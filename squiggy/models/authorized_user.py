@@ -32,7 +32,7 @@ class AuthorizedUser(Base):
     __tablename__ = 'authorized_users'
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    is_admin = True
+    is_admin = True  # TODO: db flag?
     uid = db.Column(db.String(255), nullable=False, unique=True)
 
     def __init__(self, uid):
@@ -70,6 +70,8 @@ class AuthorizedUser(Base):
 
     def to_api_json(self):
         return {
+            'isAdmin': self.is_admin,
             'isAuthenticated': self.is_authenticated,
+            'isTeaching': False,  # TODO:
             'uid': self.uid,
         }

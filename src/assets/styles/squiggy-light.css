@@ -1,0 +1,8 @@
+#light td,
+#light th {
+  border-bottom-color: #979797;
+}
+
+#light .v-card--outlined {
+  border-color: #979797;
+}
