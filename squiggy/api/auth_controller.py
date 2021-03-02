@@ -23,17 +23,36 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
-from flask_login import current_user, login_required, logout_user
+from flask import current_app as app, request
+from flask_login import current_user, login_required, login_user, logout_user
+from squiggy.api.errors import ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.models.authorized_user import AuthorizedUser
 
 
-@app.route('/api/auth/logout')
+@app.route('/api/auth/dev_auth_login', methods=['POST'])
+def dev_auth_login():
+    params = request.get_json() or {}
+    if app.config['DEVELOPER_AUTH_ENABLED']:
+        uid = params.get('uid')
+        password = params.get('password')
+        logger = app.logger
+        if password != app.config['DEVELOPER_AUTH_PASSWORD']:
+            logger.error('Dev auth: Wrong password')
+            return tolerant_jsonify({'message': 'Invalid credentials'}, 401)
+        user = AuthorizedUser.find_by_uid(uid)
+        if user is None:
+            logger.error(f'Dev auth: User with UID {uid} is not registered as an administrator.')
+            return tolerant_jsonify({'message': f'Sorry, user with UID {uid} is not registered as an administrator.'}, 403)
+        logger.info(f'Dev auth used to log in as UID {uid}')
+        login_user(user, force=True, remember=True)
+        return tolerant_jsonify(current_user.to_api_json())
+    else:
+        raise ResourceNotFoundError('Unknown path')
+
+
+@app.route('/api/auth/logout', methods=['POST'])
 @login_required
 def logout():
-    _logout_user()
-    return tolerant_jsonify(current_user.to_api_json())
-
-
-def _logout_user():
     logout_user()
+    return tolerant_jsonify({'logout': True})

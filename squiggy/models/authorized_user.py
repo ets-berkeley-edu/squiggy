@@ -32,12 +32,11 @@ class AuthorizedUser(Base):
     __tablename__ = 'authorized_users'
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    is_admin = True  # TODO: db flag?
+    is_admin = True  # Non-admin users will be stored in a separate "Users" table keyed by Canvas id.
     uid = db.Column(db.String(255), nullable=False, unique=True)
 
     def __init__(self, uid):
-        # TODO: Remove mock UID
-        self.uid = uid or '12345'
+        self.uid = uid
 
     def __repr__(self):
         return f"""<AuthorizedUser
@@ -73,5 +72,5 @@ class AuthorizedUser(Base):
             'isAdmin': self.is_admin,
             'isAuthenticated': self.is_authenticated,
             'isTeaching': False,  # TODO:
-            'uid': self.uid,
+            'uid': str(self.uid),
         }
