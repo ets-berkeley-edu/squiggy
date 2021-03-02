@@ -36,7 +36,8 @@ class AuthorizedUser(Base):
     uid = db.Column(db.String(255), nullable=False, unique=True)
 
     def __init__(self, uid):
-        self.uid = uid
+        # TODO: Remove mock UID
+        self.uid = uid or '12345'
 
     def __repr__(self):
         return f"""<AuthorizedUser
@@ -45,9 +46,13 @@ class AuthorizedUser(Base):
                     updated_at={self.updated_at}>
                 """
 
+    def get_id(self):
+        # Type 'int' is required for Flask-login user_id
+        return int(self.uid)
+
     @classmethod
-    def find_by_id(cls, db_id, include_deleted=False):
-        return cls.query.filter_by(id=db_id).first()
+    def find_by_id(cls, user_id):
+        return cls.query.filter_by(id=user_id).first()
 
     @classmethod
     def find_by_uid(cls, uid):
@@ -59,5 +64,12 @@ class AuthorizedUser(Base):
         result = db.session.execute(query, {'uid': uid}).first()
         return result and result['id']
 
+    @property
+    def is_authenticated(self):
+        return self.uid is not None
+
     def to_api_json(self):
-        return {}
+        return {
+            'isAuthenticated': self.is_authenticated,
+            'uid': self.uid,
+        }

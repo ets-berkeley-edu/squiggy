@@ -37,6 +37,7 @@ def register_routes(app):
     login_manager.anonymous_user = _user_loader
 
     # Register API routes.
+    import squiggy.api.asset_library_controller
     import squiggy.api.auth_controller
     import squiggy.api.config_controller
     import squiggy.api.status_controller
