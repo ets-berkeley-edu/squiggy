@@ -58,3 +58,6 @@ class AuthorizedUser(Base):
         query = text('SELECT id FROM authorized_users WHERE uid = :uid')
         result = db.session.execute(query, {'uid': uid}).first()
         return result and result['id']
+
+    def to_api_json(self):
+        return {}
