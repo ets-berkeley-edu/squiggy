@@ -25,12 +25,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import datetime
 
-from flask import make_response, redirect, request, session
+from flask import jsonify, make_response, redirect, request, session
 from flask_login import LoginManager
 
 
 def register_routes(app):
-
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.user_loader(_user_loader)
@@ -47,6 +46,10 @@ def register_routes(app):
     import squiggy.api.error_handlers
 
     index_html = open(app.config['INDEX_HTML']).read()
+
+    @app.login_manager.unauthorized_handler
+    def unauthorized_handler():
+        return jsonify(success=False, data={'login_required': True}, message='Unauthorized'), 401
 
     # Unmatched API routes return a 404.
     @app.route('/api/<path:path>')

@@ -23,12 +23,32 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
 import os
 os.environ['SQUIGGY_ENV'] = 'test'  # noqa
 
 from moto import mock_sts  # noqa
 import pytest  # noqa
 import squiggy.factory  # noqa
+from tests.util import override_config  # noqa
+
+
+class FakeAuth(object):
+    def __init__(self, the_app, the_client):
+        self.app = the_app
+        self.client = the_client
+
+    def login(self, uid):
+        with override_config(self.app, 'DEVELOPER_AUTH_ENABLED', True):
+            params = {
+                'uid': uid,
+                'password': self.app.config['DEVELOPER_AUTH_PASSWORD'],
+            }
+            self.client.post(
+                '/api/auth/dev_auth_login',
+                data=json.dumps(params),
+                content_type='application/json',
+            )
 
 
 # Because app and db fixtures are only created once per pytest run, individual tests
@@ -91,6 +111,12 @@ def db_session(db):
     db.session = _session
 
     return _session
+
+
+@pytest.fixture(scope='function')
+def fake_auth(app, db, client):
+    """Shortcut to start an authenticated session."""
+    return FakeAuth(app, client)
 
 
 @pytest.fixture(scope='session', autouse=True)

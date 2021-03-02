@@ -36,6 +36,9 @@ CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'
 CSRF_ENABLED = True
 CSRF_SESSION_KEY = 'secret'
 
+DEVELOPER_AUTH_ENABLED = False
+DEVELOPER_AUTH_PASSWORD = 'shotz_brewery'
+
 # Directory to search for mock fixtures, if running in "test" or "demo" mode.
 FIXTURES_PATH = None
 
