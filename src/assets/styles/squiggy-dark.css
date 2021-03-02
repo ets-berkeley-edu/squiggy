@@ -1,0 +1,8 @@
+#dark td,
+#dark th {
+  border-bottom-color: #378dc5;
+}
+
+#dark .v-card--outlined {
+  border-color: #378dc5;
+}

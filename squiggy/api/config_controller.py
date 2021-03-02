@@ -33,8 +33,9 @@ from squiggy.lib.http import tolerant_jsonify
 @app.route('/api/config')
 def app_config():
     return tolerant_jsonify({
-        'squiggyEnv': app.config['SQUIGGY_ENV'],
         'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
+        'emailAddressSupport': 'support@foo.edu',  # TODO: get email address
+        'squiggyEnv': app.config['SQUIGGY_ENV'],
         'timezone': app.config['TIMEZONE'],
     })
 
