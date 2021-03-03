@@ -1,5 +1,6 @@
 <template>
   <v-app :id="$vuetify.theme.dark ? 'dark' : 'light'">
+    <VueAnnouncer />
     <router-view :key="stripAnchorRef($route.fullPath)"></router-view>
   </v-app>
 </template>

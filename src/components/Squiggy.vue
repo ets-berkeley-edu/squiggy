@@ -1,5 +1,5 @@
 <template>
-  <div class="text-center">
+  <div class="align-center d-flex flex-column">
     <h1>Squiggy says HELLO</h1>
     <div class="d-flex flex-column justify-space-between align-center">
       <v-slider
@@ -15,47 +15,51 @@
         src="@/assets/hello.jpg"
       ></v-img>
     </div>
-    <v-card class="opaque-card pa-4" color="transparent" flat>
-      <v-form @submit.prevent="devAuth">
-        <v-text-field
-          id="dev-auth-uid"
-          v-model="devAuthUid"
-          background-color="white"
-          outlined
-          placeholder="UID"
-          :rules="[v => !!v || 'Required']"
-        ></v-text-field>
-        <v-text-field
-          id="dev-auth-password"
-          v-model="devAuthPassword"
-          background-color="white"
-          outlined
-          placeholder="Password"
-          :rules="[v => !!v || 'Required']"
-          type="password"
-        ></v-text-field>
-        <v-btn
-          id="btn-dev-auth-login"
-          block
-          :color="!devAuthUid || !devAuthPassword ? 'red lighten-2' : 'red'"
-          dark
-          large
-          @click="devAuth"
-        >
-          Dev
-          <v-icon dark>mdi-emoticon-devil-outline</v-icon>
-          Auth
-        </v-btn>
-      </v-form>
-    </v-card>
+    <div class="pt-3">
+      <v-card class="pa-4" color="transparent" flat>
+        <v-form @submit.prevent="devAuth">
+          <v-text-field
+            id="dev-auth-uid"
+            v-model="devAuthUid"
+            background-color="white"
+            outlined
+            placeholder="UID"
+            :rules="[v => !!v || 'Required']"
+          ></v-text-field>
+          <v-text-field
+            id="dev-auth-password"
+            v-model="devAuthPassword"
+            background-color="white"
+            outlined
+            placeholder="Password"
+            :rules="[v => !!v || 'Required']"
+            type="password"
+          ></v-text-field>
+          <v-btn
+            id="btn-dev-auth-login"
+            block
+            :color="!devAuthUid || !devAuthPassword ? 'red lighten-2' : 'red'"
+            dark
+            large
+            @click="devAuth"
+          >
+            Dev
+            <font-awesome-icon class="mx-2" icon="key" />
+            Auth
+          </v-btn>
+        </v-form>
+      </v-card>
+    </div>
   </div>
 </template>
 
 <script>
+import Context from '@/mixins/Context'
 import {devAuthLogIn} from '@/api/auth'
 
 export default {
   name: 'Squiggy',
+  mixins: [Context],
   data: () => ({
     devAuthUid: undefined,
     devAuthPassword: undefined,

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import Assets from '@/components/assets/Assets.vue'
 import BaseView from '@/components/BaseView.vue'
 import Error from '@/components/Error.vue'
@@ -62,6 +63,12 @@ const router = new Router({
       ]
     }
   ]
+})
+
+router.afterEach((to: any) => {
+  const pageTitle = _.get(to, 'meta.title')
+  document.title = `${pageTitle || _.capitalize(to.name) || 'Welcome'} | SuiteC`
+  Vue.prototype.$announcer.assertive(`${pageTitle || 'Page'} is loading`)
 })
 
 export default router

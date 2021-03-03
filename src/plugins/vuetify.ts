@@ -1,10 +1,21 @@
+import '@fortawesome/fontawesome-free/css/all.css'
 import colors from 'vuetify/lib/util/colors'
 import Vue from 'vue'
 import Vuetify from 'vuetify/lib'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+
+// Find icons at https://fontawesome.com/icons
+Vue.component('font-awesome-icon', FontAwesomeIcon) // eslint-disable-line vue/component-definition-name-casing
+library.add(fas)
 
 Vue.use(Vuetify)
 
 export default new Vuetify( {
+  icons: {
+    iconfont: 'faSvg'
+  },
   theme: {
     themes: {
       light: {

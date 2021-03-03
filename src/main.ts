@@ -1,4 +1,3 @@
-import '@mdi/font/css/materialdesignicons.min.css'
 import 'vuetify/dist/vuetify.min.css'
 import _ from 'lodash'
 import axios from 'axios'
@@ -6,10 +5,13 @@ import router from './router'
 import App from './App.vue'
 import store from './store'
 import Vue from 'vue'
+import VueAnnouncer from '@vue-a11y/announcer'
 import vuetify from './plugins/vuetify'
 
 const apiBaseUrl = process.env.VUE_APP_API_BASE_URL
 const isDebugMode = _.trim(process.env.VUE_APP_DEBUG).toLowerCase() === 'true'
+
+Vue.use(VueAnnouncer)
 
 const axiosErrorHandler = error => {
   const errorStatus = _.get(error, 'response.status')
