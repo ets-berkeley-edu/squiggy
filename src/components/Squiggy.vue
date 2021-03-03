@@ -15,7 +15,7 @@
         src="@/assets/hello.jpg"
       ></v-img>
     </div>
-    <div class="pt-3">
+    <div v-if="!$currentUser.isAuthenticated" class="pt-3">
       <v-card class="pa-4" color="transparent" flat>
         <v-form @submit.prevent="devAuth">
           <v-text-field

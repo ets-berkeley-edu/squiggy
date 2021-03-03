@@ -55,4 +55,4 @@ def dev_auth_login():
 @login_required
 def logout():
     logout_user()
-    return tolerant_jsonify({'logout': True})
+    return tolerant_jsonify(current_user.to_api_json())
