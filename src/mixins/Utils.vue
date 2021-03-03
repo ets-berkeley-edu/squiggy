@@ -4,6 +4,9 @@ import _ from 'lodash'
 export default {
   name: 'Utils',
   methods: {
+    go(path) {
+      this.$router.push({path}, _.noop)
+    },
     oxfordJoin: arr => {
       switch(arr.length) {
       case 1: return _.head(arr)

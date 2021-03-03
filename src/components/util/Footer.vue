@@ -56,15 +56,13 @@
 <script>
 import Context from '@/mixins/Context'
 import Iframe from '@/mixins/Iframe'
+import Utils from '@/mixins/Utils'
 import {getCasLogoutUrl} from '@/api/auth'
 
 export default {
   name: 'Footer',
-  mixins: [Context, Iframe],
+  mixins: [Context, Iframe, Utils],
   methods: {
-    go(path) {
-      this.$router.push({path}, this.$_.noop)
-    },
     logOut() {
       getCasLogoutUrl().then(() => window.location.href = '/')
     }

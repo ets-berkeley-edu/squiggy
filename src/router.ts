@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import AddLinkAsset from '@/components/assets/AddLinkAsset.vue'
 import Assets from '@/components/assets/Assets.vue'
 import BaseView from '@/components/BaseView.vue'
 import Error from '@/components/Error.vue'
@@ -35,6 +36,13 @@ const router = new Router({
             title: 'Assets'
           },
           name: 'Assets'
+        },
+        {
+          path: '/asset/add/link',
+          component: AddLinkAsset,
+          meta: {
+            title: 'Add Link Asset'
+          }
         }
       ]
     },

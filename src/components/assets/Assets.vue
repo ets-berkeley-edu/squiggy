@@ -40,6 +40,7 @@
       flat
       tile
     >
+      <AssetUploadCard />
       <AssetCard
         v-for="(asset, $index) in assets"
         :key="$index"
@@ -53,6 +54,7 @@
 
 <script>
 import AssetCard from '@/components/assets/AssetCard'
+import AssetUploadCard from '@/components/assets/AssetUploadCard'
 import Context from '@/mixins/Context'
 import InfiniteLoading from 'vue-infinite-loading'
 import Utils from '@/mixins/Utils'
@@ -60,7 +62,7 @@ import {getAssets} from '@/api/assets'
 
 export default {
   name: 'Assets',
-  components: {AssetCard, InfiniteLoading},
+  components: {AssetCard, AssetUploadCard, InfiniteLoading},
   mixins: [Context, Utils],
   data: () => ({
     assets: [],

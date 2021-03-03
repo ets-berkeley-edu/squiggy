@@ -21,7 +21,6 @@
           <v-text-field
             id="dev-auth-uid"
             v-model="devAuthUid"
-            background-color="white"
             outlined
             placeholder="UID"
             :rules="[v => !!v || 'Required']"
@@ -29,7 +28,6 @@
           <v-text-field
             id="dev-auth-password"
             v-model="devAuthPassword"
-            background-color="white"
             outlined
             placeholder="Password"
             :rules="[v => !!v || 'Required']"
