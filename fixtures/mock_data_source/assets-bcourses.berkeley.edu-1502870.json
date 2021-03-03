@@ -6,17 +6,17 @@
       "id": 451331,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Tie a Yellow Ribbon Round the Ole Oak Tree",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 544.7028571428572
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 544.7028571428572
       },
       "mime": null,
       "source": "42830",
@@ -24,28 +24,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 0,
-      "comment_count": 0,
-      "created_at": "2021-03-02T08:55:56.506Z",
-      "updated_at": "2021-03-02T08:56:00.180Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-02T08:55:56.506Z",
+      "updatedAt": "2021-03-02T08:56:00.180Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138421,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Tony Orlando and Dawn",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": "personal_bio",
-          "looking_for_collaborators": true,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Tony Orlando and Dawn",
+          "canvasImage": "https://canvasImage",
+          "personalBio": "personalBio",
+          "lookingForCollaborators": true,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -54,17 +54,17 @@
       "id": 451316,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Bad, Bad Leroy Brown",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 622.4204753199268
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 622.4204753199268
       },
       "mime": null,
       "source": "42831",
@@ -72,28 +72,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 0,
-      "comment_count": 0,
-      "created_at": "2021-03-02T07:07:18.609Z",
-      "updated_at": "2021-03-02T07:07:22.996Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-02T07:07:18.609Z",
+      "updatedAt": "2021-03-02T07:07:22.996Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138427,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Jim Croce",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": true,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Jim Croce",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": true,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -102,17 +102,17 @@
       "id": 451283,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Killing Me Softly with His Song",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 480.26073619631904
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 480.26073619631904
       },
       "mime": null,
       "source": "42833",
@@ -120,28 +120,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 1,
-      "comment_count": 0,
-      "created_at": "2021-03-02T05:21:56.696Z",
-      "updated_at": "2021-03-02T07:02:22.008Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-02T05:21:56.696Z",
+      "updatedAt": "2021-03-02T07:02:22.008Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138422,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Roberta Flack",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": false,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Roberta Flack",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": false,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -150,17 +150,17 @@
       "id": 451167,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Let's Get It On",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1020,
-        "image_height": 612
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1020,
+        "imageHeight": 612
       },
       "mime": null,
       "source": "42815",
@@ -168,28 +168,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 1,
-      "comment_count": 0,
-      "created_at": "2021-03-01T10:41:48.391Z",
-      "updated_at": "2021-03-02T06:02:17.718Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T10:41:48.391Z",
+      "updatedAt": "2021-03-02T06:02:17.718Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138414,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Marvin Gaye",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": "personal_bio",
-          "looking_for_collaborators": false,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Marvin Gaye",
+          "canvasImage": "https://canvasImage",
+          "personalBio": "personalBio",
+          "lookingForCollaborators": false,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -198,17 +198,17 @@
       "id": 451160,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "My Love",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 884,
-        "image_height": 506
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 884,
+        "imageHeight": 506
       },
       "mime": null,
       "source": "42824",
@@ -216,28 +216,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 0,
-      "comment_count": 0,
-      "created_at": "2021-03-01T09:36:01.457Z",
-      "updated_at": "2021-03-01T09:36:04.651Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T09:36:01.457Z",
+      "updatedAt": "2021-03-01T09:36:04.651Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138434,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Paul McCartney & Wings",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": true,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Paul McCartney & Wings",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": true,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -246,17 +246,17 @@
       "id": 451158,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Why Me",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 527.2074418604651
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 527.2074418604651
       },
       "mime": null,
       "source": "42823",
@@ -264,28 +264,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 1,
-      "comment_count": 0,
-      "created_at": "2021-03-01T09:11:07.111Z",
-      "updated_at": "2021-03-01T10:01:16.592Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T09:11:07.111Z",
+      "updatedAt": "2021-03-01T10:01:16.592Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138445,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Kris Kristofferson",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": false,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Kris Kristofferson",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": false,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -294,17 +294,17 @@
       "id": 451150,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Crocodile Rock",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 308.8188277087034
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 308.8188277087034
       },
       "mime": null,
       "source": "42822",
@@ -312,28 +312,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 6,
-      "comment_count": 0,
-      "created_at": "2021-03-01T08:03:30.913Z",
-      "updated_at": "2021-03-02T06:02:17.698Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T08:03:30.913Z",
+      "updatedAt": "2021-03-02T06:02:17.698Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138441,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Elton John",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": false,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Elton John",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": false,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -342,17 +342,17 @@
       "id": 451149,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Will It Go Round in Circles",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 649.861084681256
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 649.861084681256
       },
       "mime": null,
       "source": "42821",
@@ -360,28 +360,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 1,
-      "comment_count": 0,
-      "created_at": "2021-03-01T07:54:29.920Z",
-      "updated_at": "2021-03-01T10:01:16.575Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T07:54:29.920Z",
+      "updatedAt": "2021-03-01T10:01:16.575Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138429,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Learner",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Learner",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Billy Preston",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": true,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Billy Preston",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": true,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -390,17 +390,17 @@
       "id": 451140,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "You're So Vain",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 700.9532554257095
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 700.9532554257095
       },
       "mime": null,
       "source": "42819",
@@ -408,28 +408,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 2,
-      "comment_count": 0,
-      "created_at": "2021-03-01T07:12:55.756Z",
-      "updated_at": "2021-03-02T05:02:14.851Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T07:12:55.756Z",
+      "updatedAt": "2021-03-02T05:02:14.851Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138447,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Carly Simon",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": "personal_bio",
-          "looking_for_collaborators": false,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Carly Simon",
+          "canvasImage": "https://canvasImage",
+          "personalBio": "personalBio",
+          "lookingForCollaborators": false,
+          "isAdmin": false
         }
       ],
       "pins": []
@@ -438,17 +438,17 @@
       "id": 451099,
       "type": "asset",
       "url": null,
-      "download_url": "s3://download_url",
+      "downloadUrl": "s3://downloadUrl",
       "title": "Touch Me in the Morning",
-      "canvas_assignment_id": null,
+      "canvasAssignmentId": null,
       "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "preview_status": "done",
-      "thumbnail_url": "https://thumbnail_url",
-      "image_url": "https://image_url",
-      "pdf_url": null,
-      "preview_metadata": {
-        "image_width": 1038,
-        "image_height": 466.53381818181816
+      "previewStatus": "done",
+      "thumbnailUrl": "@/assets/mock-asset-preview.png",
+      "imageUrl": "https://imageUrl",
+      "pdfUrl": null,
+      "previewMetadata": {
+        "imageWidth": 1038,
+        "imageHeight": 466.53381818181816
       },
       "mime": null,
       "source": "42813",
@@ -456,28 +456,28 @@
       "likes": 0,
       "dislikes": 0,
       "views": 2,
-      "comment_count": 0,
-      "created_at": "2021-03-01T04:09:17.733Z",
-      "updated_at": "2021-03-01T08:01:11.165Z",
-      "deleted_at": null,
-      "course_id": 2516,
+      "commentCount": 0,
+      "createdAt": "2021-03-01T04:09:17.733Z",
+      "updatedAt": "2021-03-01T08:01:11.165Z",
+      "deletedAt": null,
+      "courseId": 2516,
       "visible": true,
-      "activity_type": null,
+      "activityType": null,
       "liked": null,
       "users": [
         {
           "id": 138453,
-          "canvas_user_id": 99999999,
-          "canvas_course_role": "Student",
-          "canvas_course_sections": [
+          "canvasUserId": 99999999,
+          "canvasCourseRole": "Student",
+          "canvasCourseSections": [
             "Hot 100 singles of 1973"
           ],
-          "canvas_enrollment_state": "active",
-          "canvas_full_name": "Diana Ross",
-          "canvas_image": "https://canvas_image",
-          "personal_bio": null,
-          "looking_for_collaborators": true,
-          "is_admin": false
+          "canvasEnrollmentState": "active",
+          "canvasFullName": "Diana Ross",
+          "canvasImage": "https://canvasImage",
+          "personalBio": null,
+          "lookingForCollaborators": true,
+          "isAdmin": false
         }
       ],
       "pins": []

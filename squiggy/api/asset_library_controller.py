@@ -63,7 +63,7 @@ def assets(domain, course_site_id):
     range_stop = range_stop if range_stop < total else total
     for n in range(range_start, range_stop):
         item = copy(mock_json['results'][n % 10])
-        item['id'] = range_start + n + 1
+        item['id'] = f"{range_start + n + 1}-{item['id']}"
         api_json['results'].append(item)
     return tolerant_jsonify(api_json)
 
