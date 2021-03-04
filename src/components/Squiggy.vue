@@ -33,14 +33,14 @@
             :rules="[v => !!v || 'Required']"
           />
           <v-text-field
-            id="dev-auth-uid"
+            id="uid-input"
             v-model="uid"
             outlined
             placeholder="UID"
             :rules="[v => !!v || 'Required']"
           />
           <v-text-field
-            id="dev-auth-password"
+            id="password-input"
             v-model="password"
             outlined
             placeholder="Password"
@@ -104,15 +104,15 @@ export default {
             console.log(error)
           }
         )
-      } else if (canvasCourseId) {
+      } else if (!canvasApiDomain || !canvasCourseId) {
         console.log('Canvas Course Site ID required')
-        this.$putFocusNextTick('dev-auth-course-site-id')
-      } else if (uid) {
-        console.log('Password required')
-        this.$putFocusNextTick('dev-auth-password')
-      } else {
+        this.$putFocusNextTick('canvas-api-domain-input')
+      } else if (!uid) {
         console.log('Both UID and password are required')
-        this.$putFocusNextTick('dev-auth-uid')
+        this.$putFocusNextTick('uid-input')
+      } else {
+        console.log('Password required')
+        this.$putFocusNextTick('password-input')
       }
     }
   }

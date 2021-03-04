@@ -23,12 +23,14 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
+
 admin_uid = '2040'
 unauthorized_uid = '1015674'
 
 
-class TestAssetLibraryController:
-    """Asset Library API."""
+class TestGetAssets:
+    """Assets API."""
 
     @classmethod
     def _api_get_assets(cls, client, course_site_id=1502870, domain='bcourses.berkeley.edu', expected_status_code=200):
@@ -51,3 +53,48 @@ class TestAssetLibraryController:
         api_json = self._api_get_assets(client)
         assert 'total' in api_json
         assert 'results' in api_json
+
+
+class TestCreateAsset:
+    """Create asset API."""
+
+    @staticmethod
+    def _api_create_asset(
+            client,
+            asset_type='link',
+            category_id='TODO: mock data needed',
+            description='Baby, be good, do what you should. You know it will be alright',
+            title='What goes on in your mind?',
+            url='https://www.youtube.com/watch?v=Pxq63cYIY1c',
+            expected_status_code=200,
+    ):
+        params = {
+            'categoryId': category_id,
+            'description': description,
+            'title': title,
+            'type': asset_type,
+            'url': url,
+        }
+        response = client.post(
+            '/api/asset/create',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_create_asset(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_uid)
+        self._api_create_asset(client, expected_status_code=401)
+
+    def test_admin(self, client, fake_auth):
+        """Returns a well-formed response."""
+        fake_auth.login(admin_uid)
+        api_json = self._api_create_asset(client)
+        assert 'id' in api_json
+        assert api_json['title'] == 'What goes on in your mind?'
