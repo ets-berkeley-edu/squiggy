@@ -23,10 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from dateutil.tz import tzutc
 from flask import current_app as app
 from sqlalchemy.dialects.postgresql import ENUM
 from squiggy import db, std_commit
+from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
 
 
@@ -101,10 +101,6 @@ class Asset(Base):
             'type': self.asset_type,
             'url': self.url,
             'visible': self.visible,
-            'createdAt': _isoformat(self.created_at),
-            'updatedAt': _isoformat(self.updated_at),
+            'createdAt': isoformat(self.created_at),
+            'updatedAt': isoformat(self.updated_at),
         }
-
-
-def _isoformat(value):
-    return value and value.astimezone(tzutc()).isoformat()
