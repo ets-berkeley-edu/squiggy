@@ -63,8 +63,10 @@ ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_course_i
 --
 
 ALTER TABLE IF EXISTS ONLY public.activities DROP CONSTRAINT IF EXISTS activities_pkey;
+ALTER TABLE IF EXISTS public.activities ALTER COLUMN id DROP DEFAULT;
 
 ALTER TABLE IF EXISTS ONLY public.activity_types DROP CONSTRAINT IF EXISTS activity_types_pkey;
+ALTER TABLE IF EXISTS public.activity_types ALTER COLUMN id DROP DEFAULT;
 
 ALTER TABLE IF EXISTS ONLY public.asset_categories DROP CONSTRAINT IF EXISTS asset_categories_pkey;
 
