@@ -29,6 +29,7 @@ from squiggy import db, std_commit
 from squiggy.models.authorized_user import AuthorizedUser
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
+from squiggy.models.user import User
 
 _test_courses = [
     {
@@ -48,9 +49,19 @@ _test_canvas = [
     },
 ]
 
-_test_users = [
+_test_authorized_users = [
     {
         'uid': '2040',
+    },
+]
+
+_test_users = [
+    {
+        'canvas_user_id': '9876543',
+        'canvas_course_role': 'Teacher',
+        'canvas_enrollment_state': 'active',
+        'canvas_full_name': 'Oliver Heyer',
+        'canvas_email': 'oheyer@berkeley.edu',
     },
 ]
 
@@ -98,8 +109,21 @@ def _create_courses():
 
 
 def _create_users():
+    for test_authorized_user in _test_authorized_users:
+        db.session.add(AuthorizedUser(uid=test_authorized_user['uid']))
+    course = Course.query.first()
     for test_user in _test_users:
-        db.session.add(AuthorizedUser(uid=test_user['uid']))
+        db.session.add(
+            User(
+                course_id=course.id,
+                canvas_user_id=test_user['canvas_user_id'],
+                canvas_course_role=test_user['canvas_course_role'],
+                canvas_enrollment_state=test_user['canvas_enrollment_state'],
+                canvas_full_name=test_user['canvas_full_name'],
+                canvas_email=test_user['canvas_email'],
+                canvas_course_sections=[],
+            ),
+        )
     std_commit(allow_test_environment=True)
 
 
