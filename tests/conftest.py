@@ -38,10 +38,17 @@ class FakeAuth(object):
         self.app = the_app
         self.client = the_client
 
-    def login(self, uid):
+    def login(
+            self,
+            uid,
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=123456,
+    ):
         with override_config(self.app, 'DEVELOPER_AUTH_ENABLED', True):
             params = {
                 'uid': uid,
+                'canvasApiDomain': canvas_api_domain,
+                'canvasCourseId': canvas_course_id,
                 'password': self.app.config['DEVELOPER_AUTH_PASSWORD'],
             }
             self.client.post(

@@ -23,11 +23,12 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, request
+from flask import current_app as app, request, session
 from flask_login import current_user, login_required, login_user, logout_user
 from squiggy.api.errors import ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.authorized_user import AuthorizedUser
+from squiggy.models.course import Course
 
 
 @app.route('/api/auth/dev_auth_login', methods=['POST'])
@@ -44,8 +45,19 @@ def dev_auth_login():
         if user is None:
             logger.error(f'Dev auth: User with UID {uid} is not registered as an administrator.')
             return tolerant_jsonify({'message': f'Sorry, user with UID {uid} is not registered as an administrator.'}, 403)
+
+        canvas_api_domain = params.get('canvasApiDomain')
+        canvas_course_id = params.get('canvasCourseId')
+        course = None
+        if None not in [canvas_api_domain, canvas_course_id]:
+            course = Course.find_by_canvas_course_id(canvas_api_domain, canvas_course_id)
+        if not course:
+            logger.error("Dev auth: Invalid 'canvasApiDomain' and/or 'canvasCourseId'")
+            return tolerant_jsonify({'message': 'Invalid Canvas domain or course ID.'}, 401)
+
         logger.info(f'Dev auth used to log in as UID {uid}')
-        login_user(user, force=True, remember=True)
+        if login_user(user, force=True, remember=True):
+            session['course'] = course.to_api_json()
         return tolerant_jsonify(current_user.to_api_json())
     else:
         raise ResourceNotFoundError('Unknown path')

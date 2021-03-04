@@ -36,7 +36,7 @@
               <div>
                 {{ $_.get($announcer, 'data.content') }}
               </div>
-              <div v-if="$currentUser.isAuthenticated" class="pl-2">
+              <div v-if="$currentUser.isAuthenticated && $_.get($announcer, 'data.content')" class="pl-2">
                 |
               </div>
               <div v-if="$currentUser.isAuthenticated">

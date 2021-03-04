@@ -80,12 +80,12 @@ export default {
   methods: {
     fetch() {
       return getAssets(
-          'bcourses.berkeley.edu',
-          1502870,
-          {
-            limit: this.limit,
-            offset: this.offset
-          }
+        'bcourses.berkeley.edu',
+        1502870,
+        {
+          limit: this.limit,
+          offset: this.offset
+        }
       ).then(data => {
         this.assets.unshift(...data.results.reverse())
         this.total = data.total

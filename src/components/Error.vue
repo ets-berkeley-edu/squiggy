@@ -7,7 +7,7 @@
     >
       <v-img
         v-if="!isInIframe"
-        :aspect-ratio="16/9"
+        :aspect-ratio="16 / 9"
         src="@/assets/hello.jpg"
       ></v-img>
       <v-card-text class="pt-5 text-center">
