@@ -109,10 +109,10 @@ DROP INDEX IF EXISTS asset_users_user_id_idx;
 
 --
 
-DROP SEQUENCE IF EXISTS public.activities_id_seq;
 DROP TABLE IF EXISTS public.activities;
-DROP SEQUENCE IF EXISTS public.activity_types_id_seq;
+DROP SEQUENCE IF EXISTS public.activities_id_seq;
 DROP TABLE IF EXISTS public.activity_types;
+DROP SEQUENCE IF EXISTS public.activity_types_id_seq;
 DROP TABLE IF EXISTS public.asset_categories;
 DROP TABLE IF EXISTS public.asset_users;
 DROP SEQUENCE IF EXISTS public.assets_id_seq;

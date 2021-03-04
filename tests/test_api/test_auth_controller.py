@@ -97,6 +97,28 @@ class TestDevAuth:
                 expected_status_code=403,
             )
 
+    def test_invalid_canvas_domain(self, app, client):
+        """Universidad de Monterrey is not a registered domain."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
+            api_json = self._api_dev_auth_login(
+                client,
+                canvas_api_domain='universidad.monterrey.mx',
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
+                uid=admin_uid,
+                expected_status_code=401,
+            )
+
+    def test_invalid_canvas_course_id(self, app, client):
+        """Invalid Canvas course ID."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
+            api_json = self._api_dev_auth_login(
+                client,
+                canvas_course_id=9999999999,
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
+                uid=admin_uid,
+                expected_status_code=401,
+            )
+
     def test_known_user_with_correct_password_logs_in(self, app, client):
         """There is a happy path."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
@@ -107,7 +129,6 @@ class TestDevAuth:
             )
             assert api_json['uid'] == admin_uid
             response = client.post('/api/auth/logout')
-            assert response.status_code == 200
 
 
 class TestAuthorization:
