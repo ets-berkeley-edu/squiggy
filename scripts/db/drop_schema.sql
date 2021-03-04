@@ -34,11 +34,34 @@ SET row_security = off;
 
 --
 
+ALTER TABLE IF EXISTS ONLY public.assets DROP CONSTRAINT IF EXISTS assets_pkey;
+ALTER TABLE IF EXISTS public.assets ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS ONLY public.assets DROP CONSTRAINT IF EXISTS assets_course_id_fkey;
+
 ALTER TABLE IF EXISTS ONLY public.authorized_users DROP CONSTRAINT IF EXISTS authorized_users_pkey;
 ALTER TABLE IF EXISTS ONLY public.authorized_users DROP CONSTRAINT IF EXISTS authorized_users_uid_key;
 ALTER TABLE IF EXISTS public.authorized_users ALTER COLUMN id DROP DEFAULT;
 
+ALTER TABLE IF EXISTS ONLY public.courses DROP CONSTRAINT IF EXISTS courses_pkey;
+ALTER TABLE IF EXISTS public.courses ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS ONLY public.courses DROP CONSTRAINT IF EXISTS courses_canvas_api_domain_fkey;
+
+ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_pkey;
+ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_key_key;
+ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_secret_key;
+
 --
 
+DROP SEQUENCE IF EXISTS public.assets_id_seq;
+DROP TABLE IF EXISTS public.assets;
 DROP SEQUENCE IF EXISTS public.authorized_users_id_seq;
 DROP TABLE IF EXISTS public.authorized_users;
+DROP TABLE IF EXISTS public.canvas;
+DROP SEQUENCE IF EXISTS public.courses_id_seq;
+DROP TABLE IF EXISTS public.courses;
+
+--
+
+DROP TYPE IF EXISTS public.enum_assets_type;
+
+--
