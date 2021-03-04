@@ -47,7 +47,6 @@ class Asset(Base):
     course_id = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
     title = db.Column(db.String(255))
-    uid = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255))
     visible = db.Column(db.Boolean, nullable=False)
 
@@ -55,7 +54,6 @@ class Asset(Base):
             self,
             asset_type,
             course_id,
-            uid,
             description=None,
             title=None,
             url=None,
@@ -65,7 +63,6 @@ class Asset(Base):
         self.course_id = course_id
         self.description = description
         self.title = title
-        self.uid = uid
         self.url = url
         self.visible = visible
 
@@ -75,25 +72,11 @@ class Asset(Base):
                     course_id={self.course_id},
                     description={self.description},
                     title={self.title},
-                    uid={self.uid},
                     url={self.url},
                     visible={self.visible},
                     created_at={self.created_at},
                     updated_at={self.updated_at}>
                 """
-
-    def to_api_json(self):
-        return {
-            'courseId': self.course_id,
-            'description': self.description,
-            'title': self.title,
-            'type': self.asset_type,
-            'uid': self.uid,
-            'url': self.url,
-            'visible': self.visible,
-            'createdAt': _isoformat(self.created_at),
-            'updatedAt': _isoformat(self.updated_at),
-        }
 
     @classmethod
     def create(cls, asset_type, category_id, course_id, description, title, url):
@@ -107,9 +90,21 @@ class Asset(Base):
         app.logger.warn(f'TODO: category_id={category_id}')
         db.session.flush()
         std_commit()
-        return asset.to_api_json()
+        return asset
+
+    def to_api_json(self):
+        return {
+            'id': self.id,
+            'courseId': self.course_id,
+            'description': self.description,
+            'title': self.title,
+            'type': self.asset_type,
+            'url': self.url,
+            'visible': self.visible,
+            'createdAt': _isoformat(self.created_at),
+            'updatedAt': _isoformat(self.updated_at),
+        }
 
 
-def _isoformat(obj, key):
-    value = obj.get(key)
+def _isoformat(value):
     return value and value.astimezone(tzutc()).isoformat()

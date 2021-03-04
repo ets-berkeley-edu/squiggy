@@ -71,6 +71,7 @@ def assets(domain, course_site_id):
 
 
 @app.route('/api/asset/create', methods=['POST'])
+@login_required
 def create_asset():
     params = request.get_json()
     asset_type = params.get('type')
@@ -93,7 +94,7 @@ def create_asset():
         title=title,
         url=url,
     )
-    return tolerant_jsonify(asset)
+    return tolerant_jsonify(asset.to_api_json())
 
 
 def _get(_dict, key, default_value=None):
