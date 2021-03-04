@@ -27,7 +27,6 @@ import json
 
 from tests.util import override_config
 
-
 admin_uid = '2040'
 unauthorized_uid = '1015674'
 
@@ -36,7 +35,20 @@ class TestDevAuth:
     """DevAuth handling."""
 
     @staticmethod
-    def _api_dev_auth_login(client, params, expected_status_code=200):
+    def _api_dev_auth_login(
+            client,
+            password,
+            uid,
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=123456,
+            expected_status_code=200,
+    ):
+        params = {
+            'canvasApiDomain': canvas_api_domain,
+            'canvasCourseId': canvas_course_id,
+            'password': password,
+            'uid': uid,
+        }
         response = client.post(
             '/api/auth/dev_auth_login',
             data=json.dumps(params),
@@ -50,10 +62,8 @@ class TestDevAuth:
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', False):
             self._api_dev_auth_login(
                 client,
-                params={
-                    'uid': admin_uid,
-                    'password': app.config['DEVELOPER_AUTH_PASSWORD'],
-                },
+                uid=admin_uid,
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
                 expected_status_code=404,
             )
 
@@ -62,10 +72,8 @@ class TestDevAuth:
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
-                params={
-                    'uid': admin_uid,
-                    'password': 'Born 2 Lose',
-                },
+                uid=admin_uid,
+                password='Born 2 Lose',
                 expected_status_code=401,
             )
 
@@ -74,10 +82,8 @@ class TestDevAuth:
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
-                params={
-                    'uid': 'A Bad Sort',
-                    'password': app.config['DEVELOPER_AUTH_PASSWORD'],
-                },
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
+                uid='A Bad Sort',
                 expected_status_code=403,
             )
 
@@ -86,10 +92,8 @@ class TestDevAuth:
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
-                params={
-                    'uid': unauthorized_uid,
-                    'password': app.config['DEVELOPER_AUTH_PASSWORD'],
-                },
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
+                uid=unauthorized_uid,
                 expected_status_code=403,
             )
 
@@ -98,10 +102,8 @@ class TestDevAuth:
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             api_json = self._api_dev_auth_login(
                 client,
-                params={
-                    'uid': admin_uid,
-                    'password': app.config['DEVELOPER_AUTH_PASSWORD'],
-                },
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
+                uid=admin_uid,
             )
             assert api_json['uid'] == admin_uid
             response = client.post('/api/auth/logout')

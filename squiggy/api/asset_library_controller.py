@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from copy import copy
 import json
 
-from flask import current_app as app, request
+from flask import current_app as app, request, session
 from flask_login import login_required
 from squiggy.api.errors import BadRequestError
 from squiggy.lib.http import tolerant_jsonify
@@ -74,17 +74,21 @@ def assets(domain, course_site_id):
 def create_asset():
     params = request.get_json()
     asset_type = params.get('type')
-    course_id = params.get('courseId')
     category_id = params.get('categoryId')
     description = params.get('description')
     title = params.get('title')
     url = params.get('url')
     if not asset_type or not category_id or not description or not title or not url:
         raise BadRequestError('Asset creation requires category, description, title, and url')
+
+    course = session['course']
+    if not course:
+        raise BadRequestError('Course data not found')
+
     asset = Asset.create(
         asset_type=asset_type,
         category_id=category_id,
-        course_id=course_id,
+        course_id=course['id'],
         description=description,
         title=title,
         url=url,

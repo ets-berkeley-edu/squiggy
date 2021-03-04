@@ -8,11 +8,12 @@ export function getAssets(domain, courseSiteId, args={}) {
   return axios.get(url)
 }
 
-export function createLinkAsset(category, description, title, url) {
-  return axios.post(`${utils.apiBaseUrl()}/api/auth/dev_auth_login`, {
-    category,
+export function createLinkAsset(categoryId, description, title, url) {
+  return axios.post(`${utils.apiBaseUrl()}/api/asset/create`, {
+    categoryId,
     description,
     title,
+    type: 'link',
     url
   })
 }

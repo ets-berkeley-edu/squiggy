@@ -8,35 +8,49 @@
         min="200"
         max="500"
         step="1"
-      ></v-slider>
+      />
       <v-img
-        :aspect-ratio="16/9"
+        :aspect-ratio="16 / 9"
         :width="width"
         src="@/assets/hello.jpg"
-      ></v-img>
+      />
     </div>
     <div v-if="!$currentUser.isAuthenticated" class="pt-3">
       <v-card class="pa-4" color="transparent" flat>
         <v-form @submit.prevent="devAuth">
           <v-text-field
+            id="canvas-api-domain-input"
+            v-model="canvasApiDomain"
+            outlined
+            placeholder="Canvas API Domain"
+            :rules="[v => !!v || 'Required']"
+          />
+          <v-text-field
+            id="course-site-id-input"
+            v-model="canvasCourseSiteId"
+            outlined
+            placeholder="Canvas Course Site ID"
+            :rules="[v => !!v || 'Required']"
+          />
+          <v-text-field
             id="dev-auth-uid"
-            v-model="devAuthUid"
+            v-model="uid"
             outlined
             placeholder="UID"
             :rules="[v => !!v || 'Required']"
-          ></v-text-field>
+          />
           <v-text-field
             id="dev-auth-password"
-            v-model="devAuthPassword"
+            v-model="password"
             outlined
             placeholder="Password"
             :rules="[v => !!v || 'Required']"
             type="password"
-          ></v-text-field>
+          />
           <v-btn
             id="btn-dev-auth-login"
             block
-            :color="!devAuthUid || !devAuthPassword ? 'red lighten-2' : 'red'"
+            :color="!canvasApiDomain || !canvasCourseSiteId || !uid || !password ? 'red lighten-2' : 'red'"
             dark
             large
             @click="devAuth"
@@ -59,8 +73,10 @@ export default {
   name: 'Squiggy',
   mixins: [Context],
   data: () => ({
-    devAuthUid: undefined,
-    devAuthPassword: undefined,
+    canvasApiDomain: undefined,
+    canvasCourseSiteId: undefined,
+    uid: undefined,
+    password: undefined,
     width: 300,
   }),
   created() {
@@ -68,10 +84,13 @@ export default {
   },
   methods: {
     devAuth() {
-      let uid = this.$_.trim(this.devAuthUid)
-      let password = this.$_.trim(this.devAuthPassword)
-      if (uid && password) {
-        devAuthLogIn(uid, password).then(data => {
+      const canvasApiDomain = this.$_.trim(this.canvasApiDomain)
+      const canvasCourseId = this.$_.trim(this.canvasCourseSiteId)
+      const password = this.$_.trim(this.password)
+      const uid = this.$_.trim(this.uid)
+      if (canvasApiDomain && canvasCourseId && password && uid) {
+        devAuthLogIn(canvasApiDomain, canvasCourseId, password, uid).then(
+          data => {
             if (data.isAuthenticated) {
               this.$router.push('/assets', this.$_.noop)
               this.alertScreenReader('Welcome to SuiteC')
@@ -81,10 +100,13 @@ export default {
               console.log(message)
             }
           },
-           error => {
-             console.log(error)
-           }
+          error => {
+            console.log(error)
+          }
         )
+      } else if (canvasCourseId) {
+        console.log('Canvas Course Site ID required')
+        this.$putFocusNextTick('dev-auth-course-site-id')
       } else if (uid) {
         console.log('Password required')
         this.$putFocusNextTick('dev-auth-password')

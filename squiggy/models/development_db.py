@@ -27,7 +27,26 @@ from flask import current_app as app
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.models.authorized_user import AuthorizedUser
+from squiggy.models.canvas import Canvas
+from squiggy.models.course import Course
 
+_test_courses = [
+    {
+        'active': True,
+        'canvas_api_domain': 'bcourses.berkeley.edu',
+        'canvas_course_id': 123456,
+    },
+]
+
+_test_canvas = [
+    {
+        'canvas_api_domain': 'bcourses.berkeley.edu',
+        'api_key': 'qwerty',
+        'lti_key': 'GrxUBuBcFYqUKFKqNkixiYUPJGonbedl',
+        'lti_secret': 'zY8aw28nHZHbKkYjZP1XAXgfok0tj6aw',
+        'name': 'bCourses',
+    },
+]
 
 _test_users = [
     {
@@ -44,6 +63,7 @@ def clear():
 
 def load():
     _load_schemas()
+    _create_courses()
     _create_users()
     return db
 
@@ -53,6 +73,28 @@ def _load_schemas():
     with open(app.config['BASE_DIR'] + '/scripts/db/schema.sql', 'r') as ddlfile:
         db.session().execute(text(ddlfile.read()))
         std_commit()
+
+
+def _create_courses():
+    for c in _test_canvas:
+        canvas = Canvas(
+            canvas_api_domain=c['canvas_api_domain'],
+            api_key=c['api_key'],
+            lti_key=c['lti_key'],
+            lti_secret=c['lti_secret'],
+            name=c['name'],
+        )
+        db.session.add(canvas)
+    std_commit(allow_test_environment=True)
+
+    for c in _test_courses:
+        course = Course(
+            active=c['active'],
+            canvas_api_domain=c['canvas_api_domain'],
+            canvas_course_id=c['canvas_course_id'],
+        )
+        db.session.add(course)
+    std_commit(allow_test_environment=True)
 
 
 def _create_users():
