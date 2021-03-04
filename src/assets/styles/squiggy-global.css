@@ -1,3 +1,6 @@
+.bg-transparent {
+  background-color: transparent !important;
+}
 .bg-white {
   background-color: white !important;
 }

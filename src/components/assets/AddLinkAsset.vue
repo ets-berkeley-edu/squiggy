@@ -3,7 +3,7 @@
     <div>
       <v-btn
         id="asset-library-btn"
-        class="bg-white"
+        class="bg-transparent"
         elevation="0"
         @click="go('/assets')"
       >
@@ -22,7 +22,7 @@
           URL
         </v-col>
         <v-col md="8">
-          <v-text-field label="Paste or type a URL here" outlined></v-text-field>
+          <v-text-field label="Paste or type a URL here" maxlength="255" outlined></v-text-field>
         </v-col>
       </v-row>
       <v-row>
@@ -30,7 +30,7 @@
           Title
         </v-col>
         <v-col md="8">
-          <v-text-field label="Enter a title" outlined></v-text-field>
+          <v-text-field label="Enter a title" maxlength="255" outlined></v-text-field>
         </v-col>
       </v-row>
       <v-row>
