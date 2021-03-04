@@ -46,11 +46,7 @@ class Asset(Base):
     asset_type = db.Column('type', assets_type, nullable=False)
     course_id = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
-    impact_percentile = db.Column(db.Integer, nullable=False)
-    impact_score = db.Column(db.Integer, nullable=False)
     title = db.Column(db.String(255))
-    trending_percentile = db.Column(db.Integer, nullable=False)
-    trending_score = db.Column(db.Integer, nullable=False)
     uid = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255))
     visible = db.Column(db.Boolean, nullable=False)
@@ -61,10 +57,6 @@ class Asset(Base):
             course_id,
             uid,
             description=None,
-            impact_percentile=0,
-            impact_score=0,
-            trending_percentile=0,
-            trending_score=0,
             title=None,
             url=None,
             visible=True,
@@ -72,10 +64,6 @@ class Asset(Base):
         self.asset_type = asset_type
         self.course_id = course_id
         self.description = description
-        self.impact_percentile = impact_percentile
-        self.impact_score = impact_score
-        self.trending_percentile = trending_percentile
-        self.trending_score = trending_score
         self.title = title
         self.uid = uid
         self.url = url
@@ -86,10 +74,6 @@ class Asset(Base):
                     asset_type={self.asset_type},
                     course_id={self.course_id},
                     description={self.description},
-                    impact_percentile={self.impact_percentile},
-                    impact_score={self.impact_score},
-                    trending_percentile={self.trending_percentile},
-                    trending_score={self.trending_score},
                     title={self.title},
                     uid={self.uid},
                     url={self.url},
@@ -102,10 +86,6 @@ class Asset(Base):
         return {
             'courseId': self.course_id,
             'description': self.description,
-            'impactPercentile': self.impact_percentile,
-            'impactScore': self.impact_score,
-            'trendingPercentile': self.trending_percentile,
-            'trendingScore': self.trending_score,
             'title': self.title,
             'type': self.asset_type,
             'uid': self.uid,

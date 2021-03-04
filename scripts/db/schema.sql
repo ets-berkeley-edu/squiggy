@@ -37,11 +37,137 @@ SET default_with_oids = false;
 
 --
 
+CREATE TYPE enum_activities_object_type AS ENUM (
+    'asset',
+    'canvas_discussion',
+    'canvas_submission',
+    'comment'
+);
+
+--
+
+CREATE TYPE enum_activities_type AS ENUM (
+    'asset_add',
+    'asset_comment',
+    'asset_like',
+    'asset_view',
+    'assignment_submit',
+    'discussion_entry',
+    'discussion_topic',
+    'get_asset_add',
+    'get_asset_comment',
+    'get_asset_comment_reply',
+    'get_asset_like',
+    'get_asset_view',    
+    'get_discussion_entry_reply'
+);
+
+--
+
 CREATE TYPE enum_assets_type AS ENUM (
     'file',
     'link',
     'thought'
 );
+
+--
+
+CREATE TYPE enum_users_canvas_enrollment_state AS ENUM (
+    'active',
+    'completed',
+    'inactive',
+    'invited',
+    'rejected'
+);
+
+--
+
+CREATE TABLE activities (
+    id integer NOT NULL,
+    type enum_activities_type NOT NULL,
+    object_id integer,
+    object_type enum_activities_object_type NOT NULL,
+    metadata json,
+    asset_id integer,
+    course_id integer NOT NULL,
+    user_id integer NOT NULL,
+    actor_id integer,
+    reciprocal_id integer,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+CREATE SEQUENCE activities_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE activities_id_seq OWNED BY activities.id;
+ALTER TABLE ONLY activities ALTER COLUMN id SET DEFAULT nextval('activities_id_seq'::regclass);
+
+ALTER TABLE ONLY activities
+    ADD CONSTRAINT activities_pkey PRIMARY KEY (id);
+
+CREATE INDEX activities_actor_id_idx ON activities USING btree (actor_id);
+CREATE INDEX activities_asset_id_idx ON activities USING btree (asset_id);
+CREATE INDEX activities_created_at_idx ON activities USING btree (created_at);
+
+--
+
+CREATE TABLE activity_types (
+    id integer NOT NULL,
+    type enum_activities_type NOT NULL,
+    points integer,
+    enabled boolean DEFAULT true,
+    course_id integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+CREATE SEQUENCE activity_types_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE activity_types_id_seq OWNED BY activity_types.id;
+ALTER TABLE ONLY activity_types ALTER COLUMN id SET DEFAULT nextval('activity_types_id_seq'::regclass);
+
+ALTER TABLE ONLY activity_types
+    ADD CONSTRAINT activity_types_pkey PRIMARY KEY (id, course_id);
+
+CREATE UNIQUE INDEX activity_types_type_course_id_idx ON activity_types USING btree (type, course_id);
+
+--
+
+CREATE TABLE asset_categories (
+    asset_id integer NOT NULL,
+    category_id integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY asset_categories
+    ADD CONSTRAINT asset_categories_pkey PRIMARY KEY (asset_id, category_id);
+
+CREATE INDEX asset_categories_asset_id_idx ON asset_categories USING btree (asset_id);
+CREATE INDEX asset_categories_category_id_idx ON asset_categories USING btree (category_id);
+
+--
+
+CREATE TABLE asset_users (
+    asset_id integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY asset_users
+    ADD CONSTRAINT asset_users_pkey PRIMARY KEY (asset_id, user_id);
+
+CREATE INDEX asset_users_asset_id_idx ON asset_users USING btree (asset_id);
+CREATE INDEX asset_users_user_id_idx ON asset_users USING btree (user_id);
 
 --
 
@@ -56,8 +182,6 @@ CREATE TABLE assets (
     dislikes integer DEFAULT 0,
     download_url character varying(255),
     image_url character varying(255),
-    impact_percentile integer DEFAULT 0 NOT NULL,
-    impact_score integer DEFAULT 0 NOT NULL,
     likes integer DEFAULT 0,
     mime character varying(255),
     pdf_url character varying(255),
@@ -66,8 +190,6 @@ CREATE TABLE assets (
     source character varying(255),
     thumbnail_url character varying(255),
     title character varying(255),
-    trending_percentile integer DEFAULT 0 NOT NULL,
-    trending_score integer DEFAULT 0 NOT NULL,
     type enum_assets_type NOT NULL,
     url character varying(255),
     views integer DEFAULT 0,
@@ -75,16 +197,16 @@ CREATE TABLE assets (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
-ALTER TABLE assets OWNER TO squiggy;
+
 CREATE SEQUENCE assets_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-ALTER TABLE assets_id_seq OWNER TO squiggy;
 ALTER SEQUENCE assets_id_seq OWNED BY assets.id;
 ALTER TABLE ONLY assets ALTER COLUMN id SET DEFAULT nextval('assets_id_seq'::regclass);
+
 ALTER TABLE ONLY assets
     ADD CONSTRAINT assets_pkey PRIMARY KEY (id);
 
@@ -96,16 +218,16 @@ CREATE TABLE authorized_users (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
-ALTER TABLE authorized_users OWNER TO squiggy;
+
 CREATE SEQUENCE authorized_users_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-ALTER TABLE authorized_users_id_seq OWNER TO squiggy;
 ALTER SEQUENCE authorized_users_id_seq OWNED BY authorized_users.id;
 ALTER TABLE ONLY authorized_users ALTER COLUMN id SET DEFAULT nextval('authorized_users_id_seq'::regclass);
+
 ALTER TABLE ONLY authorized_users
     ADD CONSTRAINT authorized_users_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY authorized_users
@@ -125,13 +247,64 @@ CREATE TABLE canvas (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
-ALTER TABLE canvas OWNER TO squiggy;
+
 ALTER TABLE ONLY canvas
     ADD CONSTRAINT canvas_pkey PRIMARY KEY (canvas_api_domain);
 ALTER TABLE ONLY canvas
     ADD CONSTRAINT canvas_lti_key_key UNIQUE (lti_key);
 ALTER TABLE ONLY canvas
     ADD CONSTRAINT canvas_lti_secret_key UNIQUE (lti_secret);
+
+--
+
+CREATE TABLE categories (
+    id integer NOT NULL,
+    title character varying(255) NOT NULL,
+    canvas_assignment_id integer,
+    canvas_assignment_name character varying(255),
+    course_id integer,
+    deleted_at timestamp with time zone,
+    visible boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+
+CREATE SEQUENCE categories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE categories_id_seq OWNED BY categories.id;
+ALTER TABLE ONLY categories ALTER COLUMN id SET DEFAULT nextval('categories_id_seq'::regclass);
+
+ALTER TABLE ONLY categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+--
+
+CREATE TABLE comments (
+    id integer NOT NULL,
+    body text NOT NULL,
+    asset_id integer NOT NULL,
+    user_id integer,
+    parent_id integer,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+CREATE SEQUENCE comments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE comments_id_seq OWNED BY comments.id;
+ALTER TABLE ONLY comments ALTER COLUMN id SET DEFAULT nextval('comments_id_seq'::regclass);
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_pkey PRIMARY KEY (id);
 
 --
 
@@ -149,22 +322,83 @@ CREATE TABLE courses (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
-ALTER TABLE courses OWNER TO squiggy;
+
 CREATE SEQUENCE courses_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-ALTER TABLE courses_id_seq OWNER TO squiggy;
 ALTER SEQUENCE courses_id_seq OWNED BY courses.id;
 ALTER TABLE ONLY courses ALTER COLUMN id SET DEFAULT nextval('courses_id_seq'::regclass);
+
 ALTER TABLE ONLY courses
     ADD CONSTRAINT courses_pkey PRIMARY KEY (id);
 
 --
 
+CREATE TABLE users (
+    id integer NOT NULL,
+    canvas_user_id integer NOT NULL,
+    canvas_course_role character varying(255) NOT NULL,
+    canvas_enrollment_state enum_users_canvas_enrollment_state NOT NULL,
+    canvas_full_name character varying(255) NOT NULL,
+    canvas_image character varying(255),
+    canvas_email character varying(255),
+    points integer DEFAULT 0 NOT NULL,
+    course_id integer NOT NULL,
+    share_points boolean,
+    last_activity timestamp with time zone,
+    canvas_course_sections character varying(255)[],
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+CREATE SEQUENCE users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE users_id_seq OWNED BY users.id;
+ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+--
+
+ALTER TABLE ONLY activities
+    ADD CONSTRAINT activities_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY activities
+    ADD CONSTRAINT activities_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES assets(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY activities
+    ADD CONSTRAINT activities_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY activities
+    ADD CONSTRAINT activities_reciprocal_id_fkey FOREIGN KEY (reciprocal_id) REFERENCES activities(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY activities
+    ADD CONSTRAINT activities_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY activity_types
+    ADD CONSTRAINT activity_types_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY asset_categories
+    ADD CONSTRAINT asset_categories_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES assets(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY asset_categories
+    ADD CONSTRAINT asset_categories_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY asset_users
+    ADD CONSTRAINT asset_users_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES assets(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY asset_users
+    ADD CONSTRAINT asset_users_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY assets
     ADD CONSTRAINT assets_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY categories
+    ADD CONSTRAINT categories_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES assets(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES comments(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY courses
     ADD CONSTRAINT courses_canvas_api_domain_fkey FOREIGN KEY (canvas_api_domain) REFERENCES canvas(canvas_api_domain) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
