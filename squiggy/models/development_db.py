@@ -30,6 +30,7 @@ from squiggy.models.asset import Asset
 from squiggy.models.authorized_user import AuthorizedUser
 from squiggy.models.canvas import Canvas
 from squiggy.models.category import Category
+from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
 
@@ -43,6 +44,12 @@ _test_assets = [
         'asset_type': 'link',
         'title': 'Who Loves The Sun',
         'url': 'https://www.youtube.com/watch?v=gNPovDOk4jY',
+    },
+]
+
+_test_comments = [
+    {
+        'body': 'But mostly you just make me mad, baby, you just make me mad',
     },
 ]
 
@@ -90,8 +97,9 @@ def clear():
 def load():
     _load_schemas()
     courses = _create_courses()
-    _create_assets(courses)
-    _create_users()
+    assets = _create_assets(courses)
+    users = _create_users(courses)
+    _create_comments(assets, users)
     return db
 
 
@@ -139,8 +147,9 @@ def _create_assets(courses):
     db.session.add(category)
     std_commit(allow_test_environment=True)
 
+    assets = []
     for a in _test_assets:
-        Asset.create(
+        asset = Asset.create(
             asset_type=a['asset_type'],
             course_id=course_id,
             categories=[category],
@@ -148,25 +157,39 @@ def _create_assets(courses):
             title=a['title'],
             url=a['url'],
         )
-        # db.session.add(asset)
+        assets.append(asset)
     std_commit(allow_test_environment=True)
+    return assets
 
 
-def _create_users():
+def _create_users(courses):
     for test_authorized_user in _test_authorized_users:
         db.session.add(AuthorizedUser(uid=test_authorized_user['uid']))
-    course = Course.query.first()
+    course = courses[0]
+    users = []
     for test_user in _test_users:
-        db.session.add(
-            User(
-                course_id=course.id,
-                canvas_user_id=test_user['canvas_user_id'],
-                canvas_course_role=test_user['canvas_course_role'],
-                canvas_enrollment_state=test_user['canvas_enrollment_state'],
-                canvas_full_name=test_user['canvas_full_name'],
-                canvas_email=test_user['canvas_email'],
-                canvas_course_sections=[],
-            ),
+        user = User.create(
+            course_id=course.id,
+            canvas_user_id=test_user['canvas_user_id'],
+            canvas_course_role=test_user['canvas_course_role'],
+            canvas_enrollment_state=test_user['canvas_enrollment_state'],
+            canvas_full_name=test_user['canvas_full_name'],
+            canvas_email=test_user['canvas_email'],
+            canvas_course_sections=[],
+        )
+        users.append(user)
+    std_commit(allow_test_environment=True)
+    return users
+
+
+def _create_comments(assets, users):
+    asset = assets[0]
+    user = users[0]
+    for test_comment in _test_comments:
+        Comment.create(
+            asset_id=asset.id,
+            user_id=user.id,
+            body=test_comment['body'],
         )
     std_commit(allow_test_environment=True)
 
