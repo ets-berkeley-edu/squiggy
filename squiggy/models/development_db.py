@@ -26,10 +26,25 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
+from squiggy.models.asset import Asset
 from squiggy.models.authorized_user import AuthorizedUser
 from squiggy.models.canvas import Canvas
+from squiggy.models.category import Category
 from squiggy.models.course import Course
 from squiggy.models.user import User
+
+_test_assets = [
+    {
+        'asset_type': 'link',
+        'title': 'Pale Blue Eyes',
+        'url': 'https://www.youtube.com/watch?v=KisHhIRihMY',
+    },
+    {
+        'asset_type': 'link',
+        'title': 'Who Loves The Sun',
+        'url': 'https://www.youtube.com/watch?v=gNPovDOk4jY',
+    },
+]
 
 _test_courses = [
     {
@@ -74,7 +89,8 @@ def clear():
 
 def load():
     _load_schemas()
-    _create_courses()
+    courses = _create_courses()
+    _create_assets(courses)
     _create_users()
     return db
 
@@ -98,6 +114,7 @@ def _create_courses():
         db.session.add(canvas)
     std_commit(allow_test_environment=True)
 
+    courses = []
     for c in _test_courses:
         course = Course(
             active=c['active'],
@@ -105,6 +122,33 @@ def _create_courses():
             canvas_course_id=c['canvas_course_id'],
         )
         db.session.add(course)
+        courses.append(course)
+    std_commit(allow_test_environment=True)
+    return courses
+
+
+def _create_assets(courses):
+    course_id = courses[0].id
+    category = Category(
+        canvas_assignment_name='Linger on your pale blue eyes',
+        course_id=course_id,
+        title='Thought of you as my mountain top',
+        canvas_assignment_id=98765,
+        visible=True,
+    )
+    db.session.add(category)
+    std_commit(allow_test_environment=True)
+
+    for a in _test_assets:
+        Asset.create(
+            asset_type=a['asset_type'],
+            course_id=course_id,
+            categories=[category],
+            description=None,
+            title=a['title'],
+            url=a['url'],
+        )
+        # db.session.add(asset)
     std_commit(allow_test_environment=True)
 
 
