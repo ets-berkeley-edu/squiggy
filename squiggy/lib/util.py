@@ -28,3 +28,10 @@ from dateutil.tz import tzutc
 
 def isoformat(value):
     return value and value.astimezone(tzutc()).isoformat()
+
+
+def to_int(s):
+    try:
+        return int(s)
+    except ValueError:
+        return None

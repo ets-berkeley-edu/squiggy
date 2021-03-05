@@ -26,17 +26,16 @@ const router = new Router({
           path: '/squiggy',
           component: Squiggy,
           meta: {
+            isLoginPage: true,
             title: 'Hello!'
-          },
-          name: 'Squiggy'
+          }
         },
         {
           path: '/assets',
           component: Assets,
           meta: {
             title: 'Assets'
-          },
-          name: 'Assets'
+          }
         },
         {
           path: '/asset/:id',

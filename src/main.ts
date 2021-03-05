@@ -11,33 +11,6 @@ import vuetify from './plugins/vuetify'
 const apiBaseUrl = process.env.VUE_APP_API_BASE_URL
 const isDebugMode = _.trim(process.env.VUE_APP_DEBUG).toLowerCase() === 'true'
 
-Vue.use(VueAnnouncer)
-
-const axiosErrorHandler = error => {
-  const errorStatus = _.get(error, 'response.status')
-  if (_.get(Vue.prototype.$currentUser, 'isAuthenticated')) {
-    if (errorStatus === 404) {
-      router.push({path: '/404'})
-    } else if (errorStatus >= 400) {
-      const message = _.get(error, 'response.data.message') || error.message
-      console.error(message)
-      router.push({
-        path: '/error',
-        query: {
-          m: message
-        }
-      })
-    }
-  } else {
-    router.push({
-      path: '/',
-      query: {
-        m: 'Your session has expired'
-      }
-    })
-  }
-}
-
 const putFocusNextTick = (id, cssSelector) => {
   const callable = () => {
       let el = document.getElementById(id)
@@ -49,6 +22,37 @@ const putFocusNextTick = (id, cssSelector) => {
     let counter = 0
     const job = setInterval(() => (callable() || ++counter > 3) && clearInterval(job), 500)
   })
+}
+
+// Vue prototype
+Vue.prototype.$_ = _
+Vue.prototype.$loading = () => store.dispatch('context/loadingStart')
+Vue.prototype.$putFocusNextTick = putFocusNextTick
+Vue.prototype.$ready = label => store.dispatch('context/loadingComplete', label)
+
+Vue.use(VueAnnouncer)
+
+const axiosErrorHandler = error => {
+  const errorStatus = _.get(error, 'response.status')
+  if (Vue.prototype.$currentUser.isAuthenticated) {
+    if (errorStatus === 404) {
+      router.push({path: '/404'})
+    } else if (errorStatus >= 400) {
+      router.push({
+        path: '/error',
+        query: {
+          m: _.get(error, 'response.data.message') || error.message || _.get(error, 'response.statusText')
+        }
+      })
+    }
+  } else if (!router.currentRoute.meta.isLoginPage) {
+    router.push({
+      path: '/',
+      query: {
+        m: 'Your session has expired'
+      }
+    })
+  }
 }
 
 // Axios
@@ -81,12 +85,6 @@ Vue.config.errorHandler = function(error, vm, info) {
     }
   })
 }
-
-// Vue prototype
-Vue.prototype.$_ = _
-Vue.prototype.$loading = () => store.dispatch('context/loadingStart')
-Vue.prototype.$putFocusNextTick = putFocusNextTick
-Vue.prototype.$ready = label => store.dispatch('context/loadingComplete', label)
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
