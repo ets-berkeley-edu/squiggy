@@ -31,14 +31,8 @@ class TestCategoryController:
     """Category API."""
 
     @classmethod
-    def _api_get_categories(
-            cls,
-            client,
-            course_site_id=1502870,
-            domain='bcourses.berkeley.edu',
-            expected_status_code=200,
-    ):
-        response = client.get(f'/api/{domain}/{course_site_id}/categories')
+    def _api_get_categories(cls, client, expected_status_code=200):
+        response = client.get('/api/categories')
         assert response.status_code == expected_status_code
         return response.json
 

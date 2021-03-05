@@ -23,98 +23,72 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy.dialects.postgresql import ENUM
-from squiggy import db, std_commit
-from squiggy.lib.util import isoformat
+from dateutil.tz import tzutc
+from squiggy import db
 from squiggy.models.asset_category import AssetCategory
 from squiggy.models.base import Base
 
 
-assets_type = ENUM(
-    'file',
-    'link',
-    'thought',
-    name='enum_assets_type',
-    create_type=False,
-)
-
-
-class Asset(Base):
-    __tablename__ = 'assets'
+class Category(Base):
+    __tablename__ = 'categories'
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    asset_type = db.Column('type', assets_type, nullable=False)
-    course_id = db.Column(db.Integer, nullable=False)
-    description = db.Column(db.Text)
-    source = db.Column(db.String(255))
-    title = db.Column(db.String(255))
-    url = db.Column(db.String(255))
-    visible = db.Column(db.Boolean, nullable=False)
-    categories = db.relationship(AssetCategory.__name__)
+    canvas_assignment_id = db.Column(db.Integer)
+    canvas_assignment_name = db.Column(db.String(255), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('assets.id'))
+    deleted_at = db.Column(db.DateTime)
+    title = db.Column(db.String(255), nullable=False)
+    visible = db.Column(db.Boolean, nullable=True)
+    assets = db.relationship(AssetCategory.__name__, back_populates='category')
 
     def __init__(
             self,
-            asset_type,
+            canvas_assignment_name,
             course_id,
-            description=None,
-            source=None,
-            title=None,
-            url=None,
+            title,
+            canvas_assignment_id=None,
             visible=True,
     ):
-        self.asset_type = asset_type
+        self.canvas_assignment_id = canvas_assignment_id
+        self.canvas_assignment_name = canvas_assignment_name
         self.course_id = course_id
-        self.description = description
-        self.source = source
         self.title = title
-        self.url = url
         self.visible = visible
 
     def __repr__(self):
-        return f"""<Asset
-                    asset_type={self.asset_type},
+        return f"""<Course
+                    id={self.id},
+                    canvas_assignment_id={self.canvas_assignment_id},
+                    canvas_assignment_name={self.canvas_assignment_name},
                     course_id={self.course_id},
-                    description={self.description},
-                    source={self.source},
+                    deleted_at={self.deleted_at},
                     title={self.title},
-                    url={self.url},
                     visible={self.visible},
                     created_at={self.created_at},
                     updated_at={self.updated_at}>
                 """
 
     @classmethod
-    def find_by_id(cls, asset_id):
-        return cls.query.filter_by(id=asset_id).first()
+    def get_categories_by_course_id(cls, course_id):
+        return cls.query.filter_by(course_id=course_id).all()
 
     @classmethod
-    def create(cls, asset_type, course_id, description, title, url, categories=None, source=None, visible=True):
-        asset = cls(
-            asset_type=asset_type,
-            course_id=course_id,
-            description=description,
-            source=source,
-            title=title,
-            url=url,
-            visible=visible,
-        )
-        for category in categories:
-            asset.categories.append(AssetCategory(asset, category))
-        db.session.add(asset)
-        std_commit()
-        return asset
+    def get_categories_by_id(cls, category_ids):
+        return db.session.query(cls).filter(cls.id.in_(category_ids)).all()
 
     def to_api_json(self):
         return {
             'id': self.id,
-            'categories': [c.category.to_api_json() for c in self.categories],
-            'courseId': self.course_id,
-            'description': self.description,
-            'source': self.source,
+            'canvas_assignment_id': self.canvas_assignment_id,
+            'canvas_assignment_name': self.canvas_assignment_name,
+            'course_id': self.course_id,
+            'deleted_at': _isoformat(self.deleted_at),
             'title': self.title,
-            'type': self.asset_type,
-            'url': self.url,
             'visible': self.visible,
-            'createdAt': isoformat(self.created_at),
-            'updatedAt': isoformat(self.updated_at),
+            'createdAt': _isoformat(self.created_at),
+            'updatedAt': _isoformat(self.updated_at),
         }
+
+
+def _isoformat(value):
+    return value and value.astimezone(tzutc()).isoformat()

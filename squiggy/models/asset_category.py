@@ -23,15 +23,18 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, session
-from flask_login import login_required
-from squiggy.lib.http import tolerant_jsonify
-from squiggy.models.category import Category
+from squiggy import db
+from squiggy.models.base import Base
 
 
-@app.route('/api/categories')
-@login_required
-def get_categories():
-    course = session['course']
-    categories = Category.get_categories_by_course_id(course_id=course['id'])
-    return tolerant_jsonify([c.to_api_json() for c in categories])
+class AssetCategory(Base):
+    __tablename__ = 'asset_categories'
+
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False, primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False, primary_key=True)
+    category = db.relationship('Category', back_populates='assets')
+    asset = db.relationship('Asset', back_populates='categories')
+
+    def __init__(self, asset, category):
+        self.asset_id = asset.id
+        self.category_id = category.id

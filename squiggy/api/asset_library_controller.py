@@ -28,9 +28,20 @@ import json
 
 from flask import current_app as app, request, session
 from flask_login import login_required
-from squiggy.api.errors import BadRequestError
+from squiggy.api.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
+from squiggy.models.category import Category
+
+
+@app.route('/api/asset/<asset_id>')
+@login_required
+def asset(asset_id):
+    asset = Asset.find_by_id(asset_id=asset_id)
+    if asset:
+        return tolerant_jsonify(asset.to_api_json())
+    else:
+        raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
 
 
 @app.route('/api/<domain>/<course_site_id>/assets')
@@ -75,11 +86,13 @@ def assets(domain, course_site_id):
 def create_asset():
     params = request.get_json()
     asset_type = params.get('type')
-    category_id = params.get('categoryId')
+    category_ids = params.get('categoryIds')
     description = params.get('description')
-    title = params.get('title')
+    source = params.get('source')
     url = params.get('url')
-    if not asset_type or not category_id or not description or not title or not url:
+    title = params.get('title', url)
+    visible = params.get('visible', True)
+    if not asset_type or not title or not url:
         raise BadRequestError('Asset creation requires category, description, title, and url')
 
     course = session['course']
@@ -88,11 +101,13 @@ def create_asset():
 
     asset = Asset.create(
         asset_type=asset_type,
-        category_id=category_id,
+        categories=Category.get_categories_by_id(category_ids) if category_ids else [],
         course_id=course['id'],
         description=description,
+        source=source,
         title=title,
         url=url,
+        visible=visible,
     )
     return tolerant_jsonify(asset.to_api_json())
 

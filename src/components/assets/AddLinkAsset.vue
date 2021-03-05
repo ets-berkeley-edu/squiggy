@@ -14,7 +14,7 @@
     <v-container class="mt-2" fluid>
       <v-row justify="start">
         <v-col>
-          <h2>Add Link</h2>
+          <h2>Add a Link</h2>
         </v-col>
       </v-row>
       <v-row>
@@ -43,7 +43,7 @@
           />
         </v-col>
       </v-row>
-      <v-row>
+      <v-row v-if="categories.length">
         <v-col class="pt-7 text-right" cols="2">
           Category
         </v-col>
@@ -111,11 +111,12 @@ export default {
   }),
   computed: {
     disable() {
-      let required = [this.categoryId, this.description, this.title, this.url]
+      let required = [this.description, this.title, this.url]
       return !required.every(r => this.$_.trim(r))
     }
   },
   created() {
+    this.$loading()
     getCategories().then(data => {
       this.categories = data
       this.$ready('Add a link asset')
@@ -123,7 +124,8 @@ export default {
   },
   methods: {
     submit() {
-      createLinkAsset(this.categoryId, this.description, this.title, this.url).then(() => {
+      const categoryIds = this.categoryId && [this.categoryId]
+      createLinkAsset(categoryIds, this.description, this.title, this.url).then(() => {
         console.log('TODO: Go to asset page?')
       })
     }
