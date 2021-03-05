@@ -1,7 +1,7 @@
 <template>
   <div class="align-center d-flex flex-column">
     <h1>Squiggy says HELLO</h1>
-    <div class="d-flex flex-column justify-space-between align-center">
+    <div class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
         v-model="width"
         class="align-self-stretch"
@@ -15,43 +15,51 @@
         src="@/assets/hello.jpg"
       />
     </div>
-    <div v-if="!$currentUser.isAuthenticated" class="pt-3">
-      <v-card class="pa-4" color="transparent" flat>
+
+    <ErrorsAlert v-if="errors.length" id="dev-auth-error" :errors="errors" />
+
+    <div v-if="!$currentUser.isAuthenticated">
+      <v-card color="transparent" flat>
         <v-form @submit.prevent="devAuth">
           <v-text-field
             id="canvas-api-domain-input"
             v-model="canvasApiDomain"
             outlined
-            placeholder="Canvas API Domain"
-            :rules="[v => !!v || 'Required']"
+            placeholder="Canvas domain"
+            :rules="[rule.notBlank]"
+            @input="errors = []"
           />
           <v-text-field
             id="course-site-id-input"
-            v-model="canvasCourseSiteId"
+            v-model="canvasCourseId"
             outlined
-            placeholder="Canvas Course Site ID"
-            :rules="[v => !!v || 'Required']"
+            placeholder="Canvas course ID"
+            :rules="[rule.notBlank, rule.isNumber]"
+            @input="errors = []"
           />
           <v-text-field
             id="uid-input"
             v-model="uid"
             outlined
             placeholder="UID"
-            :rules="[v => !!v || 'Required']"
+            :rules="[rule.notBlank, rule.isNumber]"
+            @input="errors = []"
           />
           <v-text-field
             id="password-input"
             v-model="password"
             outlined
             placeholder="Password"
-            :rules="[v => !!v || 'Required']"
+            :rules="[rule.notBlank]"
             type="password"
+            @input="errors = []"
           />
           <v-btn
             id="btn-dev-auth-login"
             block
-            :color="!canvasApiDomain || !canvasCourseSiteId || !uid || !password ? 'red lighten-2' : 'red'"
-            dark
+            class="white--text"
+            color="red"
+            :disabled="!canvasApiDomain || !canvasCourseId || !uid || !password || !!errors.length"
             large
             @click="devAuth"
           >
@@ -67,52 +75,49 @@
 
 <script>
 import Context from '@/mixins/Context'
+import ErrorsAlert from '@/components/util/ErrorsAlert'
+import Utils from '@/mixins/Utils'
 import {devAuthLogIn} from '@/api/auth'
 
 export default {
   name: 'Squiggy',
-  mixins: [Context],
+  components: {ErrorsAlert},
+  mixins: [Context, Utils],
   data: () => ({
     canvasApiDomain: undefined,
-    canvasCourseSiteId: undefined,
-    uid: undefined,
+    canvasCourseId: undefined,
+    errors: [],
+    idRules: [v => /^\s*\d+\s*$/.test(v) || 'Number required'],
     password: undefined,
-    width: 300,
+    uid: undefined,
+    width: 300
   }),
   created() {
     this.$ready()
   },
   methods: {
     devAuth() {
-      const canvasApiDomain = this.$_.trim(this.canvasApiDomain)
-      const canvasCourseId = this.$_.trim(this.canvasCourseSiteId)
-      const password = this.$_.trim(this.password)
-      const uid = this.$_.trim(this.uid)
-      if (canvasApiDomain && canvasCourseId && password && uid) {
-        devAuthLogIn(canvasApiDomain, canvasCourseId, password, uid).then(
+      this.errors = []
+      this.validate(this.errors, [this.rule.notBlank], this.canvasApiDomain, 'Invalid Canvas domain')
+      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.canvasCourseId, 'Invalid Canvas course ID')
+      this.validate(this.errors, [this.rule.notBlank], this.password, 'Password is required')
+      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.uid, 'Invalid UID')
+      if (this.errors.length) {
+        this.$putFocusNextTick('canvas-api-domain-input')
+      } else {
+        devAuthLogIn(this.canvasApiDomain, this.canvasCourseId, this.password, this.uid).then(
           data => {
             if (data.isAuthenticated) {
               this.$router.push('/assets', this.$_.noop)
-              this.alertScreenReader('Welcome to SuiteC')
+              this.$announcer.set('Welcome to SuiteC', 'polite')
             } else {
-              const message = this.$_.get(data, 'response.data.message') || this.$_.get(data, 'message') || 'Authentication failed'
-              // TODO: Show error in UI
-              console.log(message)
+              this.errors.push(this.getApiErrorMessage(data))
             }
           },
           error => {
-            console.log(error)
+            this.errors.push(error)
           }
         )
-      } else if (!canvasApiDomain || !canvasCourseId) {
-        console.log('Canvas Course Site ID required')
-        this.$putFocusNextTick('canvas-api-domain-input')
-      } else if (!uid) {
-        console.log('Both UID and password are required')
-        this.$putFocusNextTick('uid-input')
-      } else {
-        console.log('Password required')
-        this.$putFocusNextTick('password-input')
       }
     }
   }
