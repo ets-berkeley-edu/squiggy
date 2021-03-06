@@ -11,11 +11,7 @@
         Back to Asset Library
       </v-btn>
     </div>
-    <v-form
-      ref="form"
-      v-model="valid"
-      lazy-validation
-    >
+    <v-form @submit="submit">
       <v-container class="mt-2" fluid>
         <v-row justify="start">
           <v-col>
@@ -32,6 +28,7 @@
               label="Paste or type a URL here"
               maxlength="255"
               outlined
+              @keydown.enter="submit"
             />
           </v-col>
         </v-row>
@@ -45,6 +42,7 @@
               label="Enter a title"
               maxlength="255"
               outlined
+              @keydown.enter="submit"
             />
           </v-col>
         </v-row>

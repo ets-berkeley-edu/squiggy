@@ -32,7 +32,6 @@ class AuthorizedUser(Base):
     __tablename__ = 'authorized_users'
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    is_admin = True  # Non-admin users will be stored in a separate "Users" table keyed by Canvas id.
     uid = db.Column(db.String(255), nullable=False, unique=True)
 
     def __init__(self, uid):
@@ -62,6 +61,11 @@ class AuthorizedUser(Base):
         query = text('SELECT id FROM authorized_users WHERE uid = :uid')
         result = db.session.execute(query, {'uid': uid}).first()
         return result and result['id']
+
+    @property
+    def is_admin(self):
+        # Non-admin users will be stored in a separate "Users" table keyed by Canvas id.
+        return self.is_authenticated
 
     @property
     def is_authenticated(self):

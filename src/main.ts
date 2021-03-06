@@ -1,11 +1,13 @@
 import 'vuetify/dist/vuetify.min.css'
 import _ from 'lodash'
 import axios from 'axios'
+import moment from 'moment-timezone'
 import router from './router'
 import App from './App.vue'
 import store from './store'
 import Vue from 'vue'
 import VueAnnouncer from '@vue-a11y/announcer'
+import VueMoment from 'vue-moment'
 import vuetify from './plugins/vuetify'
 
 const apiBaseUrl = process.env.VUE_APP_API_BASE_URL
@@ -31,6 +33,7 @@ Vue.prototype.$putFocusNextTick = putFocusNextTick
 Vue.prototype.$ready = label => store.dispatch('context/loadingComplete', label)
 
 Vue.use(VueAnnouncer)
+Vue.use(VueMoment, {moment})
 
 const axiosErrorHandler = error => {
   const errorStatus = _.get(error, 'response.status')

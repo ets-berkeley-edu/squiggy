@@ -22,15 +22,37 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
 ENHANCEMENTS, OR MODIFICATIONS.
 """
+from flask import current_app as app
+from tests.util import override_config
 
-from flask import current_app as app, session
-from flask_login import current_user
-from squiggy.lib.http import tolerant_jsonify
+admin_uid = '2040'
 
 
-@app.route('/api/profile/my')
-def my_profile():
-    return tolerant_jsonify({
-        **current_user.to_api_json(),
-        'course': session.get('course'),
-    })
+class TestCanvasDomains:
+    """Canvas API."""
+
+    @classmethod
+    def _api_get_canvas_domains(cls, client, expected_status_code=200):
+        response = client.get('/api/canvas/all_domains')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client):
+        """Deny anonymous user."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', False):
+            self._api_get_canvas_domains(client, expected_status_code=401)
+
+    def test_anonymous_when_dev_auth(self, client):
+        """Allo anonymous when DEVELOPER_AUTH_ENABLED."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
+            api_json = self._api_get_canvas_domains(client)
+            assert len(api_json)
+            assert 'canvasApiDomain' in api_json[0]
+
+    def test_admin(self, client, fake_auth):
+        """Returns a well-formed response."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', False):
+            fake_auth.login(admin_uid)
+            api_json = self._api_get_canvas_domains(client)
+            assert len(api_json)
+            assert 'canvasApiDomain' in api_json[0]

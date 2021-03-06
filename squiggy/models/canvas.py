@@ -74,6 +74,10 @@ class Canvas(Base):
                     updated_at={self.updated_at}>
                 """
 
+    @classmethod
+    def get_all(cls):
+        return cls.query.order_by(cls.name).all()
+
     def to_api_json(self):
         return {
             'apiKey': self.api_key,
