@@ -119,7 +119,7 @@ class User(Base):
             canvas_email=canvas_email,
             canvas_course_sections=canvas_course_sections,
         )
-        db.session.flush()
+        db.session.add(user)
         std_commit()
         return user
 

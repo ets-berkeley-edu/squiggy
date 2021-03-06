@@ -54,7 +54,6 @@ CREATE TYPE enum_activities_type AS ENUM (
     'assignment_submit',
     'discussion_entry',
     'discussion_topic',
-    'get_asset_add',
     'get_asset_comment',
     'get_asset_comment_reply',
     'get_asset_like',

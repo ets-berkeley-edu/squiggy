@@ -26,6 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
+from squiggy.models.activity import Activity
+from squiggy.models.activity_type import ActivityType
 from squiggy.models.asset import Asset
 from squiggy.models.authorized_user import AuthorizedUser
 from squiggy.models.canvas import Canvas
@@ -33,6 +35,31 @@ from squiggy.models.category import Category
 from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
+
+
+_test_activities = [
+    {
+        'type': 'asset_add',
+        'object_type': 'asset',
+    },
+    {
+        'type': 'asset_comment',
+        'object_type': 'comment',
+    },
+]
+
+_test_activity_types = [
+    {
+        'type': 'asset_add',
+        'points': 5,
+        'enabled': True,
+    },
+    {
+        'type': 'asset_comment',
+        'points': 2,
+        'enabled': True,
+    },
+]
 
 _test_assets = [
     {
@@ -100,6 +127,8 @@ def load():
     assets = _create_assets(courses)
     users = _create_users(courses)
     _create_comments(assets, users)
+    _create_activities(assets, users)
+    _create_activity_types(courses)
     return db
 
 
@@ -157,6 +186,7 @@ def _create_assets(courses):
             title=a['title'],
             url=a['url'],
         )
+        db.session.add(asset)
         assets.append(asset)
     std_commit(allow_test_environment=True)
     return assets
@@ -190,6 +220,33 @@ def _create_comments(assets, users):
             asset_id=asset.id,
             user_id=user.id,
             body=test_comment['body'],
+        )
+    std_commit(allow_test_environment=True)
+
+
+def _create_activities(assets, users):
+    asset = assets[0]
+    user = users[0]
+    for test_activity in _test_activities:
+        Activity.create(
+            activity_type=test_activity['type'],
+            course_id=asset.course_id,
+            user_id=user.id,
+            object_type=test_activity['object_type'],
+            object_id=asset.id,
+            asset_id=asset.id,
+        )
+    std_commit(allow_test_environment=True)
+
+
+def _create_activity_types(courses):
+    course = courses[0]
+    for test_activity_type in _test_activity_types:
+        ActivityType.create(
+            course_id=course.id,
+            activity_type=test_activity_type['type'],
+            enabled=test_activity_type['enabled'],
+            points=test_activity_type['points'],
         )
     std_commit(allow_test_environment=True)
 
