@@ -1,6 +1,6 @@
 <template>
-  <div class="align-center d-flex flex-column">
-    <h1>Squiggy says HELLO</h1>
+  <div v-if="!loading" class="align-center d-flex flex-column mt-10">
+    <h1 class="grey--text text--darken-2">Squiggy says HELLO</h1>
     <div class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
         v-model="width"
@@ -15,111 +15,36 @@
         src="@/assets/hello.jpg"
       />
     </div>
-
-    <ErrorsAlert v-if="errors.length" id="dev-auth-error" :errors="errors" />
-
+    <div v-if="$currentUser.isAuthenticated">
+      <CourseSummaryCard :course="$currentUser.course" />
+    </div>
     <div v-if="!$currentUser.isAuthenticated">
-      <v-card color="transparent" flat>
-        <v-form @submit.prevent="devAuth">
-          <v-text-field
-            id="canvas-api-domain-input"
-            v-model="canvasApiDomain"
-            outlined
-            placeholder="Canvas domain"
-            :rules="[rule.notBlank]"
-            @input="errors = []"
-          />
-          <v-text-field
-            id="course-site-id-input"
-            v-model="canvasCourseId"
-            outlined
-            placeholder="Canvas course ID"
-            :rules="[rule.notBlank, rule.isNumber]"
-            @input="errors = []"
-          />
-          <v-text-field
-            id="uid-input"
-            v-model="uid"
-            outlined
-            placeholder="UID"
-            :rules="[rule.notBlank, rule.isNumber]"
-            @input="errors = []"
-          />
-          <v-text-field
-            id="password-input"
-            v-model="password"
-            outlined
-            placeholder="Password"
-            :rules="[rule.notBlank]"
-            type="password"
-            @input="errors = []"
-          />
-          <v-btn
-            id="btn-dev-auth-login"
-            block
-            class="white--text"
-            color="red"
-            :disabled="!canvasApiDomain || !canvasCourseId || !uid || !password || !!errors.length"
-            large
-            @click="devAuth"
-          >
-            Dev
-            <font-awesome-icon class="mx-2" icon="key" />
-            Auth
-          </v-btn>
-        </v-form>
-      </v-card>
+      <DevAuth :canvas-domains="canvasDomains" />
     </div>
   </div>
 </template>
 
 <script>
 import Context from '@/mixins/Context'
-import ErrorsAlert from '@/components/util/ErrorsAlert'
+import CourseSummaryCard from '@/components/course/CourseSummaryCard'
+import DevAuth from '@/components/util/DevAuth'
 import Utils from '@/mixins/Utils'
-import {devAuthLogIn} from '@/api/auth'
+import {getAllCanvasDomains} from '@/api/courses'
 
 export default {
   name: 'Squiggy',
-  components: {ErrorsAlert},
+  components: {CourseSummaryCard, DevAuth},
   mixins: [Context, Utils],
   data: () => ({
-    canvasApiDomain: undefined,
-    canvasCourseId: undefined,
-    errors: [],
-    idRules: [v => /^\s*\d+\s*$/.test(v) || 'Number required'],
-    password: undefined,
-    uid: undefined,
+    canvasDomains: undefined,
     width: 300
   }),
   created() {
-    this.$ready()
-  },
-  methods: {
-    devAuth() {
-      this.errors = []
-      this.validate(this.errors, [this.rule.notBlank], this.canvasApiDomain, 'Invalid Canvas domain')
-      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.canvasCourseId, 'Invalid Canvas course ID')
-      this.validate(this.errors, [this.rule.notBlank], this.password, 'Password is required')
-      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.uid, 'Invalid UID')
-      if (this.errors.length) {
-        this.$putFocusNextTick('canvas-api-domain-input')
-      } else {
-        devAuthLogIn(this.canvasApiDomain, this.canvasCourseId, this.password, this.uid).then(
-          data => {
-            if (data.isAuthenticated) {
-              this.$router.push('/assets', this.$_.noop)
-              this.$announcer.set('Welcome to SuiteC', 'polite')
-            } else {
-              this.errors.push(this.getApiErrorMessage(data))
-            }
-          },
-          error => {
-            this.errors.push(error)
-          }
-        )
-      }
-    }
+    this.$loading()
+    getAllCanvasDomains().then(data => {
+      this.canvasDomains = data
+      this.$ready()
+    })
   }
 }
 </script>

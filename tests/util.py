@@ -29,7 +29,7 @@ from contextlib import contextmanager
 @contextmanager
 def override_config(app, key, value):
     """Temporarily override an app config value."""
-    old_value = app.config[key]
+    old_value = app.config.get(key)
     app.config[key] = value
     try:
         yield
