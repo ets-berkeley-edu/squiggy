@@ -124,8 +124,8 @@ def clear():
 def load():
     _load_schemas()
     courses = _create_courses()
-    assets = _create_assets(courses)
     users = _create_users(courses)
+    assets = _create_assets(courses, users)
     _create_comments(assets, users)
     _create_activities(assets, users)
     _create_activity_types(courses)
@@ -164,34 +164,6 @@ def _create_courses():
     return courses
 
 
-def _create_assets(courses):
-    course_id = courses[0].id
-    category = Category(
-        canvas_assignment_name='Linger on your pale blue eyes',
-        course_id=course_id,
-        title='Thought of you as my mountain top',
-        canvas_assignment_id=98765,
-        visible=True,
-    )
-    db.session.add(category)
-    std_commit(allow_test_environment=True)
-
-    assets = []
-    for a in _test_assets:
-        asset = Asset.create(
-            asset_type=a['asset_type'],
-            categories=[category],
-            course_id=course_id,
-            description=None,
-            title=a['title'],
-            url=a['url'],
-        )
-        db.session.add(asset)
-        assets.append(asset)
-    std_commit(allow_test_environment=True)
-    return assets
-
-
 def _create_users(courses):
     for test_authorized_user in _test_authorized_users:
         db.session.add(AuthorizedUser(uid=test_authorized_user['uid']))
@@ -210,6 +182,37 @@ def _create_users(courses):
         users.append(user)
     std_commit(allow_test_environment=True)
     return users
+
+
+def _create_assets(courses, users):
+    course_id = courses[0].id
+    category = Category(
+        canvas_assignment_name='Linger on your pale blue eyes',
+        course_id=course_id,
+        title='Thought of you as my mountain top',
+        canvas_assignment_id=98765,
+        visible=True,
+    )
+    db.session.add(category)
+    std_commit(allow_test_environment=True)
+
+    user = users[0]
+
+    assets = []
+    for a in _test_assets:
+        asset = Asset.create(
+            asset_type=a['asset_type'],
+            categories=[category],
+            course_id=course_id,
+            description=None,
+            title=a['title'],
+            url=a['url'],
+            users=[user],
+        )
+        db.session.add(asset)
+        assets.append(asset)
+    std_commit(allow_test_environment=True)
+    return assets
 
 
 def _create_comments(assets, users):

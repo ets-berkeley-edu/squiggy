@@ -27,6 +27,7 @@ from sqlalchemy.dialects.postgresql import ENUM
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.asset_category import asset_category_table
+from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 
 assets_type = ENUM(
@@ -54,6 +55,11 @@ class Asset(Base):
         secondary=asset_category_table,
         backref='assets',
     )
+    users = db.relationship(
+        'User',
+        secondary=asset_user_table,
+        backref='assets',
+    )
 
     def __init__(
             self,
@@ -64,6 +70,7 @@ class Asset(Base):
             source=None,
             title=None,
             url=None,
+            users=None,
             visible=True,
     ):
         self.asset_type = asset_type
@@ -73,12 +80,14 @@ class Asset(Base):
         self.source = source
         self.title = title
         self.url = url
+        self.users = users or []
         self.visible = visible
 
     def __repr__(self):
         return f"""<Asset
                     asset_type={self.asset_type},
                     categories={self.categories},
+                    users={self.users},
                     course_id={self.course_id},
                     description={self.description},
                     source={self.source},
@@ -94,7 +103,7 @@ class Asset(Base):
         return cls.query.filter_by(id=asset_id).first()
 
     @classmethod
-    def create(cls, asset_type, course_id, description, title, url, categories=None, source=None, visible=True):
+    def create(cls, asset_type, course_id, description, title, url, categories=None, source=None, users=None, visible=True):
         asset = cls(
             asset_type=asset_type,
             categories=categories,
@@ -103,6 +112,7 @@ class Asset(Base):
             source=source,
             title=title,
             url=url,
+            users=users,
             visible=visible,
         )
         db.session.add(asset)
@@ -119,6 +129,7 @@ class Asset(Base):
             'title': self.title,
             'type': self.asset_type,
             'url': self.url,
+            'users': [u.to_api_json() for u in self.users],
             'visible': self.visible,
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
