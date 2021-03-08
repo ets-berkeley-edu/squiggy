@@ -23,18 +23,33 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
-from flask_login import current_user, login_required
-from squiggy.lib.http import tolerant_jsonify
-from squiggy.models.user import User
+admin_uid = '2040'
+unauthorized_uid = '1015674'
 
 
-@app.route('/api/profile/my')
-def my_profile():
-    return tolerant_jsonify(current_user.to_api_json())
+class TestGetUsers:
+    """User API."""
 
+    @classmethod
+    def _api_get_users(cls, client, expected_status_code=200):
+        response = client.get('/api/users')
+        assert response.status_code == expected_status_code
+        return response.json
 
-@app.route('/api/users')
-@login_required
-def get_users():
-    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id)])
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_get_users(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_uid)
+        self._api_get_users(client, expected_status_code=401)
+
+    def test_admin(self, client, fake_auth):
+        """Returns a well-formed response."""
+        fake_auth.login(admin_uid)
+        api_json = self._api_get_users(client)
+        assert len(api_json) > 1
+        assert 'id' in api_json[0]
+        assert 'canvasFullName' in api_json[0]
+        assert api_json[0]['canvasFullName'] < api_json[1]['canvasFullName']
