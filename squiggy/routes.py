@@ -97,5 +97,5 @@ def register_routes(app):
 
 
 def _user_loader(user_id=None):
-    from squiggy.models.authorized_user import AuthorizedUser
-    return AuthorizedUser(user_id)
+    from squiggy.lib.login_session import LoginSession
+    return LoginSession(user_id)

@@ -40,7 +40,7 @@ class TestDevAuth:
             password,
             uid,
             canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=123456,
+            canvas_course_id=1502870,
             expected_status_code=200,
     ):
         params = {
@@ -113,7 +113,7 @@ class TestDevAuth:
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
-                canvas_course_id=9999999999,
+                canvas_course_id=9999999,
                 password=app.config['DEVELOPER_AUTH_PASSWORD'],
                 uid=admin_uid,
                 expected_status_code=401,

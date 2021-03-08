@@ -23,14 +23,11 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, session
+from flask import current_app as app
 from flask_login import current_user
 from squiggy.lib.http import tolerant_jsonify
 
 
 @app.route('/api/profile/my')
 def my_profile():
-    return tolerant_jsonify({
-        **current_user.to_api_json(),
-        'course': session.get('course'),
-    })
+    return tolerant_jsonify(current_user.to_api_json())

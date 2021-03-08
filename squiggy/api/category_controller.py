@@ -23,8 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, session
-from flask_login import login_required
+from flask import current_app as app
+from flask_login import current_user, login_required
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.category import Category
 
@@ -32,6 +32,5 @@ from squiggy.models.category import Category
 @app.route('/api/categories')
 @login_required
 def get_categories():
-    course = session['course']
-    categories = Category.get_categories_by_course_id(course_id=course['id'])
+    categories = Category.get_categories_by_course_id(course_id=current_user.course.id)
     return tolerant_jsonify([c.to_api_json() for c in categories])

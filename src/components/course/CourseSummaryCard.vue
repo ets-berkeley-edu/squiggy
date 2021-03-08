@@ -15,15 +15,15 @@
           </v-list-item>
           <v-list-item>
             <v-list-item-content>Notifications, Daily?</v-list-item-content>
-            <v-list-item-content class="align-end">{{ course.enableDailyNotifications ? 'Yes' : 'No' }}</v-list-item-content>
+            <v-list-item-content class="align-end">{{ displayBoolean(course.enableDailyNotifications) }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
             <v-list-item-content>Notifications, Weekly?</v-list-item-content>
-            <v-list-item-content class="align-end">{{ course.enableWeeklyNotifications ? 'Yes' : 'No' }}</v-list-item-content>
+            <v-list-item-content class="align-end">{{ displayBoolean(course.enableWeeklyNotifications) }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
             <v-list-item-content>Upload enable?</v-list-item-content>
-            <v-list-item-content class="align-end">{{ course.enableUpload ? 'Yes' : 'No' }}</v-list-item-content>
+            <v-list-item-content class="align-end">{{ displayBoolean(course.enableUpload) }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
             <v-list-item-content>URL, Asset Library</v-list-item-content>
@@ -50,6 +50,11 @@ export default {
     course: {
       required: true,
       type: Object
+    }
+  },
+  methods: {
+    displayBoolean(b) {
+      return this.$_.isNil(b) ? '&mdash;' : (b ? 'Yes' : 'No')
     }
   }
 }

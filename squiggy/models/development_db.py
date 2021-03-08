@@ -84,7 +84,7 @@ _test_courses = [
     {
         'active': True,
         'canvas_api_domain': 'bcourses.berkeley.edu',
-        'canvas_course_id': 123456,
+        'canvas_course_id': 1502870,
     },
 ]
 

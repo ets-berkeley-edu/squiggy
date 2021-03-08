@@ -23,43 +23,48 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy import text
-from squiggy import db
-from squiggy.models.base import Base
+from squiggy.models.authorized_user import AuthorizedUser
+from squiggy.models.course import Course
 
 
-class AuthorizedUser(Base):
-    __tablename__ = 'authorized_users'
+class LoginSession:
 
-    id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    uid = db.Column(db.String(255), nullable=False, unique=True)
+    course = None
+    session_id = None
+    user = None
 
-    def __init__(self, uid):
-        self.uid = uid
+    def __init__(self, session_id):
+        self.session_id = session_id
+        ids = session_id.split(':') if ':' in (session_id or '') else []
+        if len(ids) == 3:
+            uid = ids[0]
+            self.user = AuthorizedUser.find_by_uid(uid=uid)
+            if self.user:
+                canvas_api_domain = ids[1]
+                canvas_course_id = ids[2]
+                self.course = Course.find_by_canvas_course_id(canvas_api_domain, canvas_course_id)
 
-    def __repr__(self):
-        return f"""<AuthorizedUser
-                    uid={self.uid},
-                    created_at={self.created_at},
-                    updated_at={self.updated_at}>
-                """
+    def get_id(self):
+        return self.session_id
 
-    @classmethod
-    def find_by_id(cls, user_id):
-        return cls.query.filter_by(id=user_id).first()
+    @property
+    def is_active(self):
+        return self.is_authenticated
 
-    @classmethod
-    def find_by_uid(cls, uid):
-        return cls.query.filter_by(uid=uid).first()
+    @property
+    def is_admin(self):
+        # Non-admin users will be stored in a separate "Users" table keyed by Canvas id.
+        return self.is_authenticated
 
-    @classmethod
-    def get_id_per_uid(cls, uid):
-        query = text('SELECT id FROM authorized_users WHERE uid = :uid')
-        result = db.session.execute(query, {'uid': uid}).first()
-        return result and result['id']
+    @property
+    def is_authenticated(self):
+        return self.user is not None
 
     def to_api_json(self):
         return {
-            'id': self.id,
-            'uid': self.uid,
+            'course': self.course and self.course.to_api_json(),
+            'isAdmin': self.is_admin,
+            'isAuthenticated': self.is_authenticated,
+            'isTeaching': False,  # TODO
+            'uid': self.user and self.user.uid,
         }
