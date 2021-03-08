@@ -13,15 +13,7 @@
       </v-img>
     </v-sheet>
     <v-card-actions>
-      <div class="align-center d-flex justify-space-between w-100">
-        <div>
-          <v-btn :id="`iconbar-pin-${asset.id}`" icon>
-            <font-awesome-icon icon="thumbtack">
-              <span v-if="!asset.isPinnedByMe" class="sr-only">Pin</span>
-              <span v-if="asset.isPinnedByMe" class="sr-only">Pinned</span>
-            </font-awesome-icon>
-          </v-btn>
-        </div>
+      <div class="align-center d-flex justify-end w-100">
         <div>
           <div class="align-center d-flex">
             <div class="pr-3">
