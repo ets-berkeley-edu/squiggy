@@ -29,6 +29,7 @@ from squiggy.lib.util import isoformat
 from squiggy.models.asset_category import asset_category_table
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
+from squiggy.models.user import User
 
 assets_type = ENUM(
     'file',
@@ -56,7 +57,7 @@ class Asset(Base):
         backref='assets',
     )
     users = db.relationship(
-        'User',
+        User.__name__,
         secondary=asset_user_table,
         backref='assets',
     )

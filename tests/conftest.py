@@ -49,7 +49,7 @@ class FakeAuth(object):
             self,
             uid,
             canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=123456,
+            canvas_course_id=1502870,
     ):
         with override_config(self.app, 'DEVELOPER_AUTH_ENABLED', True):
             params = {

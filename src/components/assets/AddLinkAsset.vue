@@ -1,16 +1,7 @@
 <template>
   <div v-if="!loading">
-    <div>
-      <v-btn
-        id="asset-library-btn"
-        class="bg-transparent"
-        elevation="0"
-        @click="go('/assets')"
-      >
-        <font-awesome-icon class="mr-2" icon="less-than" size="sm" />
-        Back to Asset Library
-      </v-btn>
-    </div>
+    <BackToAssetLibrary />
+
     <v-form @submit="submit">
       <v-container class="mt-2" fluid>
         <v-row justify="start">
@@ -98,6 +89,7 @@
 </template>
 
 <script>
+import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 import {getCategories} from '@/api/categories'
@@ -105,6 +97,7 @@ import {createLinkAsset} from '@/api/assets'
 
 export default {
   name: 'AddLinkAsset',
+  components: {BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
     categories: undefined,

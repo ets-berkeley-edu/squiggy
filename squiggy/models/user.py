@@ -72,6 +72,7 @@ class User(Base):
         share_points=False,
     ):
         self.course_id = course_id
+        self.canvas_email = canvas_email
         self.canvas_user_id = canvas_user_id
         self.canvas_course_role = canvas_course_role
         self.canvas_enrollment_state = canvas_enrollment_state

@@ -4,6 +4,7 @@ import Asset from '@/components/assets/Asset.vue'
 import Assets from '@/components/assets/Assets.vue'
 import BaseView from '@/components/BaseView.vue'
 import Error from '@/components/Error.vue'
+import ManageAssets from '@/components/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
 import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
@@ -35,6 +36,13 @@ const router = new Router({
           component: Assets,
           meta: {
             title: 'Assets'
+          }
+        },
+        {
+          path: '/assets/manage',
+          component: ManageAssets,
+          meta: {
+            title: 'Manage Assets'
           }
         },
         {
