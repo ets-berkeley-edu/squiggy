@@ -45,6 +45,13 @@ const router = new Router({
           }
         },
         {
+          path: '/asset/:id',
+          component: Asset,
+          meta: {
+            title: 'Asset'
+          }
+        },
+        {
           path: '/asset/add/link',
           component: AddLinkAsset,
           meta: {

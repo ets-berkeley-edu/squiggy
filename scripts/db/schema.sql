@@ -92,8 +92,8 @@ CREATE TABLE activities (
     user_id integer NOT NULL,
     actor_id integer,
     reciprocal_id integer,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE activities_id_seq
@@ -120,8 +120,8 @@ CREATE TABLE activity_types (
     points integer,
     enabled boolean DEFAULT true,
     course_id integer NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE activity_types_id_seq
@@ -143,8 +143,8 @@ CREATE UNIQUE INDEX activity_types_type_course_id_idx ON activity_types USING bt
 CREATE TABLE asset_categories (
     asset_id integer NOT NULL,
     category_id integer NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 ALTER TABLE ONLY asset_categories
@@ -158,8 +158,8 @@ CREATE INDEX asset_categories_category_id_idx ON asset_categories USING btree (c
 CREATE TABLE asset_users (
     asset_id integer NOT NULL,
     user_id integer NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 ALTER TABLE ONLY asset_users
@@ -193,8 +193,8 @@ CREATE TABLE assets (
     url character varying(255),
     views integer DEFAULT 0,
     visible boolean DEFAULT true NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE assets_id_seq
@@ -214,8 +214,8 @@ ALTER TABLE ONLY assets
 CREATE TABLE authorized_users (
     id integer NOT NULL,
     uid character varying(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE authorized_users_id_seq
@@ -264,8 +264,8 @@ CREATE TABLE categories (
     course_id integer,
     deleted_at timestamp with time zone,
     visible boolean DEFAULT true NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -289,8 +289,8 @@ CREATE TABLE comments (
     asset_id integer NOT NULL,
     user_id integer,
     parent_id integer,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE comments_id_seq
@@ -318,8 +318,8 @@ CREATE TABLE courses (
     enable_weekly_notifications boolean DEFAULT true NOT NULL,
     engagement_index_url character varying(255),
     name character varying(255),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE courses_id_seq
@@ -349,8 +349,8 @@ CREATE TABLE users (
     share_points boolean,
     last_activity timestamp with time zone,
     canvas_course_sections character varying(255)[],
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE users_id_seq

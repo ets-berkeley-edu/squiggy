@@ -130,8 +130,8 @@ export default {
   methods: {
     submit() {
       const categoryIds = this.categoryId && [this.categoryId]
-      createLinkAsset(categoryIds, this.description, this.title, this.url).then(() => {
-        console.log('TODO: Go to asset page?')
+      createLinkAsset(categoryIds, this.description, this.title, this.url).then(data => {
+        this.$router.push(`/asset/${data.id}`, this.$_.noop)
       })
     }
   }
