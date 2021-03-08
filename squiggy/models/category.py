@@ -24,8 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from dateutil.tz import tzutc
-from squiggy import db
-from squiggy.models.asset_category import AssetCategory
+from squiggy import db, std_commit
 from squiggy.models.base import Base
 
 
@@ -35,11 +34,10 @@ class Category(Base):
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
     canvas_assignment_id = db.Column(db.Integer)
     canvas_assignment_name = db.Column(db.String(255), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('assets.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'))
     deleted_at = db.Column(db.DateTime)
     title = db.Column(db.String(255), nullable=False)
     visible = db.Column(db.Boolean, nullable=True)
-    assets = db.relationship(AssetCategory.__name__, back_populates='category')
 
     def __init__(
             self,
@@ -67,6 +65,26 @@ class Category(Base):
                     created_at={self.created_at},
                     updated_at={self.updated_at}>
                 """
+
+    @classmethod
+    def create(
+            cls,
+            canvas_assignment_name,
+            course_id,
+            title,
+            canvas_assignment_id=None,
+            visible=True,
+    ):
+        category = cls(
+            canvas_assignment_name=canvas_assignment_name,
+            course_id=course_id,
+            title=title,
+            canvas_assignment_id=canvas_assignment_id,
+            visible=visible,
+        )
+        db.session.add(category)
+        std_commit()
+        return category
 
     @classmethod
     def get_categories_by_course_id(cls, course_id):

@@ -23,18 +23,12 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy import db
+from sqlalchemy import Column, ForeignKey, Integer, Table
 from squiggy.models.base import Base
 
-
-class AssetCategory(Base):
-    __tablename__ = 'asset_categories'
-
-    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False, primary_key=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False, primary_key=True)
-    category = db.relationship('Category', back_populates='assets')
-    asset = db.relationship('Asset', back_populates='categories')
-
-    def __init__(self, asset, category):
-        self.asset_id = asset.id
-        self.category_id = category.id
+asset_category_table = Table(
+    'asset_categories',
+    Base.metadata,
+    Column('asset_id', Integer, ForeignKey('assets.id')),
+    Column('category_id', Integer, ForeignKey('categories.id')),
+)

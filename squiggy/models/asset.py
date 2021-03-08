@@ -26,9 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from sqlalchemy.dialects.postgresql import ENUM
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
-from squiggy.models.asset_category import AssetCategory
+from squiggy.models.asset_category import asset_category_table
 from squiggy.models.base import Base
-
 
 assets_type = ENUM(
     'file',
@@ -50,12 +49,17 @@ class Asset(Base):
     title = db.Column(db.String(255))
     url = db.Column(db.String(255))
     visible = db.Column(db.Boolean, nullable=False)
-    categories = db.relationship(AssetCategory.__name__)
+    categories = db.relationship(
+        'Category',
+        secondary=asset_category_table,
+        backref='assets',
+    )
 
     def __init__(
             self,
             asset_type,
             course_id,
+            categories=None,
             description=None,
             source=None,
             title=None,
@@ -63,6 +67,7 @@ class Asset(Base):
             visible=True,
     ):
         self.asset_type = asset_type
+        self.categories = categories or []
         self.course_id = course_id
         self.description = description
         self.source = source
@@ -73,6 +78,7 @@ class Asset(Base):
     def __repr__(self):
         return f"""<Asset
                     asset_type={self.asset_type},
+                    categories={self.categories},
                     course_id={self.course_id},
                     description={self.description},
                     source={self.source},
@@ -91,6 +97,7 @@ class Asset(Base):
     def create(cls, asset_type, course_id, description, title, url, categories=None, source=None, visible=True):
         asset = cls(
             asset_type=asset_type,
+            categories=categories,
             course_id=course_id,
             description=description,
             source=source,
@@ -98,8 +105,6 @@ class Asset(Base):
             url=url,
             visible=visible,
         )
-        for category in categories:
-            asset.categories.append(AssetCategory(asset, category))
         db.session.add(asset)
         std_commit()
         return asset
@@ -107,7 +112,7 @@ class Asset(Base):
     def to_api_json(self):
         return {
             'id': self.id,
-            'categories': [c.category.to_api_json() for c in self.categories],
+            'categories': [c.to_api_json() for c in self.categories],
             'courseId': self.course_id,
             'description': self.description,
             'source': self.source,

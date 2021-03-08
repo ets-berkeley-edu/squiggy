@@ -1,6 +1,6 @@
 <template>
   <div>
-    Hello
+    {{ asset }}
   </div>
 </template>
 

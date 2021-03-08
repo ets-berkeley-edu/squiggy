@@ -23,8 +23,15 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from datetime import datetime
 import json
 import os
+
+from squiggy import std_commit
+from squiggy.models.asset import Asset
+from squiggy.models.category import Category
+from squiggy.models.course import Course
+
 os.environ['SQUIGGY_ENV'] = 'test'  # noqa
 
 from moto import mock_sts  # noqa
@@ -132,3 +139,31 @@ def fake_sts(app):
     mock_sts().start()
     yield
     mock_sts().stop()
+
+
+@pytest.fixture(scope='function')
+def mock_asset(db):
+    category = mock_category(db)
+    course = Course.query.order_by(Course.name).all()[0]
+    unique_token = datetime.now().isoformat()
+    asset = Asset.create(
+        asset_type='link',
+        categories=[category],
+        course_id=course.id,
+        description=None,
+        title=f'Mock Asset created at {unique_token}',
+        url=f'https://en.wikipedia.org/wiki/{unique_token}',
+    )
+    std_commit(allow_test_environment=True)
+    return asset
+
+
+@pytest.fixture(scope='function')
+def mock_category(db):
+    return Category.create(
+        canvas_assignment_name='Linger on your pale blue eyes',
+        course_id=1,
+        title='Thought of you as my mountain top',
+        canvas_assignment_id=98765,
+        visible=True,
+    )

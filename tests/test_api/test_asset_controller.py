@@ -62,14 +62,14 @@ class TestCreateAsset:
     def _api_create_asset(
             client,
             asset_type='link',
-            category_id='TODO: mock data needed',
+            category=None,
             description='Baby, be good, do what you should. You know it will be alright',
             title='What goes on in your mind?',
             url='https://www.youtube.com/watch?v=Pxq63cYIY1c',
             expected_status_code=200,
     ):
         params = {
-            'categoryId': category_id,
+            'categoryIds': category and [category.id],
             'description': description,
             'title': title,
             'type': asset_type,
@@ -92,9 +92,22 @@ class TestCreateAsset:
         fake_auth.login(unauthorized_uid)
         self._api_create_asset(client, expected_status_code=401)
 
-    def test_admin(self, client, fake_auth):
+    def test_create_asset(self, client, fake_auth):
         """Returns a well-formed response."""
         fake_auth.login(admin_uid)
         api_json = self._api_create_asset(client)
         assert 'id' in api_json
         assert api_json['title'] == 'What goes on in your mind?'
+        categories = api_json['categories']
+        assert len(categories) == 0
+
+    def test_create_asset_with_category(self, client, fake_auth, mock_category):
+        """Returns a well-formed response."""
+        fake_auth.login(admin_uid)
+        api_json = self._api_create_asset(client, category=mock_category)
+        assert 'id' in api_json
+        assert api_json['title'] == 'What goes on in your mind?'
+        categories = api_json['categories']
+        assert len(categories) == 1
+        assert categories[0]['id'] == mock_category.id
+        assert categories[0]['title'] == mock_category.title

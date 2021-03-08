@@ -180,8 +180,8 @@ def _create_assets(courses):
     for a in _test_assets:
         asset = Asset.create(
             asset_type=a['asset_type'],
-            course_id=course_id,
             categories=[category],
+            course_id=course_id,
             description=None,
             title=a['title'],
             url=a['url'],

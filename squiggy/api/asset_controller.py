@@ -36,7 +36,7 @@ from squiggy.models.category import Category
 
 @app.route('/api/asset/<asset_id>')
 @login_required
-def asset(asset_id):
+def get_asset(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
     if asset:
         return tolerant_jsonify(asset.to_api_json())
@@ -46,7 +46,7 @@ def asset(asset_id):
 
 @app.route('/api/<domain>/<course_site_id>/assets')
 @login_required
-def assets(domain, course_site_id):
+def get_assets(domain, course_site_id):
     args = {
         'category': _get(request.args, 'category', None),
         'hasComments': _get(request.args, 'hasComments', None),
@@ -101,7 +101,7 @@ def create_asset():
 
     asset = Asset.create(
         asset_type=asset_type,
-        categories=Category.get_categories_by_id(category_ids) if category_ids else [],
+        categories=Category.get_categories_by_id(category_ids) if category_ids else None,
         course_id=course['id'],
         description=description,
         source=source,
