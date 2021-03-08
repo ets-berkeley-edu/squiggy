@@ -31,6 +31,13 @@ from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.user import User
 
+assets_sort_by_options = {
+    'recent': 'Most recent',
+    'likes': 'Most likes',
+    'views': 'Most views',
+    'comments': 'Most comments',
+}
+
 assets_type = ENUM(
     'file',
     'link',

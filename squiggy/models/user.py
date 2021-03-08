@@ -124,6 +124,10 @@ class User(Base):
         std_commit()
         return user
 
+    @classmethod
+    def get_users_by_course_id(cls, course_id):
+        return cls.query.filter_by(course_id=course_id).order_by(cls.canvas_full_name).all()
+
     def to_api_json(self):
         return {
             'id': self.id,

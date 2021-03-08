@@ -11,7 +11,7 @@
         <v-list dense>
           <v-list-item>
             <v-list-item-content>Active</v-list-item-content>
-            <v-list-item-content class="align-end"></v-list-item-content>
+            <v-list-item-content class="align-end">{{ displayBoolean(course.active) }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
             <v-list-item-content>Notifications, Daily?</v-list-item-content>

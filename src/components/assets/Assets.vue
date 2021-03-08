@@ -1,23 +1,10 @@
 <template>
   <div v-if="!loading">
-    <div class="d-flex justify-space-between pt-2">
-      <div class="w-50">
-        <AssetsSearchForm :on-submit="search" />
-      </div>
-      <div>
-        <v-btn
-          elevation="2"
-          large
-          @click="go('/assets/manage')"
-          @keypress.enter="go('/assets/manage')"
-        >
-          <span class="pr-2">
-            <font-awesome-icon icon="cog" />
-          </span>
-          Manage Assets
-        </v-btn>
-      </div>
-    </div>
+    <AssetsHeader
+      :categories="categories"
+      :on-submit="search"
+      :users="users"
+    />
     <v-card
       class="d-flex flex-wrap"
       flat
@@ -37,27 +24,37 @@
 
 <script>
 import AssetCard from '@/components/assets/AssetCard'
-import AssetsSearchForm from '@/components/assets/AssetsSearchForm'
+import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetUploadCard from '@/components/assets/AssetUploadCard'
 import Context from '@/mixins/Context'
 import InfiniteLoading from 'vue-infinite-loading'
 import Utils from '@/mixins/Utils'
 import {getAssets} from '@/api/assets'
+import {getCategories} from '@/api/categories'
+import {getUsers} from '@/api/users'
 
 export default {
   name: 'Assets',
-  components: {AssetCard, AssetsSearchForm, AssetUploadCard, InfiniteLoading},
+  components: {AssetCard, AssetsHeader, AssetUploadCard, InfiniteLoading},
   mixins: [Context, Utils],
   data: () => ({
     assets: [],
+    categories: undefined,
     limit: 10,
     offset: 0,
-    total: undefined
+    total: undefined,
+    users: undefined
   }),
   created() {
     this.$loading()
-    this.fetch().then(() => {
-      this.$ready('Asset Library')
+    getUsers().then(data => {
+      this.users = data
+      getCategories().then(data => {
+        this.categories = data
+        this.fetch().then(() => {
+          this.$ready('Asset Library')
+        })
+      })
     })
   },
   methods: {

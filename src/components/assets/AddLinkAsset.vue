@@ -49,7 +49,7 @@
               item-text="title"
               item-value="id"
               outlined
-            ></v-select>
+            />
           </v-col>
         </v-row>
         <v-row>

@@ -112,6 +112,13 @@ _test_users = [
         'canvas_full_name': 'Oliver Heyer',
         'canvas_email': 'oheyer@berkeley.edu',
     },
+    {
+        'canvas_user_id': '654321',
+        'canvas_course_role': 'Teacher',
+        'canvas_enrollment_state': 'active',
+        'canvas_full_name': 'Christa Päffgen',
+        'canvas_email': 'nico@berkeley.edu',
+    },
 ]
 
 
