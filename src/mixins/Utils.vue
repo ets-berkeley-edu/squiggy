@@ -12,8 +12,8 @@ export default {
   }),
   methods: {
     getApiErrorMessage: (data) => _.get(data, 'response.data.message') || data.message || _.get(data, 'response.statusText'),
-    go(path, params={}) {
-      this.$router.push({path, params}, _.noop)
+    go(path, query={}) {
+      this.$router.push({path, query})
     },
     oxfordJoin: arr => {
       switch(arr.length) {
@@ -22,8 +22,10 @@ export default {
       default: return _.join(_.concat(_.initial(arr), ` and ${_.last(arr)}`), ', ')
       }
     },
-    scrollTo: anchor => VueScrollTo.scrollTo(anchor, 400),
-    scrollToTop: delay => VueScrollTo.scrollTo('#app', (delay || 400)),
+    scrollTo: element => {
+      setTimeout(() => VueScrollTo.scrollTo(element), 1000)
+
+    },
     stripAnchorRef: path => _.split(path, '#', 1)[0],
     validate: (errors, rules, value, messageIfError=null) => {
       // Logic of 'rules' is governed by Vuetify framework: https://vuetifyjs.com/en/components/forms/#rules

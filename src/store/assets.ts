@@ -1,7 +1,9 @@
 import _ from 'lodash'
 import {getAssets} from '@/api/assets'
 
-export function $_search(commit, state) {
+const orderByDefault = 'recent'
+
+function $_search(commit, state) {
   return new Promise<void>(resolve => {
     getAssets(
       state.assetType,
@@ -17,13 +19,13 @@ export function $_search(commit, state) {
       state.userId
     ).then(data => {
       const assets = _.get(data, 'results')
-      if (state.offset === 0) {
+      if (_.isNil(state.assets)) {
         commit('setAssets', assets)
       } else {
         commit('addAssets', assets)
       }
       commit('setTotalAssetCount', _.get(data, 'total'))
-      resolve(assets)
+      resolve(state.assets)
     })
   })
 }
@@ -36,16 +38,24 @@ const state = {
   hasLikes: undefined,
   hasViews: undefined,
   keywords: undefined,
-  limit: 10,
+  limit: 20,
   offset: 0,
-  orderBy: 'recent',
+  orderBy: orderByDefault,
   sectionId: undefined,
   totalAssetCount: undefined,
   userId: undefined
 }
 
 const getters = {
-  assets: (state: any): boolean => state.assets
+  assets: (state: any): boolean => state.assets,
+  assetType: (state: any): boolean => state.assetType,
+  categoryId: (state: any): number => state.categoryId,
+  keywords: (state: any): number => state.keywords,
+  limit: (state: any): number => state.limit,
+  orderBy: (state: any): string => state.orderBy,
+  orderByDefault: (): string => orderByDefault,
+  totalAssetCount: (state: any): number => state.totalAssetCount,
+  userId: (state: any): number => state.userId
 }
 
 const mutations = {
@@ -65,21 +75,12 @@ const actions = {
     commit('setOffset', state.offset + state.limit)
     return $_search(commit, state)
   },
-  search: ({commit}, {
-    assetType,
-    categoryId,
-    keywords,
-    orderBy,
-    userId
-  }: any) => {
-    commit('setAssetType', assetType)
-    commit('setCategoryId', categoryId)
-    commit('setKeywords', keywords)
-    commit('setOffset', 0)
-    commit('setOrderBy', orderBy)
-    commit('setUserId', userId)
-    return $_search(commit, state)
-  }
+  search: ({commit, state}) => $_search(commit, state),
+  setAssetType: ({commit}, assetType) => commit('setAssetType', assetType),
+  setCategoryId: ({commit}, categoryId) => commit('setCategoryId', categoryId),
+  setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
+  setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
+  setUserId: ({commit}, userId) => commit('setUserId', userId)
 }
 
 export default {
