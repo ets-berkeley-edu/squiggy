@@ -44,27 +44,24 @@ def get_asset(asset_id):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
 
 
-@app.route('/api/<domain>/<course_site_id>/assets')
+@app.route('/api/assets', methods=['POST'])
 @login_required
-def get_assets(domain, course_site_id):
+def get_assets():
     args = {
-        'category': _get(request.args, 'category', None),
-        'hasComments': _get(request.args, 'hasComments', None),
-        'hasImpact': _get(request.args, 'hasImpact', None),
-        'hasLikes': _get(request.args, 'hasLikes', None),
-        'hasPins': _get(request.args, 'hasPins', None),
-        'hasTrending': _get(request.args, 'hasTrending', None),
-        'hasViews': _get(request.args, 'hasViews', None),
+        'asset_type': _get(request.args, 'assetType', None),
+        'category_id': _get(request.args, 'categoryId', None),
+        'has_comments': _get(request.args, 'hasComments', None),
+        'has_likes': _get(request.args, 'hasLikes', None),
+        'has_views': _get(request.args, 'hasViews', None),
         'keywords': _get(request.args, 'keywords', None),
         'limit': _get(request.args, 'limit', 10),
         'offset': _get(request.args, 'offset', 0),
-        'searchContext': _get(request.args, 'searchContext', None),
-        'section': _get(request.args, 'section', None),
-        'sort': _get(request.args, 'sort', 'TODO'),
-        'type': _get(request.args, 'type', None),
-        'user': _get(request.args, 'user', None),
+        'order_by': _get(request.args, 'orderBy', 'recent'),
+        'section_id': _get(request.args, 'sectionId', None),
+        'user_id': _get(request.args, 'userId', None),
     }
-    mock_json = _load_json(f'fixtures/mock_data_source/assets-{domain}-{course_site_id}.json')
+    fixture = f'fixtures/mock_data_source/assets-{current_user.course.canvas_api_domain}-{current_user.course.canvas_course_id}.json'
+    mock_json = _load_json(fixture)
     range_start = int(args['offset'])
     total = mock_json['total']
     api_json = {
