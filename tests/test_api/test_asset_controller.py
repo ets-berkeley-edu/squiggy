@@ -25,8 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
-admin_uid = '2040'
-unauthorized_uid = '1015674'
+unauthorized_user_id = '666'
 
 
 class TestGetAssets:
@@ -44,12 +43,12 @@ class TestGetAssets:
 
     def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
-        fake_auth.login(unauthorized_uid)
+        fake_auth.login(unauthorized_user_id)
         self._api_get_assets(client, expected_status_code=401)
 
-    def test_admin(self, client, fake_auth):
+    def test_admin(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response."""
-        fake_auth.login(admin_uid)
+        fake_auth.login(authorized_user_id)
         api_json = self._api_get_assets(client)
         assert 'total' in api_json
         assert 'results' in api_json
@@ -89,21 +88,21 @@ class TestCreateAsset:
 
     def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
-        fake_auth.login(unauthorized_uid)
+        fake_auth.login(unauthorized_user_id)
         self._api_create_asset(client, expected_status_code=401)
 
-    def test_create_asset(self, client, fake_auth):
+    def test_create_asset(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response."""
-        fake_auth.login(admin_uid)
+        fake_auth.login(authorized_user_id)
         api_json = self._api_create_asset(client)
         assert 'id' in api_json
         assert api_json['title'] == 'What goes on in your mind?'
         categories = api_json['categories']
         assert len(categories) == 0
 
-    def test_create_asset_with_category(self, client, fake_auth, mock_category):
+    def test_create_asset_with_category(self, client, fake_auth, mock_category, authorized_user_id):
         """Returns a well-formed response."""
-        fake_auth.login(admin_uid)
+        fake_auth.login(authorized_user_id)
         api_json = self._api_create_asset(client, category=mock_category)
         assert 'id' in api_json
         assert api_json['title'] == 'What goes on in your mind?'

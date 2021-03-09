@@ -42,6 +42,8 @@ class Course(Base):
     engagement_index_url = db.Column(db.String(255))
     name = db.Column(db.String(255))
 
+    users = db.relationship('User', back_populates='course')
+
     def __init__(
             self,
             active,

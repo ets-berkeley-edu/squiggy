@@ -24,22 +24,21 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import pytest
-from squiggy.models.authorized_user import AuthorizedUser
+from squiggy.models.user import User
 
-unknown_uid = 'Ms. X'
-admin_uid = '2040'
-coe_advisor_uid = '1133399'
+
+unauthorized_user_id = 666
 
 
 @pytest.mark.usefixtures('db_session')
-class TestAuthorizedUser:
-    """Authorized user."""
+class TestUser:
+    """User model."""
 
     def test_load_unknown_user(self):
         """Returns None to Flask-Login for unrecognized UID."""
-        assert AuthorizedUser.find_by_uid(unknown_uid) is None
+        assert User.find_by_id(unauthorized_user_id) is None
 
-    def test_load_admin_user(self):
+    def test_load_admin_user(self, authorized_user_id):
         """Returns authorization record to Flask-Login for recognized UID."""
-        loaded_user = AuthorizedUser.find_by_uid(admin_uid)
-        assert loaded_user.uid == admin_uid
+        loaded_user = User.find_by_id(authorized_user_id)
+        assert loaded_user.id == authorized_user_id

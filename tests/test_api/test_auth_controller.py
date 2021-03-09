@@ -27,8 +27,7 @@ import json
 
 from tests.util import override_config
 
-admin_uid = '2040'
-unauthorized_uid = '1015674'
+unauthorized_user_id = '666'
 
 
 class TestDevAuth:
@@ -38,16 +37,12 @@ class TestDevAuth:
     def _api_dev_auth_login(
             client,
             password,
-            uid,
-            canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=1502870,
+            user_id,
             expected_status_code=200,
     ):
         params = {
-            'canvasApiDomain': canvas_api_domain,
-            'canvasCourseId': canvas_course_id,
             'password': password,
-            'uid': uid,
+            'userId': user_id,
         }
         response = client.post(
             '/api/auth/dev_auth_login',
@@ -57,22 +52,22 @@ class TestDevAuth:
         assert response.status_code == expected_status_code
         return json.loads(response.data)
 
-    def test_disabled(self, app, client):
+    def test_disabled(self, app, client, authorized_user_id):
         """Blocks access unless enabled."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', False):
             self._api_dev_auth_login(
                 client,
-                uid=admin_uid,
+                user_id=authorized_user_id,
                 password=app.config['DEVELOPER_AUTH_PASSWORD'],
                 expected_status_code=404,
             )
 
-    def test_password_fail(self, app, client):
+    def test_password_fail(self, app, client, authorized_user_id):
         """Fails if no match on developer password."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
-                uid=admin_uid,
+                user_id=authorized_user_id,
                 password='Born 2 Lose',
                 expected_status_code=401,
             )
@@ -83,7 +78,7 @@ class TestDevAuth:
             self._api_dev_auth_login(
                 client,
                 password=app.config['DEVELOPER_AUTH_PASSWORD'],
-                uid='A Bad Sort',
+                user_id='A Bad Sort',
                 expected_status_code=403,
             )
 
@@ -93,41 +88,21 @@ class TestDevAuth:
             self._api_dev_auth_login(
                 client,
                 password=app.config['DEVELOPER_AUTH_PASSWORD'],
-                uid=unauthorized_uid,
+                user_id=unauthorized_user_id,
                 expected_status_code=403,
             )
 
-    def test_invalid_canvas_domain(self, app, client):
-        """Universidad de Monterrey is not a registered domain."""
-        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
-            self._api_dev_auth_login(
-                client,
-                canvas_api_domain='universidad.monterrey.mx',
-                password=app.config['DEVELOPER_AUTH_PASSWORD'],
-                uid=admin_uid,
-                expected_status_code=401,
-            )
-
-    def test_invalid_canvas_course_id(self, app, client):
-        """Invalid Canvas course ID."""
-        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
-            self._api_dev_auth_login(
-                client,
-                canvas_course_id=9999999,
-                password=app.config['DEVELOPER_AUTH_PASSWORD'],
-                uid=admin_uid,
-                expected_status_code=401,
-            )
-
-    def test_known_user_with_correct_password_logs_in(self, app, client):
+    def test_known_user_with_correct_password_logs_in(self, app, client, authorized_user_id):
         """There is a happy path."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             api_json = self._api_dev_auth_login(
                 client,
                 password=app.config['DEVELOPER_AUTH_PASSWORD'],
-                uid=admin_uid,
+                user_id=authorized_user_id,
             )
-            assert api_json['uid'] == admin_uid
+            assert api_json['user']['id'] == authorized_user_id
+            assert api_json['course']['canvasCourseId'] == 1502870
+            assert api_json['course']['canvasApiDomain'] == 'bcourses.berkeley.edu'
             assert client.post('/api/auth/logout').status_code == 200
 
 
@@ -139,7 +114,7 @@ class TestAuthorization:
         assert response.status_code == expected_status_code
         return response.json
 
-    def test_admin_profile(self, client, fake_auth):
-        fake_auth.login(admin_uid)
+    def test_admin_profile(self, client, fake_auth, authorized_user_id):
+        fake_auth.login(authorized_user_id)
         api_json = self._api_my_profile(client)
-        assert api_json['uid'] == admin_uid
+        assert api_json['user']['id'] == authorized_user_id

@@ -35,30 +35,19 @@ from squiggy.lib.util import to_int
 def dev_auth_login():
     params = request.get_json() or {}
     if app.config['DEVELOPER_AUTH_ENABLED']:
-        uid = params.get('uid')
+        user_id = to_int(params.get('userId'))
         password = params.get('password')
         logger = app.logger
+
         if password != app.config['DEVELOPER_AUTH_PASSWORD']:
             logger.error('Dev auth: Wrong password')
             return tolerant_jsonify({'message': 'Invalid credentials'}, 401)
 
-        canvas_api_domain = params.get('canvasApiDomain')
-        canvas_course_id = to_int(params.get('canvasCourseId'))
-        user = LoginSession(session_id=f'{uid}:{canvas_api_domain}:{canvas_course_id}')
-
-        if user.is_admin:
-            if user.course:
-                if login_user(user, force=True, remember=True):
-                    return tolerant_jsonify(current_user.to_api_json())
-                else:
-                    return tolerant_jsonify({'message': f'Dev auth: UID {uid} failed to authenticate.'}, 401)
-            else:
-                message = f'{canvas_api_domain}:{canvas_course_id} is an invalid Canvas course ID.'
-                logger.error(f'Dev auth failed for UID {uid}. {message}')
-                return tolerant_jsonify({'message': message}, 401)
+        login_user(LoginSession(user_id), force=True, remember=True)
+        if current_user.is_authenticated:
+            return tolerant_jsonify(current_user.to_api_json())
         else:
-            logger.error(f'Dev auth: User with UID {uid} is not registered as an administrator.')
-            return tolerant_jsonify({'message': f'Sorry, UID {uid} is not registered as an administrator.'}, 403)
+            return tolerant_jsonify({'message': f'Dev auth: id {user_id} failed to authenticate.'}, 403)
     else:
         raise ResourceNotFoundError('Unknown path')
 

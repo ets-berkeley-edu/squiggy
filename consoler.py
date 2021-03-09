@@ -40,8 +40,8 @@ from pprintpp import pprint as pp # noqa
 * Click on "Python Console"
 * Click the bug icon to start a debugging session:
 
->>> from squiggy.models.authorized_user import AuthorizedUser
->>> rows = AuthorizedUser.query.all()
+>>> from squiggy.models.user import User
+>>> rows = User.query.all()
 >>> pp(rows)
 [
     <AuthorizedUser 2040>, ...

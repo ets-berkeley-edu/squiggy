@@ -23,8 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-admin_uid = '2040'
-unauthorized_uid = '1015674'
+unauthorized_user_id = '666'
 
 
 class TestGetUsers:
@@ -42,12 +41,12 @@ class TestGetUsers:
 
     def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
-        fake_auth.login(unauthorized_uid)
+        fake_auth.login(unauthorized_user_id)
         self._api_get_users(client, expected_status_code=401)
 
-    def test_admin(self, client, fake_auth):
+    def test_admin(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response."""
-        fake_auth.login(admin_uid)
+        fake_auth.login(authorized_user_id)
         api_json = self._api_get_users(client)
         assert len(api_json) > 1
         assert 'id' in api_json[0]
