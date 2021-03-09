@@ -25,8 +25,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 from tests.util import override_config
 
-admin_uid = '2040'
-
 
 class TestCanvasDomains:
     """Canvas API."""
@@ -43,16 +41,8 @@ class TestCanvasDomains:
             self._api_get_canvas_domains(client, expected_status_code=401)
 
     def test_anonymous_when_dev_auth(self, client):
-        """Allo anonymous when DEVELOPER_AUTH_ENABLED."""
+        """Allow when DEVELOPER_AUTH_ENABLED."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
-            api_json = self._api_get_canvas_domains(client)
-            assert len(api_json)
-            assert 'canvasApiDomain' in api_json[0]
-
-    def test_admin(self, client, fake_auth):
-        """Returns a well-formed response."""
-        with override_config(app, 'DEVELOPER_AUTH_ENABLED', False):
-            fake_auth.login(admin_uid)
             api_json = self._api_get_canvas_domains(client)
             assert len(api_json)
             assert 'canvasApiDomain' in api_json[0]

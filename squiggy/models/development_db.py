@@ -29,7 +29,6 @@ from squiggy import db, std_commit
 from squiggy.models.activity import Activity
 from squiggy.models.activity_type import ActivityType
 from squiggy.models.asset import Asset
-from squiggy.models.authorized_user import AuthorizedUser
 from squiggy.models.canvas import Canvas
 from squiggy.models.category import Category
 from squiggy.models.comment import Comment
@@ -95,12 +94,6 @@ _test_canvas = [
         'lti_key': 'GrxUBuBcFYqUKFKqNkixiYUPJGonbedl',
         'lti_secret': 'zY8aw28nHZHbKkYjZP1XAXgfok0tj6aw',
         'name': 'bCourses',
-    },
-]
-
-_test_authorized_users = [
-    {
-        'uid': '2040',
     },
 ]
 
@@ -172,8 +165,6 @@ def _create_courses():
 
 
 def _create_users(courses):
-    for test_authorized_user in _test_authorized_users:
-        db.session.add(AuthorizedUser(uid=test_authorized_user['uid']))
     course = courses[0]
     users = []
     for test_user in _test_users:

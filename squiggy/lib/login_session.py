@@ -23,29 +23,20 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy.models.authorized_user import AuthorizedUser
-from squiggy.models.course import Course
+from squiggy.models.user import User
 
 
 class LoginSession:
 
-    course = None
-    session_id = None
     user = None
+    user_id = None
 
-    def __init__(self, session_id):
-        self.session_id = session_id
-        ids = session_id.split(':') if ':' in (session_id or '') else []
-        if len(ids) == 3:
-            uid = ids[0]
-            self.user = AuthorizedUser.find_by_uid(uid=uid)
-            if self.user:
-                canvas_api_domain = ids[1]
-                canvas_course_id = ids[2]
-                self.course = Course.find_by_canvas_course_id(canvas_api_domain, canvas_course_id)
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.user = User.find_by_id(user_id)
 
     def get_id(self):
-        return self.session_id
+        return self.user_id
 
     @property
     def is_active(self):
@@ -53,18 +44,21 @@ class LoginSession:
 
     @property
     def is_admin(self):
-        # Non-admin users will be stored in a separate "Users" table keyed by Canvas id.
         return self.is_authenticated
 
     @property
     def is_authenticated(self):
         return self.user is not None
 
+    @property
+    def course(self):
+        return self.user and self.user.course
+
     def to_api_json(self):
         return {
-            'course': self.course and self.course.to_api_json(),
             'isAdmin': self.is_admin,
             'isAuthenticated': self.is_authenticated,
             'isTeaching': False,  # TODO
-            'uid': self.user and self.user.uid,
+            'course': self.course and self.course.to_api_json(),
+            'user': self.user and self.user.to_api_json(),
         }

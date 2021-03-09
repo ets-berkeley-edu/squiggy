@@ -33,5 +33,5 @@ def isoformat(value):
 def to_int(s):
     try:
         return int(s)
-    except ValueError:
+    except (TypeError, ValueError):
         return None

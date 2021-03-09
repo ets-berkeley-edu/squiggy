@@ -24,14 +24,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
-from flask_login import current_user
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.canvas import Canvas
 
 
 @app.route('/api/canvas/all_domains')
 def all_canvas_domains():
-    # For purpose of user-friendly dev-auth form, we allow anonymous access in non-production.
-    if not app.config['DEVELOPER_AUTH_ENABLED'] and not current_user.is_admin:
+    # To be enabled only in a dev-auth context.
+    if not app.config['DEVELOPER_AUTH_ENABLED']:
         return app.login_manager.unauthorized()
     return tolerant_jsonify([c.to_api_json() for c in Canvas.get_all()])

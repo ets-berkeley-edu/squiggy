@@ -27,8 +27,9 @@ from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat
+from squiggy.lib.util import isoformat, to_int
 from squiggy.models.base import Base
+from squiggy.models.course import Course
 
 
 canvas_enrollment_state_type = ENUM(
@@ -53,10 +54,12 @@ class User(Base):
     canvas_full_name = db.Column(db.String(255), nullable=False)
     canvas_image = db.Column(db.String(255))
     canvas_user_id = db.Column(db.Integer, nullable=False)
-    course_id = db.Column(db.Integer, nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
     share_points = db.Column(db.Boolean, default=False)
     last_activity = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    course = db.relationship(Course.__name__, back_populates='users')
 
     def __init__(
         self,
@@ -128,10 +131,16 @@ class User(Base):
     def get_users_by_course_id(cls, course_id):
         return cls.query.filter_by(course_id=course_id).order_by(cls.canvas_full_name).all()
 
+    @classmethod
+    def find_by_id(cls, user_id):
+        user_id = to_int(user_id)
+        if not user_id:
+            return None
+        return cls.query.filter_by(id=user_id).first()
+
     def to_api_json(self):
         return {
             'id': self.id,
-            'courseId': self.course_id,
             'canvasUserId': self.canvas_user_id,
             'canvasCourseRole': self.canvas_course_role,
             'canvasCourseSections': self.canvas_course_sections,

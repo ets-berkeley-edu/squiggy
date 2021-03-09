@@ -8,32 +8,11 @@
     />
     <v-card color="transparent" flat width="360">
       <v-form @submit="devAuth">
-        <div v-if="canvasDomains.length === 1" class="pb-3 text-center">
-          <h2 class="grey--text text--darken-2">{{ canvasDomains[0].canvasApiDomain }}</h2>
-        </div>
-        <v-select
-          v-if="canvasDomains.length > 1"
-          v-model="canvasApiDomain"
-          :items="canvasDomains"
-          label="Select Canvas domain..."
-          item-text="canvasApiDomain"
-          item-value="id"
-          outlined
-        ></v-select>
-        <v-text-field
-          id="course-site-id-input"
-          v-model="canvasCourseId"
-          outlined
-          placeholder="Canvas course ID"
-          :rules="[rule.notBlank, rule.isNumber]"
-          @input="errors = []"
-          @keydown.enter="devAuth"
-        />
         <v-text-field
           id="uid-input"
-          v-model="uid"
+          v-model="userId"
           outlined
-          placeholder="UID"
+          placeholder="User ID"
           :rules="[rule.notBlank, rule.isNumber]"
           @input="errors = []"
           @keydown.enter="devAuth"
@@ -53,7 +32,7 @@
           block
           class="white--text"
           color="red"
-          :disabled="!canvasApiDomain || !canvasCourseId || !uid || !password || !!errors.length"
+          :disabled="!userId || !password || !!errors.length"
           large
           @click="devAuth"
         >
@@ -83,27 +62,20 @@ export default {
     }
   },
   data: () => ({
-    canvasApiDomain: undefined,
-    canvasCourseId: undefined,
     errors: [],
     password: undefined,
-    uid: undefined,
+    userId: undefined,
     width: 300
   }),
-  created() {
-    this.canvasApiDomain = this.canvasDomains.length === 1 ? this.canvasDomains[0].canvasApiDomain : undefined
-  },
   methods: {
     devAuth() {
       this.errors = []
-      this.validate(this.errors, [this.rule.notBlank], this.canvasApiDomain, 'Invalid Canvas domain')
-      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.canvasCourseId, 'Invalid Canvas course ID')
       this.validate(this.errors, [this.rule.notBlank], this.password, 'Password is required')
-      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.uid, 'Invalid UID')
+      this.validate(this.errors, [this.rule.notBlank, this.rule.isNumber], this.userId, 'Invalid user ID')
       if (this.errors.length) {
         this.$putFocusNextTick('canvas-api-domain-input')
       } else {
-        devAuthLogIn(this.canvasApiDomain, this.canvasCourseId, this.password, this.uid).then(
+        devAuthLogIn(this.password, this.userId).then(
           data => {
             if (data.isAuthenticated) {
               this.$router.push('/assets', this.$_.noop)

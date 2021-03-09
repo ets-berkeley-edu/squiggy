@@ -211,29 +211,6 @@ ALTER TABLE ONLY assets
 
 --
 
-CREATE TABLE authorized_users (
-    id integer NOT NULL,
-    uid character varying(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-);
-
-CREATE SEQUENCE authorized_users_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER SEQUENCE authorized_users_id_seq OWNED BY authorized_users.id;
-ALTER TABLE ONLY authorized_users ALTER COLUMN id SET DEFAULT nextval('authorized_users_id_seq'::regclass);
-
-ALTER TABLE ONLY authorized_users
-    ADD CONSTRAINT authorized_users_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY authorized_users
-    ADD CONSTRAINT authorized_users_uid_key UNIQUE (uid);
-
---
-
 CREATE TABLE canvas (
     canvas_api_domain character varying(255) NOT NULL,
     api_key character varying(255) NOT NULL,

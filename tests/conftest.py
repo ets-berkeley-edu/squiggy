@@ -31,6 +31,7 @@ from squiggy import std_commit
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.course import Course
+from squiggy.models.user import User
 
 os.environ['SQUIGGY_ENV'] = 'test'  # noqa
 
@@ -47,15 +48,11 @@ class FakeAuth(object):
 
     def login(
             self,
-            uid,
-            canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=1502870,
+            user_id,
     ):
         with override_config(self.app, 'DEVELOPER_AUTH_ENABLED', True):
             params = {
-                'uid': uid,
-                'canvasApiDomain': canvas_api_domain,
-                'canvasCourseId': canvas_course_id,
+                'userId': user_id,
                 'password': self.app.config['DEVELOPER_AUTH_PASSWORD'],
             }
             self.client.post(
@@ -125,6 +122,11 @@ def db_session(db):
     db.session = _session
 
     return _session
+
+
+@pytest.fixture(scope='function')
+def authorized_user_id():
+    return User.query.first().id
 
 
 @pytest.fixture(scope='function')
