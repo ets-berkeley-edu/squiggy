@@ -4,7 +4,8 @@
       id="asset-library-btn"
       class="bg-transparent"
       elevation="0"
-      @click="go('/assets')"
+      @click="goBack"
+      @keypress.enter="goBack"
     >
       <font-awesome-icon class="mr-2" icon="less-than" size="sm" />
       Back to Asset Library
@@ -17,6 +18,18 @@ import Utils from '@/mixins/Utils'
 
 export default {
   name: 'BackToAssetLibrary',
-  mixins: [Utils]
+  mixins: [Utils],
+  props: {
+    anchor: {
+      default: undefined,
+      required: false,
+      type: String
+    }
+  },
+  methods: {
+    goBack() {
+      this.go( '/assets', this.anchor ? {'anchor': this.anchor} : {})
+    }
+  }
 }
 </script>

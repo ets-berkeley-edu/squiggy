@@ -1,8 +1,8 @@
 <template>
-  <div v-if="!loading">
+  <div v-if="!loading" id="assets-container">
     <AssetsHeader :categories="categories" :users="users" />
     <v-card class="d-flex flex-wrap" flat tile>
-      <AssetUploadCard />
+      <CreateAssetCard />
       <AssetCard
         v-for="(asset, $index) in assets"
         :key="$index"
@@ -18,8 +18,8 @@
 import AssetCard from '@/components/assets/AssetCard'
 import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetsSearch from '@/mixins/AssetsSearch'
-import AssetUploadCard from '@/components/assets/AssetUploadCard'
 import Context from '@/mixins/Context'
+import CreateAssetCard from '@/components/assets/CreateAssetCard'
 import InfiniteLoading from 'vue-infinite-loading'
 import Utils from '@/mixins/Utils'
 import {getCategories} from '@/api/categories'
@@ -27,7 +27,7 @@ import {getUsers} from '@/api/users'
 
 export default {
   name: 'Assets',
-  components: {AssetCard, AssetsHeader, AssetUploadCard, InfiniteLoading},
+  components: {AssetCard, AssetsHeader, CreateAssetCard, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils],
   data: () => ({
     categories: undefined,
@@ -39,9 +39,15 @@ export default {
       this.users = data
       getCategories().then(data => {
         this.categories = data
-        this.search({}).then(() => {
+        const anchor = this.$route.query.anchor
+        if (anchor && this.$_.size(this.assets)) {
           this.$ready('Asset Library')
-        })
+          this.scrollTo(anchor)
+        } else {
+          this.search({}).then(() => {
+            this.$ready('Asset Library')
+          })
+        }
       })
     })
   },

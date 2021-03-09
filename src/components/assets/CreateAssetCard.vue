@@ -4,7 +4,12 @@
       <v-container class="card-container fill-height px-5 text-center" fluid>
         <v-row>
           <v-col cols="18" sm="6">
-            <v-btn block class="w-100" height="300">
+            <v-btn
+              block
+              class="w-100"
+              height="300"
+              @click="go('/asset/upload')"
+            >
               <div class="d-flex flex-column">
                 <div class="pb-2">
                   <font-awesome-icon icon="laptop" size="lg" />
@@ -20,7 +25,7 @@
               block
               class="w-100"
               height="300"
-              @click="go('/asset/add/link')"
+              @click="go('/asset/create')"
             >
               <div class="d-flex flex-column">
                 <div class="pb-2">
@@ -42,7 +47,7 @@
 import Utils from '@/mixins/Utils'
 
 export default {
-  name: 'AssetUploadCard',
+  name: 'CreateAssetCard',
   mixins: [Utils]
 }
 </script>

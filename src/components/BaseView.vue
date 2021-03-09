@@ -1,7 +1,7 @@
 <template>
   <v-main id="content" class="ma-3">
     <Spinner v-if="loading" />
-    <router-view></router-view>
+    <router-view />
   </v-main>
 </template>
 
