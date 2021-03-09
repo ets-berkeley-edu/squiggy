@@ -10,7 +10,7 @@
         class="ma-3"
       />
     </v-card>
-    <InfiniteLoading spinner="waveDots" @infinite="fetch" />
+    <InfiniteLoading v-if="assets.length < totalAssetCount" spinner="waveDots" @infinite="fetch" />
   </div>
 </template>
 
@@ -42,9 +42,11 @@ export default {
         const anchor = this.$route.query.anchor
         if (anchor && this.$_.size(this.assets)) {
           this.$ready('Asset Library')
-          this.scrollTo(anchor)
+          this.$announcer.polite(`Back to Asset Library. ${this.totalAssetCount} assets total.`)
+          this.$putFocusNextTick(anchor)
+          this.scrollTo(`#${anchor}`)
         } else {
-          this.search({}).then(() => {
+          this.search().then(() => {
             this.$ready('Asset Library')
           })
         }
