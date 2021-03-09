@@ -16,7 +16,6 @@ module.exports = {
     'array-bracket-spacing': 2,
     'eqeqeq': 2,
     'key-spacing': 2,
-    'multiline-html-element-content-newline': 0,
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-multi-spaces': 2,
@@ -38,7 +37,7 @@ module.exports = {
     'vue/html-end-tags': 2,
     'vue/html-indent': 2,
     'vue/html-quotes': 2,
-    'vue/html-self-closing': 0,
+    'vue/html-self-closing': 2,
     'vue/key-spacing': 2,
     'vue/match-component-file-name': 2,
     'vue/max-attributes-per-line': ['error', {
@@ -50,11 +49,11 @@ module.exports = {
     }],
     'vue/multiline-html-element-content-newline': 2,
     'vue/no-boolean-default': 2,
-    'vue/no-mutating-props': 1,
+    'vue/no-mutating-props': 2,
     'vue/no-restricted-syntax': 2,
     'vue/no-use-v-if-with-v-for': 2,
     'vue/no-v-html': 0,
-    'vue/require-default-prop': 0,
+    'vue/require-default-prop': 2,
     'vue/require-direct-export': 2,
     'vue/require-prop-types': 2,
     'vue/script-indent': 2,
@@ -70,7 +69,7 @@ module.exports = {
     'vue/v-bind-style': 2,
     'vue/v-on-function-call': 2,
     'vue/v-on-style': 2,
-    'vue/v-slot-style': 0
+    'vue/v-slot-style': 2
   },
   parserOptions: {
     parser: require.resolve('@typescript-eslint/parser')

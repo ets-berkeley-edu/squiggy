@@ -2,9 +2,10 @@ import _ from 'lodash'
 import AddLinkAsset from '@/components/assets/AddLinkAsset.vue'
 import Asset from '@/components/assets/Asset.vue'
 import Assets from '@/components/assets/Assets.vue'
+import AssetUpload from '@/components/assets/AssetUpload.vue'
 import BaseView from '@/components/BaseView.vue'
 import Error from '@/components/Error.vue'
-import ManageAssets from '@/components/ManageAssets.vue'
+import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
 import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
@@ -29,6 +30,20 @@ const router = new Router({
           meta: {
             isLoginPage: true,
             title: 'Hello!'
+          }
+        },
+        {
+          path: '/asset/create',
+          component: AddLinkAsset,
+          meta: {
+            title: 'Add Link Asset'
+          }
+        },
+        {
+          path: '/asset/upload',
+          component: AssetUpload,
+          meta: {
+            title: 'Upload Asset'
           }
         },
         {
@@ -57,13 +72,6 @@ const router = new Router({
           component: Asset,
           meta: {
             title: 'Asset'
-          }
-        },
-        {
-          path: '/asset/add/link',
-          component: AddLinkAsset,
-          meta: {
-            title: 'Add Link Asset'
           }
         }
       ]

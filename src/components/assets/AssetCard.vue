@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card :id="`asset-${asset.id}`" @click="go(`/asset/${asset.id}`)">
     <v-sheet elevation="1">
       <v-img src="@/assets/mock-asset-preview.png">
         <v-card-text class="asset-metadata">

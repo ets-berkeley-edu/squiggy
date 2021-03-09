@@ -1,6 +1,6 @@
 <template>
   <div v-if="!loading">
-    <BackToAssetLibrary />
+    <BackToAssetLibrary anchor="assets-container" />
 
     <h2>Manage Assets</h2>
     <h3>Custom Categories</h3>
