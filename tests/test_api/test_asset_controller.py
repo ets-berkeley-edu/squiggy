@@ -32,8 +32,40 @@ class TestGetAssets:
     """Assets API."""
 
     @classmethod
-    def _api_get_assets(cls, client, course_site_id=1502870, domain='bcourses.berkeley.edu', expected_status_code=200):
-        response = client.get(f'/api/{domain}/{course_site_id}/assets')
+    def _api_get_assets(
+            cls,
+            client,
+            asset_type=None,
+            category_id=None,
+            expected_status_code=200,
+            has_comments=None,
+            has_likes=None,
+            has_views=None,
+            keywords=None,
+            limit=None,
+            offset=None,
+            order_by=None,
+            section_id=None,
+            user_id=None,
+    ):
+        params = {
+            'assetType': asset_type,
+            'categoryId': category_id,
+            'hasComments': has_comments,
+            'hasLikes': has_likes,
+            'hasViews': has_views,
+            'keywords': keywords,
+            'limit': limit,
+            'offset': offset,
+            'orderBy': order_by,
+            'sectionId': section_id,
+            'userId': user_id,
+        }
+        response = client.post(
+            '/api/assets',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
         assert response.status_code == expected_status_code
         return response.json
 
