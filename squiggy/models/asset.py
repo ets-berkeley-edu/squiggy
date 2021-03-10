@@ -111,7 +111,18 @@ class Asset(Base):
         return cls.query.filter_by(id=asset_id).first()
 
     @classmethod
-    def create(cls, asset_type, course_id, description, title, url, categories=None, source=None, users=None, visible=True):
+    def create(
+            cls,
+            asset_type,
+            course_id,
+            title,
+            description=None,
+            url=None,
+            categories=None,
+            source=None,
+            users=None,
+            visible=True,
+    ):
         asset = cls(
             asset_type=asset_type,
             categories=categories,
@@ -130,12 +141,12 @@ class Asset(Base):
     def to_api_json(self):
         return {
             'id': self.id,
+            'assetType': self.asset_type,
             'categories': [c.to_api_json() for c in self.categories],
             'courseId': self.course_id,
             'description': self.description,
             'source': self.source,
             'title': self.title,
-            'type': self.asset_type,
             'url': self.url,
             'users': [u.to_api_json() for u in self.users],
             'visible': self.visible,
