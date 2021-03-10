@@ -23,7 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from copy import copy
 import json
 
 from flask import current_app as app, request
@@ -61,35 +60,25 @@ def upload():
 @app.route('/api/assets', methods=['POST'])
 @login_required
 def get_assets():
-    args = {
+    params = request.get_json()
+    app.logger.info('ARHD')
+    app.logger.info(request.args)
+    sort = _get(request.args, 'sort', None)
+    offset = params.get('offset')
+    limit = params.get('limit')
+    filters = {
         'asset_type': _get(request.args, 'assetType', None),
         'category_id': _get(request.args, 'categoryId', None),
         'has_comments': _get(request.args, 'hasComments', None),
         'has_likes': _get(request.args, 'hasLikes', None),
         'has_views': _get(request.args, 'hasViews', None),
         'keywords': _get(request.args, 'keywords', None),
-        'limit': _get(request.args, 'limit', 10),
-        'offset': _get(request.args, 'offset', 0),
         'order_by': _get(request.args, 'orderBy', 'recent'),
+        'owner_id': _get(request.args, 'userId', None),
         'section_id': _get(request.args, 'sectionId', None),
-        'user_id': _get(request.args, 'userId', None),
     }
-    fixture = f'fixtures/mock_data_source/assets-{current_user.course.canvas_api_domain}-{current_user.course.canvas_course_id}.json'
-    mock_json = _load_json(fixture)
-    range_start = int(args['offset'])
-    total = mock_json['total']
-    api_json = {
-        'offset': range_start,
-        'results': [],
-        'total': total,
-    }
-    range_stop = range_start + int(args['limit'])
-    range_stop = range_stop if range_stop < total else total
-    for n in range(range_start, range_stop):
-        item = copy(mock_json['results'][n % 10])
-        item['id'] = f"{range_start + n + 1}-{item['id']}"
-        api_json['results'].append(item)
-    return tolerant_jsonify(api_json)
+    results = Asset.get_assets(session=current_user, sort=sort, offset=offset, limit=limit, filters=filters)
+    return tolerant_jsonify(results)
 
 
 @app.route('/api/asset/create', methods=['POST'])

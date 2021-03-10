@@ -23,9 +23,13 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy.dialects.postgresql import ENUM
+from itertools import groupby
+import re
+
+from sqlalchemy.dialects.postgresql import ENUM, JSON
+from sqlalchemy.sql import text
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat
+from squiggy.lib.util import camelize, isoformat
 from squiggy.models.asset_category import asset_category_table
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
@@ -52,12 +56,25 @@ class Asset(Base):
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
     asset_type = db.Column('type', assets_type, nullable=False)
+    body = db.Column(db.Text)
+    canvas_assignment_id = db.Column(db.Integer)
+    comment_count = db.Column(db.Integer)
     course_id = db.Column(db.Integer, nullable=False)
+    deleted_at = db.Column(db.DateTime)
     description = db.Column(db.Text)
+    dislikes = db.Column(db.Integer, nullable=False, default=0)
+    download_url = db.Column(db.String(255))
+    image_url = db.Column(db.String(255))
+    likes = db.Column(db.Integer, nullable=False, default=0)
+    mime = db.Column(db.String(255))
+    pdf_url = db.Column(db.String(255))
+    preview_metadata = db.Column(JSON)
+    preview_status = db.Column(db.String(255), nullable=False, default='pending')
     source = db.Column(db.String(255))
     title = db.Column(db.String(255))
     url = db.Column(db.String(255))
-    visible = db.Column(db.Boolean, nullable=False)
+    views = db.Column(db.Integer, nullable=False, default=0)
+    visible = db.Column(db.Boolean, nullable=False, default=True)
     categories = db.relationship(
         'Category',
         secondary=asset_category_table,
@@ -70,16 +87,16 @@ class Asset(Base):
     )
 
     def __init__(
-            self,
-            asset_type,
-            course_id,
-            categories=None,
-            description=None,
-            source=None,
-            title=None,
-            url=None,
-            users=None,
-            visible=True,
+        self,
+        asset_type,
+        course_id,
+        categories=None,
+        description=None,
+        source=None,
+        title=None,
+        url=None,
+        users=None,
+        visible=True,
     ):
         self.asset_type = asset_type
         self.categories = categories or []
@@ -138,6 +155,95 @@ class Asset(Base):
         std_commit()
         return asset
 
+    @classmethod
+    def get_assets(cls, session, sort, offset, limit, filters):
+        params = {
+            'course_id': session.course.id,
+            'user_id': session.user.id,
+            'asset_types': filters.get('asset_type'),
+            'category_id': filters.get('category_id'),
+            'owner_id': filters.get('owner_id'),
+            'section_id': filters.get('section_id'),
+            'offset': offset,
+            'limit': limit,
+        }
+
+        from_clause = """FROM assets a
+            LEFT JOIN asset_categories ac ON a.id = ac.asset_id
+            LEFT JOIN categories c ON c.id = ac.category_id
+            LEFT JOIN asset_users au ON a.id = au.asset_id
+            LEFT JOIN users u ON au.user_id = u.id
+            LEFT JOIN activities act ON a.id = act.asset_id
+                AND act.course_id = :course_id
+                AND act.user_id = :user_id
+                AND act.object_type = 'asset'
+                AND act.type = 'asset_like'"""
+
+        where_clause = _build_where_clause(filters, params)
+
+        order_clause = ''
+        if (sort == 'recent'):
+            order_clause += ' ORDER BY a.id DESC'
+        elif (sort == 'likes'):
+            order_clause += ' ORDER BY a.likes DESC, a.id DESC'
+        elif (sort == 'views'):
+            order_clause += ' ORDER BY a.views DESC, a.id DESC'
+        elif (sort == 'comments'):
+            order_clause += ' ORDER BY a.comment_count DESC, a.id DESC'
+
+        assets_query = text(f"""SELECT DISTINCT ON (a.id, a.likes, a.views, a.comment_count) a.*, act.type AS activity_type
+            {from_clause} {where_clause} {order_clause}
+            LIMIT :limit OFFSET :offset""")
+        assets_result = list(db.session.execute(assets_query, params))
+
+        count_query = text(f'SELECT COUNT(DISTINCT(a.id))::int AS count {from_clause} {where_clause}')
+        count_result = db.session.execute(count_query, params).fetchone()
+        total = (count_result and count_result[0]) or 0
+
+        asset_ids = [r['id'] for r in assets_result]
+
+        users_query = text("""SELECT au.asset_id,
+            u.id, u.canvas_user_id, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name, u.canvas_image
+            FROM users u JOIN asset_users au
+            ON au.user_id = u.id AND au.asset_id = ANY(:asset_ids)
+            ORDER BY au.asset_id""")
+        users_result = db.session.execute(users_query, {'asset_ids': asset_ids})
+
+        def _row_to_json_obj(row):
+            d = dict(row)
+            json_obj = dict()
+            for key in d.keys():
+                if key.endswith('_at'):
+                    json_obj[camelize(key)] = isoformat(d[key])
+                elif isinstance(d[key], dict):
+                    json_obj[camelize(key)] = _row_to_json_obj(d[key])
+                else:
+                    json_obj[camelize(key)] = d[key]
+            return json_obj
+
+        users_by_asset = dict()
+        for asset_id, user_rows in groupby(users_result, lambda r: r['asset_id']):
+            users_by_asset[asset_id] = [_row_to_json_obj(r) for r in user_rows]
+
+        def _row_to_json_asset(row):
+            json_asset = _row_to_json_obj(row)
+
+            # Has the current user liked the asset?
+            json_asset['liked'] = (json_asset['activityType'] == 'asset_like')
+
+            if json_asset['id'] in users_by_asset:
+                json_asset['users'] = users_by_asset[json_asset['id']]
+
+            return json_asset
+
+        results = {
+            'offset': offset,
+            'total': total,
+            'results': [_row_to_json_asset(r) for r in assets_result],
+        }
+
+        return results
+
     def to_api_json(self):
         return {
             'id': self.id,
@@ -153,3 +259,38 @@ class Asset(Base):
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def _build_where_clause(filters, params):
+    where_clause = """WHERE
+        a.deleted_at IS NULL
+        AND a.course_id = :course_id
+        AND a.visible = TRUE
+        AND (c.visible = TRUE OR c.visible IS NULL)"""
+
+    if filters.get('keywords'):
+        where_clause += ' AND (a.title ILIKE :keywords OR a.description ILIKE :keywords)'
+        params['keywords'] = '%' + re.sub(r'\s+', '%', filters['keywords'].strip()) + '%'
+
+    if filters.get('asset_type'):
+        where_clause += ' AND a.type IN(:asset_types)'
+
+    if filters.get('category_id'):
+        where_clause += ' AND c.id = :category_id'
+
+    if filters.get('owner_id'):
+        where_clause += ' AND au.user_id = :owner_id'
+
+    if filters.get('section_id'):
+        where_clause += ' AND (array_position(u.canvas_course_sections, :section_id) > 0)'
+
+    if filters.get('has_comments') is not None:
+        where_clause += (' AND a.comment_count > 0' if filters['has_comments'] else ' AND a.comment_count = 0')
+
+    if filters.get('has_likes') is not None:
+        where_clause += (' AND a.likes > 0' if filters['has_likes'] else ' AND a.likes = 0')
+
+    if filters.get('has_views') is not None:
+        where_clause += (' AND a.views > 0' if filters['has_views'] else ' AND a.views = 0')
+
+    return where_clause

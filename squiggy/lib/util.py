@@ -26,6 +26,15 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from dateutil.tz import tzutc
 
 
+def camelize(string):
+    def lower_then_capitalize():
+        yield str.lower
+        while True:
+            yield str.capitalize
+    string_transform = lower_then_capitalize()
+    return ''.join(next(string_transform)(segment) for segment in string.split('_'))
+
+
 def isoformat(value):
     return value and value.astimezone(tzutc()).isoformat()
 
