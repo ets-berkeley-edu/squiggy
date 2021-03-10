@@ -4,6 +4,9 @@
 .bg-white {
   background-color: white !important;
 }
+.h-100 {
+  height: 100% !important;
+}
 .sr-only {
   position: absolute;
   left: -10000px;

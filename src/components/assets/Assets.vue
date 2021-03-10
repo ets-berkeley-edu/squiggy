@@ -2,12 +2,12 @@
   <div v-if="!loading" id="assets-container">
     <AssetsHeader :categories="categories" :users="users" />
     <v-card class="d-flex flex-wrap" flat tile>
-      <CreateAssetCard />
+      <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
         v-for="(asset, $index) in assets"
         :key="$index"
         :asset="asset"
-        class="ma-3"
+        class="asset-card ma-3"
       />
     </v-card>
     <InfiniteLoading v-if="assets.length < totalAssetCount" spinner="waveDots" @infinite="fetch" />
@@ -40,15 +40,22 @@ export default {
       getCategories().then(data => {
         this.categories = data
         const anchor = this.$route.query.anchor
-        if (anchor && this.$_.size(this.assets)) {
+        const isReturning = anchor && this.$_.size(this.assets)
+
+        const ready = () => {
           this.$ready('Asset Library')
-          this.$announcer.polite(`Back to Asset Library. ${this.totalAssetCount} assets total.`)
-          this.$putFocusNextTick(anchor)
-          this.scrollTo(`#${anchor}`)
+          if (anchor) {
+            this.scrollTo(`#${anchor}`)
+            this.$putFocusNextTick(anchor)
+          }
+          const srAlert = `${isReturning ? 'Returning to Asset Library. ' : ''}${this.totalAssetCount} assets total.`
+          this.$announcer.polite(srAlert)
+        }
+
+        if (isReturning) {
+          ready()
         } else {
-          this.search().then(() => {
-            this.$ready('Asset Library')
-          })
+          this.search().then(ready)
         }
       })
     })
@@ -60,3 +67,10 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.asset-card {
+  height: 270px !important;
+  width: 236px !important;
+}
+</style>

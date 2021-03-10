@@ -27,7 +27,7 @@
           </template>
           <template #append-outer>
             <v-btn
-              id="search"
+              id="search-btn"
               class="mb-2"
               :disabled="isSearching || (!$_.trim(keywords) && !expanded)"
               icon
@@ -43,6 +43,7 @@
       </div>
       <div>
         <v-btn
+          id="manage-assets-btn"
           elevation="2"
           :disabled="isSearching"
           large
@@ -129,7 +130,7 @@
             <div class="d-flex flex-row-reverse">
               <div>
                 <v-btn
-                  id="adv-search-assets-btn"
+                  id="adv-search-btn"
                   color="primary"
                   :disabled="isSearching || (!$_.trim(keywords) && !expanded)"
                   elevation="1"
@@ -139,7 +140,14 @@
                 </v-btn>
               </div>
               <div class="pr-2">
-                <v-btn :disabled="isSearching" elevation="1" @click="toggle">Cancel</v-btn>
+                <v-btn
+                  id="cancel-adv-search-btn"
+                  :disabled="isSearching"
+                  elevation="1"
+                  @click="toggle"
+                >
+                  Cancel
+                </v-btn>
               </div>
             </div>
           </v-col>
