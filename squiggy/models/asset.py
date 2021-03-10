@@ -29,6 +29,7 @@ import re
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
+from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 from squiggy.lib.util import camelize, isoformat
 from squiggy.models.asset_category import asset_category_table
 from squiggy.models.asset_user import asset_user_table
@@ -180,16 +181,7 @@ class Asset(Base):
                 AND act.type = 'asset_like'"""
 
         where_clause = _build_where_clause(filters, params)
-
-        order_clause = ''
-        if (sort == 'recent'):
-            order_clause += ' ORDER BY a.id DESC'
-        elif (sort == 'likes'):
-            order_clause += ' ORDER BY a.likes DESC, a.id DESC'
-        elif (sort == 'views'):
-            order_clause += ' ORDER BY a.views DESC, a.id DESC'
-        elif (sort == 'comments'):
-            order_clause += ' ORDER BY a.comment_count DESC, a.id DESC'
+        order_clause = _build_order_clause(sort)
 
         assets_query = text(f"""SELECT DISTINCT ON (a.id, a.likes, a.views, a.comment_count) a.*, act.type AS activity_type
             {from_clause} {where_clause} {order_clause}
@@ -234,6 +226,11 @@ class Asset(Base):
             if json_asset['id'] in users_by_asset:
                 json_asset['users'] = users_by_asset[json_asset['id']]
 
+            if is_s3_preview_url(json_asset['imageUrl']):
+                json_asset['imageUrl'] = get_s3_signed_url(json_asset['imageUrl'])
+            if is_s3_preview_url(json_asset['thumbnailUrl']):
+                json_asset['thumbnailUrl'] = get_s3_signed_url(json_asset['thumbnailUrl'])
+
             return json_asset
 
         results = {
@@ -259,6 +256,19 @@ class Asset(Base):
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def _build_order_clause(sort):
+    if (sort == 'recent'):
+        return ' ORDER BY a.id DESC'
+    elif (sort == 'likes'):
+        return ' ORDER BY a.likes DESC, a.id DESC'
+    elif (sort == 'views'):
+        return ' ORDER BY a.views DESC, a.id DESC'
+    elif (sort == 'comments'):
+        return ' ORDER BY a.comment_count DESC, a.id DESC'
+    else:
+        return ''
 
 
 def _build_where_clause(filters, params):
