@@ -2,33 +2,42 @@
   <div v-if="!loading">
     <BackToAssetLibrary :anchor="`asset-${asset.id}`" />
 
-    <v-container fluid>
-      <v-row justify="space-between">
-        <v-col md="8">
-          <h2>{{ asset.title }}</h2>
-          <div v-if="asset.description">{{ asset.description }}</div>
-        </v-col>
-        <v-col md="4">
-          <div class="d-flex">
-            <div>
-              <v-btn id="edit-asset-details-btn">
-                <font-awesome-icon icon="pencil-alt" @click="edit" @keypress.enter="edit">Edit Details</font-awesome-icon>
-              </v-btn>
-            </div>
-            <div>
-              <v-btn id="download-asset-btn">
-                <font-awesome-icon icon="download" @click="download" @keypress.enter="download">Download</font-awesome-icon>
-              </v-btn>
-            </div>
-            <div>
-              <v-btn id="delete-asset-btn">
-                <font-awesome-icon icon="trash" @click="deleteAsset" @keypress.enter="deleteAsset">Download</font-awesome-icon>
-              </v-btn>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-    </v-container>
+    <div class="d-flex justify-space-between w-100">
+      <div>
+        <h2>{{ asset.title }}</h2>
+        <div v-if="asset.description">{{ asset.description }}</div>
+      </div>
+      <div class="d-flex align-content-end">
+        <div class="mr-2">
+          <v-btn
+            id="edit-asset-details-btn"
+            class="text-no-wrap"
+            @click="edit"
+            @keypress.enter="edit"
+          >
+            <font-awesome-icon class="mr-2" icon="pencil-alt" />
+            Edit Details
+          </v-btn>
+        </div>
+        <div class="mr-2">
+          <v-btn id="download-asset-btn" @click="download" @keypress.enter="download">
+            <font-awesome-icon class="mr-2" icon="download" />
+            Download
+          </v-btn>
+        </div>
+        <div>
+          <v-btn
+            id="delete-asset-btn"
+            class="mr-3"
+            @click="deleteAsset"
+            @keypress.enter="deleteAsset"
+          >
+            <font-awesome-icon class="mr-2" icon="trash" />
+            Delete
+          </v-btn>
+        </div>
+      </div>
+    </div>
 
     <AssetOverview :asset="asset" />
 
@@ -48,12 +57,13 @@ import AssetComments from '@/components/assets/AssetComments'
 import AssetOverview from '@/components/assets/AssetOverview'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
+import Utils from '@/mixins/Utils'
 import {getAsset} from '@/api/assets'
 
 export default {
   name: 'Asset',
   components: {AssetActivityTimeline, AssetComments, AssetOverview, BackToAssetLibrary},
-  mixins: [Context],
+  mixins: [Context, Utils],
   data: () => ({
     asset: undefined
   }),
@@ -73,6 +83,7 @@ export default {
     },
     edit() {
       this.$announcer.polite(`Edit asset ${this.asset.title}`)
+      this.go(`/asset/${this.asset.id}/edit`)
     }
   }
 }
