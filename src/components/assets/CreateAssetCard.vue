@@ -1,13 +1,14 @@
 <template>
   <v-card class="mb-3" no-gutters>
-    <v-sheet class="fill-height">
-      <v-container class="card-container fill-height px-5 text-center" fluid>
-        <v-row>
-          <v-col cols="18" sm="6">
+    <v-sheet class="h-100">
+      <v-container class="card-container fill-height text-center" fluid>
+        <v-row no-gutters>
+          <v-col class="column-left" cols="18" sm="6">
             <v-btn
+              id="go-upload-asset-btn"
               block
               class="w-100"
-              height="300"
+              height="250"
               @click="go('/asset/upload')"
             >
               <div class="d-flex flex-column">
@@ -20,11 +21,12 @@
               </div>
             </v-btn>
           </v-col>
-          <v-col cols="18" sm="6">
+          <v-col class="column-right" cols="18" sm="6">
             <v-btn
+              id="go-add-link-asset-btn"
               block
               class="w-100"
-              height="300"
+              height="250"
               @click="go('/asset/create')"
             >
               <div class="d-flex flex-column">
@@ -54,7 +56,13 @@ export default {
 
 <style scoped>
 .card-container {
-  min-width: 300px;
   align-content: center;
+  padding: 0 6px 0 6px;
+}
+.column-left {
+  padding: 0 7px 0 4px;
+}
+.column-right {
+  padding: 0 4px 0 7px;
 }
 </style>

@@ -69,6 +69,7 @@
             <div class="d-flex flex-row-reverse">
               <div>
                 <v-btn
+                  id="add-link-btn"
                   color="primary"
                   :disabled="disable"
                   elevation="1"
@@ -78,7 +79,7 @@
                 </v-btn>
               </div>
               <div class="pr-2">
-                <v-btn elevation="1" @click="go('/assets')">Cancel</v-btn>
+                <v-btn id="add-link-cancel-btn" elevation="1" @click="go('/assets')">Cancel</v-btn>
               </div>
             </div>
           </v-col>

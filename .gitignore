@@ -18,6 +18,9 @@ config/*-local.conf
 config/*.pickle
 .env.*.local
 
+# Ignore local SQL scripts
+scripts/db/local
+
 # Local dev
 venv
 .tox/

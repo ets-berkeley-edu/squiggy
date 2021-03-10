@@ -25,7 +25,7 @@
           Email us at <a id="help-mailto" :href="`mailto:${$config.emailAddressSupport}`" target="_blank">{{ $config.emailAddressSupport }}</a>.
         </div>
         <div v-if="!isInIframe" class="pt-4">
-          <v-btn icon @click="$router.push('/', $_.noop)">
+          <v-btn id="return-home-btn" icon @click="$router.push('/', $_.noop)">
             <span class="sr-only">Go home</span>
             <font-awesome-icon icon="home" />
           </v-btn>

@@ -1,7 +1,7 @@
 <template>
-  <v-card :id="`asset-${asset.id}`" @click="go(`/asset/${asset.id}`)">
+  <v-card :id="`asset-${asset.id}`" class="h-100" @click="go(`/asset/${asset.id}`)">
     <v-sheet elevation="1">
-      <v-img :src="asset.thumbnailUrl">
+      <v-img class="thumbnail" :src="thumbnailUrl" @error="imgError">
         <v-card-text class="asset-metadata">
           <div class="mb-3">
             {{ asset.title }}
@@ -12,8 +12,8 @@
         </v-card-text>
       </v-img>
     </v-sheet>
-    <v-card-actions>
-      <div class="align-center d-flex justify-end w-100">
+    <v-card-actions class="actions">
+      <div class="d-flex justify-end w-100">
         <div>
           <div class="align-center d-flex">
             <div class="pr-3">
@@ -46,11 +46,25 @@ export default {
       required: true,
       type: Object
     }
+  },
+  data: () => ({
+    thumbnailUrl: undefined
+  }),
+  created() {
+    this.thumbnailUrl = this.asset.thumbnailUrl || require('@/assets/img-not-found.png')
+  },
+  methods: {
+    imgError() {
+      this.thumbnailUrl = require('@/assets/img-not-found.png')
+    }
   }
 }
 </script>
 
 <style scoped>
+.actions {
+  padding: 6px 12px 4px 0;
+}
 .asset-metadata {
   background-color: #333;
   background-color: rgba(51, 51, 51, 0.9);
@@ -59,12 +73,5 @@ export default {
   left: 0;
   position: absolute;
   right: 0;
-}
-.asset-metadata span {
-  font-size: 14px;
-  font-weight: 400;
-}
-.asset-metadata small {
-  font-size: 13px;
 }
 </style>

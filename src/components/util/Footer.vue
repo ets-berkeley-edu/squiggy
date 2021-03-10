@@ -11,19 +11,19 @@
           </div>
           <div v-if="!isInIframe && $currentUser.isAuthenticated" class="d-flex">
             <div>
-              <v-btn icon @click="go('/')">
+              <v-btn id="go-home-btn" icon @click="go('/')">
                 <span class="sr-only">Go home</span>
                 <font-awesome-icon icon="home" />
               </v-btn>
             </div>
             <div>
-              <v-btn icon @click="go('/assets')">
+              <v-btn id="go-asset-library-btn" icon @click="go('/assets')">
                 <span class="sr-only">Go to Asset Library</span>
                 <font-awesome-icon icon="images" />
               </v-btn>
             </div>
             <div>
-              <v-btn icon @click="go('/engagement')">
+              <v-btn id="go-engagement-index-btn" icon @click="go('/engagement')">
                 <span class="sr-only">Go to Engagement Index</span>
                 <font-awesome-icon icon="list-ol" />
               </v-btn>
@@ -40,7 +40,7 @@
                 |
               </div>
               <div v-if="$currentUser.isAuthenticated">
-                <v-btn icon @click="logOut">
+                <v-btn id="log-out-btn" icon @click="logOut">
                   <span class="sr-only">Log Out</span>
                   <font-awesome-icon icon="sign-out-alt" />
                 </v-btn>
@@ -64,6 +64,7 @@ export default {
   mixins: [Context, Iframe, Utils],
   methods: {
     logOut() {
+      this.$announcer.polite('Logging out')
       getCasLogoutUrl().then(() => window.location.href = '/')
     }
   }
