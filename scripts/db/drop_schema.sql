@@ -75,10 +75,6 @@ ALTER TABLE IF EXISTS ONLY public.asset_users DROP CONSTRAINT IF EXISTS asset_us
 ALTER TABLE IF EXISTS ONLY public.assets DROP CONSTRAINT IF EXISTS assets_pkey;
 ALTER TABLE IF EXISTS public.assets ALTER COLUMN id DROP DEFAULT;
 
-ALTER TABLE IF EXISTS ONLY public.authorized_users DROP CONSTRAINT IF EXISTS authorized_users_pkey;
-ALTER TABLE IF EXISTS ONLY public.authorized_users DROP CONSTRAINT IF EXISTS authorized_users_uid_key;
-ALTER TABLE IF EXISTS public.authorized_users ALTER COLUMN id DROP DEFAULT;
-
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_key_key;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_secret_key;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_pkey;
@@ -119,8 +115,6 @@ DROP TABLE IF EXISTS public.asset_categories;
 DROP TABLE IF EXISTS public.asset_users;
 DROP SEQUENCE IF EXISTS public.assets_id_seq;
 DROP TABLE IF EXISTS public.assets;
-DROP SEQUENCE IF EXISTS public.authorized_users_id_seq;
-DROP TABLE IF EXISTS public.authorized_users;
 DROP TABLE IF EXISTS public.canvas;
 DROP SEQUENCE IF EXISTS public.categories_id_seq;
 DROP TABLE IF EXISTS public.categories;
