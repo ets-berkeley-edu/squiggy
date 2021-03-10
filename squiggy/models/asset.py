@@ -59,7 +59,7 @@ class Asset(Base):
     asset_type = db.Column('type', assets_type, nullable=False)
     body = db.Column(db.Text)
     canvas_assignment_id = db.Column(db.Integer)
-    comment_count = db.Column(db.Integer)
+    comment_count = db.Column(db.Integer, nullable=False, default=0)
     course_id = db.Column(db.Integer, nullable=False)
     deleted_at = db.Column(db.DateTime)
     description = db.Column(db.Text)
@@ -297,7 +297,7 @@ def _build_order_clause(sort):
     elif (sort == 'comments'):
         return ' ORDER BY a.comment_count DESC, a.id DESC'
     else:
-        return ''
+        return ' ORDER BY a.id DESC'
 
 
 def _build_where_clause(filters, params):

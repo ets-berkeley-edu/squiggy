@@ -28,6 +28,7 @@ import json
 import os
 
 from squiggy import std_commit
+from squiggy.lib.login_session import LoginSession
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.course import Course
@@ -130,6 +131,11 @@ def authorized_user_id():
 
 
 @pytest.fixture(scope='function')
+def authorized_user_session(authorized_user_id):
+    return LoginSession(authorized_user_id)
+
+
+@pytest.fixture(scope='function')
 def fake_auth(app, db, client):
     """Shortcut to start an authenticated session."""
     return FakeAuth(app, client)
@@ -144,7 +150,7 @@ def fake_sts(app):
 
 
 @pytest.fixture(scope='function')
-def mock_asset(db):
+def mock_asset(db_session):
     category = Category.create(
         canvas_assignment_name='Just look into her false colored eyes',
         course_id=1,
@@ -164,7 +170,9 @@ def mock_asset(db):
         users=[User.get_users_by_course_id(course_id=course.id)[0]],
     )
     std_commit(allow_test_environment=True)
-    return asset
+    yield asset
+    db_session.delete(asset)
+    std_commit(allow_test_environment=True)
 
 
 @pytest.fixture(scope='function')

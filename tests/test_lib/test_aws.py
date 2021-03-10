@@ -24,45 +24,19 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from datetime import datetime
-import re
-from urllib.parse import parse_qs, urlparse
 
-import boto3
-from flask import current_app as app
+from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 
 
-S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+.s3-us-west-2.amazonaws.com')
+class TestAws:
+    """AWS utility module."""
 
+    def test_identifies_preview_urls(self):
+        assert is_s3_preview_url('https://suitec-preview-images-dev.s3-us-west-2.amazonaws.com/deadd00d')
+        assert is_s3_preview_url('https://suitec-preview-images-qa.s3-us-west-2.amazonaws.com/8675309')
+        assert is_s3_preview_url('https://suitec-preview-images-prod.s3-us-west-2.amazonaws.com/abba1974')
+        assert not is_s3_preview_url('https://xkcd.com/1636/')
 
-def get_s3_signed_url(url):
-    parsed_url = urlparse(url)
-    query_string = parse_qs(parsed_url.query)
-
-    # If we already have a signed URL with at least an hour of life left, that will do.
-    if 'Expires' in query_string and (int(query_string['Expires'][0]) - datetime.utcnow().timestamp()) > 3600:
-        return url
-
-    s3 = _get_s3_client()
-    bucket = re.sub('\..*$', '', parsed_url.hostname)
-    key = re.sub('^/', '', parsed_url.path)
-
-    return s3.generate_presigned_url(
-        ClientMethod='get_object',
-        Params={
-            'Bucket': bucket,
-            'Key': key,
-        },
-        ExpiresIn=3600,
-    )
-
-
-def is_s3_preview_url(url):
-    return url and S3_PREVIEW_URL_PATTERN.match(url)
-
-
-def _get_s3_client():
-    session = boto3.Session(
-        aws_access_key_id=app.config['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=app.config['AWS_SECRET_ACCESS_KEY'],
-    )
-    return session.client('s3')
+    def test_recognizes_valid_presigned_url(self):
+        presigned = f'https://suitec-preview-images-dev.s3-us-west-2.amazonaws.com/deadd00d?Expires={int(datetime.utcnow().timestamp()) + 4000}'
+        assert get_s3_signed_url(presigned) == presigned
