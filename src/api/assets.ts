@@ -1,9 +1,17 @@
 import axios from 'axios'
 import utils from '@/api/api-utils'
 
-export function createLinkAsset(categoryIds, description, title, url) {
+export function updateAsset(assetId, categoryId, description, title) {
+  return axios.post(`${utils.apiBaseUrl()}/api/asset/update`, {
+    categoryId,
+    description,
+    title
+  })
+}
+
+export function createLinkAsset(categoryId, description, title, url) {
   return axios.post(`${utils.apiBaseUrl()}/api/asset/create`, {
-    categoryIds,
+    categoryId,
     description,
     title,
     type: 'link',

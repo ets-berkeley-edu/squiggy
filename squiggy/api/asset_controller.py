@@ -86,27 +86,47 @@ def get_assets():
 def create_asset():
     params = request.get_json()
     asset_type = params.get('type')
-    category_ids = params.get('categoryIds')
+    category_id = params.get('categoryId')
     description = params.get('description')
     source = params.get('source')
     url = params.get('url')
     title = params.get('title', url)
     visible = params.get('visible', True)
     if not asset_type or not title or not url:
-        raise BadRequestError('Asset creation requires category, description, title, and url')
+        raise BadRequestError('Asset creation requires category, title, and url.')
 
     if not current_user.course:
         raise BadRequestError('Course data not found')
 
     asset = Asset.create(
         asset_type=asset_type,
-        categories=Category.get_categories_by_id(category_ids) if category_ids else None,
+        categories=Category.get_categories_by_id([category_id]) if category_id else None,
         course_id=current_user.course.id,
         description=description,
         source=source,
         title=title,
         url=url,
+        users=[User.find_by_id(current_user.get_id())],
         visible=visible,
+    )
+    return tolerant_jsonify(asset.to_api_json())
+
+
+@app.route('/api/asset/update', methods=['POST'])
+@login_required
+def update_asset():
+    params = request.get_json()
+    asset_id = params.get('assetId')
+    category_id = params.get('categoryId')
+    description = params.get('description')
+    title = params.get('title')
+    if not asset_id or not title:
+        raise BadRequestError('Asset creation requires category and title.')
+    asset = Asset.update(
+        asset_id=asset_id,
+        categories=Category.get_categories_by_id([category_id]) if category_id else None,
+        description=description,
+        title=title,
     )
     return tolerant_jsonify(asset.to_api_json())
 

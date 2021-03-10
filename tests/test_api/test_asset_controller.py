@@ -100,7 +100,7 @@ class TestCreateAsset:
             expected_status_code=200,
     ):
         params = {
-            'categoryIds': category and [category.id],
+            'categoryId': category and category.id,
             'description': description,
             'title': title,
             'type': asset_type,
@@ -124,7 +124,7 @@ class TestCreateAsset:
         self._api_create_asset(client, expected_status_code=401)
 
     def test_create_asset(self, client, fake_auth, authorized_user_id):
-        """Returns a well-formed response."""
+        """Authorized user can create an asset."""
         fake_auth.login(authorized_user_id)
         api_json = self._api_create_asset(client)
         assert 'id' in api_json
@@ -142,3 +142,45 @@ class TestCreateAsset:
         assert len(categories) == 1
         assert categories[0]['id'] == mock_category.id
         assert categories[0]['title'] == mock_category.title
+
+
+class TestUpdateAsset:
+    """Update asset API."""
+
+    @staticmethod
+    def _api_update_asset(client, asset, expected_status_code=200):
+        params = {
+            'assetId': asset.id,
+            'categoryId': asset.categories[0].id if len(asset.categories) else None,
+            'description': asset.description,
+            'title': asset.title,
+        }
+        response = client.post(
+            '/api/asset/update',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_update_asset(client, asset=mock_asset, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_asset):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_update_asset(client, asset=mock_asset, expected_status_code=401)
+
+    def test_update_asset(self, authorized_user_id, client, fake_auth, mock_asset, mock_category):
+        """Authorized user can update asset."""
+        fake_auth.login(authorized_user_id)
+        mock_asset.title = "'I'll be your mirror'"
+        mock_asset.description = "'Reflect what you are, in case you don't know'"
+        mock_asset.categories = [mock_category]
+        api_json = self._api_update_asset(client, asset=mock_asset)
+        assert api_json['id'] == mock_asset.id
+        assert len(api_json['categories']) == 1
+        assert api_json['categories'][0]['id'] == mock_category.id
+        assert api_json['description'] == mock_asset.description
+        assert api_json['title'] == mock_asset.title

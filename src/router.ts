@@ -4,6 +4,7 @@ import Asset from '@/components/assets/Asset.vue'
 import Assets from '@/components/assets/Assets.vue'
 import AssetUpload from '@/components/assets/AssetUpload.vue'
 import BaseView from '@/components/BaseView.vue'
+import EditAsset from '@/components/assets/EditAsset.vue'
 import Error from '@/components/Error.vue'
 import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
@@ -68,8 +69,8 @@ const router = new Router({
           }
         },
         {
-          path: '/asset/:id',
-          component: Asset,
+          path: '/asset/:id/edit',
+          component: EditAsset,
           meta: {
             title: 'Asset'
           }

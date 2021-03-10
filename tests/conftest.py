@@ -145,7 +145,13 @@ def fake_sts(app):
 
 @pytest.fixture(scope='function')
 def mock_asset(db):
-    category = mock_category(db)
+    category = Category.create(
+        canvas_assignment_name='Just look into her false colored eyes',
+        course_id=1,
+        title='What a clown',
+        canvas_assignment_id=98765,
+        visible=True,
+    )
     course = Course.query.order_by(Course.name).all()[0]
     unique_token = datetime.now().isoformat()
     asset = Asset.create(
@@ -155,6 +161,7 @@ def mock_asset(db):
         description=None,
         title=f'Mock Asset created at {unique_token}',
         url=f'https://en.wikipedia.org/wiki/{unique_token}',
+        users=[User.get_users_by_course_id(course_id=course.id)[0]],
     )
     std_commit(allow_test_environment=True)
     return asset

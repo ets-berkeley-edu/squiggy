@@ -134,11 +134,11 @@ class Asset(Base):
             asset_type,
             course_id,
             title,
+            users,
             description=None,
             url=None,
             categories=None,
             source=None,
-            users=None,
             visible=True,
     ):
         asset = cls(
@@ -152,6 +152,22 @@ class Asset(Base):
             users=users,
             visible=visible,
         )
+        db.session.add(asset)
+        std_commit()
+        return asset
+
+    @classmethod
+    def update(
+            cls,
+            asset_id,
+            title,
+            categories=None,
+            description=None,
+    ):
+        asset = Asset.find_by_id(asset_id)
+        asset.title = title
+        asset.description = description
+        asset.categories = categories
         db.session.add(asset)
         std_commit()
         return asset

@@ -29,6 +29,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
+              id="asset-title-input"
               v-model="title"
               label="Enter a title"
               maxlength="255"
@@ -43,6 +44,7 @@
           </v-col>
           <v-col cols="6">
             <v-select
+              id="asset-category-select"
               v-model="categoryId"
               :items="categories"
               label="What assignment or topic is this related to"
@@ -58,6 +60,7 @@
           </v-col>
           <v-col cols="6">
             <v-textarea
+              id="asset-description-textarea"
               v-model="description"
               outlined
               placeholder="Add some more context to your link. You can use plain text or #keywords"
@@ -93,8 +96,8 @@
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {getCategories} from '@/api/categories'
 import {createLinkAsset} from '@/api/assets'
+import {getCategories} from '@/api/categories'
 
 export default {
   name: 'AddLinkAsset',
@@ -123,8 +126,7 @@ export default {
   },
   methods: {
     submit() {
-      const categoryIds = this.categoryId && [this.categoryId]
-      createLinkAsset(categoryIds, this.description, this.title, this.url).then(data => {
+      createLinkAsset(this.categoryId, this.description, this.title, this.url).then(data => {
         this.$router.push(`/asset/${data.id}`, this.$_.noop)
       })
     }
