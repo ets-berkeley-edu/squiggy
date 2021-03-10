@@ -32,6 +32,7 @@ from squiggy.api.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
+from squiggy.models.user import User
 
 
 @app.route('/api/asset/<asset_id>')
@@ -42,6 +43,19 @@ def get_asset(asset_id):
         return tolerant_jsonify(asset.to_api_json())
     else:
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
+
+
+@app.route('/api/asset/upload', methods=['POST'])
+@login_required
+def upload():
+    file_upload = _get_upload_from_http_post()
+    asset = Asset.create(
+        asset_type='file',
+        course_id=current_user.course.id,
+        title=file_upload['name'],
+        users=[User.find_by_id(current_user.get_id())],
+    )
+    return tolerant_jsonify(asset.to_api_json())
 
 
 @app.route('/api/assets', methods=['POST'])
@@ -222,4 +236,20 @@ def _hot_100_of_1973():
         {'title': 'It Never Rains in Southern California', 'artist': 'Albert Hammond'},
         {'title': 'The Twelfth of Never', 'artist': 'Donny Osmond'},
         {'title': 'Papa Was a Rollin\' Stone', 'artist': 'The Temptations'},
+    }
+
+
+def _get_upload_from_http_post():
+    request_files = request.files
+    file = request_files.get('file[0]')
+    if not file:
+        raise BadRequestError('request.files is empty')
+
+    filename = file.filename and file.filename.strip()
+    if not filename:
+        raise BadRequestError(f'Invalid file: {filename}')
+
+    return {
+        'name': filename.rsplit('/', 1)[-1],
+        'byte_stream': file.read(),
     }

@@ -22,10 +22,7 @@ export default {
       default: return _.join(_.concat(_.initial(arr), ` and ${_.last(arr)}`), ', ')
       }
     },
-    scrollTo: element => {
-      setTimeout(() => VueScrollTo.scrollTo(element), 1000)
-
-    },
+    scrollTo: element => setTimeout(() => VueScrollTo.scrollTo(element), 1000),
     stripAnchorRef: path => _.split(path, '#', 1)[0],
     validate: (errors, rules, value, messageIfError=null) => {
       // Logic of 'rules' is governed by Vuetify framework: https://vuetifyjs.com/en/components/forms/#rules

@@ -45,3 +45,7 @@ export function getAssets(
     }
   )
 }
+
+export function uploadFile(file) {
+  return utils.postMultipartFormData('/api/asset/upload', {'file[0]': file})
+}
