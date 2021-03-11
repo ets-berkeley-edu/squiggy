@@ -30,7 +30,7 @@ const putFocusNextTick = (id, cssSelector) => {
 Vue.prototype.$_ = _
 Vue.prototype.$loading = () => store.dispatch('context/loadingStart')
 Vue.prototype.$putFocusNextTick = putFocusNextTick
-Vue.prototype.$ready = label => store.dispatch('context/loadingComplete', label)
+Vue.prototype.$ready = (label, focusTarget?) => store.dispatch('context/loadingComplete', {label, focusTarget})
 
 Vue.use(VueAnnouncer)
 Vue.use(VueMoment, {moment})

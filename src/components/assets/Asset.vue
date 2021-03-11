@@ -26,15 +26,46 @@
           </v-btn>
         </div>
         <div>
-          <v-btn
-            id="delete-asset-btn"
-            class="mr-3"
-            @click="deleteAsset"
-            @keypress.enter="deleteAsset"
-          >
-            <font-awesome-icon class="mr-2" icon="trash" />
-            Delete
-          </v-btn>
+          <v-dialog v-model="dialogConfirmDelete" width="500">
+            <template #activator="{}">
+              <v-btn
+                id="delete-asset-btn"
+                class="mr-3"
+                @click="confirmDelete"
+                @keypress.enter="confirmDelete"
+              >
+                <font-awesome-icon class="mr-2" icon="trash" />
+                Delete
+              </v-btn>
+            </template>
+            <v-card>
+              <v-card-title id="delete-dialog-title" tabindex="-1">Delete Asset?</v-card-title>
+              <v-card-text>
+                Are you sure you want to delete <span class="font-weight-bold">{{ asset.title }}</span>?
+              </v-card-text>
+              <v-divider />
+              <v-card-actions>
+                <v-spacer />
+                <div class="d-flex flex-row-reverse">
+                  <v-btn
+                    id="confirm-delete-btn"
+                    color="primary"
+                    text
+                    @click="deleteConfirmed"
+                  >
+                    Confirm
+                  </v-btn>
+                  <v-btn
+                    id="cancel-delete-btn"
+                    text
+                    @click="cancelDelete"
+                  >
+                    Cancel
+                  </v-btn>
+                </div>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </div>
       </div>
     </div>
@@ -58,25 +89,41 @@ import AssetOverview from '@/components/assets/AssetOverview'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {getAsset} from '@/api/assets'
+import {deleteAsset, getAsset} from '@/api/assets'
 
 export default {
   name: 'Asset',
   components: {AssetActivityTimeline, AssetComments, AssetOverview, BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
-    asset: undefined
+    asset: undefined,
+    dialogConfirmDelete: undefined
   }),
   created() {
     this.$loading()
     getAsset(this.$route.params.id).then(data => {
       this.asset = data
       this.$ready(this.asset.title)
+      // this.$putFocusNextTick('asset-title')
     })
   },
   methods: {
-    deleteAsset() {
-      this.$announcer.polite(`Confirm delete asset ${this.asset.title}`)
+    cancelDelete() {
+      this.dialogConfirmDelete = false
+      this.$announcer.polite('Canceled')
+      this.$putFocusNextTick('asset-title')
+    },
+    confirmDelete() {
+      this.dialogConfirmDelete = true
+      this.$announcer.polite('Confirm delete')
+      this.$putFocusNextTick('delete-dialog-title')
+    },
+    deleteConfirmed() {
+      this.dialogConfirmDelete = false
+      deleteAsset(this.asset.id).then(() => {
+        this.$announcer.polite('Deleted')
+        this.go('/assets', {m: `Asset '${this.asset.title}' deleted.`})
+      })
     },
     download() {
       this.$announcer.polite(`Downloading asset ${this.asset.title}`)

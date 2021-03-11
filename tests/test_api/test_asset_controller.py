@@ -25,10 +25,44 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
+from squiggy import std_commit
 from squiggy.lib.util import is_instructor
 from squiggy.models.course import Course
 
 unauthorized_user_id = '666'
+
+
+class TestGetAsset:
+    """Asset API."""
+
+    @staticmethod
+    def _api_asset(asset_id, client, expected_status_code=200):
+        response = client.get(f'/api/asset/{asset_id}')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_asset(asset_id=1, client=client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_asset):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_asset(asset_id=1, client=client, expected_status_code=401)
+
+    def test_owner_view_asset(self, client, fake_auth, mock_asset, mock_category):
+        """Authorized user can view asset."""
+        fake_auth.login(mock_asset.users[0].id)
+        asset = self._api_asset(asset_id=mock_asset.id, client=client)
+        assert asset['id'] == mock_asset.id
+
+    def test_teacher_view_asset(self, client, fake_auth, mock_asset):
+        """Authorized user can view asset."""
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        fake_auth.login(instructors[0].id)
+        asset = self._api_asset(asset_id=mock_asset.id, client=client)
+        assert asset['id'] == mock_asset.id
 
 
 class TestGetAssets:
@@ -197,3 +231,39 @@ class TestUpdateAsset:
         assert api_json['categories'][0]['id'] == mock_category.id
         assert api_json['description'] == mock_asset.description
         assert api_json['title'] == mock_asset.title
+
+
+class TestDeleteAsset:
+    """Delete asset API."""
+
+    @staticmethod
+    def _api_delete_asset(asset_id, client, expected_status_code=200):
+        response = client.delete(f'/api/asset/{asset_id}/delete')
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_delete_asset(asset_id=1, client=client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_asset):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_delete_asset(asset_id=1, client=client, expected_status_code=401)
+
+    def test_delete_asset_by_owner(self, client, fake_auth, mock_asset, mock_category):
+        """Authorized user can delete asset."""
+        fake_auth.login(mock_asset.users[0].id)
+        self._verify_delete_asset(mock_asset.id, client)
+
+    def test_delete_asset_by_teacher(self, client, fake_auth, mock_asset, mock_category):
+        """Authorized user can delete asset."""
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        fake_auth.login(instructors[0].id)
+        self._verify_delete_asset(mock_asset.id, client)
+
+    def _verify_delete_asset(self, asset_id, client):
+        self._api_delete_asset(asset_id=asset_id, client=client)
+        std_commit(allow_test_environment=True)
+        response = client.get(f'/api/asset/{asset_id}')
+        assert response.status_code == 404

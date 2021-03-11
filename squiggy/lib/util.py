@@ -23,7 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from datetime import datetime
+
 from dateutil.tz import tzutc
+import pytz
 
 
 def camelize(string):
@@ -33,6 +36,11 @@ def camelize(string):
             yield str.capitalize
     string_transform = lower_then_capitalize()
     return ''.join(next(string_transform)(segment) for segment in string.split('_'))
+
+
+def is_instructor(user):
+    role = user.canvas_course_role.lower()
+    return 'instructor' in role or 'teacher' in role
 
 
 def isoformat(value):
@@ -46,6 +54,5 @@ def to_int(s):
         return None
 
 
-def is_instructor(user):
-    role = user.canvas_course_role.lower()
-    return 'instructor' in role or 'teacher' in role
+def utc_now():
+    return datetime.utcnow().replace(tzinfo=pytz.utc)

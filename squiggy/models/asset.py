@@ -30,7 +30,7 @@ from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
-from squiggy.lib.util import camelize, isoformat
+from squiggy.lib.util import camelize, isoformat, utc_now
 from squiggy.models.asset_category import asset_category_table
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
@@ -126,7 +126,7 @@ class Asset(Base):
 
     @classmethod
     def find_by_id(cls, asset_id):
-        return cls.query.filter_by(id=asset_id).first()
+        return cls.query.filter_by(id=asset_id, deleted_at=None).first()
 
     @classmethod
     def create(
@@ -155,6 +155,13 @@ class Asset(Base):
         db.session.add(asset)
         std_commit()
         return asset
+
+    @classmethod
+    def delete(cls, asset_id):
+        asset = cls.find_by_id(asset_id)
+        if asset:
+            asset.deleted_at = utc_now()
+            std_commit()
 
     @classmethod
     def update(
