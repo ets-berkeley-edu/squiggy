@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from datetime import datetime
 import json
 import os
+import random
 
 from squiggy import std_commit
 from squiggy.lib.login_session import LoginSession
@@ -159,6 +160,16 @@ def mock_asset(db_session):
         visible=True,
     )
     course = Course.query.order_by(Course.name).all()[0]
+    canvas_user_id = str(random.randint(1000000, 9999999))
+    user = User.create(
+        course_id=course.id,
+        canvas_user_id=canvas_user_id,
+        canvas_course_role='Student',
+        canvas_enrollment_state='active',
+        canvas_full_name=f'Student {canvas_user_id}',
+        canvas_email=f'{canvas_user_id}@berkeley.edu',
+        canvas_course_sections=[],
+    )
     unique_token = datetime.now().isoformat()
     asset = Asset.create(
         asset_type='link',
@@ -167,8 +178,9 @@ def mock_asset(db_session):
         description=None,
         title=f'Mock Asset created at {unique_token}',
         url=f'https://en.wikipedia.org/wiki/{unique_token}',
-        users=[User.get_users_by_course_id(course_id=course.id)[0]],
+        users=[user],
     )
+
     std_commit(allow_test_environment=True)
     yield asset
     db_session.delete(asset)

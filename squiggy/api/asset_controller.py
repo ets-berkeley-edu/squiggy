@@ -27,6 +27,7 @@ import json
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
+from squiggy.api.api_util import can_update_asset, can_view_asset
 from squiggy.api.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
@@ -38,7 +39,7 @@ from squiggy.models.user import User
 @login_required
 def get_asset(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
-    if asset:
+    if asset and can_view_asset(asset=asset, user=current_user):
         return tolerant_jsonify(asset.to_api_json())
     else:
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
@@ -118,8 +119,11 @@ def update_asset():
     category_id = params.get('categoryId')
     description = params.get('description')
     title = params.get('title')
-    if not asset_id or not title:
-        raise BadRequestError('Asset creation requires category and title.')
+    asset = Asset.find_by_id(asset_id) if asset_id else None
+    if not asset or not title:
+        raise BadRequestError('Asset update requires a valid ID and title.')
+    if not can_update_asset(asset=asset, user=current_user):
+        raise BadRequestError('To update an asset you must (1) own it or (2) be a teacher in the course.')
     asset = Asset.update(
         asset_id=asset_id,
         categories=Category.get_categories_by_id([category_id]) if category_id else None,

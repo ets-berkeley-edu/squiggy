@@ -25,6 +25,9 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
+from squiggy.lib.util import is_instructor
+from squiggy.models.course import Course
+
 unauthorized_user_id = '666'
 
 
@@ -172,9 +175,19 @@ class TestUpdateAsset:
         fake_auth.login(unauthorized_user_id)
         self._api_update_asset(client, asset=mock_asset, expected_status_code=401)
 
-    def test_update_asset(self, authorized_user_id, client, fake_auth, mock_asset, mock_category):
+    def test_update_asset_by_owner(self, client, fake_auth, mock_asset, mock_category):
         """Authorized user can update asset."""
-        fake_auth.login(authorized_user_id)
+        fake_auth.login(mock_asset.users[0].id)
+        self._verify_update_asset(client, mock_asset, mock_category)
+
+    def test_update_asset_by_teacher(self, client, fake_auth, mock_asset, mock_category):
+        """Authorized user can update asset."""
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        fake_auth.login(instructors[0].id)
+        self._verify_update_asset(client, mock_asset, mock_category)
+
+    def _verify_update_asset(self, client, mock_asset, mock_category):
         mock_asset.title = "'I'll be your mirror'"
         mock_asset.description = "'Reflect what you are, in case you don't know'"
         mock_asset.categories = [mock_category]
