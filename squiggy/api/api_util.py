@@ -23,29 +23,14 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from dateutil.tz import tzutc
+from squiggy.lib.util import is_instructor
 
 
-def camelize(string):
-    def lower_then_capitalize():
-        yield str.lower
-        while True:
-            yield str.capitalize
-    string_transform = lower_then_capitalize()
-    return ''.join(next(string_transform)(segment) for segment in string.split('_'))
+def can_update_asset(user, asset):
+    user_id = user.id if hasattr(user, 'id') else user.user_id
+    user_ids = [user.id for user in asset.users]
+    return user.course.id == asset.course_id and (is_instructor(user) or user_id in user_ids)
 
 
-def isoformat(value):
-    return value and value.astimezone(tzutc()).isoformat()
-
-
-def to_int(s):
-    try:
-        return int(s)
-    except (TypeError, ValueError):
-        return None
-
-
-def is_instructor(user):
-    role = user.canvas_course_role.lower()
-    return 'instructor' in role or 'teacher' in role
+def can_view_asset(user, asset):
+    return user.course.id == asset.course_id

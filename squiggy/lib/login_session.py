@@ -39,6 +39,10 @@ class LoginSession:
         return self.user_id
 
     @property
+    def canvas_course_role(self):
+        return self.user and self.user.canvas_course_role
+
+    @property
     def is_active(self):
         return self.is_authenticated
 

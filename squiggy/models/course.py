@@ -83,6 +83,10 @@ class Course(Base):
                 """
 
     @classmethod
+    def find_by_id(cls, course_id):
+        return cls.query.filter_by(id=course_id).first()
+
+    @classmethod
     def find_by_canvas_course_id(cls, canvas_api_domain, canvas_course_id):
         return cls.query.filter_by(canvas_api_domain=canvas_api_domain, canvas_course_id=canvas_course_id).first()
 
