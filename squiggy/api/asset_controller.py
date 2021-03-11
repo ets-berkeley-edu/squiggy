@@ -61,8 +61,6 @@ def upload():
 @login_required
 def get_assets():
     params = request.get_json()
-    app.logger.info('ARHD')
-    app.logger.info(request.args)
     sort = _get(request.args, 'sort', None)
     offset = params.get('offset')
     limit = params.get('limit')
