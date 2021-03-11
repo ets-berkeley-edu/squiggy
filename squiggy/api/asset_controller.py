@@ -23,16 +23,39 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from datetime import datetime
 import json
+import re
 
-from flask import current_app as app, request
+from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_asset, can_view_asset
 from squiggy.api.errors import BadRequestError, ResourceNotFoundError
+from squiggy.lib.aws import stream_object
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.user import User
+
+
+@app.route('/api/asset/<asset_id>/download')
+@login_required
+def download(asset_id):
+    asset = Asset.find_by_id(asset_id)
+    s3_url = asset.download_url
+    if asset and s3_url and can_view_asset(current_user, asset):
+        stream = stream_object(s3_url)
+        if stream:
+            now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            name = re.sub(r'[^a-zA-Z0-9]', '_', asset.title)
+            extension = s3_url.rsplit('.', 1)[-1]
+            return Response(
+                stream,
+                headers={
+                    'Content-disposition': f'attachment; filename="{name}_{now}.{extension}"',
+                },
+            )
+    raise ResourceNotFoundError(f'Asset {asset_id} not found.')
 
 
 @app.route('/api/asset/<asset_id>')

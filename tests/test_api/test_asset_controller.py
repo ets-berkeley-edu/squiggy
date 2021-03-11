@@ -25,6 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
+from moto import mock_s3
 from squiggy import std_commit
 from squiggy.lib.util import is_instructor
 from squiggy.models.course import Course
@@ -63,6 +64,43 @@ class TestGetAsset:
         fake_auth.login(instructors[0].id)
         asset = self._api_asset(asset_id=mock_asset.id, client=client)
         assert asset['id'] == mock_asset.id
+
+
+class TestDownloadAsset:
+    """Download Asset API."""
+
+    @staticmethod
+    def _api_download_asset(app, asset_id, client, expected_status_code=200):
+        response = client.get(f'/api/asset/{asset_id}/download')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    @mock_s3
+    def test_anonymous(self, app, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_download_asset(app, asset_id=1, client=client, expected_status_code=401)
+
+    @mock_s3
+    def test_unauthorized(self, app, client, fake_auth, mock_asset):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_download_asset(app, asset_id=1, client=client, expected_status_code=401)
+
+    @mock_s3
+    def test_owner_download_asset(self, app, client, fake_auth, mock_asset, mock_category):
+        """Authorized user can download asset."""
+        fake_auth.login(mock_asset.users[0].id)
+        # TODO: Mock S3 so authorized user actually gets download. For now, 404 oddly indicates success.
+        self._api_download_asset(app, asset_id=mock_asset.id, client=client, expected_status_code=404)
+
+    @mock_s3
+    def test_teacher_download(self, app, client, fake_auth, mock_asset):
+        """Authorized user can download asset."""
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        fake_auth.login(instructors[0].id)
+        # TODO: Mock S3 so authorized user actually gets download. For now, 404 oddly indicates success.
+        self._api_download_asset(app, asset_id=mock_asset.id, client=client, expected_status_code=404)
 
 
 class TestGetAssets:

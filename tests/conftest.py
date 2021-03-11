@@ -151,7 +151,7 @@ def fake_sts(app):
 
 
 @pytest.fixture(scope='function')
-def mock_asset(db_session):
+def mock_asset(app, db_session):
     category = Category.create(
         canvas_assignment_name='Just look into her false colored eyes',
         course_id=1,
@@ -176,6 +176,7 @@ def mock_asset(db_session):
         categories=[category],
         course_id=course.id,
         description=None,
+        download_url=f"s3://{app.config['AWS_S3_BUCKET_FOR_ASSETS']}/asset/{course.id}_{canvas_user_id}_{unique_token}.pdf",
         title=f'Mock Asset created at {unique_token}',
         url=f'https://en.wikipedia.org/wiki/{unique_token}',
         users=[user],

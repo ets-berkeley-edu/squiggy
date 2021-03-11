@@ -12,56 +12,56 @@
         Back to Asset
       </v-btn>
     </div>
-    <div>
-      Edit details
+    <div class="ma-3">
+      <h2>Edit details</h2>
+      <v-container>
+        <v-row>
+          <v-col>
+            <v-img :src="imageUrl" width="50" />
+          </v-col>
+          <v-col>
+            <div>
+              Title
+            </div>
+            <div>
+              <v-text-field
+                id="asset-title-input"
+                v-model="title"
+                label="Enter a title"
+                maxlength="255"
+                outlined
+                @keydown.enter="submit"
+              />
+            </div>
+            <div>
+              Category
+            </div>
+            <div>
+              <v-select
+                id="asset-category-select"
+                v-model="categoryId"
+                :items="categories"
+                label="What assignment or topic is this related to"
+                item-text="title"
+                item-value="id"
+                outlined
+              />
+            </div>
+            <div>
+              Description
+            </div>
+            <div>
+              <v-textarea
+                id="asset-description-textarea"
+                v-model="description"
+                outlined
+                placeholder="Add some more context to your link. You can use plain text or #keywords"
+              />
+            </div>
+          </v-col>
+        </v-row>
+      </v-container>
     </div>
-    <v-container>
-      <v-row>
-        <v-col>
-          <v-img :src="imageUrl" width="50" />
-        </v-col>
-        <v-col>
-          <div>
-            Title
-          </div>
-          <div>
-            <v-text-field
-              id="asset-title-input"
-              v-model="title"
-              label="Enter a title"
-              maxlength="255"
-              outlined
-              @keydown.enter="submit"
-            />
-          </div>
-          <div>
-            Category
-          </div>
-          <div>
-            <v-select
-              id="asset-category-select"
-              v-model="categoryId"
-              :items="categories"
-              label="What assignment or topic is this related to"
-              item-text="title"
-              item-value="id"
-              outlined
-            />
-          </div>
-          <div>
-            Description
-          </div>
-          <div>
-            <v-textarea
-              id="asset-description-textarea"
-              v-model="description"
-              outlined
-              placeholder="Add some more context to your link. You can use plain text or #keywords"
-            />
-          </div>
-        </v-col>
-      </v-row>
-    </v-container>
   </div>
 </template>
 

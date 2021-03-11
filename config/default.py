@@ -28,6 +28,8 @@ import os
 
 AWS_ACCESS_KEY_ID = 'some id'
 AWS_SECRET_ACCESS_KEY = 'some secret'
+AWS_S3_BUCKET_FOR_ASSETS = None
+AWS_S3_REGION = 'us-west-2'
 
 # Base directory for the application (one level up from this config file).
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
