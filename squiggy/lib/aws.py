@@ -29,6 +29,7 @@ from urllib.parse import parse_qs, urlparse
 
 import boto3
 from flask import current_app as app
+import smart_open
 
 
 S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+.s3-us-west-2.amazonaws.com')
@@ -56,13 +57,25 @@ def get_s3_signed_url(url):
     )
 
 
+def stream_object(s3_url):
+    try:
+        return smart_open.open(s3_url, 'rb', transport_params={'session': _get_session()})
+    except Exception as e:
+        app.logger.error(f'S3 stream operation failed (s3_url={s3_url})')
+        app.logger.exception(e)
+        return None
+
+
 def is_s3_preview_url(url):
     return url and S3_PREVIEW_URL_PATTERN.match(url)
 
 
 def _get_s3_client():
-    session = boto3.Session(
+    return _get_session().client('s3')
+
+
+def _get_session():
+    return boto3.Session(
         aws_access_key_id=app.config['AWS_ACCESS_KEY_ID'],
         aws_secret_access_key=app.config['AWS_SECRET_ACCESS_KEY'],
     )
-    return session.client('s3')

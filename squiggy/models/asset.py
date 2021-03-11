@@ -93,6 +93,7 @@ class Asset(Base):
         course_id,
         categories=None,
         description=None,
+        download_url=None,
         source=None,
         title=None,
         url=None,
@@ -103,6 +104,7 @@ class Asset(Base):
         self.categories = categories or []
         self.course_id = course_id
         self.description = description
+        self.download_url = download_url
         self.source = source
         self.title = title
         self.url = url
@@ -135,10 +137,11 @@ class Asset(Base):
             course_id,
             title,
             users,
-            description=None,
-            url=None,
             categories=None,
+            description=None,
+            download_url=None,
             source=None,
+            url=None,
             visible=True,
     ):
         asset = cls(
@@ -146,6 +149,7 @@ class Asset(Base):
             categories=categories,
             course_id=course_id,
             description=description,
+            download_url=download_url,
             source=source,
             title=title,
             url=url,

@@ -2,73 +2,7 @@
   <div v-if="!loading">
     <BackToAssetLibrary :anchor="`asset-${asset.id}`" />
 
-    <div class="d-flex justify-space-between w-100">
-      <div>
-        <h2>{{ asset.title }}</h2>
-        <div v-if="asset.description">{{ asset.description }}</div>
-      </div>
-      <div class="d-flex align-content-end">
-        <div class="mr-2">
-          <v-btn
-            id="edit-asset-details-btn"
-            class="text-no-wrap"
-            @click="edit"
-            @keypress.enter="edit"
-          >
-            <font-awesome-icon class="mr-2" icon="pencil-alt" />
-            Edit Details
-          </v-btn>
-        </div>
-        <div class="mr-2">
-          <v-btn id="download-asset-btn" @click="download" @keypress.enter="download">
-            <font-awesome-icon class="mr-2" icon="download" />
-            Download
-          </v-btn>
-        </div>
-        <div>
-          <v-dialog v-model="dialogConfirmDelete" width="500">
-            <template #activator="{}">
-              <v-btn
-                id="delete-asset-btn"
-                class="mr-3"
-                @click="confirmDelete"
-                @keypress.enter="confirmDelete"
-              >
-                <font-awesome-icon class="mr-2" icon="trash" />
-                Delete
-              </v-btn>
-            </template>
-            <v-card>
-              <v-card-title id="delete-dialog-title" tabindex="-1">Delete Asset?</v-card-title>
-              <v-card-text>
-                Are you sure you want to delete <span class="font-weight-bold">{{ asset.title }}</span>?
-              </v-card-text>
-              <v-divider />
-              <v-card-actions>
-                <v-spacer />
-                <div class="d-flex flex-row-reverse">
-                  <v-btn
-                    id="confirm-delete-btn"
-                    color="primary"
-                    text
-                    @click="deleteConfirmed"
-                  >
-                    Confirm
-                  </v-btn>
-                  <v-btn
-                    id="cancel-delete-btn"
-                    text
-                    @click="cancelDelete"
-                  >
-                    Cancel
-                  </v-btn>
-                </div>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-        </div>
-      </div>
-    </div>
+    <AssetPageHeader :asset="asset" />
 
     <AssetOverview :asset="asset" />
 
@@ -86,52 +20,25 @@
 import AssetActivityTimeline from '@/components/assets/AssetActivityTimeline'
 import AssetComments from '@/components/assets/AssetComments'
 import AssetOverview from '@/components/assets/AssetOverview'
+import AssetPageHeader from '@/components/assets/AssetPageHeader'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {deleteAsset, getAsset} from '@/api/assets'
+import {getAsset} from '@/api/assets'
 
 export default {
   name: 'Asset',
-  components: {AssetActivityTimeline, AssetComments, AssetOverview, BackToAssetLibrary},
+  components: {AssetActivityTimeline, AssetComments, AssetOverview, AssetPageHeader, BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
-    asset: undefined,
-    dialogConfirmDelete: undefined
+    asset: undefined
   }),
   created() {
     this.$loading()
     getAsset(this.$route.params.id).then(data => {
       this.asset = data
       this.$ready(this.asset.title)
-      // this.$putFocusNextTick('asset-title')
     })
-  },
-  methods: {
-    cancelDelete() {
-      this.dialogConfirmDelete = false
-      this.$announcer.polite('Canceled')
-      this.$putFocusNextTick('asset-title')
-    },
-    confirmDelete() {
-      this.dialogConfirmDelete = true
-      this.$announcer.polite('Confirm delete')
-      this.$putFocusNextTick('delete-dialog-title')
-    },
-    deleteConfirmed() {
-      this.dialogConfirmDelete = false
-      deleteAsset(this.asset.id).then(() => {
-        this.$announcer.polite('Deleted')
-        this.go('/assets', {m: `Asset '${this.asset.title}' deleted.`})
-      })
-    },
-    download() {
-      this.$announcer.polite(`Downloading asset ${this.asset.title}`)
-    },
-    edit() {
-      this.$announcer.polite(`Edit asset ${this.asset.title}`)
-      this.go(`/asset/${this.asset.id}/edit`)
-    }
   }
 }
 </script>
