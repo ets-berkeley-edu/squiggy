@@ -20,6 +20,10 @@ export function createLinkAsset(categoryId, description, title, url) {
   })
 }
 
+export function deleteAsset(assetId) {
+  return axios.delete(`${utils.apiBaseUrl()}/api/asset/${assetId}/delete`)
+}
+
 export function getAsset(assetId) {
   return axios.get(`${utils.apiBaseUrl()}/api/asset/${assetId}`)
 }

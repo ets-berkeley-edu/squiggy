@@ -111,6 +111,18 @@ def create_asset():
     return tolerant_jsonify(asset.to_api_json())
 
 
+@app.route('/api/asset/<asset_id>/delete', methods=['DELETE'])
+@login_required
+def delete_asset(asset_id):
+    asset = Asset.find_by_id(asset_id) if asset_id else None
+    if not asset:
+        raise ResourceNotFoundError('Asset not found.')
+    if not can_update_asset(asset=asset, user=current_user):
+        raise BadRequestError('To delete this asset you must own it or be a teacher in the course.')
+    Asset.delete(asset_id=asset_id)
+    return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
+
+
 @app.route('/api/asset/update', methods=['POST'])
 @login_required
 def update_asset():
