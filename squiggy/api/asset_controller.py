@@ -123,7 +123,7 @@ def update_asset():
     if not asset or not title:
         raise BadRequestError('Asset update requires a valid ID and title.')
     if not can_update_asset(asset=asset, user=current_user):
-        raise BadRequestError('To update an asset you must (1) own it or (2) be a teacher in the course.')
+        raise BadRequestError('To update an asset you must own it or be a teacher in the course.')
     asset = Asset.update(
         asset_id=asset_id,
         categories=Category.get_categories_by_id([category_id]) if category_id else None,
