@@ -13,54 +13,65 @@
       </v-btn>
     </div>
     <div class="ma-3">
-      <h2>Edit details</h2>
-      <v-container>
-        <v-row>
-          <v-col>
-            <v-img :src="imageUrl" width="50" />
-          </v-col>
-          <v-col>
-            <div>
-              Title
-            </div>
+      <div class="py-2">
+        <h2>Edit details</h2>
+      </div>
+      <v-card class="pa-3" outlined>
+        <v-list-item>
+          <v-list-item-avatar class="align-self-start pa-3" size="320" tile>
+            <v-img alt="Image preview of the asset" :src="imageUrl" @error="imgError" />
+          </v-list-item-avatar>
+          <v-list-item-content>
             <div>
               <v-text-field
                 id="asset-title-input"
                 v-model="title"
-                label="Enter a title"
+                label="Title"
                 maxlength="255"
                 outlined
                 @keydown.enter="submit"
               />
             </div>
             <div>
-              Category
-            </div>
-            <div>
               <v-select
                 id="asset-category-select"
-                v-model="categoryId"
+                v-model="category"
                 :items="categories"
-                label="What assignment or topic is this related to"
+                label="Category"
                 item-text="title"
                 item-value="id"
                 outlined
               />
             </div>
             <div>
-              Description
-            </div>
-            <div>
               <v-textarea
                 id="asset-description-textarea"
                 v-model="description"
+                auto-grow
                 outlined
-                placeholder="Add some more context to your link. You can use plain text or #keywords"
+                placeholder="Description"
               />
             </div>
-          </v-col>
-        </v-row>
-      </v-container>
+          </v-list-item-content>
+        </v-list-item>
+        <v-card-actions>
+          <v-spacer />
+          <div class="d-flex flex-row-reverse">
+            <v-btn
+              id="confirm-delete-btn"
+              class="mr-2"
+              color="primary"
+              :disabled="!$_.trim(title)"
+              @click="submit"
+            >
+              Save
+            </v-btn>
+            <v-btn id="cancel-delete-btn" class="mr-2" @click="cancel">
+              Cancel
+            </v-btn>
+          </div>
+        </v-card-actions>
+      </v-card>
     </div>
   </div>
 </template>
@@ -77,7 +88,7 @@ export default {
   data: () => ({
     assetId: undefined,
     categories: undefined,
-    categoryId: undefined,
+    category: undefined,
     description: undefined,
     imageUrl: undefined,
     title: undefined,
@@ -89,7 +100,7 @@ export default {
       this.assetId = data.id
       this.title = data.title
       this.description = data.description
-      this.categoryId = data.categories.length ? data.categories[0] : null
+      this.category = data.categories.length ? data.categories[0] : null
       this.imageUrl = data.imageUrl || require('@/assets/img-not-found.png')
       getCategories().then(data => {
         this.categories = data
@@ -98,14 +109,21 @@ export default {
     })
   },
   methods: {
-    submit() {
-      updateAsset(this.assetId, this.categoryId, this.description, this.title).then(data => {
-        this.$announcer.polite(`${this.title} updated`)
-        this.go(`/asset/${data.id}`)
-      })
+    cancel() {
+      this.$announcer.polite('Canceled')
+      this.go(`/asset/${this.assetId}`)
     },
     goBack() {
       this.go( `/asset/${this.assetId}`)
+    },
+    imgError() {
+      this.imageUrl = require('@/assets/img-not-found.png')
+    },
+    submit() {
+      updateAsset(this.assetId, this.category.id, this.description, this.title).then(data => {
+        this.$announcer.polite(`${data.title} updated`)
+        this.go(`/asset/${this.assetId}`)
+      })
     }
   }
 }

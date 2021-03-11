@@ -9,7 +9,6 @@
         <v-btn
           id="edit-asset-details-btn"
           class="text-no-wrap"
-          :disabled="disableButtons"
           @click="edit"
           @keypress.enter="edit"
         >
@@ -18,11 +17,7 @@
         </v-btn>
       </div>
       <div class="mr-2">
-        <v-btn
-          id="download-asset-btn"
-          :disabled="disableButtons"
-          :href="downloadUrl"
-        >
+        <v-btn id="download-asset-btn" :href="downloadUrl">
           <font-awesome-icon class="mr-2" icon="download" />
           Download
         </v-btn>
@@ -33,7 +28,6 @@
             <v-btn
               id="delete-asset-btn"
               class="mr-3"
-              :disabled="disableButtons"
               @click="confirmDelete"
               @keypress.enter="confirmDelete"
             >
@@ -53,7 +47,6 @@
                 <v-btn
                   id="confirm-delete-btn"
                   color="primary"
-                  :disabled="disableButtons"
                   text
                   @click="deleteConfirmed"
                 >
@@ -61,7 +54,6 @@
                 </v-btn>
                 <v-btn
                   id="cancel-delete-btn"
-                  :disabled="disableButtons"
                   text
                   @click="cancelDelete"
                 >
@@ -91,7 +83,6 @@ export default {
   },
   data: () => ({
     dialogConfirmDelete: undefined,
-    disableButtons: false,
     downloadUrl: undefined
   }),
   created() {
