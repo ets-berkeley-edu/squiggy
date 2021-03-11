@@ -99,8 +99,8 @@ export default {
   },
   methods: {
     submit() {
-      updateAsset(this.categoryId, this.description, this.title).then(data => {
-        this.$announcer(`${this.title} updated`)
+      updateAsset(this.assetId, this.categoryId, this.description, this.title).then(data => {
+        this.$announcer.polite(`${this.title} updated`)
         this.go(`/asset/${data.id}`)
       })
     },

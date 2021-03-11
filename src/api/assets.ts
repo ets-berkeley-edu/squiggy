@@ -3,6 +3,7 @@ import utils from '@/api/api-utils'
 
 export function updateAsset(assetId, categoryId, description, title) {
   return axios.post(`${utils.apiBaseUrl()}/api/asset/update`, {
+    assetId,
     categoryId,
     description,
     title
