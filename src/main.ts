@@ -7,6 +7,7 @@ import App from './App.vue'
 import store from './store'
 import Vue from 'vue'
 import VueAnnouncer from '@vue-a11y/announcer'
+import VueKinesis from 'vue-kinesis'
 import VueMoment from 'vue-moment'
 import vuetify from './plugins/vuetify'
 
@@ -28,12 +29,13 @@ const putFocusNextTick = (id, cssSelector) => {
 
 // Vue prototype
 Vue.prototype.$_ = _
-Vue.prototype.$loading = () => store.dispatch('context/loadingStart')
+Vue.prototype.$loading = (noSpinner?: boolean) => store.dispatch('context/loadingStart', noSpinner)
 Vue.prototype.$putFocusNextTick = putFocusNextTick
 Vue.prototype.$ready = (label, focusTarget?) => store.dispatch('context/loadingComplete', {label, focusTarget})
 
 Vue.use(VueAnnouncer)
 Vue.use(VueMoment, {moment})
+Vue.use(VueKinesis)
 
 const axiosErrorHandler = error => {
   const errorStatus = _.get(error, 'response.status')

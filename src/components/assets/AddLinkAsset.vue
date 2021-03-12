@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!loading">
+  <div v-if="!isLoading">
     <BackToAssetLibrary />
 
     <v-form @submit="submit">

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!loading">
+  <div v-if="!isLoading">
     <BackToAssetLibrary :anchor="`asset-${asset.id}`" />
     <AssetPageHeader :asset="asset" />
     <AssetImage :asset="asset" :contain="true" :max-height="540" />

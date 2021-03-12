@@ -1,7 +1,7 @@
 <template>
   <div class="align-center d-flex flex-column mt-8 pt-10">
     <v-card
-      v-if="!loading"
+      v-if="!isLoading"
       class="elevation-1"
       outlined
     >

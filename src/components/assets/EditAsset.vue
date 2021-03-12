@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!loading">
+  <div v-if="!isLoading">
     <div>
       <v-btn
         id="asset-library-btn"

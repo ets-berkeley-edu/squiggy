@@ -18,18 +18,19 @@
             <v-btn
               id="search-assets-btn"
               class="ml-2"
-              :disabled="isSearching"
+              :disabled="isLoading || isSearching"
               icon
               @click="toggle"
             >
               <font-awesome-icon icon="caret-down" />
+              <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
             </v-btn>
           </template>
           <template #append-outer>
             <v-btn
               id="search-btn"
               class="mb-2"
-              :disabled="isSearching || (!$_.trim(keywords) && !expanded)"
+              :disabled="isLoading || isSearching || (!$_.trim(keywords) && !expanded)"
               icon
             >
               <font-awesome-icon
@@ -37,6 +38,7 @@
                 icon="search"
                 size="lg"
               />
+              <span class="sr-only">Search assets</span>
             </v-btn>
           </template>
         </v-text-field>
@@ -158,19 +160,22 @@
 </template>
 
 <script>
+import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 import AssetsSearch from '@/mixins/AssetsSearch'
 
 export default {
   name: 'AssetsHeader',
-  mixins: [AssetsSearch, Utils],
+  mixins: [AssetsSearch, Context, Utils],
   props: {
     categories: {
-      required: true,
+      default: () => [],
+      required: false,
       type: Array
     },
     users: {
-      required: true,
+      default: () => [],
+      required: false,
       type: Array
     }
   },
