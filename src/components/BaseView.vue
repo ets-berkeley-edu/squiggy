@@ -1,6 +1,6 @@
 <template>
   <v-main id="content" class="ma-3">
-    <Spinner v-if="loading" />
+    <Spinner v-if="isLoading && !noSpinnerWhenLoading" />
     <router-view />
   </v-main>
 </template>

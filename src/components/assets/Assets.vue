@@ -1,16 +1,16 @@
 <template>
-  <div v-if="!loading" id="assets-container">
+  <div id="assets-container">
     <AssetsHeader :categories="categories" :users="users" />
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
-        v-for="(asset, $index) in assets"
+        v-for="(asset, $index) in (isLoading ? skeletons : assets)"
         :key="$index"
         :asset="asset"
         class="asset-card ma-3"
       />
     </v-card>
-    <InfiniteLoading v-if="assets.length < totalAssetCount" spinner="waveDots" @infinite="fetch" />
+    <InfiniteLoading v-if="!isLoading && (assets.length < totalAssetCount)" spinner="waveDots" @infinite="fetch" />
   </div>
 </template>
 
@@ -31,10 +31,11 @@ export default {
   mixins: [AssetsSearch, Context, Utils],
   data: () => ({
     categories: undefined,
+    skeletons: Array.from(new Array(40), () => ({isLoading: true})),
     users: undefined
   }),
   created() {
-    this.$loading()
+    this.$loading(true)
     getUsers().then(data => {
       this.users = data
       getCategories().then(data => {

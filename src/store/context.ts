@@ -1,17 +1,19 @@
 import Vue from 'vue'
 
 const state = {
-  loading: undefined
+  isLoading: undefined,
+  noSpinnerWhenLoading: false
 }
 
 const getters = {
-  loading: (state: any): boolean => state.loading
+  isLoading: (state: any): boolean => state.isLoading,
+  noSpinnerWhenLoading: (state: any): boolean => state.noSpinnerWhenLoading,
 }
 
 const mutations = {
   loadingComplete: (state: any, pageTitle: string, focusTarget?: string) => {
     document.title = `${pageTitle || 'UC Berkeley'} | SuiteC`
-    state.loading = false
+    state.isLoading = false
     if (pageTitle) {
       Vue.prototype.$announcer.assertive(`${pageTitle} page is ready`)
     }
@@ -33,12 +35,15 @@ const mutations = {
     }
     Vue.prototype.$putFocusNextTick('page-title')
   },
-  loadingStart: (state: any) => (state.loading = true)
+  loadingStart: (state: any, noSpinnerWhenLoading?: boolean) => {
+    state.isLoading = true
+    state.noSpinnerWhenLoading = noSpinnerWhenLoading
+  }
 }
 
 const actions = {
   loadingComplete: ({commit}, {label, focusTarget}) => commit('loadingComplete', label, focusTarget),
-  loadingStart: ({commit}) => commit('loadingStart')}
+  loadingStart: ({commit}, noSpinner?: boolean) => commit('loadingStart', noSpinner)}
 
 export default {
   namespaced: true,

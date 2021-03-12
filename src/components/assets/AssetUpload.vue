@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!loading">
+  <div v-if="!isLoading">
     <BackToAssetLibrary anchor="assets-container" />
     <h2>Upload a file</h2>
     <div
