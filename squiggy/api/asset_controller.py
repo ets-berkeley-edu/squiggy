@@ -146,6 +146,17 @@ def delete_asset(asset_id):
     return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
 
 
+@app.route('/api/asset/<asset_id>/like')
+@login_required
+def like_asset(asset_id):
+    asset = Asset.find_by_id(asset_id=asset_id)
+    if asset and can_view_asset(asset=asset, user=current_user):
+        # TODO: Implement Asset.like and write pytests
+        return tolerant_jsonify(asset.to_api_json())
+    else:
+        raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
+
+
 @app.route('/api/asset/update', methods=['POST'])
 @login_required
 def update_asset():
