@@ -70,6 +70,8 @@
 </template>
 
 <script>
+import {likeAsset} from '@/api/assets'
+
 export default {
   name: 'AssetOverview',
   props: {
@@ -86,7 +88,9 @@ export default {
   },
   methods: {
     like() {
-      this.$announcer.polite(`You liked ${this.asset.title}.`)
+      likeAsset(this.asset.id).then(asset => {
+        this.$announcer.polite(`You liked '${asset.title}'`)
+      })
     }
   }
 }

@@ -59,6 +59,10 @@ export function getAssets(
   )
 }
 
+export function likeAsset(assetId) {
+  return axios.get(`/api/asset/${assetId}/like`)
+}
+
 export function uploadFile(file) {
   return utils.postMultipartFormData('/api/asset/upload', {'file[0]': file})
 }

@@ -19,7 +19,7 @@
       <v-card class="pa-3" outlined>
         <v-list-item>
           <v-list-item-avatar class="align-self-start pa-3" size="320" tile>
-            <v-img alt="Image preview of the asset" :src="imageUrl" @error="imgError" />
+            <AssetImage :asset="asset" />
           </v-list-item-avatar>
           <v-list-item-content>
             <div>
@@ -90,7 +90,6 @@ export default {
     categories: undefined,
     category: undefined,
     description: undefined,
-    imageUrl: undefined,
     title: undefined,
     valid: true,
   }),
@@ -101,7 +100,6 @@ export default {
       this.title = data.title
       this.description = data.description
       this.category = data.categories.length ? data.categories[0] : null
-      this.imageUrl = data.imageUrl || require('@/assets/img-not-found.png')
       getCategories().then(data => {
         this.categories = data
         this.$ready(this.title)
@@ -115,9 +113,6 @@ export default {
     },
     goBack() {
       this.go( `/asset/${this.assetId}`)
-    },
-    imgError() {
-      this.imageUrl = require('@/assets/img-not-found.png')
     },
     submit() {
       updateAsset(this.assetId, this.category.id, this.description, this.title).then(data => {

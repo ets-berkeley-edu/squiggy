@@ -1,9 +1,6 @@
 <template>
-  <div class="d-flex justify-space-between w-100">
-    <div>
-      <h2>{{ asset.title }}</h2>
-      <div v-if="asset.description">{{ asset.description }}</div>
-    </div>
+  <div class="align-content-center d-flex justify-space-between pt-2 w-100">
+    <h2 id="asset.title">{{ asset.title }}</h2>
     <div class="d-flex align-content-end">
       <div class="mr-2">
         <v-btn
@@ -37,28 +34,32 @@
           </template>
           <v-card>
             <v-card-title id="delete-dialog-title" tabindex="-1">Delete Asset?</v-card-title>
-            <v-card-text>
-              Are you sure you want to delete <span class="font-weight-bold">{{ asset.title }}</span>?
+            <v-card-text class="pt-3">
+              Are you sure you want to delete <span class="font-weight-bold text-no-wrap">{{ asset.title }}</span>?
             </v-card-text>
             <v-divider />
             <v-card-actions>
               <v-spacer />
-              <div class="d-flex flex-row-reverse">
-                <v-btn
-                  id="confirm-delete-btn"
-                  color="primary"
-                  text
-                  @click="deleteConfirmed"
-                >
-                  Confirm
-                </v-btn>
-                <v-btn
-                  id="cancel-delete-btn"
-                  text
-                  @click="cancelDelete"
-                >
-                  Cancel
-                </v-btn>
+              <div class="d-flex flex-row-reverse pa-2">
+                <div>
+                  <v-btn
+                    id="confirm-delete-btn"
+                    color="primary"
+                    @click="deleteConfirmed"
+                    @keypress.enter="deleteConfirmed"
+                  >
+                    Confirm
+                  </v-btn>
+                </div>
+                <div class="mr-2">
+                  <v-btn
+                    id="cancel-delete-btn"
+                    @click="cancelDelete"
+                    @keypress.enter="cancelDelete"
+                  >
+                    Cancel
+                  </v-btn>
+                </div>
               </div>
             </v-card-actions>
           </v-card>
