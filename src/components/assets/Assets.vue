@@ -4,8 +4,8 @@
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
-        v-for="(asset, $index) in (isLoading ? skeletons : assets)"
-        :key="$index"
+        v-for="(asset, index) in (isLoading ? skeletons : assets)"
+        :key="index"
         :asset="asset"
         class="asset-card ma-3"
       />

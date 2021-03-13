@@ -32,6 +32,8 @@
               class="mb-2"
               :disabled="isLoading || isSearching || (!$_.trim(keywords) && !expanded)"
               icon
+              @click="fetch"
+              @keypress.enter="fetch"
             >
               <font-awesome-icon
                 class="mb-3"
@@ -197,11 +199,12 @@ export default {
       this.$putFocusNextTick(this.expanded ? 'keywords-input' : 'basic-search-input')
     },
     fetch() {
-      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId)
+      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId) {
         this.isSearching = true
-      this.search().then(() => {
-        this.isSearching = false
-      })
+        this.search().then(() => {
+          this.isSearching = false
+        })
+      }
     }
   }
 }

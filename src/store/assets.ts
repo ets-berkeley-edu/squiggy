@@ -3,7 +3,7 @@ import {getAssets} from '@/api/assets'
 
 const orderByDefault = 'recent'
 
-function $_search(commit, state) {
+function $_search(commit, state, addToExisting?: boolean) {
   return new Promise<void>(resolve => {
     getAssets(
       state.assetType,
@@ -19,11 +19,7 @@ function $_search(commit, state) {
       state.userId
     ).then(data => {
       const assets = _.get(data, 'results')
-      if (_.isNil(state.assets)) {
-        commit('setAssets', assets)
-      } else {
-        commit('addAssets', assets)
-      }
+      commit(addToExisting ? 'addAssets' : 'setAssets', assets)
       commit('setTotalAssetCount', _.get(data, 'total'))
       resolve(state.assets)
     })
@@ -47,10 +43,10 @@ const state = {
 }
 
 const getters = {
-  assets: (state: any): boolean => state.assets,
-  assetType: (state: any): boolean => state.assetType,
+  assets: (state: any): any[] => state.assets,
+  assetType: (state: any): string => state.assetType,
   categoryId: (state: any): number => state.categoryId,
-  keywords: (state: any): number => state.keywords,
+  keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
   orderBy: (state: any): string => state.orderBy,
   orderByDefault: (): string => orderByDefault,
@@ -73,7 +69,7 @@ const mutations = {
 const actions = {
   nextPage: ({commit, state}) => {
     commit('setOffset', state.offset + state.limit)
-    return $_search(commit, state)
+    return $_search(commit, state, true)
   },
   search: ({commit, state}) => $_search(commit, state),
   setAssetType: ({commit}, assetType) => commit('setAssetType', assetType),
