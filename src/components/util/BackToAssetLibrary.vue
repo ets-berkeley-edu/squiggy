@@ -3,6 +3,7 @@
     <v-btn
       id="asset-library-btn"
       class="bg-transparent"
+      :disabled="disabled"
       elevation="0"
       @click="goBack"
       @keypress.enter="goBack"
@@ -21,6 +22,11 @@ export default {
   mixins: [Utils],
   props: {
     anchor: {
+      default: undefined,
+      required: false,
+      type: String
+    },
+    disabled: {
       default: undefined,
       required: false,
       type: String

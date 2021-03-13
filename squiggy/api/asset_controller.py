@@ -85,19 +85,19 @@ def upload():
 @login_required
 def get_assets():
     params = request.get_json()
-    sort = _get(request.args, 'sort', None)
+    sort = _get(params, 'sort', None)
     offset = params.get('offset')
     limit = params.get('limit')
     filters = {
-        'asset_type': _get(request.args, 'assetType', None),
-        'category_id': _get(request.args, 'categoryId', None),
-        'has_comments': _get(request.args, 'hasComments', None),
-        'has_likes': _get(request.args, 'hasLikes', None),
-        'has_views': _get(request.args, 'hasViews', None),
-        'keywords': _get(request.args, 'keywords', None),
-        'order_by': _get(request.args, 'orderBy', 'recent'),
-        'owner_id': _get(request.args, 'userId', None),
-        'section_id': _get(request.args, 'sectionId', None),
+        'asset_type': _get(params, 'assetType', None),
+        'category_id': _get(params, 'categoryId', None),
+        'has_comments': _get(params, 'hasComments', None),
+        'has_likes': _get(params, 'hasLikes', None),
+        'has_views': _get(params, 'hasViews', None),
+        'keywords': _get(params, 'keywords', None),
+        'order_by': _get(params, 'orderBy', 'recent'),
+        'owner_id': _get(params, 'userId', None),
+        'section_id': _get(params, 'sectionId', None),
     }
     results = Asset.get_assets(session=current_user, sort=sort, offset=offset, limit=limit, filters=filters)
     return tolerant_jsonify(results)

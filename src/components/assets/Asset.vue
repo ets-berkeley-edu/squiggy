@@ -1,14 +1,16 @@
 <template>
-  <div v-if="!isLoading">
-    <BackToAssetLibrary :anchor="`asset-${asset.id}`" />
+  <div>
+    <BackToAssetLibrary :anchor="`asset-${asset.id}`" :disabled="isLoading" />
     <AssetPageHeader :asset="asset" />
     <AssetImage :asset="asset" :contain="true" :max-height="540" />
-    <AssetOverview :asset="asset" />
-    <AssetActivityTimeline :asset="asset" />
-    <AssetComments :asset="asset" />
-    <pre>
-      {{ asset }}
-    </pre>
+    <div v-if="!isLoading">
+      <AssetOverview :asset="asset" />
+      <AssetActivityTimeline :asset="asset" />
+      <AssetComments :asset="asset" />
+      <pre>
+        {{ asset }}
+      </pre>
+    </div>
   </div>
 </template>
 
