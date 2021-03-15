@@ -79,14 +79,13 @@ class Comment(Base):
         for row in cls.query.filter_by(asset_id=asset_id).order_by(order_by).all():
             comment = row.to_api_json()
             (orphans if row.parent_id else parents).append(comment)
-            comment['children'] = []
+            comment['replies'] = []
         while len(orphans):
             orphan = orphans.pop(0)
             # Find the child's parent
             parent = next((c for c in (parents + orphans) if orphan['parentId'] == c['id']), None)
             if parent:
-                # TODO: Replies in chronological order?
-                parent['children'].insert(0, orphan)
+                parent['replies'].insert(0, orphan)
         return parents
 
     def to_api_json(self):

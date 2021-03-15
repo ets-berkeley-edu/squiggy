@@ -1,55 +1,73 @@
 <template>
-  <v-container v-if="comments" fluid>
-    <v-row>
-      <v-col>
-        <h3 id="comments-count">{{ comments.length }} Comments</h3>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
-        Current User Avatar
-      </v-col>
-      <v-col>
-        <div>
-          <font-awesome-icon icon="graduation-cap" />
-          Name of active user
+  <div v-if="comments">
+    <h3 id="comments-count">{{ comments.length || 'No' }} Comments</h3>
+    <div class="d-flex justify-center my-3 px-5 w-100">
+      <div class="pr-5 pt-3">
+        <Avatar size="medium" :user="$currentUser" />
+      </div>
+      <div class="w-75">
+        <div class="pb-2">
+          <font-awesome-icon class="primary--text" icon="graduation-cap" />
+          {{ $currentUser.canvasFullName }} (me)
         </div>
-        <v-textarea
-          id="comment-body-textarea"
-          v-model="body"
-          auto-grow
-          outlined
-          placeholder="Add a comment"
-        />
-        <v-btn
-          id="confirm-delete-btn"
-          class="mr-2"
-          color="primary"
-          :disabled="!$_.trim(body)"
-          @click="create"
-        >
-          <font-awesome-icon icon="comment" />
-          Comment
-        </v-btn>
-      </v-col>
-    </v-row>
-    <v-row v-for="comment in comments" :key="comment.id">
-      <v-col>
+        <div>
+          <v-textarea
+            id="comment-body-textarea"
+            v-model="body"
+            auto-grow
+            dense
+            outlined
+            placeholder="Add a comment"
+          />
+        </div>
+        <div class="text-right">
+          <v-btn
+            id="post-comment-btn"
+            color="primary"
+            :disabled="!$_.trim(body)"
+            @click="create"
+          >
+            <font-awesome-icon class="mr-2" icon="comment" />
+            Comment
+          </v-btn>
+        </div>
+      </div>
+    </div>
+    <div v-for="comment in comments" :key="comment.id">
+      <div class="align-center d-flex">
+        <div>
+          <Avatar :user="comment.user" />
+        </div>
+        <div>
+          {{ comment.user.canvasFullName }}
+        </div>
+        <div>
+          on {{ comment.createdAt | moment('LL') }}
+        </div>
+      </div>
+      <div class="pa-5">
         {{ comment.body }}
-      </v-col>
-      <v-col>
-        {{ comment.children }}
-      </v-col>
-    </v-row>
-  </v-container>
+        <div v-if="comment.replies.length">
+          <div
+            v-for="reply in comment.replies"
+            :key="reply.id"
+            class="pa-5"
+          >
+            {{ reply.body }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-
+import Avatar from '@/components/user/Avatar'
 import {createComment, getComments} from '@/api/comments'
 
 export default {
   name: 'AssetComments',
+  components: {Avatar},
   props: {
     asset: {
       required: true,
