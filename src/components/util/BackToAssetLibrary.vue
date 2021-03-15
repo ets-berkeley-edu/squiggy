@@ -27,9 +27,8 @@ export default {
       type: String
     },
     disabled: {
-      default: undefined,
       required: false,
-      type: String
+      type: Boolean
     }
   },
   methods: {

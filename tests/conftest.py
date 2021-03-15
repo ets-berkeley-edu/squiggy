@@ -28,19 +28,19 @@ import json
 import os
 import random
 
+from moto import mock_sts  # noqa
+import pytest  # noqa
 from squiggy import std_commit
 from squiggy.lib.login_session import LoginSession
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
+from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
-
-os.environ['SQUIGGY_ENV'] = 'test'  # noqa
-
-from moto import mock_sts  # noqa
-import pytest  # noqa
 import squiggy.factory  # noqa
 from tests.util import override_config  # noqa
+
+os.environ['SQUIGGY_ENV'] = 'test'  # noqa
 
 
 class FakeAuth(object):
@@ -181,7 +181,15 @@ def mock_asset(app, db_session):
         url=f'https://en.wikipedia.org/wiki/{unique_token}',
         users=[user],
     )
-
+    for test_comment in _get_mock_comments():
+        comment = Comment.create(asset_id=asset.id, body=test_comment['body'], user_id=user.id)
+        for reply in test_comment.get('replies', []):
+            Comment.create(
+                asset_id=asset.id,
+                body=reply['body'],
+                parent_id=comment.id,
+                user_id=user.id,
+            )
     std_commit(allow_test_environment=True)
     yield asset
     db_session.delete(asset)
@@ -197,3 +205,22 @@ def mock_category(db):
         canvas_assignment_id=98765,
         visible=True,
     )
+
+
+def _get_mock_comments():
+    return [
+        {
+            'body': 'But mostly you just make me mad, baby, you just make me mad',
+            'replies': [
+                {
+                    'body': 'In what costume shall the poor girl wear to all tomorrow\'s parties?',
+                },
+                {
+                    'body': 'For Thursday\'s child is Sunday\'s clown, for whom none will go mourning.',
+                },
+            ],
+        },
+        {
+            'body': 'And where will she go, and what shall she do, when midnight comes around?',
+        },
+    ]

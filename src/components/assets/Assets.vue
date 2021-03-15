@@ -1,5 +1,5 @@
 <template>
-  <div id="assets-container">
+  <div id="asset-library">
     <AssetsHeader :categories="categories" :users="users" />
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />

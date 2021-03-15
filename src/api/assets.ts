@@ -60,7 +60,7 @@ export function getAssets(
 }
 
 export function likeAsset(assetId) {
-  return axios.get(`/api/asset/${assetId}/like`)
+  return axios.get(`${utils.apiBaseUrl()}/api/asset/${assetId}/like`)
 }
 
 export function uploadFile(file) {

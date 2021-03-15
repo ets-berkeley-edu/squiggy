@@ -23,6 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from sqlalchemy.sql import desc
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
@@ -68,6 +69,25 @@ class Comment(Base):
         db.session.add(comment)
         std_commit()
         return comment
+
+    @classmethod
+    def get_comments(cls, asset_id):
+        orphans = []
+        parents = []
+        # Sort reverse chronological
+        order_by = desc(cls.created_at)
+        for row in cls.query.filter_by(asset_id=asset_id).order_by(order_by).all():
+            comment = row.to_api_json()
+            (orphans if row.parent_id else parents).append(comment)
+            comment['children'] = []
+        while len(orphans):
+            orphan = orphans.pop(0)
+            # Find the child's parent
+            parent = next((c for c in (parents + orphans) if orphan['parentId'] == c['id']), None)
+            if parent:
+                # TODO: Replies in chronological order?
+                parent['children'].insert(0, orphan)
+        return parents
 
     def to_api_json(self):
         return {

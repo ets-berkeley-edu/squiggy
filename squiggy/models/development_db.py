@@ -31,7 +31,6 @@ from squiggy.models.activity_type import ActivityType
 from squiggy.models.asset import Asset
 from squiggy.models.canvas import Canvas
 from squiggy.models.category import Category
-from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
 
@@ -70,12 +69,6 @@ _test_assets = [
         'asset_type': 'link',
         'title': 'Who Loves The Sun',
         'url': 'https://www.youtube.com/watch?v=gNPovDOk4jY',
-    },
-]
-
-_test_comments = [
-    {
-        'body': 'But mostly you just make me mad, baby, you just make me mad',
     },
 ]
 
@@ -126,7 +119,6 @@ def load():
     courses = _create_courses()
     users = _create_users(courses)
     assets = _create_assets(courses, users)
-    _create_comments(assets, users)
     _create_activities(assets, users)
     _create_activity_types(courses)
     return db
@@ -211,18 +203,6 @@ def _create_assets(courses, users):
         assets.append(asset)
     std_commit(allow_test_environment=True)
     return assets
-
-
-def _create_comments(assets, users):
-    asset = assets[0]
-    user = users[0]
-    for test_comment in _test_comments:
-        Comment.create(
-            asset_id=asset.id,
-            user_id=user.id,
-            body=test_comment['body'],
-        )
-    std_commit(allow_test_environment=True)
 
 
 def _create_activities(assets, users):
