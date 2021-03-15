@@ -9,13 +9,25 @@
           <div v-if="isInIframe || !$currentUser.isAuthenticated">
             &copy; {{ new Date().getFullYear() }} Regents of the University of California. All Rights Reserved.
           </div>
-          <div v-if="!isInIframe && $currentUser.isAuthenticated" class="d-flex">
+          <div v-if="!isInIframe && $currentUser.isAuthenticated" class="align-center d-flex">
             <div>
-              <v-btn id="go-home-btn" icon @click="go('/')">
+              <v-btn
+                id="go-home-btn"
+                :disabled="$router.currentRoute.meta.isLoginPage"
+                icon
+                @click="go('/')"
+              >
                 <span class="sr-only">Go home</span>
-                <font-awesome-icon icon="home" />
+                <font-awesome-icon icon="home" size="lg" />
               </v-btn>
             </div>
+            <div>
+              <v-btn id="toggle-dark-mode-btn" icon @click="$vuetify.theme.dark = !$vuetify.theme.dark">
+                <span class="sr-only">Turn dark mode {{ $vuetify.theme.dark ? 'off' : 'on' }}.</span>
+                <font-awesome-icon :class="{'yellow--text': $vuetify.theme.dark}" :icon="$vuetify.theme.dark ? 'sun' : 'moon'" />
+              </v-btn>
+            </div>
+            <div class="px-2">|</div>
             <div>
               <v-btn id="go-asset-library-btn" icon @click="go('/assets')">
                 <span class="sr-only">Go to Asset Library</span>
@@ -42,7 +54,7 @@
               <div v-if="$currentUser.isAuthenticated">
                 <v-btn id="log-out-btn" icon @click="logOut">
                   <span class="sr-only">Log Out</span>
-                  <font-awesome-icon icon="sign-out-alt" />
+                  <font-awesome-icon icon="sign-out-alt" size="lg" />
                 </v-btn>
               </div>
             </div>

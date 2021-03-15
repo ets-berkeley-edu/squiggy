@@ -15,6 +15,7 @@
           </v-col>
           <v-col cols="6">
             <v-text-field
+              id="asset-url-input"
               v-model="url"
               label="Paste or type a URL here"
               maxlength="255"

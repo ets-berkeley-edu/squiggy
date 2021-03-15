@@ -82,6 +82,7 @@
             <v-row>
               <v-col>
                 <v-select
+                  id="adv-search-categories-select"
                   :items="categories"
                   item-text="title"
                   item-value="id"
@@ -93,6 +94,7 @@
               </v-col>
               <v-col>
                 <v-select
+                  id="adv-search-asset-types-select"
                   :items="$_.map($config.assetTypes, t => ({text: $_.capitalize(t), value: t}))"
                   label="Asset type"
                   outlined
@@ -104,6 +106,7 @@
             <v-row>
               <v-col>
                 <v-select
+                  id="adv-search-user-select"
                   :items="users"
                   item-text="canvasFullName"
                   item-value="id"
@@ -122,6 +125,7 @@
           </v-col>
           <v-col>
             <v-select
+              id="adv-search-order-by-select"
               :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
               outlined
               :value="orderBy"

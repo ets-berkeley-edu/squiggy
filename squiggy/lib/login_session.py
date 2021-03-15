@@ -60,9 +60,11 @@ class LoginSession:
 
     def to_api_json(self):
         return {
-            'isAdmin': self.is_admin,
-            'isAuthenticated': self.is_authenticated,
-            'isTeaching': False,  # TODO
-            'course': self.course and self.course.to_api_json(),
-            'user': self.user and self.user.to_api_json(),
+            **(self.user.to_api_json() if self.user else {}),
+            **{
+                'isAdmin': self.is_admin,
+                'isAuthenticated': self.is_authenticated,
+                'isTeaching': False,  # TODO
+                'course': self.course and self.course.to_api_json(),
+            },
         }

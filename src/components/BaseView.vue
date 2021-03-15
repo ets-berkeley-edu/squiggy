@@ -7,18 +7,21 @@
 
 <script>
 import Context from '@/mixins/Context'
+import Iframe from '@/mixins/Iframe'
 import Spinner from '@/components/util/Spinner'
 import Util from '@/mixins/Utils'
 
 export default {
   name: 'BaseView',
   components: {Spinner},
-  mixins: [Context, Util],
+  mixins: [Context, Iframe, Util],
   data: () => ({
     navItems: undefined,
   }),
   created() {
-    this.prefersColorScheme()
+    if (!this.isInIframe) {
+      this.prefersColorScheme()
+    }
   },
   methods: {
     prefersColorScheme() {

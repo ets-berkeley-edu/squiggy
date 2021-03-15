@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isLoading" class="align-center d-flex flex-column mt-10">
+  <div v-if="!isLoading" class="align-center d-flex flex-column my-10">
     <h1 class="grey--text text--darken-2">Squiggy says HELLO</h1>
     <div class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
@@ -15,9 +15,41 @@
         src="@/assets/hello.jpg"
       />
     </div>
-    <div v-if="$currentUser.isAuthenticated">
-      <CourseSummaryCard :course="$currentUser.course" />
-    </div>
+    <v-expansion-panels v-if="$currentUser.isAuthenticated" class="w-50">
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          <h2 class="red--text text-no-wrap">
+            <div class="align-center d-flex">
+              <div class="pr-2">
+                <Avatar :user="$currentUser" />
+              </div>
+              <div>
+                User {{ $currentUser.id }}
+              </div>
+            </div>
+          </h2>
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <UserSummary :user="$currentUser" />
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          <h2 class="primary--text text-no-wrap">Canvas Course {{ $currentUser.course.canvasCourseId }}</h2>
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <CourseSummary :course="$currentUser.course" />
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          <h2 class="orange--text text-no-wrap">Configs</h2>
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <Configs />
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
     <div v-if="!$currentUser.isAuthenticated">
       <DevAuth :canvas-domains="canvasDomains" />
     </div>
@@ -25,15 +57,18 @@
 </template>
 
 <script>
+import Avatar from '@/components/user/Avatar'
+import Configs from '@/components/util/Configs'
+import CourseSummary from '@/components/course/CourseSummary'
 import Context from '@/mixins/Context'
-import CourseSummaryCard from '@/components/course/CourseSummaryCard'
 import DevAuth from '@/components/util/DevAuth'
+import UserSummary from '@/components/user/UserSummary'
 import Utils from '@/mixins/Utils'
 import {getAllCanvasDomains} from '@/api/courses'
 
 export default {
   name: 'Squiggy',
-  components: {CourseSummaryCard, DevAuth},
+  components: {Avatar, Configs, CourseSummary, DevAuth, UserSummary},
   mixins: [Context, Utils],
   data: () => ({
     canvasDomains: undefined,
