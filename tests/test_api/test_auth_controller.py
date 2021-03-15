@@ -100,7 +100,7 @@ class TestDevAuth:
                 password=app.config['DEVELOPER_AUTH_PASSWORD'],
                 user_id=authorized_user_id,
             )
-            assert api_json['user']['id'] == authorized_user_id
+            assert api_json['id'] == authorized_user_id
             assert api_json['course']['canvasCourseId'] == 1502870
             assert api_json['course']['canvasApiDomain'] == 'bcourses.berkeley.edu'
             assert client.post('/api/auth/logout').status_code == 200
@@ -117,4 +117,4 @@ class TestAuthorization:
     def test_admin_profile(self, client, fake_auth, authorized_user_id):
         fake_auth.login(authorized_user_id)
         api_json = self._api_my_profile(client)
-        assert api_json['user']['id'] == authorized_user_id
+        assert api_json['id'] == authorized_user_id
