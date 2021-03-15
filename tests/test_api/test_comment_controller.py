@@ -77,8 +77,8 @@ class TestCreateComments:
         api_json = _api_get_comments(asset_id=mock_asset.id, client=client)
         comment = api_json[0]
         assert 'phone booth' in comment['body']
-        assert 'children' in comment
-        replies = comment['children']
+        assert 'replies' in comment
+        replies = comment['replies']
         assert len(replies) == 1
         assert 'ring it off the wall' in replies[0]['body']
 
@@ -101,8 +101,9 @@ class TestGetComments:
         api_json = _api_get_comments(asset_id=mock_asset.id, client=client)
         assert len(api_json) == 2
         comment = api_json[1]
-        assert 'children' in comment
-        replies = comment['children']
+        assert comment.get('user', {}).get('id') == comment['userId']
+        assert 'replies' in comment
+        replies = comment['replies']
         assert len(replies) == 2
         assert 'all tomorrow\'s parties' in replies[0]['body']
         assert 'Sunday\'s clown' in replies[1]['body']

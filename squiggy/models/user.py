@@ -138,6 +138,10 @@ class User(Base):
             return None
         return cls.query.filter_by(id=user_id).first()
 
+    @classmethod
+    def find_by_ids(cls, user_ids):
+        return cls.query.filter(cls.id.in_(user_ids)).all()
+
     def to_api_json(self):
         return {
             'id': self.id,

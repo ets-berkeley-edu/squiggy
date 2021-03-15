@@ -30,6 +30,7 @@ from squiggy.api.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.comment import Comment
+from squiggy.models.user import User
 
 
 @app.route('/api/comment/create', methods=['POST'])
@@ -47,7 +48,7 @@ def create_comment():
         body=body,
         parent_id=parent_id and int(parent_id),
     )
-    return tolerant_jsonify(comment.to_api_json())
+    return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
 
 
 @app.route('/api/comments/<asset_id>')
@@ -55,6 +56,14 @@ def create_comment():
 def get_comments(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
     if asset and can_view_asset(asset=asset, user=current_user):
-        return tolerant_jsonify(Comment.get_comments(asset.id))
+        return tolerant_jsonify(_decorate_comments(Comment.get_comments(asset.id)))
     else:
         raise ResourceNotFoundError(f'No comment found with id: {asset_id}')
+
+
+def _decorate_comments(comments):
+    user_ids = map(lambda c: c['userId'], comments)
+    users_by_id = {user.id: user for user in User.find_by_ids(user_ids)}
+    for comment in comments:
+        comment['user'] = users_by_id[comment['userId']].to_api_json()
+    return comments

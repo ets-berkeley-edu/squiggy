@@ -4,7 +4,17 @@
       <v-col>
         <v-row justify="space-between">
           <v-col v-for="user in asset.users" :key="user.id">
-            by [face here] <a href="#">{{ user.canvasFullName }}</a> on {{ asset.createdAt | moment('lll') }}
+            <div class="align-center d-flex">
+              <div class="pr-1">
+                by
+              </div>
+              <div class="pr-1">
+                <Avatar :user="user" />
+              </div>
+              <div>
+                {{ user.canvasFullName }} on {{ asset.createdAt | moment('LL') }}
+              </div>
+            </div>
           </v-col>
           <v-col>
             <v-row align="center" justify="end">
@@ -34,23 +44,13 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-img :src="imageUrl" width="500">
-          <template #placeholder>
-            <v-row class="fill-height ma-0" align="center" justify="center">
-              <v-progress-circular indeterminate color="grey lighten-5" />
-            </v-row>
-          </template>
-        </v-img>
-        <v-divider class="my-2" />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
         Description
       </v-col>
       <v-col>
         {{ asset.description }}
       </v-col>
+    </v-row>
+    <v-row>
       <v-col>
         Source
       </v-col>
@@ -60,10 +60,24 @@
     </v-row>
     <v-row justify="start">
       <v-col>
-        Category
+        {{ asset.categories.length === 1 ? 'Category' : 'Categories' }}
       </v-col>
       <v-col>
-        {{ asset.categories }}
+        <div v-if="asset.categories.length">
+          <OxfordJoin v-slot="{item}" :items="asset.categories">
+            <router-link
+              :id="`link-to-assets-of-category-${item.id}`"
+              :aria-label="`View assets, filtered by category ${item.name}`"
+              :to="`/assets?categoryId=${item.id}`"
+            >
+              {{ item.name }}
+            </router-link>
+          </OxfordJoin>
+          {{ asset.categories.length ? $_.map(asset.categories, 'title') : '' }}
+        </div>
+        <div v-if="!asset.categories.length">
+          &mdash;
+        </div>
       </v-col>
     </v-row>
   </v-container>
@@ -71,9 +85,11 @@
 
 <script>
 import {likeAsset} from '@/api/assets'
+import Avatar from '@/components/user/Avatar'
 
 export default {
   name: 'AssetOverview',
+  components: {Avatar},
   props: {
     asset: {
       required: true,

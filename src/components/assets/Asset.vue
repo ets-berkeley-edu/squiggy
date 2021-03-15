@@ -3,16 +3,26 @@
     <BackToAssetLibrary :anchor="asset && `asset-${asset.id}`" :disabled="isLoading" />
     <div v-if="!isLoading">
       <AssetPageHeader :asset="asset" />
-      <AssetImage :asset="asset" :contain="true" :max-height="540" />
-      <AssetOverview :asset="asset" />
+      <div class="my-3 pa-2">
+        <v-card outlined>
+          <v-card-text>
+            <AssetImage :asset="asset" :contain="true" :max-height="540" />
+            <AssetOverview :asset="asset" />
+          </v-card-text>
+        </v-card>
+      </div>
+      <!--
+      TODO: Will Activity-Timeline suffer the fate of the Impact Studio? I.e., will it go away?
       <AssetActivityTimeline :asset="asset" />
-      <AssetComments :asset="asset" />
+      -->
+      <div class="py-3">
+        <AssetComments :asset="asset" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import AssetActivityTimeline from '@/components/assets/AssetActivityTimeline'
 import AssetComments from '@/components/assets/AssetComments'
 import AssetImage from '@/components/assets/AssetImage'
 import AssetOverview from '@/components/assets/AssetOverview'
@@ -25,7 +35,6 @@ import {getAsset} from '@/api/assets'
 export default {
   name: 'Asset',
   components: {
-    AssetActivityTimeline,
     AssetComments,
     AssetImage,
     AssetOverview,
