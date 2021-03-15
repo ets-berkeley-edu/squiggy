@@ -39,6 +39,7 @@ def register_routes(app):
     import squiggy.api.asset_controller
     import squiggy.api.auth_controller
     import squiggy.api.category_controller
+    import squiggy.api.comment_controller
     import squiggy.api.config_controller
     import squiggy.api.course_controller
     import squiggy.api.status_controller
