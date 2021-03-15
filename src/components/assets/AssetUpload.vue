@@ -24,13 +24,14 @@
 
 <script>
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
+import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {uploadFile} from '@/api/assets'
+import {createFileAsset} from '@/api/assets'
 
 export default {
-  name: 'UploadAsset',
+  name: 'AssetUpload',
   components: {BackToAssetLibrary},
-  mixins: [Utils],
+  mixins: [Context, Utils],
   data: () => ({
     file: undefined
   }),
@@ -47,7 +48,7 @@ export default {
       this.$announcer.polite(`${this.file} removed`)
     },
     upload() {
-      uploadFile(this.file).then(asset => {
+      createFileAsset(null, 'Placeholder description', 'Placeholder title', this.file).then(asset => {
         this.$announcer.polite('File uploaded. Asset created.')
         this.go(`/asset/${asset.id}`)
       })

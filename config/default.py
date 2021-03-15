@@ -58,6 +58,10 @@ LOGGING_LOCATION = 'squiggy.log'
 LOGGING_LEVEL = logging.DEBUG
 LOGGING_PROPAGATION_LEVEL = logging.INFO
 
+# Where file assets go.
+S3_BUCKET = 'some-bucket'
+S3_REGION = 'us-west-2'
+
 # Used to encrypt session cookie.
 SECRET_KEY = 'secret'
 

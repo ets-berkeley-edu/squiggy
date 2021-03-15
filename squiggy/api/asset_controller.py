@@ -25,13 +25,14 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from datetime import datetime
 import json
+import os
 import re
 
 from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_asset, can_view_asset
-from squiggy.api.errors import BadRequestError, ResourceNotFoundError
-from squiggy.lib.aws import stream_object
+from squiggy.api.errors import BadRequestError, InternalServerError, ResourceNotFoundError
+from squiggy.lib.aws import put_binary_data_to_s3, stream_object
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
@@ -68,20 +69,6 @@ def get_asset(asset_id):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
 
 
-@app.route('/api/asset/upload', methods=['POST'])
-@login_required
-def upload():
-    file_upload = _get_upload_from_http_post()
-    # TODO: Put file in S3
-    asset = Asset.create(
-        asset_type='file',
-        course_id=current_user.course.id,
-        title=file_upload['name'],
-        users=[User.find_by_id(current_user.get_id())],
-    )
-    return tolerant_jsonify(asset.to_api_json())
-
-
 @app.route('/api/assets', methods=['POST'])
 @login_required
 def get_assets():
@@ -107,7 +94,7 @@ def get_assets():
 @app.route('/api/asset/create', methods=['POST'])
 @login_required
 def create_asset():
-    params = request.get_json()
+    params = request.get_json() or request.form
     asset_type = params.get('type')
     category_id = params.get('categoryId')
     description = params.get('description')
@@ -115,17 +102,38 @@ def create_asset():
     url = params.get('url')
     title = params.get('title', url)
     visible = params.get('visible', True)
-    if not asset_type or not title or not url:
-        raise BadRequestError('Asset creation requires category, title, and url.')
+    if not asset_type or not title:
+        raise BadRequestError('Asset creation requires title and type.')
+
+    if asset_type == 'link' and not url:
+        raise BadRequestError('Link asset creation requires url.')
 
     if not current_user.course:
         raise BadRequestError('Course data not found')
+
+    content_type = None
+    download_url = None
+    if asset_type == 'file':
+        file_upload = _get_upload_from_http_post()
+        # S3 key begins with course id, reversed for performant key distribution, padded for readability.
+        bucket = app.config['S3_BUCKET']
+        reverse_course = str(current_user.course.id)[::-1].rjust(7, '0')
+        (filename, extension) = os.path.splitext(file_upload['name'])
+        # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
+        key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{filename[0:170]}.{extension}"
+        if put_binary_data_to_s3(bucket, key, file_upload['byte_stream']):
+            download_url = f's3://{bucket}/{key}'
+            # TODO determine content type for preview service
+        else:
+            raise InternalServerError('Could not upload file.')
 
     asset = Asset.create(
         asset_type=asset_type,
         categories=Category.get_categories_by_id([category_id]) if category_id else None,
         course_id=current_user.course.id,
         description=description,
+        download_url=download_url,
+        mime=content_type,
         source=source,
         title=title,
         url=url,

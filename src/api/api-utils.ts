@@ -6,9 +6,13 @@ export default {
   apiBaseUrl: () => Vue.prototype.$config.apiBaseUrl,
   postMultipartFormData: (path: string, data: object) => {
     const formData = new FormData()
-    _.each(data, (value, key) => !_.isNil(value) && formData.append(key, value))
+    _.forOwn(data, (value, key) => {
+      if (!_.isNil(value)) {
+        formData.append(key, value)
+      }
+    })
     return axios.post(
-      `${Vue.prototype.$config.apiBaseUrl}${path}`,
+      path,
       formData,
       {
         headers: {
