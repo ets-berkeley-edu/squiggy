@@ -32,7 +32,7 @@ from flask import current_app as app
 import smart_open
 
 
-S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+.s3-us-west-2.amazonaws.com')
+S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+\.s3.*\.amazonaws\.com')
 
 
 def get_s3_signed_url(url):
