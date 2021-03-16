@@ -31,6 +31,7 @@ from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 from squiggy.lib.util import camelize, isoformat, utc_now
+from squiggy.models.activity import Activity
 from squiggy.models.asset_category import asset_category_table
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
@@ -161,6 +162,19 @@ class Asset(Base):
         )
         db.session.add(asset)
         std_commit()
+
+        # Invisible assets generate no activities.
+        if visible:
+            for user in users:
+                Activity.create(
+                    activity_type='asset_add',
+                    course_id=course_id,
+                    user_id=user.id,
+                    object_type='asset',
+                    object_id=asset.id,
+                    asset_id=asset.id,
+                )
+
         return asset
 
     @classmethod
