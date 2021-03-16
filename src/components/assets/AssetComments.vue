@@ -35,10 +35,10 @@
     </div>
     <div v-for="comment in comments" :key="comment.id">
       <div class="align-center d-flex">
-        <div>
+        <div class="pr-2">
           <Avatar :user="comment.user" />
         </div>
-        <div>
+        <div class="pr-1">
           {{ comment.user.canvasFullName }}
         </div>
         <div>

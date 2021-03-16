@@ -15,6 +15,7 @@
         v-if="!asset.isLoading"
         :id="`asset-${asset.id}`"
         class="h-100"
+        @keypress.enter="go(`/asset/${asset.id}`)"
         @click="go(`/asset/${asset.id}`)"
       >
         <v-sheet elevation="1">
