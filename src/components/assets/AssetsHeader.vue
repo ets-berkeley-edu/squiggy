@@ -1,172 +1,202 @@
 <template>
   <div>
-    <div v-if="!expanded" class="align-start d-flex justify-space-between">
-      <div class="w-50">
-        <v-text-field
-          id="basic-search-input"
-          :value="keywords"
-          clearable
-          :disabled="isBusy"
-          label="Search"
-          solo
-          type="search"
-          @click:append-outer="fetch"
-          @input="setKeywords"
-          @keypress.enter="fetch"
-        >
-          <template #append>
-            <v-btn
-              id="search-assets-btn"
-              class="ml-2"
-              :disabled="isLoading || isBusy"
-              icon
-              @click="toggle"
-            >
-              <font-awesome-icon icon="caret-down" />
-              <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
-            </v-btn>
-          </template>
-          <template #append-outer>
-            <v-btn
-              id="search-btn"
-              class="mb-2"
-              :disabled="isLoading || isBusy || (!$_.trim(keywords) && !expanded)"
-              icon
-              @click="fetch"
-              @keypress.enter="fetch"
-            >
-              <font-awesome-icon
-                class="mb-3"
-                icon="search"
-                size="lg"
-              />
-              <span class="sr-only">Search assets</span>
-            </v-btn>
-          </template>
-        </v-text-field>
-      </div>
-      <div>
-        <v-btn
-          id="manage-assets-btn"
-          elevation="2"
-          :disabled="isBusy"
-          large
-          @click="go('/assets/manage')"
-          @keypress.enter="go('/assets/manage')"
-        >
-          <span class="pr-2">
-            <font-awesome-icon icon="cog" />
-          </span>
-          Manage Assets
-        </v-btn>
-      </div>
-    </div>
     <v-expand-transition>
-      <v-container v-if="expanded" fluid>
-        <v-row>
-          <v-col cols="2">Search</v-col>
-          <v-col>
-            <v-text-field
-              id="adv-search-keywords-input"
-              placeholder="Keyword"
-              type="search"
-              :value="keywords"
-              @input="setKeywords"
-              @keypress.enter="fetch"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2">Filter by</v-col>
-          <v-col>
-            <v-row>
-              <v-col>
-                <AccessibleSelect
-                  :disabled="isBusy"
-                  id-prefix="adv-search-categories"
-                  item-text="title"
-                  item-value="id"
-                  :items="categories"
-                  label="Category"
-                  :value="categoryId"
-                  @input="setCategoryId"
+      <div v-if="!expanded" class="align-start d-flex justify-space-between">
+        <div class="w-50">
+          <v-text-field
+            id="basic-search-input"
+            :value="keywords"
+            clearable
+            :disabled="isBusy"
+            label="Search"
+            solo
+            type="search"
+            @click:append-outer="fetch"
+            @input="setKeywords"
+            @keypress.enter="fetch"
+          >
+            <template #append>
+              <v-btn
+                id="search-assets-btn"
+                class="ml-2"
+                :disabled="isLoading || isBusy"
+                icon
+                @click="toggle"
+              >
+                <font-awesome-icon icon="caret-down" />
+                <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
+              </v-btn>
+            </template>
+            <template #append-outer>
+              <v-btn
+                id="search-btn"
+                class="mb-2"
+                :disabled="isLoading || isBusy || (!$_.trim(keywords) && !expanded)"
+                icon
+                @click="fetch"
+                @keypress.enter="fetch"
+              >
+                <font-awesome-icon
+                  class="mb-3"
+                  icon="search"
+                  size="lg"
                 />
-              </v-col>
-              <v-col>
-                <AccessibleSelect
-                  :disabled="isBusy"
-                  id-prefix="adv-search-asset-types"
-                  :items="$_.map($config.assetTypes, t => ({text: $_.capitalize(t), value: t}))"
-                  label="Asset type"
-                  :value="assetType"
-                  @input="setAssetType"
-                />
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>
-                <AccessibleSelect
-                  :disabled="isBusy"
-                  id-prefix="adv-search-user"
-                  item-text="canvasFullName"
-                  item-value="id"
-                  :items="users"
-                  label="User"
-                  :value="userId"
-                  @input="setUserId"
-                />
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2">
-            Sort by
-          </v-col>
-          <v-col>
-            <AccessibleSelect
-              :disabled="isBusy"
-              id-prefix="adv-search-order-by"
-              :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
-              :value="orderBy"
-              @input="setOrderBy"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col class="text-right" cols="8">
-            <div class="d-flex flex-row-reverse">
-              <div>
-                <v-btn
-                  id="adv-search-btn"
-                  color="primary"
-                  :disabled="isBusy || (!$_.trim(keywords) && !expanded)"
-                  elevation="1"
-                  @click="fetch"
-                >
-                  Search
-                </v-btn>
-              </div>
-              <div class="pr-2">
-                <v-btn
-                  id="cancel-adv-search-btn"
-                  :disabled="isBusy"
-                  elevation="1"
-                  @click="toggle"
-                >
-                  Cancel
-                </v-btn>
-              </div>
-            </div>
-          </v-col>
-        </v-row>
-      </v-container>
+                <span class="sr-only">Search assets</span>
+              </v-btn>
+            </template>
+          </v-text-field>
+        </div>
+        <div>
+          <v-btn
+            id="manage-assets-btn"
+            elevation="2"
+            :disabled="isBusy"
+            large
+            @click="go('/assets/manage')"
+            @keypress.enter="go('/assets/manage')"
+          >
+            <span class="pr-2">
+              <font-awesome-icon icon="cog" />
+            </span>
+            Manage Assets
+          </v-btn>
+        </div>
+      </div>
     </v-expand-transition>
+    <v-expand-transition>
+      <v-card v-if="expanded" class="mb-6 pl-8 pr-16 pt-4">
+        <v-container fluid>
+          <v-row no-gutters>
+            <v-col class="pr-4 pt-4 text-right" cols="1">
+              Search
+            </v-col>
+            <v-col>
+              <v-text-field
+                id="adv-search-keywords-input"
+                clearable
+                solo
+                placeholder="Keyword"
+                type="search"
+                :value="keywords"
+                @input="setKeywords"
+                @keypress.enter="fetch"
+              />
+            </v-col>
+          </v-row>
+          <v-row no-gutters>
+            <v-col class="pr-4 pt-2 text-right" cols="1">Filter by</v-col>
+            <v-col>
+              <v-row no-gutters>
+                <v-col class="pr-2">
+                  <AccessibleSelect
+                    :clearable="true"
+                    :dense="true"
+                    :disabled="isBusy"
+                    id-prefix="adv-search-categories"
+                    item-text="title"
+                    item-value="id"
+                    :items="categories"
+                    label="Category"
+                    :value="categoryId"
+                    @input="setCategoryId"
+                  />
+                </v-col>
+                <v-col>
+                  <AccessibleSelect
+                    :clearable="true"
+                    :dense="true"
+                    :disabled="isBusy"
+                    id-prefix="adv-search-asset-types"
+                    :items="$_.map($config.assetTypes, t => ({text: $_.capitalize(t), value: t}))"
+                    label="Asset type"
+                    :value="assetType"
+                    @input="setAssetType"
+                  />
+                </v-col>
+              </v-row>
+              <v-row no-gutters>
+                <v-col class="w-50">
+                  <AccessibleSelect
+                    :clearable="true"
+                    class="w-50"
+                    :dense="true"
+                    :disabled="isBusy"
+                    id-prefix="adv-search-user"
+                    item-text="canvasFullName"
+                    item-value="id"
+                    :items="users"
+                    label="User"
+                    :value="userId"
+                    @input="setUserId"
+                  />
+                </v-col>
+              </v-row>
+            </v-col>
+          </v-row>
+          <v-row no-gutters>
+            <v-col class="pr-4 pt-2 text-right" cols="1">
+              Sort by
+            </v-col>
+            <v-col>
+              <AccessibleSelect
+                class="w-50"
+                :dense="true"
+                :disabled="isBusy"
+                id-prefix="adv-search-order-by"
+                :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
+                :value="orderBy"
+                @input="setOrderBy"
+              />
+            </v-col>
+          </v-row>
+          <v-row no-gutters>
+            <v-col class="text-right" cols="12">
+              <div class="d-flex flex-row-reverse">
+                <div>
+                  <v-btn
+                    id="adv-search-btn"
+                    class="text-capitalize"
+                    color="primary"
+                    :disabled="isBusy || (!$_.trim(keywords) && !expanded)"
+                    elevation="1"
+                    medium
+                    @click="fetch"
+                  >
+                    Search
+                  </v-btn>
+                </div>
+                <div class="pr-2">
+                  <v-btn
+                    id="cancel-adv-search-btn"
+                    class="text-capitalize"
+                    :disabled="isBusy"
+                    elevation="1"
+                    medium
+                    @click="toggle"
+                  >
+                    Cancel
+                  </v-btn>
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card>
+    </v-expand-transition>
+    <Alert
+      v-if="alert"
+      id="assert-library-alert"
+      class="my-2"
+      :messages="[alert]"
+      :type="alertType"
+      width="auto"
+    />
   </div>
 </template>
 
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
+import Alert from '@/components/util/Alert'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
@@ -175,9 +205,11 @@ import {getUsers} from '@/api/users'
 
 export default {
   name: 'AssetsHeader',
-  components: {AccessibleSelect},
+  components: {AccessibleSelect, Alert},
   mixins: [AssetsSearch, Context, Utils],
   data: () => ({
+    alert: undefined,
+    alertType: undefined,
     categories: undefined,
     expanded: false,
     isBusy: true,
@@ -186,6 +218,9 @@ export default {
   watch: {
     expanded() {
       this.$putFocusNextTick(this.expanded ? 'adv-search-keywords-input' : 'basic-search-input')
+    },
+    isDirty() {
+      this.clearAlert()
     }
   },
   created() {
@@ -199,11 +234,17 @@ export default {
     })
   },
   methods: {
+    clearAlert() {
+      this.alert = null
+      this.alertType = null
+    },
     toggle() {
       this.setAssetType(null)
       this.setCategoryId(null)
       this.setOrderBy('recent')
       this.setUserId(null)
+      this.alert = null
+      this.alertType = null
       this.expanded = !this.expanded
       this.$announcer.polite(`Advanced search form is ${this.expanded ? 'open' : 'closed'}.`)
       this.$putFocusNextTick(this.expanded ? 'keywords-input' : 'basic-search-input')
@@ -211,8 +252,17 @@ export default {
     fetch() {
       if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId) {
         this.isBusy = true
-        this.search().then(() => {
+        this.$announcer.polite('Searching')
+        this.search().then(data => {
           this.isBusy = false
+          if (data.total) {
+            this.alertType = 'info'
+            this.alert = `${data.total} matching assets found.`
+            setTimeout(this.clearAlert, 3000)
+          } else {
+            this.alertType = 'warning'
+            this.alert = 'No matching assets found'
+          }
         })
       }
     }
