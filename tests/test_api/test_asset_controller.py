@@ -24,11 +24,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
+import os
 
 from moto import mock_s3
 from squiggy import std_commit
 from squiggy.lib.util import is_instructor
 from squiggy.models.course import Course
+from tests.util import mock_s3_bucket
 
 unauthorized_user_id = '666'
 
@@ -165,7 +167,7 @@ class TestCreateAsset:
     """Create asset API."""
 
     @staticmethod
-    def _api_create_asset(
+    def _api_create_link_asset(
             client,
             asset_type='link',
             category=None,
@@ -189,34 +191,71 @@ class TestCreateAsset:
         assert response.status_code == expected_status_code
         return json.loads(response.data)
 
+    @staticmethod
+    def _api_create_file_asset(
+            client,
+            asset_type='file',
+            category=None,
+            description='Gone to choose, choose again',
+            title='The Black Angel\'s Death Song',
+            expected_status_code=200,
+    ):
+        params = {
+            'description': description,
+            'title': title,
+            'type': asset_type,
+        }
+        if category and category.id:
+            params['categoryId'] = category.id
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+        params['file[0]'] = open(f'{base_dir}/fixtures/mock_file_upload/the_gift.txt', 'rb')
+        response = client.post(
+            '/api/asset/create',
+            data=params,
+            content_type='multipart/form-data',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
     def test_anonymous(self, client):
         """Denies anonymous user."""
-        self._api_create_asset(client, expected_status_code=401)
+        self._api_create_link_asset(client, expected_status_code=401)
 
     def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_create_asset(client, expected_status_code=401)
+        self._api_create_link_asset(client, expected_status_code=401)
 
-    def test_create_asset(self, client, fake_auth, authorized_user_id):
+    def test_create_link_asset(self, client, fake_auth, authorized_user_id):
         """Authorized user can create an asset."""
         fake_auth.login(authorized_user_id)
-        api_json = self._api_create_asset(client)
+        api_json = self._api_create_link_asset(client)
         assert 'id' in api_json
         assert api_json['title'] == 'What goes on in your mind?'
         categories = api_json['categories']
         assert len(categories) == 0
 
-    def test_create_asset_with_category(self, client, fake_auth, mock_category, authorized_user_id):
+    def test_create_link_asset_with_category(self, client, fake_auth, mock_category, authorized_user_id):
         """Returns a well-formed response."""
         fake_auth.login(authorized_user_id)
-        api_json = self._api_create_asset(client, category=mock_category)
+        api_json = self._api_create_link_asset(client, category=mock_category)
         assert 'id' in api_json
         assert api_json['title'] == 'What goes on in your mind?'
         categories = api_json['categories']
         assert len(categories) == 1
         assert categories[0]['id'] == mock_category.id
         assert categories[0]['title'] == mock_category.title
+
+    @mock_s3
+    def test_create_file_asset(self, client, app, fake_auth, authorized_user_id):
+        """Authorized user can create an asset."""
+        fake_auth.login(authorized_user_id)
+        with mock_s3_bucket(app):
+            api_json = self._api_create_file_asset(client)
+            assert 'id' in api_json
+            assert api_json['title'] == 'The Black Angel\'s Death Song'
+            categories = api_json['categories']
+            assert len(categories) == 0
 
 
 class TestUpdateAsset:

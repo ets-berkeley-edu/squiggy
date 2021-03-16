@@ -20,6 +20,16 @@ export function createLinkAsset(categoryId, description, title, url) {
   })
 }
 
+export function createFileAsset(categoryId, description, title, file) {
+  return utils.postMultipartFormData(`${utils.apiBaseUrl()}/api/asset/create`, {
+    categoryId,
+    description,
+    'file[0]': file,
+    title,
+    type: 'file'
+  })
+}
+
 export function deleteAsset(assetId) {
   return axios.delete(`${utils.apiBaseUrl()}/api/asset/${assetId}/delete`)
 }
@@ -61,8 +71,4 @@ export function getAssets(
 
 export function likeAsset(assetId) {
   return axios.get(`${utils.apiBaseUrl()}/api/asset/${assetId}/like`)
-}
-
-export function uploadFile(file) {
-  return utils.postMultipartFormData('/api/asset/upload', {'file[0]': file})
 }

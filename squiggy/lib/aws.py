@@ -57,6 +57,17 @@ def get_s3_signed_url(url):
     )
 
 
+def put_binary_data_to_s3(bucket, key, binary_data):
+    try:
+        s3 = _get_s3_client()
+        s3.put_object(Body=binary_data, Bucket=bucket, Key=key)
+        return True
+    except Exception as e:
+        app.logger.error(f'S3 put operation failed (bucket={bucket}, key={key})')
+        app.logger.exception(e)
+        return None
+
+
 def stream_object(s3_url):
     try:
         return smart_open.open(s3_url, 'rb', transport_params={'session': _get_session()})

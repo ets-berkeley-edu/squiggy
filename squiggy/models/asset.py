@@ -94,6 +94,7 @@ class Asset(Base):
         categories=None,
         description=None,
         download_url=None,
+        mime=None,
         source=None,
         title=None,
         url=None,
@@ -105,6 +106,7 @@ class Asset(Base):
         self.course_id = course_id
         self.description = description
         self.download_url = download_url
+        self.mime = mime
         self.source = source
         self.title = title
         self.url = url
@@ -140,6 +142,7 @@ class Asset(Base):
             categories=None,
             description=None,
             download_url=None,
+            mime=None,
             source=None,
             url=None,
             visible=True,

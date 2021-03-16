@@ -25,6 +25,18 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from contextlib import contextmanager
 
+import boto3
+import moto
+
+
+@contextmanager
+def mock_s3_bucket(app):
+    with moto.mock_s3():
+        bucket = app.config['S3_BUCKET']
+        s3 = boto3.resource('s3', app.config['S3_REGION'])
+        s3.create_bucket(Bucket=bucket, CreateBucketConfiguration={'LocationConstraint': app.config['S3_REGION']})
+        yield s3
+
 
 @contextmanager
 def override_config(app, key, value):
