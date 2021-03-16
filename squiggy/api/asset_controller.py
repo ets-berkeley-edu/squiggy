@@ -120,7 +120,7 @@ def create_asset():
         reverse_course = str(current_user.course.id)[::-1].rjust(7, '0')
         (filename, extension) = os.path.splitext(file_upload['name'])
         # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
-        key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{filename[0:170]}.{extension}"
+        key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{filename[0:170]}{extension}"
         if put_binary_data_to_s3(bucket, key, file_upload['byte_stream']):
             download_url = f's3://{bucket}/{key}'
             # TODO determine content type for preview service
