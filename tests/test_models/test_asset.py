@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import pytest
+from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 
 
@@ -76,3 +77,34 @@ class TestAsset:
             assert asset['users'][0]['canvasEnrollmentState'] == 'active'
             assert 'canvasCourseSections' in asset['users'][0]
             assert 'canvasImage' in asset['users'][0]
+
+    def test_asset_creation_activity(self, authorized_user_session):
+        asset = Asset.create(
+            asset_type='link',
+            categories=None,
+            course_id=authorized_user_session.course.id,
+            title='Riding in a Stutz Bear Cat, Jim',
+            url='https://genius.com/The-velvet-underground-sweet-jane-lyrics',
+            users=[authorized_user_session.user],
+        )
+        activities = Activity.query.filter_by(asset_id=asset.id).all()
+        assert len(activities) == 1
+        assert activities[0].activity_type == 'asset_add'
+        assert activities[0].course_id == authorized_user_session.course.id
+        assert activities[0].object_type == 'asset'
+        assert activities[0].object_id == asset.id
+        assert activities[0].asset_id == asset.id
+        assert activities[0].user_id == authorized_user_session.user.id
+
+    def test_asset_creation_invisible_no_activities(self, authorized_user_session):
+        asset = Asset.create(
+            asset_type='link',
+            categories=None,
+            course_id=authorized_user_session.course.id,
+            title='Riding in a Stutz Bear Cat, Jim',
+            url='https://genius.com/The-velvet-underground-sweet-jane-lyrics',
+            users=[authorized_user_session.user],
+            visible=False,
+        )
+        activities = Activity.query.filter_by(asset_id=asset.id).all()
+        assert len(activities) == 0
