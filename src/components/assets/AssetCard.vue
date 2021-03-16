@@ -66,11 +66,10 @@ export default {
       type: Object
     }
   },
-  data: () => ({
-    thumbnailUrl: undefined
-  }),
-  created() {
-    this.thumbnailUrl = this.asset.thumbnailUrl || require('@/assets/img-not-found.png')
+  computed: {
+    thumbnailUrl() {
+      return this.asset.thumbnailUrl || require('@/assets/img-not-found.png')
+    }
   },
   methods: {
     imgError() {
