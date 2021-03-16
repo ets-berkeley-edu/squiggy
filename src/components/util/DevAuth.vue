@@ -1,10 +1,11 @@
 <template>
   <div v-if="!$currentUser.isAuthenticated">
-    <ErrorsAlert
+    <Alert
       v-if="errors.length"
       id="dev-auth-error"
       class="mt-2"
-      :errors="errors"
+      :messages="errors"
+      type="error"
     />
     <v-card color="transparent" flat width="360">
       <v-form @submit="devAuth">
@@ -46,14 +47,14 @@
 </template>
 
 <script>
+import Alert from '@/components/util/Alert'
 import Context from '@/mixins/Context'
-import ErrorsAlert from '@/components/util/ErrorsAlert'
 import Utils from '@/mixins/Utils'
 import {devAuthLogIn} from '@/api/auth'
 
 export default {
   name: 'DevAuth',
-  components: {ErrorsAlert},
+  components: {Alert},
   mixins: [Context, Utils],
   props: {
     canvasDomains: {

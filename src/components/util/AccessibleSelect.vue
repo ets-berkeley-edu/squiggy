@@ -2,10 +2,10 @@
   <v-select
     :id="`${idPrefix}-select`"
     v-model="modelProxy"
-    :clearable="true"
+    :clearable="clearable"
+    :dense="dense"
     :disabled="disabled"
     :eager="true"
-    :filled="true"
     :items="items"
     :item-text="itemText"
     :item-value="itemValue"
@@ -27,6 +27,14 @@
 export default {
   name: 'AccessibleSelect',
   props: {
+    clearable: {
+      required: false,
+      type: Boolean
+    },
+    dense: {
+      required: false,
+      type: Boolean
+    },
     disabled: {
       required: false,
       type: Boolean

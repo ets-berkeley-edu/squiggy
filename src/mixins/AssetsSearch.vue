@@ -8,6 +8,7 @@ export default {
       'assets',
       'assetType',
       'categoryId',
+      'isDirty',
       'keywords',
       'limit',
       'orderBy',
