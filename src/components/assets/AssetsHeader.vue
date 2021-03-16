@@ -6,7 +6,7 @@
           id="basic-search-input"
           :value="keywords"
           clearable
-          :disabled="isSearching"
+          :disabled="isBusy"
           label="Search"
           solo
           type="search"
@@ -18,7 +18,7 @@
             <v-btn
               id="search-assets-btn"
               class="ml-2"
-              :disabled="isLoading || isSearching"
+              :disabled="isLoading || isBusy"
               icon
               @click="toggle"
             >
@@ -30,7 +30,7 @@
             <v-btn
               id="search-btn"
               class="mb-2"
-              :disabled="isLoading || isSearching || (!$_.trim(keywords) && !expanded)"
+              :disabled="isLoading || isBusy || (!$_.trim(keywords) && !expanded)"
               icon
               @click="fetch"
               @keypress.enter="fetch"
@@ -49,7 +49,7 @@
         <v-btn
           id="manage-assets-btn"
           elevation="2"
-          :disabled="isSearching"
+          :disabled="isBusy"
           large
           @click="go('/assets/manage')"
           @keypress.enter="go('/assets/manage')"
@@ -81,23 +81,23 @@
           <v-col>
             <v-row>
               <v-col>
-                <v-select
-                  id="adv-search-categories-select"
-                  :items="categories"
+                <AccessibleSelect
+                  :disabled="isBusy"
+                  id-prefix="adv-search-categories"
                   item-text="title"
                   item-value="id"
+                  :items="categories"
                   label="Category"
-                  outlined
                   :value="categoryId"
                   @input="setCategoryId"
                 />
               </v-col>
               <v-col>
-                <v-select
-                  id="adv-search-asset-types-select"
+                <AccessibleSelect
+                  :disabled="isBusy"
+                  id-prefix="adv-search-asset-types"
                   :items="$_.map($config.assetTypes, t => ({text: $_.capitalize(t), value: t}))"
                   label="Asset type"
-                  outlined
                   :value="assetType"
                   @input="setAssetType"
                 />
@@ -105,15 +105,15 @@
             </v-row>
             <v-row>
               <v-col>
-                <v-select
-                  id="adv-search-user-select"
-                  :items="users"
+                <AccessibleSelect
+                  :disabled="isBusy"
+                  id-prefix="adv-search-user"
                   item-text="canvasFullName"
                   item-value="id"
+                  :items="users"
                   label="User"
-                  outlined
                   :value="userId"
-                  @change="setUserId"
+                  @input="setUserId"
                 />
               </v-col>
             </v-row>
@@ -124,10 +124,10 @@
             Sort by
           </v-col>
           <v-col>
-            <v-select
-              id="adv-search-order-by-select"
+            <AccessibleSelect
+              :disabled="isBusy"
+              id-prefix="adv-search-order-by"
               :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
-              outlined
               :value="orderBy"
               @input="setOrderBy"
             />
@@ -140,7 +140,7 @@
                 <v-btn
                   id="adv-search-btn"
                   color="primary"
-                  :disabled="isSearching || (!$_.trim(keywords) && !expanded)"
+                  :disabled="isBusy || (!$_.trim(keywords) && !expanded)"
                   elevation="1"
                   @click="fetch"
                 >
@@ -150,7 +150,7 @@
               <div class="pr-2">
                 <v-btn
                   id="cancel-adv-search-btn"
-                  :disabled="isSearching"
+                  :disabled="isBusy"
                   elevation="1"
                   @click="toggle"
                 >
@@ -166,31 +166,37 @@
 </template>
 
 <script>
+import AccessibleSelect from '@/components/util/AccessibleSelect'
+import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import AssetsSearch from '@/mixins/AssetsSearch'
+import {getCategories} from '@/api/categories'
+import {getUsers} from '@/api/users'
 
 export default {
   name: 'AssetsHeader',
+  components: {AccessibleSelect},
   mixins: [AssetsSearch, Context, Utils],
-  props: {
-    categories: {
-      default: () => [],
-      required: false,
-      type: Array
-    },
-    users: {
-      default: () => [],
-      required: false,
-      type: Array
+  data: () => ({
+    categories: undefined,
+    expanded: false,
+    isBusy: true,
+    users: undefined
+  }),
+  watch: {
+    expanded() {
+      this.$putFocusNextTick(this.expanded ? 'adv-search-keywords-input' : 'basic-search-input')
     }
   },
-  data: () => ({
-    expanded: false,
-    isSearching: false
-  }),
   created() {
-    this.expanded = !!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId)
+    getUsers().then(data => {
+      this.users = data
+      getCategories().then(data => {
+        this.categories = data
+        this.expanded = !!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId)
+        this.isBusy = false
+      })
+    })
   },
   methods: {
     toggle() {
@@ -204,9 +210,9 @@ export default {
     },
     fetch() {
       if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId) {
-        this.isSearching = true
+        this.isBusy = true
         this.search().then(() => {
-          this.isSearching = false
+          this.isBusy = false
         })
       }
     }
