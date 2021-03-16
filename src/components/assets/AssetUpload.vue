@@ -1,24 +1,107 @@
 <template>
   <div v-if="!isLoading">
     <BackToAssetLibrary anchor="assets-container" />
-    <h2>Upload a file</h2>
+    <h2>Upload a File</h2>
     <div
+      v-if="!file && !uploading"
       v-cloak
       id="drop-file-to-upload"
-      style="height: 400px; background-color: #378dc5"
+      class="file-upload-box"
       @drop.prevent="addFile"
       @dragover.prevent
     >
-      <h2>Files to Upload (Drag them over)</h2>
+      <div class="file-upload-box-icon"><font-awesome-icon icon="cloud-upload-alt" /></div>
+      <div class="file-upload-box-text">Drop file to upload</div>
+      <div class="file-upload-box-text">or</div>
       <v-btn
-        id="file-upload-btn"
-        class="w-50"
-        :disabled="!file"
-        @click="upload"
+        id="browse-files-btn"
+        elevation="1"
+        @click="browseFiles"
       >
-        Upload
+        Browse
       </v-btn>
+      <input
+        ref="browseFileInput"
+        class="d-none"
+        type="file"
+        @change="onFileBrowserChange"
+      >
     </div>
+    <div
+      v-if="!file && uploading"
+      class="file-upload-box"
+    >
+      <div class="file-upload-box-icon"><font-awesome-icon icon="spinner" spin /></div>
+      <div class="file-upload-box-text">Uploading...</div>
+    </div>
+    <v-form v-if="file && !uploading" @submit="upload">
+      <v-container class="mt-2" fluid>
+        <v-row>
+          <v-col class="pt-7 text-right" cols="2">
+            Title
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              id="asset-title-input"
+              v-model="title"
+              label="Enter a title"
+              maxlength="255"
+              outlined
+              @keydown.enter="submit"
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="categories.length">
+          <v-col class="pt-7 text-right" cols="2">
+            Category
+          </v-col>
+          <v-col cols="6">
+            <v-select
+              id="asset-category-select"
+              v-model="categoryId"
+              :items="categories"
+              label="What assignment or topic is this related to"
+              item-text="title"
+              item-value="id"
+              outlined
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col class="pt-7 text-right" cols="2">
+            Description
+          </v-col>
+          <v-col cols="6">
+            <v-textarea
+              id="asset-description-textarea"
+              v-model="description"
+              outlined
+              placeholder="Add some more context to your file. You can use plain text or #keywords"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col class="text-right" cols="8">
+            <div class="d-flex flex-row-reverse">
+              <div>
+                <v-btn
+                  id="upload-file-btn"
+                  color="primary"
+                  :disabled="!file || !title"
+                  elevation="1"
+                  @click="upload"
+                >
+                  Upload file
+                </v-btn>
+              </div>
+              <div class="pr-2">
+                <v-btn id="upload-file-cancel-btn" elevation="1" @click="go('/assets')">Cancel</v-btn>
+              </div>
+            </div>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
   </div>
 </template>
 
@@ -27,28 +110,47 @@ import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 import {createFileAsset} from '@/api/assets'
+import {getCategories} from '@/api/categories'
 
 export default {
   name: 'AssetUpload',
   components: {BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
-    file: undefined
+    categories: undefined,
+    categoryId: undefined,
+    description: undefined,
+    file: undefined,
+    title: undefined,
+    uploading: false
   }),
+  created() {
+    this.$loading()
+    getCategories().then(data => {
+      this.categories = data
+      this.$ready('Upload a file')
+    })
+  },
   methods: {
     addFile(e) {
-      const files = e.dataTransfer.files
+      this.selectFile(e.dataTransfer.files)
+    },
+    browseFiles() {
+      this.$refs.browseFileInput.click()
+    },
+    onFileBrowserChange(e) {
+      this.selectFile(e.target.files)
+    },
+    selectFile(files) {
       if (this.$_.size(files) > 0) {
         this.file = files[0]
+        this.title = this.file.name
         this.$announcer.polite(`${this.file} added`)
       }
     },
-    removeFile(file){
-      this.files = this.file.filter(f => f !== file)
-      this.$announcer.polite(`${this.file} removed`)
-    },
     upload() {
-      createFileAsset(null, 'Placeholder description', 'Placeholder title', this.file).then(asset => {
+      this.uploading = true
+      createFileAsset(this.categoryId, this.description, this.title, this.file).then(asset => {
         this.$announcer.polite('File uploaded. Asset created.')
         this.go(`/asset/${asset.id}`)
       })
@@ -56,3 +158,28 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.file-upload-box {
+  background-color: #F7F7F7;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  display: table;
+  height: 280px;
+  margin-bottom: 10px;
+  padding-left: 10%;
+  padding-right: 10%;
+  padding-top: 40px;
+  text-align: center;
+  width: 100%;
+}
+.file-upload-box-text {
+  font-size: 20px;
+  line-height: 24px;
+  margin: 10px;
+}
+.file-upload-box-icon {
+  color: #747474;
+  font-size: 48px;
+}
+</style>

@@ -71,7 +71,7 @@
 
 <script>
 import Utils from '@/mixins/Utils'
-import {deleteAsset, downloadAsset} from '@/api/assets'
+import {deleteAsset} from '@/api/assets'
 
 export default {
   name: 'AssetPageHeader',
@@ -105,12 +105,6 @@ export default {
       deleteAsset(this.asset.id).then(() => {
         this.$announcer.polite('Deleted')
         this.go('/assets', {m: `Asset '${this.asset.title}' deleted.`})
-      })
-    },
-    download() {
-      this.$announcer.polite('Downloading')
-      downloadAsset(this.asset.id).then(() => {
-        this.$announcer.polite(`${this.asset.title} downloaded.`)
       })
     },
     edit() {
