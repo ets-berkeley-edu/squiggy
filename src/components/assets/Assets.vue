@@ -10,7 +10,14 @@
         class="asset-card ma-3"
       />
     </v-card>
-    <InfiniteLoading v-if="!isLoading && (assets.length < totalAssetCount)" spinner="waveDots" @infinite="fetch" />
+    <InfiniteLoading
+      v-if="!isLoading && (assets.length < totalAssetCount)"
+      spinner="waveDots"
+      @infinite="fetch"
+    >
+      <template #no-more><span id="no-more-assets-to-fetch" /></template>
+      <template #no-results><span id="zero-assets" /></template>
+    </InfiniteLoading>
   </div>
 </template>
 
