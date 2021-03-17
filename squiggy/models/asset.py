@@ -30,6 +30,7 @@ from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
+from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import camelize, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset_category import asset_category_table
@@ -73,6 +74,7 @@ class Asset(Base):
     preview_metadata = db.Column(JSON)
     preview_status = db.Column(db.String(255), nullable=False, default='pending')
     source = db.Column(db.String(255))
+    thumbnail_url = db.Column(db.String(255))
     title = db.Column(db.String(255))
     url = db.Column(db.String(255))
     views = db.Column(db.Integer, nullable=False, default=0)
@@ -162,6 +164,9 @@ class Asset(Base):
         )
         db.session.add(asset)
         std_commit()
+
+        preview_url = download_url if asset_type == 'file' else url
+        generate_previews(asset.id, preview_url)
 
         # Invisible assets generate no activities.
         if visible:
@@ -284,6 +289,21 @@ class Asset(Base):
         }
 
         return results
+
+    def update_preview(self, **kwargs):
+        if kwargs.get('preview_status'):
+            self.preview_status = kwargs['preview_status']
+        if kwargs.get('thumbnail_url'):
+            self.thumbnail_url = kwargs['thumbnail_url']
+        if kwargs.get('image_url'):
+            self.image_url = kwargs['image_url']
+        if kwargs.get('pdf_url'):
+            self.pdf_url = kwargs['pdf_url']
+        if kwargs.get('metadata'):
+            self.preview_metadata = kwargs['metadata']
+        db.session.add(self)
+        std_commit()
+        return True
 
     def to_api_json(self):
         return {

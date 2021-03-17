@@ -26,6 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import logging
 import os
 
+API_PREFIX = 'https://example.com/api'
+
 AWS_ACCESS_KEY_ID = 'some id'
 AWS_SECRET_ACCESS_KEY = 'some secret'
 AWS_S3_BUCKET_FOR_ASSETS = None
@@ -57,6 +59,10 @@ LOGGING_FORMAT = '[%(asctime)s] - %(levelname)s: %(message)s [in %(pathname)s:%(
 LOGGING_LOCATION = 'squiggy.log'
 LOGGING_LEVEL = logging.DEBUG
 LOGGING_PROPAGATION_LEVEL = logging.INFO
+
+PREVIEWS_API_KEY = 'someKey'
+PREVIEWS_ENABLED = True
+PREVIEWS_URL = 'https://example.com/previews'
 
 # Where file assets go.
 S3_BUCKET = 'some-bucket'
