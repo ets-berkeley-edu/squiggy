@@ -2,6 +2,7 @@
   <div>
     <v-btn
       :id="`delete-comment-${comment.id}-btn`"
+      :disabled="disable"
       icon
       @click="confirmDelete(comment.id)"
       @keypress.enter="confirmDelete(comment.id)"
@@ -59,6 +60,10 @@ export default {
     comment: {
       required: true,
       type: Object
+    },
+    disable: {
+      required: false,
+      type: Boolean
     }
   },
   data: () => ({

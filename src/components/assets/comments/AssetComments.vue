@@ -1,6 +1,6 @@
 <template>
   <div v-if="comments">
-    <EditCommentForm :after-save="refresh" :asset-id="assetId" />
+    <EditCommentForm :after-save="refresh" :asset-id="assetId" avatar-size="medium" />
     <v-container fluid>
       <v-row>
         <v-col cols="2" />
@@ -8,12 +8,12 @@
           <h3 id="comments-count">{{ pluralize('comment', comments.length, {0: 'No'}) }}</h3>
         </v-col>
       </v-row>
-      <v-row v-for="comment in comments" :key="comment.id">
+      <v-row v-for="comment in comments" :id="`comment-${comment.id}`" :key="comment.id">
         <v-col cols="2" />
         <v-col>
           <v-row>
             <v-col>
-              <div class="d-flex justify-space-between">
+              <div v-if="editCommentId !== comment.id" class="d-flex justify-space-between">
                 <div class="align-center d-flex">
                   <div class="pr-4">
                     <Avatar :user="comment.user" />
@@ -40,6 +40,7 @@
                       <DeleteCommentDialog
                         :after-delete="refresh"
                         :comment="comment"
+                        :disable="disableActions"
                       />
                     </div>
                     <div v-if="$currentUser.isAdmin || (comment.userId === $currentUser.id)">
@@ -61,22 +62,26 @@
           </v-row>
           <v-row>
             <v-col>
-              {{ comment.body }}
+              <div v-if="comment.id === editCommentId">
+                <EditCommentForm
+                  :after-cancel="() => editCommentId = null"
+                  :after-save="refresh"
+                  :asset-id="assetId"
+                  :comment="comment"
+                />
+              </div>
+              <div v-if="comment.id !== editCommentId" :id="`comment-${comment.id}-body`">
+                {{ comment.body }}
+              </div>
               <div v-if="comment.replies.length">
                 <div
                   v-for="reply in comment.replies"
+                  :id="`comment-${reply.id}-body`"
                   :key="reply.id"
                   class="pa-5"
                 >
                   {{ reply.body }}
                 </div>
-              </div>
-              <div v-if="comment.id === replyToCommentId">
-                <EditCommentForm
-                  :after-save="refresh"
-                  :asset-id="assetId"
-                  :parent="comment"
-                />
               </div>
             </v-col>
           </v-row>
@@ -123,14 +128,18 @@ export default {
   },
   methods: {
     edit(commentId) {
-      console.log(`TODO: edit comment ${commentId}`)
+      this.editCommentId = commentId
     },
     getPossessive(comment) {
       return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
     },
-    refresh() {
+    refresh(comment) {
+      this.editCommentId = null
       getComments(this.assetId).then(data => {
         this.comments = data
+        if (comment) {
+          this.scrollTo(`#comment-${comment.id}`, 0)
+        }
       })
     },
     replyTo(commentId) {
