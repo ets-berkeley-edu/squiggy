@@ -1,7 +1,8 @@
 <template>
   <div class="position-relative">
     <v-img
-      :class="`student-avatar-${size}`"
+      :id="`user-avatar-${user.id}`"
+      :class="`user-avatar-${size}`"
       :aria-label="`Photo of ${user.canvasFullName}`"
       :alt="`Photo of ${user.canvasFullName}`"
       :src="avatarUrl"
@@ -52,17 +53,17 @@ export default {
   object-fit: cover;
   width: 60px;
 }
-.student-avatar-large {
+.user-avatar-large {
   border-radius: 75px;
   height: 150px;
   width: 150px;
 }
-.student-avatar-medium {
+.user-avatar-medium {
   border-radius: 50px;
   height: 100px;
   width: 100px;
 }
-.student-avatar-small {
+.user-avatar-small {
   border: 1px;
   border-radius: 15px;
   height: 30px;

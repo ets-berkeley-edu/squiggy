@@ -38,9 +38,13 @@ def camelize(string):
     return ''.join(next(string_transform)(segment) for segment in string.split('_'))
 
 
+def is_admin(user):
+    return user.canvas_course_role and 'admin' in user.canvas_course_role.lower()
+
+
 def is_instructor(user):
-    role = user.canvas_course_role.lower()
-    return 'instructor' in role or 'teacher' in role
+    role = user.canvas_course_role and user.canvas_course_role.lower()
+    return role and ('instructor' in role or 'teacher' in role)
 
 
 def isoformat(value):
