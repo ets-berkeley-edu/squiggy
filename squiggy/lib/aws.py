@@ -57,10 +57,10 @@ def get_s3_signed_url(url):
     )
 
 
-def put_binary_data_to_s3(bucket, key, binary_data):
+def put_binary_data_to_s3(bucket, key, binary_data, content_type):
     try:
         s3 = _get_s3_client()
-        s3.put_object(Body=binary_data, Bucket=bucket, Key=key)
+        s3.put_object(Body=binary_data, Bucket=bucket, Key=key, ContentType=content_type)
         return True
     except Exception as e:
         app.logger.error(f'S3 put operation failed (bucket={bucket}, key={key})')

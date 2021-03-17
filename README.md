@@ -24,6 +24,12 @@ export CPPFLAGS="-I/usr/local/opt/openssl/include"
 
 and retry the install.
 
+libmagic is used to determine content type on file assets.
+
+```
+brew install libmagic
+```
+
 ### Front-end dependencies
 
 ```

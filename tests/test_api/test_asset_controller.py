@@ -254,6 +254,7 @@ class TestCreateAsset:
             api_json = self._api_create_file_asset(client)
             assert 'id' in api_json
             assert api_json['title'] == 'The Black Angel\'s Death Song'
+            assert api_json['mime'] == 'text/plain'
             categories = api_json['categories']
             assert len(categories) == 0
 
