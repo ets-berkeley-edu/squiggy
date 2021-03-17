@@ -44,23 +44,21 @@
     </v-row>
     <v-row>
       <v-col>
-        Description
-      </v-col>
-      <v-col>
+        <h3 class="sr-only">Description</h3>
         {{ asset.description }}
       </v-col>
     </v-row>
     <v-row>
-      <v-col>
-        Source
+      <v-col class="text-right" cols="1">
+        <span class="font-weight-bold">Source:</span>
       </v-col>
       <v-col>
         {{ asset.source || '&mdash;' }}
       </v-col>
     </v-row>
     <v-row justify="start">
-      <v-col>
-        {{ asset.categories.length === 1 ? 'Category' : 'Categories' }}
+      <v-col class="text-right" cols="1">
+        <span class="font-weight-bold">{{ asset.categories.length === 1 ? 'Category' : 'Categories' }}:</span>
       </v-col>
       <v-col>
         <div v-if="asset.categories.length">
@@ -73,7 +71,7 @@
               {{ item.name }}
             </router-link>
           </OxfordJoin>
-          {{ asset.categories.length ? $_.map(asset.categories, 'title') : '' }}
+          {{ asset.categories.length ? oxfordJoin($_.map(asset.categories, 'title')) : '' }}
         </div>
         <div v-if="!asset.categories.length">
           &mdash;
@@ -84,12 +82,15 @@
 </template>
 
 <script>
-import {likeAsset} from '@/api/assets'
 import Avatar from '@/components/user/Avatar'
+import OxfordJoin from '@/components/util/OxfordJoin'
+import Utils from '@/mixins/Utils'
+import {likeAsset} from '@/api/assets'
 
 export default {
   name: 'AssetOverview',
-  components: {Avatar},
+  components: {Avatar, OxfordJoin},
+  mixins: [Utils],
   props: {
     asset: {
       required: true,

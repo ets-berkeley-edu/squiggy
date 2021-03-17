@@ -44,7 +44,7 @@ from squiggy.models.user import User
 def download(asset_id):
     asset = Asset.find_by_id(asset_id)
     s3_url = asset.download_url
-    if asset and s3_url and can_view_asset(current_user, asset):
+    if asset and s3_url and can_view_asset(asset=asset, user=current_user):
         stream = stream_object(s3_url)
         if stream:
             now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')

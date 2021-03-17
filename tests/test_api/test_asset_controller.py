@@ -318,11 +318,11 @@ class TestDeleteAsset:
         response = client.delete(f'/api/asset/{asset_id}/delete')
         assert response.status_code == expected_status_code
 
-    def test_anonymous(self, client, mock_asset):
+    def test_anonymous(self, client):
         """Denies anonymous user."""
         self._api_delete_asset(asset_id=1, client=client, expected_status_code=401)
 
-    def test_unauthorized(self, client, fake_auth, mock_asset):
+    def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
         self._api_delete_asset(asset_id=1, client=client, expected_status_code=401)

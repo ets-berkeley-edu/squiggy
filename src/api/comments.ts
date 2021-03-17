@@ -9,6 +9,10 @@ export function createComment(assetId, body, parentId?) {
   })
 }
 
+export function deleteComment(commentId) {
+  return axios.delete(`${utils.apiBaseUrl()}/api/comment/${commentId}/delete`)
+}
+
 export function getComments(assetId) {
   return axios.get(`${utils.apiBaseUrl()}/api/comments/${assetId}`)
 }

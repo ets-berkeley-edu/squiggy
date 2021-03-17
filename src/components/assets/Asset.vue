@@ -16,7 +16,7 @@
       <AssetActivityTimeline :asset="asset" />
       -->
       <div class="py-3">
-        <AssetComments :asset="asset" />
+        <AssetComments :asset-id="asset.id" />
       </div>
     </div>
   </div>

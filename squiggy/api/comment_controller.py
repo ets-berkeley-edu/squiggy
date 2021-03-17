@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_view_asset
+from squiggy.api.api_util import can_delete_comment, can_view_asset
 from squiggy.api.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
@@ -59,6 +59,17 @@ def get_comments(asset_id):
         return tolerant_jsonify(_decorate_comments(Comment.get_comments(asset.id)))
     else:
         raise ResourceNotFoundError(f'No comment found with id: {asset_id}')
+
+
+@app.route('/api/comment/<comment_id>/delete', methods=['DELETE'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.find_by_id(comment_id=comment_id)
+    if comment and can_delete_comment(comment=comment, user=current_user):
+        Comment.delete(comment_id=comment_id)
+        return tolerant_jsonify({'message': f'Comment {comment_id} deleted'}), 200
+    else:
+        raise ResourceNotFoundError(f'No comment found with id: {comment_id}')
 
 
 def _decorate_comments(comments):
