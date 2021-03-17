@@ -16,3 +16,7 @@ export function deleteComment(commentId) {
 export function getComments(assetId) {
   return axios.get(`${utils.apiBaseUrl()}/api/comments/${assetId}`)
 }
+
+export function updateComment(commentId, body) {
+  return axios.post(`${utils.apiBaseUrl()}/api/comment/${commentId}/update`, {body})
+}

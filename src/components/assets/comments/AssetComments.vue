@@ -1,37 +1,6 @@
 <template>
   <div v-if="comments">
-    <div class="d-flex justify-center my-5 px-5 w-100">
-      <div class="pr-5 pt-3">
-        <Avatar size="medium" :user="$currentUser" />
-      </div>
-      <div class="w-75">
-        <div class="pb-2">
-          <font-awesome-icon class="primary--text" icon="graduation-cap" />
-          {{ $currentUser.canvasFullName }} (me)
-        </div>
-        <div>
-          <v-textarea
-            id="comment-body-textarea"
-            v-model="body"
-            auto-grow
-            dense
-            outlined
-            placeholder="Add a comment"
-          />
-        </div>
-        <div class="text-right">
-          <v-btn
-            id="post-comment-btn"
-            color="primary"
-            :disabled="!$_.trim(body)"
-            @click="create"
-          >
-            <font-awesome-icon class="mr-2" icon="comment" />
-            Comment
-          </v-btn>
-        </div>
-      </div>
-    </div>
+    <EditCommentForm :after-save="refresh" :asset-id="assetId" />
     <v-container fluid>
       <v-row>
         <v-col cols="2" />
@@ -58,11 +27,12 @@
                     <div>
                       <v-btn
                         :id="`reply-to-comment-${comment.id}-btn`"
+                        :disabled="disableActions"
                         icon
                         @click="replyTo(comment.id)"
                         @keypress.enter="replyTo(comment.id)"
                       >
-                        <span class="sr-only">Reply</span>
+                        <span class="sr-only">Reply to {{ getPossessive(comment) }} comment</span>
                         <font-awesome-icon icon="reply" />
                       </v-btn>
                     </div>
@@ -75,11 +45,12 @@
                     <div v-if="$currentUser.isAdmin || (comment.userId === $currentUser.id)">
                       <v-btn
                         :id="`edit-comment-${comment.id}-btn`"
+                        :disabled="disableActions"
                         icon
                         @click="edit(comment.id)"
                         @keypress.enter="edit(comment.id)"
                       >
-                        <span class="sr-only">Edit</span>
+                        <span class="sr-only">Edit {{ getPossessive(comment) }} comment</span>
                         <font-awesome-icon icon="pencil-alt" />
                       </v-btn>
                     </div>
@@ -100,6 +71,13 @@
                   {{ reply.body }}
                 </div>
               </div>
+              <div v-if="comment.id === replyToCommentId">
+                <EditCommentForm
+                  :after-save="refresh"
+                  :asset-id="assetId"
+                  :parent="comment"
+                />
+              </div>
             </v-col>
           </v-row>
         </v-col>
@@ -111,12 +89,13 @@
 <script>
 import Avatar from '@/components/user/Avatar'
 import DeleteCommentDialog from '@/components/assets/comments/DeleteCommentDialog'
+import EditCommentForm from '@/components/assets/comments/EditCommentForm'
 import Utils from '@/mixins/Utils'
-import {createComment, getComments} from '@/api/comments'
+import {getComments} from '@/api/comments'
 
 export default {
   name: 'AssetComments',
-  components: {Avatar, DeleteCommentDialog},
+  components: {Avatar, DeleteCommentDialog, EditCommentForm},
   mixins: [Utils],
   props: {
     assetId: {
@@ -130,24 +109,24 @@ export default {
     }
   },
   data: () => ({
-    body: undefined,
-    comments: undefined
+    comments: undefined,
+    editCommentId: undefined,
+    replyToCommentId: undefined
   }),
+  computed: {
+    disableActions() {
+      return this.editCommentId || this.replyToCommentId
+    }
+  },
   created() {
     this.refresh()
   },
   methods: {
-    create() {
-      createComment(this.assetId, this.body, this.parentId).then(() => {
-        this.$announcer.polite('Comment posted')
-        getComments(this.assetId).then(data => {
-          this.comments = data
-          this.body = null
-        })
-      })
-    },
     edit(commentId) {
       console.log(`TODO: edit comment ${commentId}`)
+    },
+    getPossessive(comment) {
+      return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
     },
     refresh() {
       getComments(this.assetId).then(data => {

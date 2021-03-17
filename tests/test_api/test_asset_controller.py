@@ -28,7 +28,7 @@ import os
 
 from moto import mock_s3
 from squiggy import std_commit
-from squiggy.lib.util import is_instructor
+from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
 from tests.util import mock_s3_bucket
 
@@ -62,7 +62,7 @@ class TestGetAsset:
     def test_teacher_view_asset(self, client, fake_auth, mock_asset):
         """Authorized user can view asset."""
         course = Course.find_by_id(mock_asset.course_id)
-        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         asset = self._api_asset(asset_id=mock_asset.id, client=client)
         assert asset['id'] == mock_asset.id
@@ -99,7 +99,7 @@ class TestDownloadAsset:
     def test_teacher_download(self, app, client, fake_auth, mock_asset):
         """Authorized user can download asset."""
         course = Course.find_by_id(mock_asset.course_id)
-        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         # TODO: Mock S3 so authorized user actually gets download. For now, 404 oddly indicates success.
         self._api_download_asset(app, asset_id=mock_asset.id, client=client, expected_status_code=404)
@@ -294,7 +294,7 @@ class TestUpdateAsset:
     def test_update_asset_by_teacher(self, client, fake_auth, mock_asset, mock_category):
         """Authorized user can update asset."""
         course = Course.find_by_id(mock_asset.course_id)
-        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         self._verify_update_asset(client, mock_asset, mock_category)
 
@@ -335,7 +335,7 @@ class TestDeleteAsset:
     def test_delete_asset_by_teacher(self, client, fake_auth, mock_asset, mock_category):
         """Authorized user can delete asset."""
         course = Course.find_by_id(mock_asset.course_id)
-        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         self._verify_delete_asset(mock_asset.id, client)
 

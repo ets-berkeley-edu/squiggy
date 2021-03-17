@@ -26,9 +26,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import json
 
 from squiggy import std_commit
-from squiggy.lib.util import is_instructor
+from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.comment import Comment
 from squiggy.models.course import Course
+from squiggy.models.user import User
 
 unauthorized_user_id = '666'
 
@@ -114,6 +115,58 @@ class TestGetComments:
         assert 'Sunday\'s clown' in replies[1]['body']
 
 
+class TestUpdateComment:
+    """Update comment API."""
+
+    @staticmethod
+    def _api_update_comment(client, body, comment_id, expected_status_code=200):
+        response = client.post(
+            f'/api/comment/{comment_id}/update',
+            data=json.dumps({'body': body}),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_update_comment(client, body='Anonymous hack!', comment_id=1, expected_status_code=401)
+
+    def test_teachers_cannot_update(self, client, fake_auth):
+        """Denies teacher."""
+        instructor = next(user for user in User.query.all() if is_teaching(user))
+        fake_auth.login(instructor.id)
+        self._api_update_comment(
+            client,
+            body='Unauthorized instructor hack!',
+            comment_id=1,
+            expected_status_code=404,
+        )
+
+    def test_admins_cannot_update(self, client, fake_auth):
+        """Denies admin."""
+        admin_user = next(user for user in User.query.all() if is_admin(user))
+        fake_auth.login(admin_user.id)
+        self._api_update_comment(
+            client,
+            body='Unauthorized admin hack!',
+            comment_id=1,
+            expected_status_code=404,
+        )
+
+    def test_update_comment_by_owner(self, client, fake_auth, mock_asset):
+        """Comment author can update comment."""
+        comment = Comment.query.first()
+        fake_auth.login(comment.user_id)
+        body = 'I, me, mine.'
+        self._api_update_comment(client, body=body, comment_id=comment.id)
+        std_commit(allow_test_environment=True)
+        # Verify update
+        comments = _api_get_comments(asset_id=comment.asset_id, client=client)
+        updated_comment = next(c for c in comments if c['id'] == comment.id)
+        assert updated_comment['body'] == body
+
+
 class TestDeleteComment:
     """Delete comment API."""
 
@@ -139,7 +192,7 @@ class TestDeleteComment:
     def test_delete_asset_by_teacher(self, client, fake_auth, mock_asset):
         """Authorized user can delete asset."""
         course = Course.find_by_id(mock_asset.course_id)
-        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         self._verify_delete_comment(mock_asset, client)
 

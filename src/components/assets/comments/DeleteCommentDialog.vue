@@ -6,14 +6,14 @@
       @click="confirmDelete(comment.id)"
       @keypress.enter="confirmDelete(comment.id)"
     >
-      <span class="sr-only">Delete</span>
+      <span class="sr-only">Delete {{ possessive }} comment</span>
       <font-awesome-icon icon="trash" />
     </v-btn>
     <v-dialog v-model="confirmDeleteDialog" width="500">
       <v-card>
         <v-card-title id="delete-dialog-title" tabindex="-1">Delete comment?</v-card-title>
         <v-card-text class="pt-3">
-          Are you sure you want to delete {{ comment.userId === $currentUser.id ? 'your' : `${comment.user.canvasFullName}'s` }} comment?
+          Are you sure you want to delete {{ possessive }} comment?
         </v-card-text>
         <v-divider />
         <v-card-actions>
@@ -63,8 +63,12 @@ export default {
   },
   data: () => ({
     confirmDeleteCommentId: undefined,
-    confirmDeleteDialog: false
+    confirmDeleteDialog: false,
+    possessive: undefined
   }),
+  created() {
+    this.possessive = this.comment.userId === this.$currentUser.id ? 'your' : `${this.comment.user.canvasFullName}'s`
+  },
   methods: {
     cancelDelete() {
       this.confirmDeleteCommentId = this.confirmDeleteDialog = null
@@ -88,7 +92,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>
