@@ -23,20 +23,34 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import os
+from flask import current_app as app, request
+from squiggy.api.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
+from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.previews import verify_preview_service_authorization
+from squiggy.models.asset import Asset
 
 
-ALERT_INFREQUENT_ACTIVITY_ENABLED = False
-ALERT_WITHDRAWAL_ENABLED = False
+@app.route('/api/previews/callback', methods=['POST'])
+def previews_callback():
+    if not verify_preview_service_authorization(request.headers.get('authorization')):
+        raise UnauthorizedRequestError('Missing or invalid authorization header.')
 
-AWS_APP_ROLE_ARN = 'arn:aws:iam::123456789012:role/test-role'
+    params = request.get_json()
 
-INDEX_HTML = 'tests/static/test-index.html'
+    if not (params.get('id', None) and params.get('status', None)):
+        raise BadRequestError('Id and status fields required.')
 
-LOGGING_LOCATION = 'STDOUT'
+    asset = Asset.find_by_id(params['id'])
+    if not asset:
+        raise BadRequestError(f"Asset {params['id']} not found.")
 
-PREVIEWS_ENABLED = False
-
-SQLALCHEMY_DATABASE_URI = f"postgres://squiggy:squiggy@localhost:{os.getenv('PGPORT', '5432')}/squiggy_test"
-
-TESTING = True
+    if asset.update_preview(
+        preview_status=params.get('status'),
+        thumbnail_url=params.get('thumbnail'),
+        image_url=params.get('image'),
+        pdf_url=params.get('pdf'),
+        metadata=params.get('metadata'),
+    ):
+        return tolerant_jsonify({'status': 'success'})
+    else:
+        raise InternalServerError(f"Unable to update preview data (asset_id={params['id']}.")
