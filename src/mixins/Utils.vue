@@ -23,6 +23,9 @@ export default {
       default: return _.join(_.concat(_.initial(arr), ` and ${_.last(arr)}`), ', ')
       }
     },
+    pluralize: (noun, count, substitutions={}, pluralSuffix='s') => {
+      return (`${substitutions[count] || substitutions['other'] || count} ` + (count === 1 ? noun : `${noun}${pluralSuffix}`))
+    },
     scrollTo: element => setTimeout(() => VueScrollTo.scrollTo(element), 1000),
     stripAnchorRef: path => _.split(path, '#', 1)[0],
     validate: (errors, rules, value, messageIfError=null) => {

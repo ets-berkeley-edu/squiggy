@@ -59,6 +59,17 @@ class Comment(Base):
                 """
 
     @classmethod
+    def delete(cls, comment_id):
+        comment = cls.query.filter_by(id=comment_id).first()
+        if comment:
+            db.session.delete(comment)
+            std_commit()
+
+    @classmethod
+    def find_by_id(cls, comment_id):
+        return cls.query.filter_by(id=comment_id).first()
+
+    @classmethod
     def create(cls, asset_id, user_id, body, parent_id=None):
         comment = cls(
             asset_id=asset_id,

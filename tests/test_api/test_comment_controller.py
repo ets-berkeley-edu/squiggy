@@ -25,6 +25,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
+from squiggy import std_commit
+from squiggy.lib.util import is_instructor
+from squiggy.models.comment import Comment
+from squiggy.models.course import Course
+
 unauthorized_user_id = '666'
 
 
@@ -107,6 +112,45 @@ class TestGetComments:
         assert len(replies) == 2
         assert 'all tomorrow\'s parties' in replies[0]['body']
         assert 'Sunday\'s clown' in replies[1]['body']
+
+
+class TestDeleteComment:
+    """Delete comment API."""
+
+    @staticmethod
+    def _api_delete_comment(comment_id, client, expected_status_code=200):
+        response = client.delete(f'/api/comment/{comment_id}/delete')
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_delete_comment(comment_id=1, client=client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_delete_comment(comment_id=1, client=client, expected_status_code=401)
+
+    def test_delete_comment_by_owner(self, client, fake_auth, mock_asset):
+        """Authorized user can delete comment."""
+        fake_auth.login(mock_asset.users[0].id)
+        self._verify_delete_comment(mock_asset, client)
+
+    def test_delete_asset_by_teacher(self, client, fake_auth, mock_asset):
+        """Authorized user can delete asset."""
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_instructor(u), course.users))
+        fake_auth.login(instructors[0].id)
+        self._verify_delete_comment(mock_asset, client)
+
+    def _verify_delete_comment(self, asset, client):
+        comment = Comment.get_comments(asset_id=asset.id)[0]
+        comment_id = comment['id']
+        self._api_delete_comment(comment_id=comment_id, client=client)
+        std_commit(allow_test_environment=True)
+        comments = _api_get_comments(asset_id=asset.id, client=client)
+        comment_ids = list(map(lambda c: c['id'], comments))
+        assert comment_id not in comment_ids
 
 
 def _api_get_comments(asset_id, client, expected_status_code=200):

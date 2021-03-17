@@ -60,6 +60,7 @@ module.exports = {
     'vue/singleline-html-element-content-newline': 0,
     'vue/space-infix-ops': 2,
     'vue/space-unary-ops': 2,
+    'vue/this-in-template': 2,
     'vue/valid-v-slot': [
       'error',
       {

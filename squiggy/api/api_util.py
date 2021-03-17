@@ -27,10 +27,18 @@ from squiggy.lib.util import is_instructor
 
 
 def can_update_asset(user, asset):
-    user_id = user.id if hasattr(user, 'id') else user.user_id
+    user_id = _get_user_id(user)
     user_ids = [user.id for user in asset.users]
     return user.course.id == asset.course_id and (is_instructor(user) or user_id in user_ids)
 
 
-def can_view_asset(user, asset):
-    return user.course.id == asset.course_id
+def can_view_asset(asset, user):
+    return user.course.id == asset.course_id or user.is_admin
+
+
+def can_delete_comment(comment, user):
+    return comment.user_id == _get_user_id(user) or user.is_admin
+
+
+def _get_user_id(user):
+    return user.id if hasattr(user, 'id') else user.user_id
