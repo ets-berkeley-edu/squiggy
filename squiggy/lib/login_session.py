@@ -23,6 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from squiggy.lib.util import is_admin, is_instructor
 from squiggy.models.user import User
 
 
@@ -43,28 +44,32 @@ class LoginSession:
         return self.user and self.user.canvas_course_role
 
     @property
+    def course(self):
+        return self.user and self.user.course
+
+    @property
     def is_active(self):
         return self.is_authenticated
 
     @property
     def is_admin(self):
-        return self.is_authenticated
+        return is_admin(self)
 
     @property
     def is_authenticated(self):
         return self.user is not None
 
     @property
-    def course(self):
-        return self.user and self.user.course
+    def is_teaching(self):
+        return is_instructor(self)
 
     def to_api_json(self):
         return {
             **(self.user.to_api_json() if self.user else {}),
             **{
+                'course': self.course and self.course.to_api_json(),
                 'isAdmin': self.is_admin,
                 'isAuthenticated': self.is_authenticated,
-                'isTeaching': False,  # TODO
-                'course': self.course and self.course.to_api_json(),
+                'isTeaching': self.is_teaching,
             },
         }

@@ -56,19 +56,29 @@
                 <div>
                   <div class="d-flex">
                     <div>
-                      <v-btn icon @click="replyTo(comment.id)" @keypress.enter="replyTo(comment.id)">
+                      <v-btn
+                        :id="`reply-to-comment-${comment.id}-btn`"
+                        icon
+                        @click="replyTo(comment.id)"
+                        @keypress.enter="replyTo(comment.id)"
+                      >
                         <span class="sr-only">Reply</span>
                         <font-awesome-icon icon="reply" />
                       </v-btn>
                     </div>
-                    <div v-if="$currentUser.isAdmin || (comment.userId === $currentUser.id)">
-                      <v-btn icon @click="confirmDelete(comment.id)" @keypress.enter="confirmDelete(comment.id)">
-                        <span class="sr-only">Delete</span>
-                        <font-awesome-icon icon="trash" />
-                      </v-btn>
+                    <div v-if="$currentUser.isAdmin || $currentUser.isTeaching || (comment.userId === $currentUser.id)">
+                      <DeleteCommentDialog
+                        :after-delete="refresh"
+                        :comment="comment"
+                      />
                     </div>
                     <div v-if="$currentUser.isAdmin || (comment.userId === $currentUser.id)">
-                      <v-btn icon @click="edit(comment.id)" @keypress.enter="edit(comment.id)">
+                      <v-btn
+                        :id="`edit-comment-${comment.id}-btn`"
+                        icon
+                        @click="edit(comment.id)"
+                        @keypress.enter="edit(comment.id)"
+                      >
                         <span class="sr-only">Edit</span>
                         <font-awesome-icon icon="pencil-alt" />
                       </v-btn>
@@ -95,61 +105,18 @@
         </v-col>
       </v-row>
     </v-container>
-    <v-dialog v-model="confirmDeleteDialog" width="500">
-      <template #activator="{}">
-        <v-btn
-          id="delete-comment-btn"
-          class="mr-3"
-          @click="confirmDelete"
-          @keypress.enter="confirmDelete"
-        >
-          <font-awesome-icon class="mr-2" icon="trash" />
-          Delete
-        </v-btn>
-      </template>
-      <v-card>
-        <v-card-title id="delete-dialog-title" tabindex="-1">Delete comment?</v-card-title>
-        <v-card-text class="pt-3">
-          Are you sure you want to delete this comment?
-        </v-card-text>
-        <v-divider />
-        <v-card-actions>
-          <v-spacer />
-          <div class="d-flex flex-row-reverse pa-2">
-            <div>
-              <v-btn
-                id="confirm-delete-btn"
-                color="primary"
-                @click="deleteConfirmed"
-                @keypress.enter="deleteConfirmed"
-              >
-                Confirm
-              </v-btn>
-            </div>
-            <div class="mr-2">
-              <v-btn
-                id="cancel-delete-btn"
-                @click="cancelDelete"
-                @keypress.enter="cancelDelete"
-              >
-                Cancel
-              </v-btn>
-            </div>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
 <script>
 import Avatar from '@/components/user/Avatar'
+import DeleteCommentDialog from '@/components/assets/comments/DeleteCommentDialog'
 import Utils from '@/mixins/Utils'
-import {createComment, deleteComment, getComments} from '@/api/comments'
+import {createComment, getComments} from '@/api/comments'
 
 export default {
   name: 'AssetComments',
-  components: {Avatar},
+  components: {Avatar, DeleteCommentDialog},
   mixins: [Utils],
   props: {
     assetId: {
@@ -164,9 +131,7 @@ export default {
   },
   data: () => ({
     body: undefined,
-    comments: undefined,
-    confirmDeleteCommentId: undefined,
-    confirmDeleteDialog: false
+    comments: undefined
   }),
   created() {
     this.refresh()
@@ -174,29 +139,11 @@ export default {
   methods: {
     create() {
       createComment(this.assetId, this.body, this.parentId).then(() => {
+        this.$announcer.polite('Comment posted')
         getComments(this.assetId).then(data => {
           this.comments = data
           this.body = null
         })
-      })
-    },
-    cancelDelete() {
-      this.confirmDeleteCommentId = this.confirmDeleteDialog = null
-      this.$announcer.polite('Canceled')
-      this.$putFocusNextTick('asset-title')
-    },
-    confirmDelete(commentId) {
-      this.confirmDeleteCommentId = commentId
-      this.confirmDeleteDialog = true
-      this.$announcer.polite('Confirm delete')
-      this.$putFocusNextTick('delete-dialog-title')
-    },
-    deleteConfirmed() {
-      const commentId = this.confirmDeleteCommentId
-      this.confirmDeleteCommentId = this.confirmDeleteDialog = null
-      deleteComment(commentId).then(() => {
-        this.refresh()
-        this.$announcer.polite('Comment deleted')
       })
     },
     edit(commentId) {

@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import AssetComments from '@/components/assets/AssetComments'
+import AssetComments from '@/components/assets/comments/AssetComments'
 import AssetImage from '@/components/assets/AssetImage'
 import AssetOverview from '@/components/assets/AssetOverview'
 import AssetPageHeader from '@/components/assets/AssetPageHeader'

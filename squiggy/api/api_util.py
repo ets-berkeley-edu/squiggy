@@ -37,7 +37,7 @@ def can_view_asset(asset, user):
 
 
 def can_delete_comment(comment, user):
-    return comment.user_id == _get_user_id(user) or user.is_admin
+    return comment.user_id == _get_user_id(user) or user.is_admin or user.is_teaching
 
 
 def _get_user_id(user):

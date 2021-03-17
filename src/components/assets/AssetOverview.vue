@@ -12,7 +12,7 @@
                 <Avatar :user="user" />
               </div>
               <div>
-                {{ user.canvasFullName }} on {{ asset.createdAt | moment('LL') }}
+                <span :id="`by-user-${user.id}`">{{ user.canvasFullName }}</span> on {{ asset.createdAt | moment('LL') }}
               </div>
             </div>
           </v-col>
@@ -49,16 +49,26 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col class="text-right" cols="1">
-        <span class="font-weight-bold">Source:</span>
+      <v-col
+        class="font-weight-bold text-no-wrap"
+        lg="1"
+        md="1"
+        sm="2"
+      >
+        Source:
       </v-col>
       <v-col>
         {{ asset.source || '&mdash;' }}
       </v-col>
     </v-row>
     <v-row justify="start">
-      <v-col class="text-right" cols="1">
-        <span class="font-weight-bold">{{ asset.categories.length === 1 ? 'Category' : 'Categories' }}:</span>
+      <v-col
+        class="font-weight-bold text-no-wrap"
+        lg="1"
+        md="1"
+        sm="2"
+      >
+        {{ asset.categories.length === 1 ? 'Category' : 'Categories' }}:
       </v-col>
       <v-col>
         <div v-if="asset.categories.length">

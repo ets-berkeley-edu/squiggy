@@ -16,7 +16,7 @@ export default {
       this.$router.push({path, query})
     },
     oxfordJoin: arr => {
-      switch(arr.length) {
+      switch(_.size(arr)) {
       case 0: return ''
       case 1: return _.head(arr)
       case 2: return `${_.head(arr)} and ${_.last(arr)}`
