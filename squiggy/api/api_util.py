@@ -23,22 +23,28 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy.lib.util import is_instructor
+from squiggy.lib.util import is_teaching
 
 
 def can_update_asset(user, asset):
     user_id = _get_user_id(user)
     user_ids = [user.id for user in asset.users]
-    return user.course.id == asset.course_id and (is_instructor(user) or user_id in user_ids)
+    return user.course.id == asset.course_id and (is_teaching(user) or user_id in user_ids)
 
 
 def can_view_asset(asset, user):
-    return user.course.id == asset.course_id or user.is_admin
+    return user and (user.course.id == asset.course_id or user.is_admin)
 
 
 def can_delete_comment(comment, user):
-    return comment.user_id == _get_user_id(user) or user.is_admin or user.is_teaching
+    user_id = _get_user_id(user)
+    return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
+
+
+def can_update_comment(comment, user):
+    user_id = _get_user_id(user)
+    return user_id and comment.user_id == user_id
 
 
 def _get_user_id(user):
-    return user.id if hasattr(user, 'id') else user.user_id
+    return user and (user.id if hasattr(user, 'id') else user.user_id)

@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_delete_comment, can_view_asset
+from squiggy.api.api_util import can_delete_comment, can_update_comment, can_view_asset
 from squiggy.api.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
@@ -38,17 +38,22 @@ from squiggy.models.user import User
 def create_comment():
     params = request.get_json()
     asset_id = params.get('assetId')
-    body = params.get('body', '').strip()
-    parent_id = params.get('parentId')
-    if not asset_id or not body:
-        raise BadRequestError('Comment creation requires assetId and body.')
-    comment = Comment.create(
-        asset_id=asset_id and int(asset_id),
-        user_id=current_user.user_id,
-        body=body,
-        parent_id=parent_id and int(parent_id),
-    )
-    return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
+    asset = Asset.find_by_id(asset_id=asset_id)
+    if asset and can_view_asset(asset=asset, user=current_user):
+        body = params.get('body', '').strip()
+        if not body:
+            raise BadRequestError('Comment body is required.')
+        parent_id = params.get('parentId')
+        comment = Comment.create(
+            asset_id=asset_id and int(asset_id),
+            user_id=current_user.user_id,
+            body=body,
+            parent_id=parent_id and int(parent_id),
+        )
+        # TODO: Register activities: 'asset_comment', 'get_asset_comment', and 'get_asset_comment_reply'
+        return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
+    else:
+        raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
 
 
 @app.route('/api/comments/<asset_id>')
@@ -58,7 +63,7 @@ def get_comments(asset_id):
     if asset and can_view_asset(asset=asset, user=current_user):
         return tolerant_jsonify(_decorate_comments(Comment.get_comments(asset.id)))
     else:
-        raise ResourceNotFoundError(f'No comment found with id: {asset_id}')
+        raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
 
 
 @app.route('/api/comment/<comment_id>/delete', methods=['DELETE'])
@@ -69,7 +74,22 @@ def delete_comment(comment_id):
         Comment.delete(comment_id=comment_id)
         return tolerant_jsonify({'message': f'Comment {comment_id} deleted'}), 200
     else:
-        raise ResourceNotFoundError(f'No comment found with id: {comment_id}')
+        raise ResourceNotFoundError('Comment is either unavailable or non-existent.')
+
+
+@app.route('/api/comment/<comment_id>/update', methods=['POST'])
+@login_required
+def update_comment(comment_id):
+    params = request.get_json()
+    comment = Comment.find_by_id(comment_id=comment_id)
+    if comment and can_update_comment(comment=comment, user=current_user):
+        body = params.get('body', '').strip()
+        if not body:
+            raise BadRequestError('Comment body is required.')
+        comment = Comment.update(body=body, comment_id=comment.id)
+        return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
+    else:
+        raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
 
 
 def _decorate_comments(comments):

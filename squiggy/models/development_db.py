@@ -105,6 +105,13 @@ _test_users = [
         'canvas_full_name': 'Christa Päffgen',
         'canvas_email': 'nico@berkeley.edu',
     },
+    {
+        'canvas_user_id': '321098',
+        'canvas_course_role': 'Administrator',
+        'canvas_enrollment_state': 'active',
+        'canvas_full_name': 'Edie Sedgwick',
+        'canvas_email': 'factory_girl@berkeley.edu',
+    },
 ]
 
 

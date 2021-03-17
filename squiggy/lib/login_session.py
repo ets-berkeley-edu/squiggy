@@ -23,7 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy.lib.util import is_admin, is_instructor
+from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.user import User
 
 
@@ -61,7 +61,7 @@ class LoginSession:
 
     @property
     def is_teaching(self):
-        return is_instructor(self)
+        return is_teaching(self)
 
     def to_api_json(self):
         return {

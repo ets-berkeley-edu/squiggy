@@ -82,6 +82,14 @@ class Comment(Base):
         return comment
 
     @classmethod
+    def update(cls, body, comment_id):
+        comment = cls.find_by_id(comment_id)
+        comment.body = body
+        db.session.add(comment)
+        std_commit()
+        return comment
+
+    @classmethod
     def get_comments(cls, asset_id):
         orphans = []
         parents = []

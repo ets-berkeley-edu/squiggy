@@ -42,7 +42,7 @@ def is_admin(user):
     return user.canvas_course_role and 'admin' in user.canvas_course_role.lower()
 
 
-def is_instructor(user):
+def is_teaching(user):
     role = user.canvas_course_role and user.canvas_course_role.lower()
     return role and ('instructor' in role or 'teacher' in role)
 
