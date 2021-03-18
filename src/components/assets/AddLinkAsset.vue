@@ -44,14 +44,14 @@
             Category
           </v-col>
           <v-col cols="6">
-            <v-select
-              id="asset-category-select"
-              v-model="categoryId"
+            <AccessibleSelect
+              id-prefix="asset-category"
               :items="categories"
-              label="What assignment or topic is this related to"
               item-text="title"
               item-value="id"
-              outlined
+              label="What assignment or topic is this related to"
+              :value="categoryId"
+              @input="c => (categoryId = c)"
             />
           </v-col>
         </v-row>
@@ -94,6 +94,7 @@
 </template>
 
 <script>
+import AccessibleSelect from '@/components/util/AccessibleSelect'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
@@ -102,7 +103,7 @@ import {getCategories} from '@/api/categories'
 
 export default {
   name: 'AddLinkAsset',
-  components: {BackToAssetLibrary},
+  components: {AccessibleSelect, BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
     categories: undefined,
