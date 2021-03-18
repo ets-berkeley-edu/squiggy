@@ -43,7 +43,7 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col>
+      <v-col id="asset-description">
         <h3 class="sr-only">Description</h3>
         {{ asset.description }}
       </v-col>
