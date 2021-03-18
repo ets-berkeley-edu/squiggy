@@ -39,7 +39,6 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 CANVAS_ACCESS_TOKEN = None
 CANVAS_API_URL = 'https://foo.instructure.com'
 CANVAS_BASE_URL = 'https://ucberkeley.foo.instructure.com'
-CANVAS_BERKELEY_ACCOUNT_ID = 00000
 
 CAS_SERVER = 'https://auth-test.berkeley.edu/cas/'
 CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'

@@ -25,8 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import urllib
 
-from flask import current_app as app
-from flask import Response
+from flask import current_app as app, Response
 import requests
 import simplejson as json
 
