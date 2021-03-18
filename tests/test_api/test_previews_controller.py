@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from datetime import datetime
-import json
 
 from squiggy.lib.previews import generate_preview_service_signature
 
@@ -37,8 +36,8 @@ class TestPreviews:
         response = client.post(
             '/api/previews/callback',
             headers={'authorization': auth_header},
-            data=json.dumps(params),
-            content_type='application/json',
+            data=params,
+            content_type='multipart/form-data',
         )
         assert response.status_code == expected_status_code
         return response.json
@@ -79,10 +78,7 @@ class TestPreviews:
             'status': 'done',
             'image': 'https://imgur.com/gallery/6LXFXr2',
             'thumbnail': 'https://imgur.com/gallery/QZmb5KU',
-            'metadata': {
-                'imageWidth': 200,
-                'imageHeight': 100,
-            },
+            'metadata': '{"imageWidth": 200, "imageHeight": 100}',
         }
         self._api_post_preview_callback(client, header, preview_result_payload)
 
