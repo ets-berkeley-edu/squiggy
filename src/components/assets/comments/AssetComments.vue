@@ -21,46 +21,14 @@
           <Avatar class="float-right" :user="comment.user" />
         </v-col>
         <v-col cols="8">
-          <div class="align-center d-flex justify-space-between">
-            <div>
-              {{ comment.user.canvasFullName }} on {{ comment.createdAt | moment('LL') }}
-            </div>
-            <div class="d-flex">
-              <div>
-                <v-btn
-                  :id="`reply-to-comment-${comment.id}-btn`"
-                  :disabled="disableActions"
-                  icon
-                  @click="replyTo(comment.id)"
-                  @keypress.enter="replyTo(comment.id)"
-                >
-                  <span class="sr-only">Reply to {{ getPossessive(comment) }} comment</span>
-                  <font-awesome-icon icon="reply" />
-                </v-btn>
-              </div>
-              <div v-if="$currentUser.isAdmin || $currentUser.isTeaching || (comment.userId === $currentUser.id)">
-                <DeleteCommentDialog
-                  :after-delete="refresh"
-                  :comment="comment"
-                  :disable="disableActions"
-                />
-              </div>
-              <div v-if="$currentUser.isAdmin || (comment.userId === $currentUser.id)">
-                <v-btn
-                  :id="`edit-comment-${comment.id}-btn`"
-                  :disabled="disableActions"
-                  icon
-                  @click="edit(comment.id)"
-                  @keypress.enter="edit(comment.id)"
-                >
-                  <span class="sr-only">Edit {{ getPossessive(comment) }} comment</span>
-                  <font-awesome-icon icon="pencil-alt" />
-                </v-btn>
-              </div>
-            </div>
-          </div>
+          <CommentToolbar
+            :comment="comment"
+            :disable-actions="disableActions"
+            :edit="edit"
+            :refresh="refresh"
+          />
           <div>
-            <div v-if="comment.id === editCommentId" cols="8">
+            <div v-if="comment.id === editCommentId">
               <EditCommentForm
                 :after-cancel="() => editCommentId = null"
                 :after-save="refresh"
@@ -78,7 +46,33 @@
                 :key="reply.id"
                 class="pa-5"
               >
-                {{ reply.body }}
+                <div class="align-center d-flex mb-2">
+                  <div class="pr-2">
+                    <Avatar class="float-right" :user="reply.user" />
+                  </div>
+                  <div>
+                    <CommentToolbar
+                      v-if="reply.user"
+                      :comment="reply"
+                      :disable-actions="disableActions"
+                      :edit="edit"
+                      :refresh="refresh"
+                    />
+                  </div>
+                </div>
+                <div class="pl-10">
+                  <div v-if="reply.id === editCommentId">
+                    <EditCommentForm
+                      :after-cancel="() => editCommentId = null"
+                      :after-save="refresh"
+                      :asset-id="assetId"
+                      :comment="reply"
+                    />
+                  </div>
+                  <div v-if="editCommentId !== reply.id" :id="`comment-${reply.id}-body`">
+                    {{ reply.body }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -90,14 +84,14 @@
 
 <script>
 import Avatar from '@/components/user/Avatar'
-import DeleteCommentDialog from '@/components/assets/comments/DeleteCommentDialog'
+import CommentToolbar from '@/components/assets/comments/CommentToolbar'
 import EditCommentForm from '@/components/assets/comments/EditCommentForm'
 import Utils from '@/mixins/Utils'
 import {getComments} from '@/api/comments'
 
 export default {
   name: 'AssetComments',
-  components: {Avatar, DeleteCommentDialog, EditCommentForm},
+  components: {Avatar, CommentToolbar, EditCommentForm},
   mixins: [Utils],
   props: {
     assetId: {
@@ -127,9 +121,6 @@ export default {
     edit(commentId) {
       this.editCommentId = commentId
     },
-    getPossessive(comment) {
-      return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
-    },
     refresh(comment=undefined) {
       this.editCommentId = null
       getComments(this.assetId).then(data => {
@@ -138,9 +129,6 @@ export default {
           this.scrollTo(`#comment-${comment.id}`, 0)
         }
       })
-    },
-    replyTo(commentId) {
-      console.log(`TODO: reply to comment ${commentId}`)
     }
   }
 }
