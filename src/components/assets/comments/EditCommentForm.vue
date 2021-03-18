@@ -1,7 +1,7 @@
 <template>
-  <div id="create-or-edit-comment">
+  <div :id="comment ? `edit-comment-${comment.id}` : 'new-comment-form'">
     <v-textarea
-      :id="parent ? `reply-to-comment-${comment.id}-body-textarea` : (comment ? `comment-${comment.id}-body-textarea` : 'comment-body-textarea')"
+      :id="parent ? `reply-to-comment-${parent.id}-body-textarea` : (comment ? `comment-${comment.id}-body-textarea` : 'comment-body-textarea')"
       v-model="body"
       :autofocus="!!(parent || comment)"
       auto-grow
@@ -29,7 +29,7 @@
           <span v-if="!isSaving">{{ parent ? 'Reply' : (comment ? 'Save' : 'Comment') }}</span>
         </v-btn>
       </div>
-      <div v-if="comment">
+      <div v-if="comment || parent">
         <v-btn
           :disabled="isSaving"
           text
@@ -92,8 +92,7 @@ export default {
     this.body = this.comment && this.comment.body
     if (this.comment || this.parent) {
       const action = this.comment ? 'Editing' : 'Replying'
-      this.$announcer.polite(`${action} ${this.getPossessive(this.comment)} comment`)
-      this.scrollTo('#create-or-edit-comment', 0)
+      this.$announcer.polite(`${action} ${this.getPossessive(this.comment || this.parent)} comment`)
     }
   },
   methods: {
@@ -120,9 +119,6 @@ export default {
           this.isSaving = false
         })
       }
-    },
-    getPossessive(comment) {
-      return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
     }
   }
 }

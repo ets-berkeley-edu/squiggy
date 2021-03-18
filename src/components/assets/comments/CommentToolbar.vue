@@ -1,5 +1,5 @@
 <template>
-  <div class="align-center d-flex justify-space-between">
+  <div class="align-center d-flex justify-space-between w-100">
     <div>
       {{ comment.user.canvasFullName }} on {{ comment.createdAt | moment('LL') }}
     </div>
@@ -9,10 +9,10 @@
           :id="`reply-to-comment-${comment.id}-btn`"
           :disabled="disableActions"
           icon
-          @click="replyTo(comment.id)"
-          @keypress.enter="replyTo(comment.id)"
+          @click="replyTo(comment)"
+          @keypress.enter="replyTo(comment)"
         >
-          <span class="sr-only">Reply to {{ possessive }} comment</span>
+          <span class="sr-only">Reply to {{ getPossessive(comment) }} comment</span>
           <font-awesome-icon icon="reply" />
         </v-btn>
       </div>
@@ -28,10 +28,10 @@
           :id="`edit-comment-${comment.id}-btn`"
           :disabled="disableActions"
           icon
-          @click="edit(comment.id)"
-          @keypress.enter="edit(comment.id)"
+          @click="edit(comment)"
+          @keypress.enter="edit(comment)"
         >
-          <span class="sr-only">Edit {{ possessive }} comment</span>
+          <span class="sr-only">Edit {{ getPossessive(comment) }} comment</span>
           <font-awesome-icon icon="pencil-alt" />
         </v-btn>
       </div>
@@ -41,10 +41,12 @@
 
 <script>
 import DeleteCommentDialog from '@/components/assets/comments/DeleteCommentDialog'
+import Utils from '@/mixins/Utils'
 
 export default {
   name: 'CommentToolbar',
   components: {DeleteCommentDialog},
+  mixins: [Utils],
   props: {
     comment: {
       required: true,
@@ -61,17 +63,11 @@ export default {
     refresh: {
       required: true,
       type: Function
-    }
-  },
-  data: () => ({
-    possessive: undefined
-  }),
-  created() {
-    this.possessive = this.comment.userId === this.$currentUser.id ? 'your' : `${this.comment.user.canvasFullName}'s`
-  },
-  methods: {
-    replyTo(commentId) {
-      console.log(`TODO: reply to comment ${commentId}`)
+    },
+    replyTo: {
+      default: () => {},
+      required: false,
+      type: Function
     }
   }
 }
