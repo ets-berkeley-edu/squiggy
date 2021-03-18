@@ -114,7 +114,7 @@ export default {
   }),
   computed: {
     disable() {
-      let required = [this.description, this.title, this.url]
+      let required = [this.title, this.url]
       return !required.every(r => this.$_.trim(r))
     }
   },
@@ -127,8 +127,8 @@ export default {
   },
   methods: {
     submit() {
-      createLinkAsset(this.categoryId, this.description, this.title, this.url).then(data => {
-        this.$router.push(`/asset/${data.id}`, this.$_.noop)
+      createLinkAsset(this.categoryId, this.description, this.title, this.url).then(() => {
+        this.go('/assets')
       })
     }
   }
