@@ -22,25 +22,37 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
 ENHANCEMENTS, OR MODIFICATIONS.
 """
-
+from canvasapi.exceptions import CanvasException
 from flask import current_app as app
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
+from squiggy.externals.canvas import ping_canvas
 from squiggy.lib.http import tolerant_jsonify
 
 
 @app.route('/api/ping')
 def app_status():
-    def db_status():
-        try:
-            db.session.execute('SELECT 1')
-            return True
-        except SQLAlchemyError:
-            app.logger.exception('Database connection error')
-            return False
-
     resp = {
         'app': True,
-        'db': db_status(),
+        'canvas': _ping_canvas(),
+        'db': _db_status(),
     }
     return tolerant_jsonify(resp)
+
+
+def _db_status():
+    try:
+        db.session.execute('SELECT 1')
+        return True
+    except SQLAlchemyError:
+        app.logger.exception('Database connection error')
+        return False
+
+
+def _ping_canvas():
+    try:
+        return ping_canvas() if app.config['CANVAS_ACCESS_TOKEN'] else None
+    except CanvasException as e:
+        app.logger.error('Canvas error during /api/ping')
+        app.logger.exception(e)
+        return False

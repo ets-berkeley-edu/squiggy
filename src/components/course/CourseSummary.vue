@@ -5,6 +5,19 @@
       <v-list-item-content class="align-end">{{ displayBoolean(course.active) }}</v-list-item-content>
     </v-list-item>
     <v-list-item>
+      <v-list-item-content>Canvas Course Site</v-list-item-content>
+      <v-list-item-content class="align-end">
+        <a
+          :id="`canvas-course-site-${course.canvasCourseId}`"
+          aria-label="Open Canvas course site in a new window"
+          :href="`${$config.canvasBaseUrl}/courses/${course.canvasCourseId}`"
+          target="_blank"
+        >
+          Canvas Course <span id="canvas-course-site-id">{{ course.canvasCourseId }}</span>
+        </a>
+      </v-list-item-content>
+    </v-list-item>
+    <v-list-item>
       <v-list-item-content>Notifications, Daily?</v-list-item-content>
       <v-list-item-content class="align-end">{{ displayBoolean(course.enableDailyNotifications) }}</v-list-item-content>
     </v-list-item>
