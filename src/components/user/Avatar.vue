@@ -1,15 +1,13 @@
 <template>
-  <div class="position-relative">
-    <v-img
-      :id="`user-avatar-${user.id}`"
-      :class="`user-avatar-${size}`"
-      :aria-label="`Photo of ${user.canvasFullName}`"
-      :alt="`Photo of ${user.canvasFullName}`"
-      :src="avatarUrl"
-      class="avatar"
-      @error="avatarError"
-    />
-  </div>
+  <v-img
+    :id="`user-avatar-${user.id}`"
+    :class="`user-avatar-${size}`"
+    :aria-label="`Photo of ${user.canvasFullName}`"
+    :alt="`Photo of ${user.canvasFullName}`"
+    :src="avatarUrl"
+    class="avatar"
+    @error="avatarError"
+  />
 </template>
 
 <script>
