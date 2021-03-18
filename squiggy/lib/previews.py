@@ -59,7 +59,7 @@ def generate_preview_service_signature(nonce=None):
     if not nonce:
         nonce = str(int(datetime.now().timestamp() * 1000))
     digester = hmac.new(_byte_string(app.config['PREVIEWS_API_KEY']), _byte_string(nonce), hashlib.sha1)
-    return f"Bearer {nonce}:{base64.urlsafe_b64encode(digester.digest()).decode('utf-8')}"
+    return f"Bearer {nonce}:{base64.b64encode(digester.digest()).decode('utf-8')}"
 
 
 def verify_preview_service_authorization(auth_header):

@@ -23,6 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
+
 from flask import current_app as app, request
 from squiggy.api.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
@@ -35,10 +37,17 @@ def previews_callback():
     if not verify_preview_service_authorization(request.headers.get('authorization')):
         raise UnauthorizedRequestError('Missing or invalid authorization header.')
 
-    params = request.get_json()
-
+    params = request.form
     if not (params.get('id', None) and params.get('status', None)):
         raise BadRequestError('Id and status fields required.')
+    metadata = None
+    try:
+        if params.get('metadata'):
+            metadata = json.loads(params['metadata'])
+    except Exception as e:
+        app.logger.error('Failed to parse JSON preview metadata.')
+        app.logger.exception(e)
+        raise BadRequestError('Could not parse JSON metadata.')
 
     asset = Asset.find_by_id(params['id'])
     if not asset:
@@ -49,7 +58,7 @@ def previews_callback():
         thumbnail_url=params.get('thumbnail'),
         image_url=params.get('image'),
         pdf_url=params.get('pdf'),
-        metadata=params.get('metadata'),
+        metadata=metadata,
     ):
         return tolerant_jsonify({'status': 'success'})
     else:
