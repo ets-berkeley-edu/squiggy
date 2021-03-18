@@ -93,8 +93,14 @@ def update_comment(comment_id):
 
 
 def _decorate_comments(comments):
-    user_ids = map(lambda c: c['userId'], comments)
+    user_ids = []
+    for comment in comments:
+        user_ids.append(comment['userId'])
+        for reply in comment.get('replies', []):
+            user_ids.append(reply['userId'])
     users_by_id = {user.id: user for user in User.find_by_ids(user_ids)}
     for comment in comments:
         comment['user'] = users_by_id[comment['userId']].to_api_json()
+        for reply in comment.get('replies', []):
+            reply['user'] = users_by_id[comment['userId']].to_api_json()
     return comments
