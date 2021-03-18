@@ -156,6 +156,7 @@ class Asset(Base):
             course_id=course_id,
             description=description,
             download_url=download_url,
+            mime=mime,
             source=source,
             title=title,
             url=url,

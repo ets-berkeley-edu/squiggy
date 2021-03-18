@@ -30,6 +30,7 @@ import re
 
 from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
+import magic
 from squiggy.api.api_util import can_update_asset, can_view_asset
 from squiggy.api.errors import BadRequestError, InternalServerError, ResourceNotFoundError
 from squiggy.lib.aws import put_binary_data_to_s3, stream_object
@@ -121,9 +122,9 @@ def create_asset():
         (filename, extension) = os.path.splitext(file_upload['name'])
         # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
         key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{filename[0:170]}{extension}"
-        if put_binary_data_to_s3(bucket, key, file_upload['byte_stream']):
+        content_type = magic.from_buffer(file_upload['byte_stream'], mime=True)
+        if put_binary_data_to_s3(bucket, key, file_upload['byte_stream'], content_type):
             download_url = f's3://{bucket}/{key}'
-            # TODO determine content type for preview service
         else:
             raise InternalServerError('Could not upload file.')
 
