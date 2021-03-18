@@ -130,7 +130,7 @@ def create_asset():
 
     asset = Asset.create(
         asset_type=asset_type,
-        categories=Category.get_categories_by_id([category_id]) if category_id else None,
+        categories=category_id and [Category.find_by_id(category_id)],
         course_id=current_user.course.id,
         description=description,
         download_url=download_url,
@@ -182,7 +182,7 @@ def update_asset():
         raise BadRequestError('To update an asset you must own it or be a teacher in the course.')
     asset = Asset.update(
         asset_id=asset_id,
-        categories=Category.get_categories_by_id([category_id]) if category_id else None,
+        categories=category_id and [Category.find_by_id(category_id)],
         description=description,
         title=title,
     )
