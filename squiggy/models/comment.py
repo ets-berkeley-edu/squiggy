@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from sqlalchemy.sql import desc
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
+from squiggy.models.activity import Activity
 from squiggy.models.base import Base
 
 
@@ -70,15 +71,16 @@ class Comment(Base):
         return cls.query.filter_by(id=comment_id).first()
 
     @classmethod
-    def create(cls, asset_id, user_id, body, parent_id=None):
+    def create(cls, asset, user_id, body, parent_id=None):
         comment = cls(
-            asset_id=asset_id,
+            asset_id=asset.id,
             user_id=user_id,
             body=body,
             parent_id=parent_id,
         )
         db.session.add(comment)
         std_commit()
+        _create_activities_per_new_comment(asset=asset, comment=comment)
         return comment
 
     @classmethod
@@ -116,3 +118,35 @@ class Comment(Base):
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def _create_activities_per_new_comment(asset, comment):
+    if asset.visible:
+        course_id = asset.course_id
+        Activity.create(
+            activity_type='asset_comment',
+            course_id=course_id,
+            user_id=comment.user_id,
+            object_type='comment',
+            object_id=comment.id,
+            asset_id=asset.id,
+        )
+        for user in asset.users:
+            Activity.create(
+                activity_type='get_asset_comment',
+                course_id=course_id,
+                user_id=user.id,
+                object_type='comment',
+                object_id=comment.id,
+                asset_id=asset.id,
+            )
+        if comment.parent_id:
+            parent = Comment.find_by_id(comment.parent_id)
+            Activity.create(
+                activity_type='get_asset_comment_reply',
+                course_id=course_id,
+                user_id=parent.user_id,
+                object_type='comment',
+                object_id=parent.id,
+                asset_id=asset.id,
+            )

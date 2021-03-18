@@ -27,6 +27,7 @@ import json
 
 from squiggy import std_commit
 from squiggy.lib.util import is_admin, is_teaching
+from squiggy.models.activity import Activity
 from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -72,6 +73,11 @@ class TestCreateComments:
         comment_id = api_json['id']
         assert comment_id
         assert 'phone booth' in api_json['body']
+        # Verify activities
+        activities = Activity.find_by_object_id(object_type='comment', object_id=comment_id)
+        assert len(activities) > 0
+        assert activities[0].asset_id == mock_asset.id
+
         # Reply
         self._api_create_comment(
             asset_id=mock_asset.id,
@@ -87,6 +93,9 @@ class TestCreateComments:
         replies = comment['replies']
         assert len(replies) == 1
         assert 'ring it off the wall' in replies[0]['body']
+        activities = Activity.find_by_object_id(object_type='comment', object_id=replies[0]['id'])
+        assert len(activities) > 0
+        assert activities[0].asset_id == mock_asset.id
 
 
 class TestGetComments:

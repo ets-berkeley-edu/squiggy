@@ -23,6 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
@@ -133,6 +134,10 @@ class Activity(Base):
         db.session.add(activity)
         std_commit()
         return activity
+
+    @classmethod
+    def find_by_object_id(cls, object_type, object_id):
+        return cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).all()
 
     def to_api_json(self):
         return {

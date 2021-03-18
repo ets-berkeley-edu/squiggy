@@ -45,12 +45,11 @@ def create_comment():
             raise BadRequestError('Comment body is required.')
         parent_id = params.get('parentId')
         comment = Comment.create(
-            asset_id=asset_id and int(asset_id),
+            asset=asset,
             user_id=current_user.user_id,
             body=body,
             parent_id=parent_id and int(parent_id),
         )
-        # TODO: Register activities: 'asset_comment', 'get_asset_comment', and 'get_asset_comment_reply'
         return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
     else:
         raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
