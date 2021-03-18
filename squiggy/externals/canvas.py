@@ -23,46 +23,17 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import json
-
+from canvasapi import Canvas
 from flask import current_app as app
-from squiggy import __version__ as version
-from squiggy.lib.http import tolerant_jsonify
-from squiggy.models.asset import assets_sort_by_options, assets_type
 
 
-@app.route('/api/config')
-def app_config():
-    return tolerant_jsonify({
-        'assetTypes': assets_type.enums,
-        'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
-        'emailAddressSupport': 'support@foo.edu',  # TODO: get email address
-        'canvasApiUrl': app.config['CANVAS_API_URL'],
-        'canvasBaseUrl': app.config['CANVAS_BASE_URL'],
-        'orderByOptions': assets_sort_by_options,
-        'squiggyEnv': app.config['SQUIGGY_ENV'],
-        'timezone': app.config['TIMEZONE'],
-    })
+def ping_canvas():
+    return _get_canvas() is not None
 
 
-@app.route('/api/version')
-def app_version():
-    v = {
-        'version': version,
-    }
-    build_stats = load_json('config/build-summary.json')
-    if build_stats:
-        v.update(build_stats)
-    else:
-        v.update({
-            'build': None,
-        })
-    return tolerant_jsonify(v)
-
-
-def load_json(relative_path):
-    try:
-        file = open(app.config['BASE_DIR'] + '/' + relative_path)
-        return json.load(file)
-    except (FileNotFoundError, KeyError, TypeError):
-        return None
+def _get_canvas():
+    canvas = Canvas(
+        base_url=app.config['CANVAS_API_URL'],
+        access_token=app.config['CANVAS_ACCESS_TOKEN'],
+    )
+    return canvas.get_account(app.config['CANVAS_BERKELEY_ACCOUNT_ID'])
