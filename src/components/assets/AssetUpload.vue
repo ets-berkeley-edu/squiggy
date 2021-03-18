@@ -3,7 +3,7 @@
     <BackToAssetLibrary anchor="assets-container" />
     <h2>Upload a File</h2>
     <div
-      v-if="!file && !uploading"
+      v-if="!uploading && !file"
       v-cloak
       id="drop-file-to-upload"
       class="file-upload-box"
@@ -28,13 +28,13 @@
       >
     </div>
     <div
-      v-if="!file && uploading"
+      v-if="uploading"
       class="file-upload-box"
     >
       <div class="file-upload-box-icon"><font-awesome-icon icon="spinner" spin /></div>
       <div class="file-upload-box-text">Uploading...</div>
     </div>
-    <v-form v-if="file && !uploading" @submit="upload">
+    <v-form v-if="!uploading && file" @submit="upload">
       <v-container class="mt-2" fluid>
         <v-row>
           <v-col class="pt-7 text-right" cols="2">
@@ -87,7 +87,7 @@
                 <v-btn
                   id="upload-file-btn"
                   color="primary"
-                  :disabled="!file || !title"
+                  :disabled="disable"
                   elevation="1"
                   @click="upload"
                 >
@@ -124,6 +124,11 @@ export default {
     title: undefined,
     uploading: false
   }),
+  computed: {
+    disable() {
+      return !(this.file && this.$_.trim(this.title))
+    }
+  },
   created() {
     this.$loading()
     getCategories().then(data => {
@@ -150,9 +155,9 @@ export default {
     },
     upload() {
       this.uploading = true
-      createFileAsset(this.categoryId, this.description, this.title, this.file).then(asset => {
+      createFileAsset(this.categoryId, this.description, this.title, this.file).then(() => {
         this.$announcer.polite('File uploaded. Asset created.')
-        this.go(`/asset/${asset.id}`)
+        this.go('/assets')
       })
     }
   }
