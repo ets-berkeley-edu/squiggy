@@ -18,7 +18,11 @@
       </v-row>
       <v-row v-for="comment in comments" :id="`comment-${comment.id}`" :key="comment.id">
         <v-col cols="2">
-          <Avatar class="float-right" :user="comment.user" />
+          <Avatar
+            :id="`comment-${comment.id}-user-${comment.user.id}-avatar`"
+            class="float-right"
+            :user="comment.user"
+          />
         </v-col>
         <v-col cols="8">
           <CommentToolbar
@@ -42,13 +46,16 @@
             </div>
             <div
               v-for="reply in comment.replies"
-              :id="`comment-${reply.id}-body`"
               :key="reply.id"
               class="pt-5 px-5 w-100"
             >
               <div class="align-center d-flex mb-2">
                 <div class="pr-2">
-                  <Avatar class="float-right" :user="reply.user" />
+                  <Avatar
+                    :id="`comment-${reply.id}-user-${comment.user.id}-avatar`"
+                    class="float-right"
+                    :user="reply.user"
+                  />
                 </div>
                 <CommentToolbar
                   :comment="reply"
