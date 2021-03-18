@@ -57,7 +57,7 @@ def generate_previews(asset_id, asset_url):
 
 def generate_preview_service_signature(nonce=None):
     if not nonce:
-        nonce = str(int(datetime.now().timestamp()))
+        nonce = str(int(datetime.now().timestamp() * 1000))
     digester = hmac.new(_byte_string(app.config['PREVIEWS_API_KEY']), _byte_string(nonce), hashlib.sha1)
     return f"Bearer {nonce}:{base64.urlsafe_b64encode(digester.digest()).decode('utf-8')}"
 
@@ -73,8 +73,8 @@ def verify_preview_service_authorization(auth_header):
         return False
 
     nonce = to_int(header_fields[0]) or 0
-    now = int(datetime.now().timestamp())
-    if abs(now - nonce) > 600:
+    now = int(datetime.now().timestamp() * 1000)
+    if abs(now - nonce) > (600 * 1000):
         app.logger.error(f'Invalid authorization nonce provided to preview service callback: {nonce}.')
         return False
 
