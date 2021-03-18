@@ -54,7 +54,7 @@ class Category(Base):
         self.visible = visible
 
     def __repr__(self):
-        return f"""<Course
+        return f"""<Category
                     id={self.id},
                     canvas_assignment_id={self.canvas_assignment_id},
                     canvas_assignment_name={self.canvas_assignment_name},
@@ -91,8 +91,8 @@ class Category(Base):
         return cls.query.filter_by(course_id=course_id).all()
 
     @classmethod
-    def get_categories_by_id(cls, category_ids):
-        return db.session.query(cls).filter(cls.id.in_(category_ids)).all()
+    def find_by_id(cls, category_id):
+        return cls.query.filter_by(id=category_id).first()
 
     def to_api_json(self):
         return {

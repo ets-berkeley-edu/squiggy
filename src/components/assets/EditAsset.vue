@@ -1,12 +1,12 @@
 <template>
   <div v-if="!isLoading">
-    <div>
+    <div v-if="asset">
       <v-btn
         id="asset-library-btn"
         class="bg-transparent"
         elevation="0"
-        @click="go(`/asset/${assetId}`)"
-        @keypress.enter="go(`/asset/${assetId}`)"
+        @click="go(`/asset/${asset.id}`)"
+        @keypress.enter="go(`/asset/${asset.id}`)"
       >
         <font-awesome-icon class="mr-2" icon="less-than" size="sm" />
         Back to Asset
@@ -33,14 +33,16 @@
               />
             </div>
             <div>
-              <v-select
-                id="asset-category-select"
-                v-model="category"
-                :items="categories"
-                label="Category"
+              <AccessibleSelect
+                :clearable="true"
+                :dense="true"
+                id-prefix="asset-category"
                 item-text="title"
                 item-value="id"
-                outlined
+                :items="categories"
+                label="Category"
+                :value="categoryId"
+                @input="c => (categoryId = c)"
               />
             </div>
             <div>
@@ -63,10 +65,16 @@
               color="primary"
               :disabled="!$_.trim(title)"
               @click="submit"
+              @keypress.enter="submit"
             >
               Save
             </v-btn>
-            <v-btn id="cancel-delete-btn" class="mr-2" @click="cancel">
+            <v-btn
+              id="cancel-delete-btn"
+              class="mr-2"
+              @click="cancel"
+              @keypress.enter="cancel"
+            >
               Cancel
             </v-btn>
           </div>
@@ -77,6 +85,8 @@
 </template>
 
 <script>
+import AccessibleSelect from '@/components/util/AccessibleSelect'
+import AssetImage from '@/components/assets/AssetImage'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 import {getAsset, updateAsset} from '@/api/assets'
@@ -84,11 +94,12 @@ import {getCategories} from '@/api/categories'
 
 export default {
   name: 'EditAsset',
+  components: {AccessibleSelect, AssetImage},
   mixins: [Context, Utils],
   data: () => ({
-    assetId: undefined,
+    asset: undefined,
     categories: undefined,
-    category: undefined,
+    categoryId: undefined,
     description: undefined,
     title: undefined,
     valid: true,
@@ -96,10 +107,11 @@ export default {
   created() {
     this.$loading()
     getAsset(this.$route.params.id).then(data => {
-      this.assetId = data.id
+      this.asset = data
       this.title = data.title
       this.description = data.description
-      this.category = data.categories.length ? data.categories[0] : null
+      // TODO: Do we need to support multiple-category-select?
+      this.categoryId = data.categories.length ? data.categories[0].id : null
       getCategories().then(data => {
         this.categories = data
         this.$ready(this.title)
@@ -109,15 +121,12 @@ export default {
   methods: {
     cancel() {
       this.$announcer.polite('Canceled')
-      this.go(`/asset/${this.assetId}`)
-    },
-    goBack() {
-      this.go( `/asset/${this.assetId}`)
+      this.go(`/asset/${this.asset.id}`)
     },
     submit() {
-      updateAsset(this.assetId, this.category.id, this.description, this.title).then(data => {
-        this.$announcer.polite(`${data.title} updated`)
-        this.go(`/asset/${this.assetId}`)
+      this.$announcer.polite('Updating asset')
+      updateAsset(this.asset.id, this.categoryId, this.description, this.title).then(() => {
+        this.go(`/asset/${this.asset.id}`)
       })
     }
   }
