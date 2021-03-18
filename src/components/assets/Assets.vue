@@ -4,20 +4,18 @@
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
-        v-for="(asset, index) in (isLoading ? skeletons : assets)"
+        v-for="(asset, index) in infiniteScroll"
         :key="index"
         :asset="asset"
         class="asset-card ma-3"
       />
+      <InfiniteLoading v-if="!isLoading || true" @infinite="fetch">
+        <template #error>Sorry, an error occurred. Please refresh the page.</template>
+        <template #no-more><span id="no-more-assets-to-fetch" /></template>
+        <template #no-results><span id="zero-assets" /></template>
+        <template #spinner><span class="sr-only">Loading...</span></template>
+      </InfiniteLoading>
     </v-card>
-    <InfiniteLoading
-      v-if="!isLoading && (assets.length < totalAssetCount)"
-      spinner="waveDots"
-      @infinite="fetch"
-    >
-      <template #no-more><span id="no-more-assets-to-fetch" /></template>
-      <template #no-results><span id="zero-assets" /></template>
-    </InfiniteLoading>
   </div>
 </template>
 
@@ -35,8 +33,13 @@ export default {
   components: {AssetCard, AssetsHeader, CreateAssetCard, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils],
   data: () => ({
-    skeletons: Array.from(new Array(40), () => ({isLoading: true}))
+    isComplete: false
   }),
+  computed: {
+    infiniteScroll() {
+      return this.isLoading ? this.getSkeletons(20) : (this.isComplete ? this.assets : this.assets.concat(this.getSkeletons(10)))
+    }
+  },
   created() {
     this.$loading(true)
     const anchor = this.$route.query.anchor
@@ -58,8 +61,18 @@ export default {
   },
   methods: {
     fetch($state) {
-      this.nextPage().then(assets => assets.length ? $state.loaded() : $state.complete())
-    }
+      this.nextPage().then(assets => {
+        if (assets.results.length) {
+          $state.loaded()
+          this.$announcer.polite(`${this.assets.length} of ${this.totalAssetCount} assets loaded.`)
+        } else {
+          $state.complete()
+          this.isComplete = true
+          this.$announcer.polite(`All ${this.totalAssetCount} assets have loaded.`)
+        }
+      })
+    },
+    getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true}))
   }
 }
 </script>
