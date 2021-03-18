@@ -1,6 +1,6 @@
 <template>
   <div class="align-center d-flex justify-space-between w-100">
-    <div>
+    <div :id="`comment-${comment.id}-user-name`">
       {{ comment.user.canvasFullName }} on {{ comment.createdAt | moment('LL') }}
     </div>
     <div class="d-flex">
