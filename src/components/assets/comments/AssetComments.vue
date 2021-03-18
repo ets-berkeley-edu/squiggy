@@ -26,6 +26,7 @@
             :disable-actions="disableActions"
             :edit="edit"
             :refresh="refresh"
+            :reply-to="replyTo"
           />
           <div>
             <div v-if="comment.id === editCommentId">
@@ -39,40 +40,54 @@
             <div v-if="editCommentId !== comment.id" :id="`comment-${comment.id}-body`">
               {{ comment.body }}
             </div>
-            <div v-if="comment.replies.length">
-              <div
-                v-for="reply in comment.replies"
-                :id="`comment-${reply.id}-body`"
-                :key="reply.id"
-                class="pa-5"
-              >
-                <div class="align-center d-flex mb-2">
-                  <div class="pr-2">
-                    <Avatar class="float-right" :user="reply.user" />
-                  </div>
-                  <div>
-                    <CommentToolbar
-                      v-if="reply.user"
-                      :comment="reply"
-                      :disable-actions="disableActions"
-                      :edit="edit"
-                      :refresh="refresh"
-                    />
-                  </div>
+            <div
+              v-for="reply in comment.replies"
+              :id="`comment-${reply.id}-body`"
+              :key="reply.id"
+              class="pt-5 px-5 w-100"
+            >
+              <div class="align-center d-flex mb-2">
+                <div class="pr-2">
+                  <Avatar class="float-right" :user="reply.user" />
                 </div>
-                <div class="pl-10">
-                  <div v-if="reply.id === editCommentId">
-                    <EditCommentForm
-                      :after-cancel="() => editCommentId = null"
-                      :after-save="refresh"
-                      :asset-id="assetId"
-                      :comment="reply"
-                    />
-                  </div>
-                  <div v-if="editCommentId !== reply.id" :id="`comment-${reply.id}-body`">
-                    {{ reply.body }}
-                  </div>
+                <CommentToolbar
+                  :comment="reply"
+                  :disable-actions="disableActions"
+                  :edit="edit"
+                  :refresh="refresh"
+                />
+              </div>
+              <div class="pl-10">
+                <div v-if="reply.id === editCommentId">
+                  <EditCommentForm
+                    :after-cancel="() => editCommentId = null"
+                    :after-save="refresh"
+                    :asset-id="assetId"
+                    :comment="reply"
+                  />
                 </div>
+                <div v-if="editCommentId !== reply.id" :id="`comment-${reply.id}-body`">
+                  {{ reply.body }}
+                </div>
+              </div>
+            </div>
+            <div v-if="replyToCommentId === comment.id" class="pl-6 pt-5">
+              <div class="d-flex">
+                <div class="pr-3">
+                  <Avatar class="float-right" :user="$currentUser" />
+                </div>
+                <div class="pb-2">
+                  <font-awesome-icon class="primary--text mr-1" icon="graduation-cap" />
+                  {{ $currentUser.canvasFullName }} (me)
+                </div>
+              </div>
+              <div class="pl-10">
+                <EditCommentForm
+                  :after-cancel="() => replyToCommentId = null"
+                  :after-save="refresh"
+                  :asset-id="assetId"
+                  :parent="comment"
+                />
               </div>
             </div>
           </div>
@@ -118,17 +133,23 @@ export default {
     this.refresh()
   },
   methods: {
-    edit(commentId) {
-      this.editCommentId = commentId
+    edit(comment) {
+      this.editCommentId = comment.id
+      this.$announcer.polite(`Editing to ${this.getPossessive(comment)} comment`)
     },
     refresh(comment=undefined) {
       this.editCommentId = null
+      this.replyToCommentId = null
       getComments(this.assetId).then(data => {
         this.comments = data
         if (comment) {
           this.scrollTo(`#comment-${comment.id}`, 0)
         }
       })
+    },
+    replyTo(comment) {
+      this.replyToCommentId = comment.id
+      this.$announcer.polite(`Replying to ${this.getPossessive(comment)} comment`)
     }
   }
 }

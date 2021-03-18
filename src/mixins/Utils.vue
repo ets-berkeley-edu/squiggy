@@ -12,6 +12,9 @@ export default {
   }),
   methods: {
     getApiErrorMessage: (data) => _.get(data, 'response.data.message') || data.message || _.get(data, 'response.statusText'),
+    getPossessive(comment) {
+      return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
+    },
     go(path, query={}) {
       this.$router.push({path, query})
     },

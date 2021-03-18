@@ -102,5 +102,5 @@ def _decorate_comments(comments):
     for comment in comments:
         comment['user'] = users_by_id[comment['userId']].to_api_json()
         for reply in comment.get('replies', []):
-            reply['user'] = users_by_id[comment['userId']].to_api_json()
+            reply['user'] = users_by_id[reply['userId']].to_api_json()
     return comments
