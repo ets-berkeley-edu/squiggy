@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app, request
 from flask_login import current_user, login_required
 from squiggy.api.api_util import can_delete_comment, can_update_comment, can_view_asset
-from squiggy.api.errors import BadRequestError, ResourceNotFoundError
+from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.comment import Comment

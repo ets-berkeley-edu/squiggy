@@ -27,6 +27,7 @@ import datetime
 
 from flask import jsonify, make_response, redirect, request, session
 from flask_login import LoginManager
+from squiggy.merged.lti import lti_launch
 
 
 def register_routes(app):
@@ -60,7 +61,7 @@ def register_routes(app):
     @app.route('/api/<path:path>')
     def handle_unmatched_api_route(**kwargs):
         app.logger.error('The requested resource could not be found.')
-        raise squiggy.api.errors.ResourceNotFoundError('The requested resource could not be found.')
+        raise squiggy.lib.errors.ResourceNotFoundError('The requested resource could not be found.')
 
     # Non-API routes are handled by the front end.
     @app.route('/', defaults={'path': ''})
@@ -101,4 +102,9 @@ def register_routes(app):
 
 def _user_loader(user_id=None):
     from squiggy.lib.login_session import LoginSession
+    user_id = user_id or _lti_launch()
     return LoginSession(user_id)
+
+
+def _lti_launch():
+    return lti_launch(request.get_json() or request.form, request.headers) if request.method == 'POST' else None

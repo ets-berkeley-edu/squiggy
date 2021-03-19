@@ -32,8 +32,8 @@ from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
 import magic
 from squiggy.api.api_util import can_update_asset, can_view_asset
-from squiggy.api.errors import BadRequestError, InternalServerError, ResourceNotFoundError
 from squiggy.lib.aws import put_binary_data_to_s3, stream_object
+from squiggy.lib.errors import BadRequestError, InternalServerError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category

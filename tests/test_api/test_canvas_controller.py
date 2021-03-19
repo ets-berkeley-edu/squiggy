@@ -32,11 +32,11 @@ class TestLtiCartridgeController:
         response = client.get('/lti/cartridge/asset_library.xml')
         assert response.status_code == 200
         assert 'application/xml' in response.content_type
-        assert '/lti/assetlibrary' in str(response.data)
+        assert '/assets' in str(response.data)
 
     def test_engagement_index_xml(self, client):
         """Valid cartridge XML contains Engagement Index launch URL."""
         response = client.get('/lti/cartridge/engagement_index.xml')
         assert response.status_code == 200
         assert 'application/xml' in response.content_type
-        assert '/lti/engagementindex' in str(response.data)
+        assert '/engage' in str(response.data)

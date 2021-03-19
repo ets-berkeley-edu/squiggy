@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required, login_user, logout_user
-from squiggy.api.errors import ResourceNotFoundError
+from squiggy.lib.errors import ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import to_int
