@@ -89,13 +89,12 @@
               <v-row no-gutters>
                 <v-col class="pr-2">
                   <AccessibleSelect
-                    :clearable="true"
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-categories"
+                    :items="categories"
                     item-text="title"
                     item-value="id"
-                    :items="categories"
                     label="Category"
                     :value="categoryId"
                     @input="setCategoryId"
@@ -103,7 +102,6 @@
                 </v-col>
                 <v-col>
                   <AccessibleSelect
-                    :clearable="true"
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-asset-types"
@@ -117,14 +115,13 @@
               <v-row no-gutters>
                 <v-col class="w-50">
                   <AccessibleSelect
-                    :clearable="true"
                     class="w-50"
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-user"
+                    :items="users"
                     item-text="canvasFullName"
                     item-value="id"
-                    :items="users"
                     label="User"
                     :value="userId"
                     @input="setUserId"

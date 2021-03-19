@@ -1,16 +1,16 @@
 <template>
-  <div>
-    <BackToAssetLibrary :anchor="asset && `asset-${asset.id}`" :disabled="isLoading" />
-    <div v-if="!isLoading">
+  <div v-if="!isLoading">
+    <BackToAssetLibrary :anchor="`asset-${asset.id}`" :disabled="isLoading" />
+    <div>
       <AssetPageHeader :asset="asset" />
-      <div class="mt-3 pa-2">
-        <v-card outlined>
-          <v-card-text>
+      <v-card class="mt-3 pa-2" outlined>
+        <v-card-text>
+          <div class="asset-image-container">
             <AssetImage :asset="asset" :contain="true" :max-height="540" />
-            <AssetOverview :asset="asset" />
-          </v-card-text>
-        </v-card>
-      </div>
+          </div>
+          <AssetOverview :asset="asset" />
+        </v-card-text>
+      </v-card>
       <!--
       TODO: Will Activity-Timeline suffer the fate of the Impact Studio? I.e., will it go away?
       <AssetActivityTimeline :asset="asset" />
@@ -54,3 +54,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.asset-image-container {
+  height: 540px;
+}
+</style>

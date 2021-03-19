@@ -34,12 +34,11 @@
             </div>
             <div>
               <AccessibleSelect
-                :clearable="true"
                 :dense="true"
                 id-prefix="asset-category"
+                :items="categories"
                 item-text="title"
                 item-value="id"
-                :items="categories"
                 label="Category"
                 :value="categoryId"
                 @input="c => (categoryId = c)"

@@ -58,9 +58,9 @@
           <v-col cols="6">
             <AccessibleSelect
               id-prefix="asset-category"
+              :items="categories"
               item-text="title"
               item-value="id"
-              :items="categories"
               label="What assignment or topic is this related to"
               :value="categoryId"
               @input="c => (categoryId = c)"
