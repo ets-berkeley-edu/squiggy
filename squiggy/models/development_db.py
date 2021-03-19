@@ -168,13 +168,13 @@ def _create_users(courses):
     users = []
     for test_user in _test_users:
         user = User.create(
-            course_id=course.id,
-            canvas_user_id=test_user['canvas_user_id'],
             canvas_course_role=test_user['canvas_course_role'],
+            canvas_course_sections=[],
+            canvas_email=test_user['canvas_email'],
             canvas_enrollment_state=test_user['canvas_enrollment_state'],
             canvas_full_name=test_user['canvas_full_name'],
-            canvas_email=test_user['canvas_email'],
-            canvas_course_sections=[],
+            canvas_user_id=test_user['canvas_user_id'],
+            course_id=course.id,
         )
         users.append(user)
     std_commit(allow_test_environment=True)

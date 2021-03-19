@@ -24,7 +24,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from dateutil.tz import tzutc
-from squiggy import db
+from sqlalchemy import and_
+from squiggy import db, std_commit
 from squiggy.models.base import Base
 
 
@@ -89,6 +90,32 @@ class Course(Base):
     @classmethod
     def find_by_canvas_course_id(cls, canvas_api_domain, canvas_course_id):
         return cls.query.filter_by(canvas_api_domain=canvas_api_domain, canvas_course_id=canvas_course_id).first()
+
+    @classmethod
+    def find_or_create(
+            cls,
+            canvas_api_domain,
+            canvas_course_id,
+            asset_library_url=None,
+            engagement_index_url=None,
+            name=None,
+    ):
+        where_clause = and_(
+            cls.canvas_api_domain == canvas_api_domain,
+            cls.canvas_course_id == canvas_course_id,
+        )
+        course = cls.query.filter(where_clause).one_or_none()
+        if not course:
+            course = cls(
+                asset_library_url=asset_library_url,
+                canvas_api_domain=canvas_api_domain,
+                canvas_course_id=canvas_course_id,
+                engagement_index_url=engagement_index_url,
+                name=name,
+            )
+            db.session.add(course)
+            std_commit()
+        return course
 
     def to_api_json(self):
         return {

@@ -25,12 +25,18 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import re
 
-from squiggy.lib.errors import ResourceNotFoundError
+from lti.contrib.flask import FlaskToolProvider
+from oauthlib.oauth1 import RequestValidator
+from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.util import to_int
 from squiggy.models.canvas import Canvas
+from squiggy.models.course import Course
+from squiggy.models.user import User
 
 
-def lti_launch(args, headers):
+def lti_launch(request):
+    user = None
+    args = request.get_json() or request.form
     lti_configs = {}
     validation = {
         'custom_canvas_api_domain': _str_strip,
@@ -48,9 +54,10 @@ def lti_launch(args, headers):
     }
 
     def _fetch(key):
+        value = args.get(key)
         validate = validation[key]
-        validation_needs_headers = validate is _canvas_external_tool_url
-        lti_configs[key] = validate(args.get(key), headers) if validation_needs_headers else validate(args.get(key))
+        pass_headers = validate is _canvas_external_tool_url
+        lti_configs[key] = validate(value, request.headers) if pass_headers else validate(value)
         return lti_configs[key]
 
     if all(_fetch(key) for key in validation.keys()):
@@ -60,12 +67,71 @@ def lti_launch(args, headers):
             lti_key=lti_configs['oauth_consumer_key'],
         )
         if canvas:
-            # TODO
-            port_over_old_suitec_logic()
+            tool_provider = FlaskToolProvider.from_flask_request(request=request)
+            if tool_provider.is_valid_request(RequestValidator()):
+                external_tool_url = lti_configs['custom_external_tool_url']
+                course = Course.find_or_create(
+                    asset_library_url=external_tool_url if 'asset' in request.path else None,
+                    canvas_api_domain=canvas_api_domain,
+                    canvas_course_id=lti_configs['custom_canvas_course_id'],
+                    engagement_index_url=external_tool_url if 'engage' in request.path else None,
+                    name=args.get('context_title'),
+                )
+                user = User.find_or_create(
+                    course_id=course.id,
+                    canvas_user_id=lti_configs['custom_canvas_user_id'],
+                    canvas_course_role='TODO',
+                    canvas_enrollment_state='TODO',
+                    canvas_full_name='TODO',
+                    canvas_image='TODO',
+                    canvas_email='TODO',
+                    canvas_course_sections='TODO',
+                )
+            else:
+                raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
         else:
             raise ResourceNotFoundError(f'Failed \'canvas\' lookup where canvas_api_domain = {canvas_api_domain}')
-    else:
-        return None
+    return user
+
+
+def get_lti_cartridge_xml(host, tool_id):
+    tool_metadata = _get_tool_metadata(host=host, tool_id=tool_id)
+    launch_url = tool_metadata['launch_url']
+    title = tool_metadata['title']
+    return f"""
+        <?xml version="1.0" encoding="UTF-8"?>
+            <cartridge_basiclti_link
+              xmlns="http://www.imsglobal.org/xsd/imslticc_v1p0"
+              xmlns:blti = "http://www.imsglobal.org/xsd/imsbasiclti_v1p0"
+              xmlns:lticm ="http://www.imsglobal.org/xsd/imslticm_v1p0"
+              xmlns:lticp ="http://www.imsglobal.org/xsd/imslticp_v1p0"
+              xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation = "
+                http://www.imsglobal.org/xsd/imslticc_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticc_v1p0.xsd
+                http://www.imsglobal.org/xsd/imsbasiclti_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd
+                http://www.imsglobal.org/xsd/imslticm_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd
+                http://www.imsglobal.org/xsd/imslticp_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd">
+              <blti:title>{title}</blti:title>
+              <blti:description>{tool_metadata['description']}</blti:description>
+              <blti:launch_url>{launch_url}</blti:launch_url>
+              <blti:extensions platform="canvas.instructure.com">
+                <lticm:property name="tool_id">{tool_id}</lticm:property>
+                <lticm:property name="privacy_level">public</lticm:property>
+                <lticm:options name="course_navigation">
+                  <lticm:property name="url">{launch_url}</lticm:property>
+                  <lticm:property name="text">{title}</lticm:property>
+                  <lticm:property name="visibility">public</lticm:property>
+                  <lticm:property name="default">disabled</lticm:property>
+                  <lticm:property name="enabled">false</lticm:property>
+                  <lticm:options name="custom_fields">
+                    <lticm:property name="external_tool_url">$Canvas.externalTool.url</lticm:property>
+                  </lticm:options>
+                </lticm:options>
+              </blti:extensions>
+              <cartridge_bundle identifierref="BLTI001_Bundle"/>
+              <cartridge_icon identifierref="BLTI001_Icon"/>
+            </cartridge_basiclti_link>
+    """
 
 
 def _alpha_num(s):
@@ -87,84 +153,26 @@ def _canvas_external_tool_url(s, headers):
     return external_tool_url if re.search(pattern, external_tool_url) else None
 
 
+def _get_tool_metadata(host, tool_id):
+    return {
+        'suitec:asset_library': {
+            'description': """
+                The Asset Library is where students and instructors can collect relevant materials for the course.
+                Materials can be seen by the other students in the class and can be discussed, liked, etc.
+            """,
+            'launch_url': f'https://{host}/assets',
+            'title': 'Asset Library',
+        },
+        'suitec:engagement_index': {
+            'description': """
+                The Engagement Index provides a leaderboard based on the student's activity in the course.
+                The Engagement Index will record activities such as discussion posts, likes, comments, etc.
+            """,
+            'launch_url': f'https://{host}/engage',
+            'title': 'Engagement Index',
+        },
+    }.get(tool_id, None)
+
+
 def _str_strip(s):
     return str(s).strip() if isinstance(s, str) else None
-
-
-def port_over_old_suitec_logic():
-    # TODO:
-    #
-    #     // Validate the LTI keys
-    #     var provider = new lti.Provider(consumer_key, canvas.lti_secret);
-    #     provider.valid_request(req, function(err, isValid) {
-    #       if (err) {
-    #         if (err.message === 'Invalid Signature') {
-    #           return callback({'code': 401, 'msg': 'Invalid Signature'});
-    #         }
-    #
-    #         log.error({'err': err}, 'An LTI launch resulted in an error');
-    #         return callback({'code': 400, 'msg': err.message});
-    #       } else if (!isValid) {
-    #         log.warn('An LTI launch was invalid');
-    #         return callback({'code': 400, 'msg': 'Failed validation'});
-    #       }
-    #
-    #       // Create the course on the fly
-    #       var courseInfo = {
-    #         'name': req.body.context_title
-    #       };
-    #       if (externalToolUrl) {
-    #         if (toolId === 'assetlibrary') {
-    #           courseInfo.assetlibrary_url = externalToolUrl;
-    #         } else if (toolId === 'dashboard') {
-    #           courseInfo.dashboard_url = externalToolUrl;
-    #         } else if (toolId === 'engagementindex') {
-    #           courseInfo.engagementindex_url = externalToolUrl;
-    #         } else if (toolId === 'whiteboards') {
-    #           courseInfo.whiteboards_url = externalToolUrl;
-    #         }
-    #       }
-    #       CourseAPI.getOrCreateCourse(canvas_course_id, canvas, courseInfo, function(err, course) {
-    #         if (err) {
-    #           return callback(err);
-    #         }
-    #
-    #         // If the LTI launch did not provide a recognized Canvas enrollment state, mark the user inactive to
-    #         // keep them from surfacing as a course site member.
-    #         if (!_.includes(_.values(CollabosphereConstants.ENROLLMENT_STATE), canvas_enrollment_state)) {
-    #           canvas_enrollment_state = 'inactive';
-    #         }
-    #
-    #         // Site admins are likewise considered inactive.
-    #         if (_.includes(CollabosphereConstants.ADMIN_ROLES, canvas_course_role)) {
-    #           canvas_enrollment_state = 'inactive';
-    #         }
-    #
-    #         // Create the user on the fly
-    #         var defaults = {
-    #           'canvas_course_role': canvas_course_role,
-    #           'canvas_full_name': canvas_full_name,
-    #           'canvas_image': canvas_image,
-    #           'canvas_email': canvas_email,
-    #           'canvas_enrollment_state': canvas_enrollment_state
-    #         };
-    #         UsersAPI.getOrCreateUser(canvas_user_id, course, defaults, function(err, user) {
-    #           if (err) {
-    #             return callback(err);
-    #           }
-    #
-    #           // Store or update the user's analytics properties
-    #           AnalyticsAPI.identifyUser(user);
-    #
-    #           // Keep track of the URL that is performing the LTI launch
-    #           provider.body.tool_url = externalToolUrl;
-    #
-    #           // Keep track of whether this Canvas instance supports custom cross-window messaging
-    #           provider.body.supports_custom_messaging = canvas.supports_custom_messaging;
-    #
-    #           return callback(null, provider.body, user);
-    #         });
-    #       });
-    #     });
-    #
-    pass

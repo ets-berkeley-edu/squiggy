@@ -103,8 +103,24 @@ def register_routes(app):
 def _user_loader(user_id=None):
     from squiggy.lib.login_session import LoginSession
     user_id = user_id or _lti_launch()
-    return LoginSession(user_id)
+    user = LoginSession(user_id)
+    _create_cookies_as_needed(user)
+    return user
 
 
 def _lti_launch():
-    return lti_launch(request.get_json() or request.form, request.headers) if request.method == 'POST' else None
+    return lti_launch(request) if request.method == 'POST' else None
+
+
+def _create_cookies_as_needed(user):
+    # TODO: Create cookies
+    #
+    # var name = encodeURIComponent(api_domain + '_' + course_id);
+    # res.cookie(name, user.id, {'sameSite': 'None', 'secure': true, 'signed': true});
+    #
+    # // Store another cookie to let the application know whether this Canvas instance supports customized
+    # // cross-window messaging.
+    # var customMessagingCookieName = encodeURIComponent(body.custom_canvas_api_domain + '_supports_custom_messaging');
+    # var customMessagingCookieValue = encodeURIComponent(body.supports_custom_messaging);
+    # res.cookie(customMessagingCookieName, customMessagingCookieValue, {'sameSite': 'None', 'secure': true});
+    pass
