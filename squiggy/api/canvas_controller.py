@@ -28,32 +28,18 @@ from flask import current_app as app, request, Response
 
 @app.route('/lti/cartridge/asset_library.xml')
 def asset_library_xml():
-    return _get_lti_cartridge(
-        description="""The Asset Library is where students and instructors can collect relevant materials for
-            the course. Materials can be seen by the other students in the class and can be discussed, liked, etc.
-        """,
-        host=request.headers['Host'],
-        title='Asset Library',
-        tool_id='assetlibrary',
-    )
+    return _get_lti_cartridge(tool_id='suitec:asset_library')
 
 
 @app.route('/lti/cartridge/engagement_index.xml')
 def engagement_index_xml():
-    return _get_lti_cartridge(
-        description="""The Engagement Index provides a leaderboard based on the student's activity in the course.
-            The Engagement Index will record activities such as discussion posts, likes, comments, etc.
-        """,
-        host=request.headers['Host'],
-        title='Engagement Index',
-        tool_id='engagementindex',
-    )
+    return _get_lti_cartridge(tool_id='suitec:engagement_index')
 
 
-def _get_lti_cartridge(description, host, title, tool_id):
-    # TODO: Can we take 'collabosphere_' out of the tool_id?
-    # TODO: How does '$Canvas.externalTool.url' work? Legacy SuiteC uses it in the same way.
-    url = f'https://{host}/lti/{tool_id}'
+def _get_lti_cartridge(tool_id):
+    tool_metadata = _get_tool_metadata(tool_id)
+    launch_url = tool_metadata['launch_url']
+    title = tool_metadata['title']
     xml = f"""
         <?xml version="1.0" encoding="UTF-8"?>
             <cartridge_basiclti_link
@@ -68,14 +54,13 @@ def _get_lti_cartridge(description, host, title, tool_id):
                 http://www.imsglobal.org/xsd/imslticm_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd
                 http://www.imsglobal.org/xsd/imslticp_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd">
               <blti:title>{title}</blti:title>
-              <blti:description>{description}</blti:description>
-              <blti:icon></blti:icon>
-              <blti:launch_url>{url}</blti:launch_url>
+              <blti:description>{tool_metadata['description']}</blti:description>
+              <blti:launch_url>{launch_url}</blti:launch_url>
               <blti:extensions platform="canvas.instructure.com">
-                <lticm:property name="tool_id">collabosphere_{tool_id}</lticm:property>
+                <lticm:property name="tool_id">{tool_id}</lticm:property>
                 <lticm:property name="privacy_level">public</lticm:property>
                 <lticm:options name="course_navigation">
-                  <lticm:property name="url">{url}</lticm:property>
+                  <lticm:property name="url">{launch_url}</lticm:property>
                   <lticm:property name="text">{title}</lticm:property>
                   <lticm:property name="visibility">public</lticm:property>
                   <lticm:property name="default">disabled</lticm:property>
@@ -89,3 +74,25 @@ def _get_lti_cartridge(description, host, title, tool_id):
               <cartridge_icon identifierref="BLTI001_Icon"/>
             </cartridge_basiclti_link>"""
     return Response(xml, mimetype='application/xml')
+
+
+def _get_tool_metadata(tool_id):
+    base_url = f"https://{request.headers['Host']}"
+    return {
+        'suitec:asset_library': {
+            'description': """
+                The Asset Library is where students and instructors can collect relevant materials for the course.
+                Materials can be seen by the other students in the class and can be discussed, liked, etc.
+            """,
+            'launch_url': f'{base_url}/assets',
+            'title': 'Asset Library',
+        },
+        'suitec:engagement_index': {
+            'description': """
+                The Engagement Index provides a leaderboard based on the student's activity in the course.
+                The Engagement Index will record activities such as discussion posts, likes, comments, etc.
+            """,
+            'launch_url': f'{base_url}/engage',
+            'title': 'Engagement Index',
+        },
+    }.get(tool_id, None)

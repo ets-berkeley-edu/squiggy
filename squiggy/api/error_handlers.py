@@ -24,31 +24,31 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
-import squiggy.api.errors
+import squiggy.lib.errors
 from squiggy.lib.http import tolerant_jsonify
 
 
-@app.errorhandler(squiggy.api.errors.BadRequestError)
+@app.errorhandler(squiggy.lib.errors.BadRequestError)
 def handle_bad_request(error):
     return error.to_json(), 400
 
 
-@app.errorhandler(squiggy.api.errors.UnauthorizedRequestError)
+@app.errorhandler(squiggy.lib.errors.UnauthorizedRequestError)
 def handle_unauthorized(error):
     return error.to_json(), 401
 
 
-@app.errorhandler(squiggy.api.errors.ForbiddenRequestError)
+@app.errorhandler(squiggy.lib.errors.ForbiddenRequestError)
 def handle_forbidden(error):
     return error.to_json(), 403
 
 
-@app.errorhandler(squiggy.api.errors.ResourceNotFoundError)
+@app.errorhandler(squiggy.lib.errors.ResourceNotFoundError)
 def handle_resource_not_found(error):
     return error.to_json(), 404
 
 
-@app.errorhandler(squiggy.api.errors.InternalServerError)
+@app.errorhandler(squiggy.lib.errors.InternalServerError)
 def handle_internal_server_error(error):
     return error.to_json(), 500
 

@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import json
 
 from flask import current_app as app, request
-from squiggy.api.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
+from squiggy.lib.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.previews import verify_preview_service_authorization
 from squiggy.models.asset import Asset
