@@ -25,6 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from datetime import datetime
 
+from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, to_int
@@ -63,40 +64,40 @@ class User(Base):
 
     def __init__(
         self,
-        course_id,
-        canvas_user_id,
         canvas_course_role,
         canvas_enrollment_state,
         canvas_full_name,
-        canvas_image=None,
-        canvas_email=None,
+        canvas_user_id,
+        course_id,
         canvas_course_sections=None,
+        canvas_email=None,
+        canvas_image=None,
         points=0,
         share_points=False,
     ):
-        self.course_id = course_id
-        self.canvas_email = canvas_email
-        self.canvas_user_id = canvas_user_id
         self.canvas_course_role = canvas_course_role
+        self.canvas_course_sections = canvas_course_sections
+        self.canvas_email = canvas_email
         self.canvas_enrollment_state = canvas_enrollment_state
         self.canvas_full_name = canvas_full_name
         self.canvas_image = canvas_image
-        self.canvas_course_sections = canvas_course_sections
+        self.canvas_user_id = canvas_user_id
+        self.course_id = course_id
         self.points = points
         self.share_points = share_points
 
     def __repr__(self):
         return f"""<User
-                    course_id={self.course_id},
-                    canvas_user_id={self.canvas_user_id},
-                    canvas_full_name={self.canvas_full_name},
-                    canvas_email={self.canvas_email},
                     canvas_course_role={self.canvas_course_role},
-                    canvas_enrollment_state={self.canvas_enrollment_state},
                     canvas_course_sections={self.canvas_course_sections},
+                    canvas_email={self.canvas_email},
+                    canvas_enrollment_state={self.canvas_enrollment_state},
+                    canvas_full_name={self.canvas_full_name},
+                    canvas_user_id={self.canvas_user_id},
+                    course_id={self.course_id},
+                    last_activity={self.last_activity},
                     points={self.points},
                     share_points={self.share_points},
-                    last_activity={self.last_activity},
                     created_at={self.created_at},
                     updated_at={self.updated_at}>
                 """
@@ -104,27 +105,59 @@ class User(Base):
     @classmethod
     def create(
             cls,
-            course_id,
-            canvas_user_id,
             canvas_course_role,
             canvas_enrollment_state,
             canvas_full_name,
+            canvas_user_id,
+            course_id,
             canvas_image=None,
             canvas_email=None,
             canvas_course_sections=None,
     ):
         user = cls(
-            course_id=course_id,
-            canvas_user_id=canvas_user_id,
             canvas_course_role=canvas_course_role,
+            canvas_course_sections=canvas_course_sections,
+            canvas_email=canvas_email,
             canvas_enrollment_state=canvas_enrollment_state,
             canvas_full_name=canvas_full_name,
             canvas_image=canvas_image,
-            canvas_email=canvas_email,
-            canvas_course_sections=canvas_course_sections,
+            canvas_user_id=canvas_user_id,
+            course_id=course_id,
         )
         db.session.add(user)
         std_commit()
+        return user
+
+    @classmethod
+    def find_or_create(
+            cls,
+            canvas_course_role,
+            canvas_enrollment_state,
+            canvas_full_name,
+            canvas_user_id,
+            course_id,
+            canvas_course_sections=None,
+            canvas_email=None,
+            canvas_image=None,
+    ):
+        where_clause = and_(
+            cls.course_id == course_id,
+            cls.canvas_user_id == canvas_user_id,
+        )
+        user = cls.query.filter(where_clause).one_or_none()
+        if not user:
+            user = cls(
+                canvas_course_role=canvas_course_role,
+                canvas_course_sections=canvas_course_sections,
+                canvas_email=canvas_email,
+                canvas_enrollment_state=canvas_enrollment_state,
+                canvas_full_name=canvas_full_name,
+                canvas_image=canvas_image,
+                canvas_user_id=canvas_user_id,
+                course_id=course_id,
+            )
+            db.session.add(user)
+            std_commit()
         return user
 
     @classmethod

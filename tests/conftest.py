@@ -162,13 +162,13 @@ def mock_asset(app, db_session):
     course = Course.query.order_by(Course.name).all()[0]
     canvas_user_id = str(random.randint(1000000, 9999999))
     user = User.create(
-        course_id=course.id,
-        canvas_user_id=canvas_user_id,
         canvas_course_role='Student',
+        canvas_course_sections=[],
+        canvas_email=f'{canvas_user_id}@berkeley.edu',
         canvas_enrollment_state='active',
         canvas_full_name=f'Student {canvas_user_id}',
-        canvas_email=f'{canvas_user_id}@berkeley.edu',
-        canvas_course_sections=[],
+        canvas_user_id=canvas_user_id,
+        course_id=course.id,
     )
     unique_token = datetime.now().isoformat()
     asset = Asset.create(
