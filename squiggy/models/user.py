@@ -165,6 +165,10 @@ class User(Base):
         return cls.query.filter_by(course_id=course_id).order_by(cls.canvas_full_name).all()
 
     @classmethod
+    def find_by_canvas_user_id(cls, canvas_user_id):
+        return cls.query.filter_by(canvas_user_id=canvas_user_id).first()
+
+    @classmethod
     def find_by_id(cls, user_id):
         user_id = to_int(user_id)
         if not user_id:

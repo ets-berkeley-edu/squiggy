@@ -26,8 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import datetime
 
 from flask import jsonify, make_response, redirect, request, session
-from flask_login import LoginManager
-from squiggy.merged.lti import lti_launch
+from flask_login import current_user, LoginManager
+from squiggy.models.canvas import Canvas
 
 
 def register_routes(app):
@@ -77,7 +77,7 @@ def register_routes(app):
         session.modified = True
 
     @app.after_request
-    def after_api_request(response):
+    def after_request(response):
         if app.config['SQUIGGY_ENV'] == 'development':
             # In development the response can be shared with requesting code from any local origin.
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
@@ -97,30 +97,32 @@ def register_routes(app):
                 app.logger.warning(log_message)
             else:
                 app.logger.debug(log_message)
+
+        if current_user.is_authenticated:
+            _create_cookies_as_needed(response, current_user)
+
         return response
 
 
 def _user_loader(user_id=None):
     from squiggy.lib.login_session import LoginSession
-    user_id = user_id or _lti_launch()
-    user = LoginSession(user_id)
-    _create_cookies_as_needed(user)
-    return user
+    return LoginSession(user_id)
 
 
-def _lti_launch():
-    return lti_launch(request) if request.method == 'POST' else None
-
-
-def _create_cookies_as_needed(user):
-    # TODO: Create cookies
-    #
-    # var name = encodeURIComponent(api_domain + '_' + course_id);
-    # res.cookie(name, user.id, {'sameSite': 'None', 'secure': true, 'signed': true});
-    #
-    # // Store another cookie to let the application know whether this Canvas instance supports customized
-    # // cross-window messaging.
-    # var customMessagingCookieName = encodeURIComponent(body.custom_canvas_api_domain + '_supports_custom_messaging');
-    # var customMessagingCookieValue = encodeURIComponent(body.supports_custom_messaging);
-    # res.cookie(customMessagingCookieName, customMessagingCookieValue, {'sameSite': 'None', 'secure': true});
-    pass
+def _create_cookies_as_needed(response, user):
+    canvas_api_domain = user.course.canvas_api_domain
+    response.set_cookie(
+        key=f'{canvas_api_domain}_{user.course.id}',
+        value=str(user.user_id),
+        samesite='None',
+        secure=True,
+    )
+    key = f'{canvas_api_domain}_supports_custom_messaging'
+    if not request.cookies.get(key):
+        canvas = Canvas.find_by_domain(canvas_api_domain)
+        response.set_cookie(
+            key=key,
+            value=str(canvas.supports_custom_messaging),
+            samesite='None',
+            secure=True,
+        )

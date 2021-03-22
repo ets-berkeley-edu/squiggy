@@ -23,55 +23,30 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy.lib.util import is_admin, is_teaching
-from squiggy.models.user import User
+from oauthlib.oauth1 import RequestValidator
 
 
-class LoginSession:
+class LtiRequestValidator(RequestValidator):
 
-    user = None
+    def __init__(self, canvas):
+        super().__init__()
+        self.canvas = canvas
 
-    def __init__(self, user_id):
-        self.user = User.find_by_id(user_id) if user_id else None
-
-    def get_id(self):
-        return self.user and self.user.id
+    def get_client_secret(self, client_key, request):
+        return self.canvas.lti_secret
 
     @property
-    def canvas_course_role(self):
-        return self.user and self.user.canvas_course_role
+    def client_key_length(self):
+        return 20, 32
 
-    @property
-    def course(self):
-        return self.user and self.user.course
-
-    @property
-    def is_active(self):
-        return self.is_authenticated
-
-    @property
-    def is_admin(self):
-        return is_admin(self)
-
-    @property
-    def is_authenticated(self):
-        return self.user is not None
-
-    @property
-    def is_teaching(self):
-        return is_teaching(self)
-
-    @property
-    def user_id(self):
-        return self.user and self.user.id
-
-    def to_api_json(self):
-        return {
-            **(self.user.to_api_json() if self.user else {}),
-            **{
-                'course': self.course and self.course.to_api_json(),
-                'isAdmin': self.is_admin,
-                'isAuthenticated': self.is_authenticated,
-                'isTeaching': self.is_teaching,
-            },
-        }
+    def validate_timestamp_and_nonce(
+            self,
+            client_key,
+            timestamp,
+            nonce,
+            request,
+            request_token=None,
+            access_token=None,
+    ):
+        # TODO: RequestValidator requires that this subclass implement this method. For now, we skip this validation.
+        return True

@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from dateutil.tz import tzutc
-from sqlalchemy import and_
 from squiggy import db
 from squiggy.models.base import Base
 
@@ -76,8 +75,8 @@ class Canvas(Base):
                 """
 
     @classmethod
-    def find_by_domain(cls, canvas_api_domain, lti_key):
-        return cls.query.filter(and_(cls.canvas_api_domain == canvas_api_domain, cls.lti_key == lti_key)).first()
+    def find_by_domain(cls, canvas_api_domain):
+        return cls.query.filter_by(canvas_api_domain=canvas_api_domain).first()
 
     @classmethod
     def get_all(cls):

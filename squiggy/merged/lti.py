@@ -25,30 +25,38 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import re
 
+from flask import current_app as app
 from lti.contrib.flask import FlaskToolProvider
-from oauthlib.oauth1 import RequestValidator
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
-from squiggy.lib.util import to_int
+from squiggy.merged.lti_request_validator import LtiRequestValidator
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 from squiggy.models.user import User
 
+TOOL_ID_ASSET_LIBRARY = 'suitec:asset_library'
+TOOL_ID_ENGAGEMENT_INDEX = 'suitec:engagement_index'
 
-def lti_launch(request):
+
+def lti_launch(request, tool_id):
+    is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
+    is_engagement_index = tool_id == TOOL_ID_ENGAGEMENT_INDEX
+    if not is_asset_library and not is_engagement_index:
+        raise BadRequestError(f'Missing or invalid tool_id: {tool_id}')
+
     user = None
-    args = request.get_json() or request.form
+    args = request.form
     lti_configs = {}
     validation = {
         'custom_canvas_api_domain': _str_strip,
-        'custom_canvas_course_id': to_int,
-        'custom_canvas_user_id': to_int,
+        'custom_canvas_course_id': _str_strip,
+        'custom_canvas_user_id': _str_strip,
         'custom_external_tool_url': _canvas_external_tool_url,
         'lis_person_name_full': _str_strip,
-        'oauth_consumer_key': _alpha_num_32,
+        'oauth_consumer_key': _alpha_num,
         'oauth_nonce': _alpha_num,
         'oauth_signature': _str_strip,
         'oauth_signature_method': _str_strip,
-        'oauth_timestamp': to_int,
+        'oauth_timestamp': _str_strip,
         'oauth_version': _str_strip,
         'roles': _str_strip,
     }
@@ -57,24 +65,36 @@ def lti_launch(request):
         value = args.get(key)
         validate = validation[key]
         pass_headers = validate is _canvas_external_tool_url
-        lti_configs[key] = validate(value, request.headers) if pass_headers else validate(value)
-        return lti_configs[key]
+        validated_value = validate(value, request.headers) if pass_headers else validate(value)
+        if validated_value:
+            lti_configs[key] = validated_value
+            return lti_configs[key]
+        else:
+            app.logger.warn(f'Invalid \'{key}\' parameter in LTI launch: {value}')
 
     if all(_fetch(key) for key in validation.keys()):
         canvas_api_domain = lti_configs['custom_canvas_api_domain']
-        canvas = Canvas.find_by_domain(
-            canvas_api_domain=canvas_api_domain,
-            lti_key=lti_configs['oauth_consumer_key'],
-        )
-        if canvas:
-            tool_provider = FlaskToolProvider.from_flask_request(request=request)
-            if tool_provider.is_valid_request(RequestValidator()):
+        canvas = Canvas.find_by_domain(canvas_api_domain)
+        if canvas and canvas.lti_key == lti_configs['oauth_consumer_key']:
+            # TODO: How does Canvas deliver LTI_SECRET?
+            lti_secret = canvas.lti_secret
+            tool_metadata = _get_tool_metadata(
+                host=request.headers['Host'],
+                tool_id=tool_id,
+            )
+            tool_provider = FlaskToolProvider.from_unpacked_request(
+                params=lti_configs,
+                url=tool_metadata['launch_url'],
+                headers=dict(request.headers),
+                secret=lti_secret,
+            )
+            if tool_provider.is_valid_request(LtiRequestValidator(canvas)):
                 external_tool_url = lti_configs['custom_external_tool_url']
                 course = Course.find_or_create(
-                    asset_library_url=external_tool_url if 'asset' in request.path else None,
+                    asset_library_url=external_tool_url if is_asset_library else None,
                     canvas_api_domain=canvas_api_domain,
                     canvas_course_id=lti_configs['custom_canvas_course_id'],
-                    engagement_index_url=external_tool_url if 'engage' in request.path else None,
+                    engagement_index_url=external_tool_url if is_engagement_index else None,
                     name=args.get('context_title'),
                 )
                 user = User.find_or_create(
@@ -87,11 +107,12 @@ def lti_launch(request):
                     canvas_email='TODO',
                     canvas_course_sections='TODO',
                 )
+
             else:
                 raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
         else:
             raise ResourceNotFoundError(f'Failed \'canvas\' lookup where canvas_api_domain = {canvas_api_domain}')
-    return user
+    return user, ('/assets' if is_asset_library else '/engage')
 
 
 def get_lti_cartridge_xml(host, tool_id):
@@ -139,11 +160,6 @@ def _alpha_num(s):
     return value if value.isalnum() else None
 
 
-def _alpha_num_32(s):
-    value = _alpha_num(s)
-    return value if (value and len(value) == 32) else None
-
-
 def _canvas_external_tool_url(s, headers):
     referrer = headers.get('Referer')
     pattern = '/external_tools/(\d+)'
@@ -154,21 +170,24 @@ def _canvas_external_tool_url(s, headers):
 
 
 def _get_tool_metadata(host, tool_id):
+    is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
+    api_path = '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index'
+    launch_url = f"'https://{host.rstrip('/')}{api_path}'"
     return {
-        'suitec:asset_library': {
+        TOOL_ID_ASSET_LIBRARY: {
             'description': """
                 The Asset Library is where students and instructors can collect relevant materials for the course.
                 Materials can be seen by the other students in the class and can be discussed, liked, etc.
             """,
-            'launch_url': f'https://{host}/assets',
+            'launch_url': launch_url,
             'title': 'Asset Library',
         },
-        'suitec:engagement_index': {
+        TOOL_ID_ENGAGEMENT_INDEX: {
             'description': """
                 The Engagement Index provides a leaderboard based on the student's activity in the course.
                 The Engagement Index will record activities such as discussion posts, likes, comments, etc.
             """,
-            'launch_url': f'https://{host}/engage',
+            'launch_url': launch_url,
             'title': 'Engagement Index',
         },
     }.get(tool_id, None)

@@ -5,6 +5,7 @@ import Assets from '@/components/assets/Assets.vue'
 import AssetUpload from '@/components/assets/AssetUpload.vue'
 import BaseView from '@/components/BaseView.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
+import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
 import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
@@ -73,6 +74,13 @@ const router = new Router({
           component: EditAsset,
           meta: {
             title: 'Asset'
+          }
+        },
+        {
+          path: '/engage',
+          component: Engage,
+          meta: {
+            title: 'Engagement Index'
           }
         }
       ]
