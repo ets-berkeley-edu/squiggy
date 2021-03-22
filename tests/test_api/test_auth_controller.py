@@ -23,8 +23,13 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from datetime import datetime
 import json
 
+import pytest
+from squiggy.merged.lti import TOOL_ID_ASSET_LIBRARY
+from squiggy.models.canvas import Canvas
+from squiggy.models.user import User
 from tests.util import override_config
 
 unauthorized_user_id = '666'
@@ -118,3 +123,78 @@ class TestAuthorization:
         fake_auth.login(authorized_user_id)
         api_json = self._api_my_profile(client)
         assert api_json['id'] == authorized_user_id
+
+
+class TestLtiLaunchUrl:
+    """LTI Launch API."""
+
+    @staticmethod
+    def _api_auth_lti_launch(
+            client,
+            custom_canvas_api_domain,
+            custom_canvas_course_id,
+            custom_canvas_user_id,
+            custom_external_tool_url,
+            lis_person_name_full,
+            oauth_consumer_key,
+            oauth_consumer_secret,
+            roles,
+            tool_id,
+            expected_status_code=200,
+    ):
+        data = {
+            'custom_canvas_api_domain': custom_canvas_api_domain,
+            'custom_canvas_course_id': custom_canvas_course_id,
+            'custom_canvas_user_id': custom_canvas_user_id,
+            'custom_external_tool_url': custom_external_tool_url,
+            'lis_person_name_full': lis_person_name_full,
+            'oauth_consumer_key': oauth_consumer_key,
+            'oauth_consumer_secret': oauth_consumer_secret,
+            'oauth_nonce': 'kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pT',
+            'oauth_signature': '?????',  # TODO: We must solve the mystery of simulating Canvas LTI launch POST.
+            'oauth_signature_method': 'HMAC-SHA1',
+            'oauth_timestamp': str(int(datetime.now().timestamp())),
+            'oauth_version': '1.0',
+            'roles': roles,
+        }
+        is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
+        response = client.post(
+            '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index',
+            data=data,
+            content_type='application/x-www-form-urlencoded',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    @pytest.mark.skipif(reason='TODO: We must solve the mystery of simulating Canvas LTI launch POST.')
+    def test_create_user_at_lti_launch(self, client):
+        """User is created during LTI launch."""
+        canvas_api_domain = 'bcourses.berkeley.edu'
+        canvas = Canvas.find_by_domain(canvas_api_domain=canvas_api_domain)
+        canvas_course_id = 1502870
+        canvas_user_id = 45678901
+        full_name = 'Dee Dee Ramone'
+        self._api_auth_lti_launch(
+            client=client,
+            custom_canvas_api_domain=canvas.canvas_api_domain,
+            custom_canvas_course_id=canvas_course_id,
+            custom_canvas_user_id=canvas_user_id,
+            custom_external_tool_url=f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765',
+            lis_person_name_full=full_name,
+            oauth_consumer_key=canvas.lti_key,
+            oauth_consumer_secret=canvas.lti_secret,
+            roles='Student',
+            tool_id=TOOL_ID_ASSET_LIBRARY,
+        )
+        user = User.find_by_canvas_user_id(canvas_user_id)
+        assert user
+        assert user.canvas_full_name == full_name
+
+
+class TestCookies:
+    """Cookies."""
+
+    @pytest.mark.skipif(reason='TODO: Verify that cookies are properly managed.')
+    def test_squiggy_cookies(self, client):
+        """Cookies are properly managed."""
+        pass
