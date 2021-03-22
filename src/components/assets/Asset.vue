@@ -6,7 +6,7 @@
       <v-card class="mt-3 pa-2" outlined>
         <v-card-text>
           <div class="asset-image-container">
-            <AssetImage :asset="asset" :contain="true" :max-height="540" />
+            <AssetPreview :asset="asset" :contain="true" :max-height="540" />
           </div>
           <AssetOverview :asset="asset" />
         </v-card-text>
@@ -24,9 +24,9 @@
 
 <script>
 import AssetComments from '@/components/assets/comments/AssetComments'
-import AssetImage from '@/components/assets/AssetImage'
 import AssetOverview from '@/components/assets/AssetOverview'
 import AssetPageHeader from '@/components/assets/AssetPageHeader'
+import AssetPreview from '@/components/assets/AssetPreview'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
@@ -36,9 +36,9 @@ export default {
   name: 'Asset',
   components: {
     AssetComments,
-    AssetImage,
     AssetOverview,
     AssetPageHeader,
+    AssetPreview,
     BackToAssetLibrary
   },
   mixins: [Context, Utils],

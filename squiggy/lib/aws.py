@@ -36,6 +36,8 @@ S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+\.s3.*\.a
 
 
 def get_s3_signed_url(url):
+    if not is_s3_preview_url(url):
+        return url
     parsed_url = urlparse(url)
     query_string = parse_qs(parsed_url.query)
 

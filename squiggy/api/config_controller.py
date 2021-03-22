@@ -41,6 +41,7 @@ def app_config():
         'canvasBaseUrl': app.config['CANVAS_BASE_URL'],
         'orderByOptions': assets_sort_by_options,
         'squiggyEnv': app.config['SQUIGGY_ENV'],
+        'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],
     })
 

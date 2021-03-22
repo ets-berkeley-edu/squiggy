@@ -29,7 +29,7 @@ import re
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
-from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
+from squiggy.lib.aws import get_s3_signed_url
 from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import camelize, isoformat, utc_now
 from squiggy.models.activity import Activity
@@ -275,11 +275,7 @@ class Asset(Base):
 
             if json_asset['id'] in users_by_asset:
                 json_asset['users'] = users_by_asset[json_asset['id']]
-
-            if is_s3_preview_url(json_asset['imageUrl']):
-                json_asset['imageUrl'] = get_s3_signed_url(json_asset['imageUrl'])
-            if is_s3_preview_url(json_asset['thumbnailUrl']):
-                json_asset['thumbnailUrl'] = get_s3_signed_url(json_asset['thumbnailUrl'])
+            json_asset['thumbnailUrl'] = get_s3_signed_url(json_asset['thumbnailUrl'])
 
             return json_asset
 
@@ -307,6 +303,8 @@ class Asset(Base):
         return True
 
     def to_api_json(self):
+        image_url = get_s3_signed_url(self.image_url)
+        pdf_url = get_s3_signed_url(self.pdf_url)
         return {
             'id': self.id,
             'assetType': self.asset_type,
@@ -318,10 +316,10 @@ class Asset(Base):
             'description': self.description,
             'dislikes': self.dislikes,
             'downloadUrl': self.download_url,
-            'imageUrl': self.image_url,
+            'imageUrl': image_url,
             'likes': self.likes,
             'mime': self.mime,
-            'pdfUrl': self.pdf_url,
+            'pdfUrl': pdf_url,
             'previewMetadata': self.preview_metadata,
             'previewStatus': self.preview_status,
             'source': self.source,
