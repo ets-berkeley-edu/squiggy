@@ -57,7 +57,7 @@ INACTIVE_SESSION_LIFETIME = 20
 
 # These "INDEX_HTML" and "STATIC_PATH" defaults are good in squiggy-[dev|qa|prod]. See development.py for local configs.
 INDEX_HTML = 'dist/static/index.html'
-STATIC_PATH = 'static'
+STATIC_PATH = '/static'
 
 # Logging
 LOGGING_FORMAT = '[%(asctime)s] - %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
