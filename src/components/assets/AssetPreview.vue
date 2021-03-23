@@ -38,12 +38,25 @@
           <source :src="videoUrl" type="video/mp4">
         </video>
       </div>
-      <div v-if="asset.assetType === 'link' && isEmbeddable">
+      <div v-if="asset.assetType === 'link' && isEmbeddable && !asset.previewMetadata.youtubeId">
         <iframe
           width="100%"
           height="800"
           :src="embedUrl"
           frameborder="0"
+        />
+      </div>
+      <div v-if="asset.assetType === 'link' && isEmbeddable && asset.previewMetadata.youtubeId">
+        <iframe
+          width="100%"
+          height="800"
+          :src="embedUrl"
+          frameborder="0"
+          webkitallowfullscreen=""
+          mozallowfullscreen=""
+          allowfullscreen=""
+          allowscriptaccess="always"
+          scrolling="no"
         />
       </div>
       <div v-if="asset.assetType === 'link' && !isEmbeddable && asset.imageUrl">
@@ -115,10 +128,11 @@ export default {
             this.width = this.asset.previewMetadata.image_width
           }
         } else if (this.asset.assetType === 'link') {
+          var currentProtocol = document.location.protocol
           if (this.asset.previewMetadata.youtubeId) {
-            this.embedUrl = '//www.youtube.com/embed/' + this.asset.previewMetadata.youtubeId + '?autoplay=false'
+            this.isEmbeddable = true
+            this.embedUrl = currentProtocol + '//www.youtube.com/embed/' + this.asset.previewMetadata.youtubeId + '?autoplay=false'
           } else {
-            var currentProtocol = document.location.protocol
             var alternateEmbedUrl = null
             if (currentProtocol === 'http:') {
               this.isEmbeddable = this.asset.previewMetadata.httpEmbeddable
@@ -127,7 +141,7 @@ export default {
               this.isEmbeddable = this.asset.previewMetadata.httpsEmbeddable
               alternateEmbedUrl = this.asset.previewMetadata.httpsEmbedUrl
             }
-            this.embedUrl = (alternateEmbedUrl || this.asset.url).replace(/^https?:/, '')
+            this.embedUrl = (alternateEmbedUrl || this.asset.url).replace(/^https?:/, currentProtocol)
           }
         }
       }
