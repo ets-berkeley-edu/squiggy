@@ -29,5 +29,6 @@ DEBUG = True
 DEVELOPER_AUTH_ENABLED = True
 
 INDEX_HTML = 'public/index.html'
+STATIC_PATH = ''
 
 VUE_LOCALHOST_BASE_URL = 'http://localhost:8080'
