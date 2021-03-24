@@ -27,6 +27,7 @@ from datetime import datetime
 import json
 
 import pytest
+from squiggy import std_commit
 from squiggy.merged.lti import TOOL_ID_ASSET_LIBRARY
 from squiggy.models.canvas import Canvas
 from squiggy.models.user import User
@@ -140,7 +141,7 @@ class TestLtiLaunchUrl:
             oauth_consumer_secret,
             roles,
             tool_id,
-            expected_status_code=200,
+            expected_status_code=302,
     ):
         data = {
             'custom_canvas_api_domain': custom_canvas_api_domain,
@@ -164,9 +165,7 @@ class TestLtiLaunchUrl:
             content_type='application/x-www-form-urlencoded',
         )
         assert response.status_code == expected_status_code
-        return json.loads(response.data)
 
-    @pytest.mark.skipif(reason='TODO: We must solve the mystery of simulating Canvas LTI launch POST.')
     def test_create_user_at_lti_launch(self, client):
         """User is created during LTI launch."""
         canvas_api_domain = 'bcourses.berkeley.edu'
@@ -174,21 +173,30 @@ class TestLtiLaunchUrl:
         canvas_course_id = 1502870
         canvas_user_id = 45678901
         full_name = 'Dee Dee Ramone'
+        external_tool_url = f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765'
         self._api_auth_lti_launch(
             client=client,
             custom_canvas_api_domain=canvas.canvas_api_domain,
             custom_canvas_course_id=canvas_course_id,
             custom_canvas_user_id=canvas_user_id,
-            custom_external_tool_url=f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765',
+            custom_external_tool_url=external_tool_url,
             lis_person_name_full=full_name,
             oauth_consumer_key=canvas.lti_key,
             oauth_consumer_secret=canvas.lti_secret,
             roles='Student',
             tool_id=TOOL_ID_ASSET_LIBRARY,
         )
+        std_commit(allow_test_environment=True)
+
         user = User.find_by_canvas_user_id(canvas_user_id)
         assert user
         assert user.canvas_full_name == full_name
+        assert user.canvas_user_id == canvas_user_id
+
+        course = user.course
+        assert course.canvas_course_id == canvas_course_id
+        assert course.engagement_index_url is None
+        assert course.asset_library_url == external_tool_url
 
 
 class TestCookies:

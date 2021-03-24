@@ -71,12 +71,14 @@ def lti_launch_engagement_index():
 
 
 def _lti_launch(tool_id):
+    app.logger.info(f'Begin LTI launch for tool {tool_id}')
     user, redirect_path = lti_launch(request=request, tool_id=tool_id)
     login_session = LoginSession(user and user.id)
     login_user(login_session, force=True, remember=True)
 
     if current_user.is_authenticated:
-        vue_base_url = app.config['VUE_LOCALHOST_BASE_URL']
-        return redirect(f"{vue_base_url or ''}{redirect_path}")
+        uri = f"{app.config['VUE_LOCALHOST_BASE_URL'] or ''}{redirect_path}"
+        app.logger.info(f'User authenticated via LTI launch. Redirecting to {uri}')
+        return redirect(location=uri)
     else:
-        raise UnauthorizedRequestError('Failed to identify user in LTI launch.')
+        raise UnauthorizedRequestError(f'Failed authenticate user during {tool_id} LTI launch {login_session.to_api_json()}')
