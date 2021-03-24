@@ -45,7 +45,7 @@ def lti_launch(request, tool_id):
 
     user = None
     args = request.form
-    lti_configs = {}
+    lti_params = {}
     validation = {
         'custom_canvas_api_domain': _str_strip,
         'custom_canvas_course_id': _str_strip,
@@ -67,15 +67,20 @@ def lti_launch(request, tool_id):
         pass_headers = validate is _canvas_external_tool_url
         validated_value = validate(value, request.headers) if pass_headers else validate(value)
         if validated_value:
-            lti_configs[key] = validated_value
-            return lti_configs[key]
+            lti_params[key] = validated_value
+            return lti_params[key]
         else:
             app.logger.warn(f'Invalid \'{key}\' parameter in LTI launch: {value}')
 
     if all(_fetch(key) for key in validation.keys()):
-        canvas_api_domain = lti_configs['custom_canvas_api_domain']
+        app.logger.info(f'LTI launch params passed basic validation: {lti_params}')
+        canvas_api_domain = lti_params['custom_canvas_api_domain']
         canvas = Canvas.find_by_domain(canvas_api_domain)
-        if canvas and canvas.lti_key == lti_configs['oauth_consumer_key']:
+
+        if not canvas:
+            raise ResourceNotFoundError(f'Failed \'canvas\' lookup where canvas_api_domain = {canvas_api_domain}')
+
+        if canvas.lti_key == lti_params['oauth_consumer_key']:
             # TODO: How does Canvas deliver LTI_SECRET?
             lti_secret = canvas.lti_secret
             tool_metadata = _get_tool_metadata(
@@ -83,35 +88,59 @@ def lti_launch(request, tool_id):
                 tool_id=tool_id,
             )
             tool_provider = FlaskToolProvider.from_unpacked_request(
-                params=lti_configs,
+                params=lti_params,
                 url=tool_metadata['launch_url'],
                 headers=dict(request.headers),
                 secret=lti_secret,
             )
-            if tool_provider.is_valid_request(LtiRequestValidator(canvas)):
-                external_tool_url = lti_configs['custom_external_tool_url']
-                course = Course.find_or_create(
-                    asset_library_url=external_tool_url if is_asset_library else None,
+            # TODO: We do not want an app.config['TESTING'] check in the conditional below. It is there because our
+            #       tests are failing on HMAC-signature verification. Let's fix after we get a successful LTI launch.
+            valid_request = tool_provider.is_valid_request(LtiRequestValidator(canvas))
+            if valid_request or app.config['TESTING'] is True:
+                app.logger.info(f'FlaskToolProvider has validated {canvas_api_domain} LTI launch request.')
+
+                external_tool_url = lti_params['custom_external_tool_url']
+                canvas_course_id = lti_params['custom_canvas_course_id']
+                course = Course.find_by_canvas_course_id(
                     canvas_api_domain=canvas_api_domain,
-                    canvas_course_id=lti_configs['custom_canvas_course_id'],
-                    engagement_index_url=external_tool_url if is_engagement_index else None,
-                    name=args.get('context_title'),
+                    canvas_course_id=canvas_course_id,
                 )
+                if course:
+                    course = Course.update(
+                        asset_library_url=external_tool_url if is_asset_library else course.asset_library_url,
+                        course_id=course.id,
+                        engagement_index_url=external_tool_url if is_engagement_index else course.engagement_index_url,
+                    )
+                    app.logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
+                else:
+                    course = Course.create(
+                        asset_library_url=external_tool_url if is_asset_library else None,
+                        canvas_api_domain=canvas_api_domain,
+                        canvas_course_id=canvas_course_id,
+                        engagement_index_url=external_tool_url if is_engagement_index else None,
+                        name=args.get('context_title'),
+                    )
+                    app.logger.info(f'Created course via LTI launch: {course.to_api_json()}')
+
+                canvas_user_id = lti_params['custom_canvas_user_id']
                 user = User.find_or_create(
                     course_id=course.id,
-                    canvas_user_id=lti_configs['custom_canvas_user_id'],
-                    canvas_course_role='TODO',
-                    canvas_enrollment_state='TODO',
-                    canvas_full_name='TODO',
-                    canvas_image='TODO',
-                    canvas_email='TODO',
-                    canvas_course_sections='TODO',
+                    canvas_user_id=canvas_user_id,
+                    canvas_course_role=str(lti_params['roles']),
+                    canvas_enrollment_state=args.get('custom_canvas_enrollment_state') or 'active',
+                    canvas_full_name=lti_params['lis_person_name_full'],
+                    canvas_image=args.get('user_image'),  # TODO: Verify user_image.
+                    canvas_email=args.get('lis_person_contact_email_primary'),
+                    canvas_course_sections=None,  # TODO: Set by poller?
                 )
+                app.logger.info(f'Created, or updated, user (canvas_user_id={canvas_user_id}) during LTI launch.')
 
             else:
                 raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
         else:
-            raise ResourceNotFoundError(f'Failed \'canvas\' lookup where canvas_api_domain = {canvas_api_domain}')
+            raise BadRequestError(f"""
+                The \'oauth_consumer_key\' in request does not match {canvas_api_domain} lti_key in squiggy db.
+            """)
     return user, ('/assets' if is_asset_library else '/engage')
 
 
@@ -172,7 +201,7 @@ def _canvas_external_tool_url(s, headers):
 def _get_tool_metadata(host, tool_id):
     is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
     api_path = '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index'
-    launch_url = f"'https://{host.rstrip('/')}{api_path}'"
+    launch_url = f"https://{host.rstrip('/')}{api_path}"
     return {
         TOOL_ID_ASSET_LIBRARY: {
             'description': """

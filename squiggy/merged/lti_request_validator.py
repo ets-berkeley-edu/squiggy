@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from oauthlib.oauth1 import RequestValidator
+from squiggy.models.canvas import Canvas
 
 
 class LtiRequestValidator(RequestValidator):
@@ -34,6 +35,11 @@ class LtiRequestValidator(RequestValidator):
 
     def get_client_secret(self, client_key, request):
         return self.canvas.lti_secret
+
+    def validate_client_key(self, client_key, request):
+        canvas_api_domain = request.body.get('custom_canvas_api_domain')
+        canvas = canvas_api_domain and Canvas.find_by_domain(canvas_api_domain=canvas_api_domain)
+        return canvas and canvas.lti_key == client_key
 
     @property
     def client_key_length(self):

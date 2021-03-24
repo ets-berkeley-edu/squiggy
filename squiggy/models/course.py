@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from dateutil.tz import tzutc
-from sqlalchemy import and_
 from squiggy import db, std_commit
 from squiggy.models.base import Base
 
@@ -92,7 +91,7 @@ class Course(Base):
         return cls.query.filter_by(canvas_api_domain=canvas_api_domain, canvas_course_id=canvas_course_id).first()
 
     @classmethod
-    def find_or_create(
+    def create(
             cls,
             canvas_api_domain,
             canvas_course_id,
@@ -100,21 +99,29 @@ class Course(Base):
             engagement_index_url=None,
             name=None,
     ):
-        where_clause = and_(
-            cls.canvas_api_domain == canvas_api_domain,
-            cls.canvas_course_id == canvas_course_id,
+        course = cls(
+            asset_library_url=asset_library_url,
+            canvas_api_domain=canvas_api_domain,
+            canvas_course_id=canvas_course_id,
+            engagement_index_url=engagement_index_url,
+            name=name,
         )
-        course = cls.query.filter(where_clause).one_or_none()
-        if not course:
-            course = cls(
-                asset_library_url=asset_library_url,
-                canvas_api_domain=canvas_api_domain,
-                canvas_course_id=canvas_course_id,
-                engagement_index_url=engagement_index_url,
-                name=name,
-            )
-            db.session.add(course)
-            std_commit()
+        db.session.add(course)
+        std_commit()
+        return course
+
+    @classmethod
+    def update(
+            cls,
+            asset_library_url,
+            course_id,
+            engagement_index_url,
+    ):
+        course = cls.find_by_id(course_id=course_id)
+        course.asset_library_url = asset_library_url
+        course.engagement_index_url = engagement_index_url
+        db.session.add(course)
+        std_commit()
         return course
 
     def to_api_json(self):
