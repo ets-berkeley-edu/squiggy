@@ -84,6 +84,7 @@ def register_routes(app):
             response.headers['Access-Control-Allow-Origin'] = app.config['VUE_LOCALHOST_BASE_URL']
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
+
         if request.full_path.startswith('/api'):
             log_message = ' '.join([
                 request.remote_addr,
@@ -98,9 +99,7 @@ def register_routes(app):
             else:
                 app.logger.debug(log_message)
 
-        if current_user.is_authenticated:
-            _create_cookies_as_needed(response, current_user)
-
+        _create_cookies_as_needed(response)
         return response
 
 
@@ -109,20 +108,23 @@ def _user_loader(user_id=None):
     return LoginSession(user_id)
 
 
-def _create_cookies_as_needed(response, user):
-    canvas_api_domain = user.course.canvas_api_domain
-    response.set_cookie(
-        key=f'{canvas_api_domain}_{user.course.id}',
-        value=str(user.user_id),
-        samesite='None',
-        secure=True,
-    )
-    key = f'{canvas_api_domain}_supports_custom_messaging'
-    if not request.cookies.get(key):
-        canvas = Canvas.find_by_domain(canvas_api_domain)
-        response.set_cookie(
-            key=key,
-            value=str(canvas.supports_custom_messaging),
-            samesite='None',
-            secure=True,
-        )
+def _create_cookies_as_needed(response):
+    if current_user.is_authenticated:
+        canvas_api_domain = current_user.course.canvas_api_domain
+        key = f'{canvas_api_domain}_{current_user.course.id}'
+        if not request.cookies.get(key):
+            response.set_cookie(
+                key=key,
+                value=str(current_user.user_id),
+                samesite='None',
+                secure=True,
+            )
+        key = f'{canvas_api_domain}_supports_custom_messaging'
+        if not request.cookies.get(key):
+            canvas = Canvas.find_by_domain(canvas_api_domain)
+            response.set_cookie(
+                key=key,
+                value=str(canvas.supports_custom_messaging),
+                samesite='None',
+                secure=True,
+            )
