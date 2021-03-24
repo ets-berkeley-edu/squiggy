@@ -26,7 +26,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from datetime import datetime
 import json
 
-import pytest
 from squiggy import std_commit
 from squiggy.merged.lti import TOOL_ID_ASSET_LIBRARY
 from squiggy.models.canvas import Canvas
@@ -202,7 +201,37 @@ class TestLtiLaunchUrl:
 class TestCookies:
     """Cookies."""
 
-    @pytest.mark.skipif(reason='TODO: Verify that cookies are properly managed.')
-    def test_squiggy_cookies(self, client):
-        """Cookies are properly managed."""
-        pass
+    @staticmethod
+    def _assert_cookie(client, user=None):
+        client.get('/api/profile/my')
+        cookie_dict = client.cookie_jar._cookies
+        assert len(cookie_dict) == 1
+        cookies = list(list(client.cookie_jar._cookies.values())[0].values())[0]
+        if user:
+            def _assert_cookie_value(key, value):
+                assert key in cookies
+                assert cookies[key].value == str(value)
+
+            canvas_api_domain = user.course.canvas_api_domain
+            canvas = Canvas.find_by_domain(canvas_api_domain)
+            _assert_cookie_value(key=f'{canvas_api_domain}_{user.course.id}', value=user.id)
+            _assert_cookie_value(
+                key=f'{canvas_api_domain}_supports_custom_messaging',
+                value=canvas.supports_custom_messaging,
+            )
+        else:
+            assert 'supports_custom_messaging' not in cookies
+
+    def test_anonymous(self, client):
+        """No cookies for anonymous user."""
+        self._assert_cookie(client=client)
+
+    def test_unauthorized(self, client, fake_auth):
+        """No cookies for unauthorized user."""
+        self._assert_cookie(client=client)
+
+    def test_admin(self, client, fake_auth, authorized_user_id):
+        """Cookies for authenticated user."""
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(user.id)
+        self._assert_cookie(client=client, user=user)
