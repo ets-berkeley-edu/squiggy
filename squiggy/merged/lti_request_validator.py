@@ -45,6 +45,10 @@ class LtiRequestValidator(RequestValidator):
     def client_key_length(self):
         return 20, 32
 
+    @property
+    def nonce_length(self):
+        return 20, 50
+
     def validate_timestamp_and_nonce(
             self,
             client_key,
