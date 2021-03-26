@@ -26,8 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import datetime
 
 from flask import jsonify, make_response, redirect, request, session
-from flask_login import current_user, LoginManager
-from squiggy.models.canvas import Canvas
+from flask_login import login_user, LoginManager
+from squiggy.lib.util import to_int
 
 
 def register_routes(app):
@@ -43,7 +43,6 @@ def register_routes(app):
     import squiggy.api.category_controller
     import squiggy.api.comment_controller
     import squiggy.api.config_controller
-    import squiggy.api.course_controller
     import squiggy.api.previews_controller
     import squiggy.api.status_controller
     import squiggy.api.user_controller
@@ -80,7 +79,7 @@ def register_routes(app):
     def after_request(response):
         if app.config['SQUIGGY_ENV'] == 'development':
             # In development the response can be shared with requesting code from any local origin.
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Squiggy-Course-Site-UUID'
             response.headers['Access-Control-Allow-Origin'] = app.config['VUE_LOCALHOST_BASE_URL']
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
@@ -99,32 +98,25 @@ def register_routes(app):
             else:
                 app.logger.debug(log_message)
 
-        _create_cookies_as_needed(response)
         return response
 
 
 def _user_loader(user_id=None):
     from squiggy.lib.login_session import LoginSession
-    return LoginSession(user_id)
 
-
-def _create_cookies_as_needed(response):
-    if current_user.is_authenticated:
-        canvas_api_domain = current_user.course.canvas_api_domain
-        key = f'{canvas_api_domain}_{current_user.course.id}'
-        if not request.cookies.get(key):
-            response.set_cookie(
-                key=key,
-                value=str(current_user.user_id),
-                samesite='None',
-                secure=True,
-            )
-        key = f'{canvas_api_domain}_supports_custom_messaging'
-        if not request.cookies.get(key):
-            canvas = Canvas.find_by_domain(canvas_api_domain)
-            response.set_cookie(
-                key=key,
-                value=str(canvas.supports_custom_messaging),
-                samesite='None',
-                secure=True,
-            )
+    user = LoginSession(user_id)
+    if not user.is_authenticated:
+        # HTTP header identifies the Canvas course site
+        course_site_uuid = request.headers.get('Squiggy-Course-Site-UUID')
+        if course_site_uuid and '|' in course_site_uuid:
+            cookie_value = request.cookies.get(course_site_uuid)
+            canvas_api_domain, canvas_course_id = course_site_uuid.split('|')
+            user_id = to_int(cookie_value) if cookie_value else None
+            if canvas_api_domain and canvas_course_id and user_id:
+                candidate = LoginSession(user_id)
+                course = candidate.course
+                if course.canvas_api_domain == canvas_api_domain and str(course.canvas_course_id) == str(canvas_course_id):
+                    # User must be a member of the Canvas course site.
+                    user = candidate
+                    login_user(user)
+    return user

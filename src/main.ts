@@ -94,6 +94,12 @@ Vue.config.errorHandler = function(error, vm, info) {
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
 
+  const user = Vue.prototype.$currentUser
+  if (user.isAuthenticated) {
+    // LTI integration
+    axios.defaults.headers['Squiggy-Course-Site-UUID'] = `${user.canvasApiDomain}|${user.canvasCourseId}`
+  }
+
   axios.get(`${apiBaseUrl}/api/config`).then(data => {
     Vue.prototype.$config = data
     Vue.prototype.$config.apiBaseUrl = apiBaseUrl

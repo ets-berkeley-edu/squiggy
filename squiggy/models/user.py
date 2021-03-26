@@ -182,15 +182,17 @@ class User(Base):
     def to_api_json(self):
         return {
             'id': self.id,
-            'canvasUserId': self.canvas_user_id,
+            'canvasApiDomain': self.course.canvas_api_domain,
+            'canvasCourseId': self.course.canvas_course_id,
             'canvasCourseRole': self.canvas_course_role,
             'canvasCourseSections': self.canvas_course_sections,
             'canvasEmail': self.canvas_email,
             'canvasFullName': self.canvas_full_name,
             'canvasImage': self.canvas_image,
+            'canvasUserId': self.canvas_user_id,
+            'lastActivity': isoformat(self.last_activity),
             'points': self.points,
             'sharePoints': self.share_points,
-            'lastActivity': isoformat(self.last_activity),
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }

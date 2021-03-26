@@ -51,7 +51,7 @@
       </v-expansion-panel>
     </v-expansion-panels>
     <div v-if="!$currentUser.isAuthenticated">
-      <DevAuth :canvas-domains="canvasDomains" />
+      <DevAuth />
     </div>
   </div>
 </template>
@@ -64,22 +64,13 @@ import Context from '@/mixins/Context'
 import DevAuth from '@/components/util/DevAuth'
 import UserSummary from '@/components/user/UserSummary'
 import Utils from '@/mixins/Utils'
-import {getAllCanvasDomains} from '@/api/courses'
 
 export default {
   name: 'Squiggy',
   components: {Avatar, Configs, CourseSummary, DevAuth, UserSummary},
   mixins: [Context, Utils],
   data: () => ({
-    canvasDomains: undefined,
     width: 300
-  }),
-  created() {
-    this.$loading()
-    getAllCanvasDomains().then(data => {
-      this.canvasDomains = data
-      this.$ready()
-    })
-  }
+  })
 }
 </script>
