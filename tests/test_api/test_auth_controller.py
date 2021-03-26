@@ -137,7 +137,6 @@ class TestLtiLaunchUrl:
             custom_external_tool_url,
             lis_person_name_full,
             oauth_consumer_key,
-            oauth_consumer_secret,
             roles,
             tool_id,
             expected_status_code=302,
@@ -149,7 +148,6 @@ class TestLtiLaunchUrl:
             'custom_external_tool_url': custom_external_tool_url,
             'lis_person_name_full': lis_person_name_full,
             'oauth_consumer_key': oauth_consumer_key,
-            'oauth_consumer_secret': oauth_consumer_secret,
             'oauth_nonce': 'kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pT',
             'oauth_signature': '?????',  # TODO: We must solve the mystery of simulating Canvas LTI launch POST.
             'oauth_signature_method': 'HMAC-SHA1',
@@ -181,7 +179,6 @@ class TestLtiLaunchUrl:
             custom_external_tool_url=external_tool_url,
             lis_person_name_full=full_name,
             oauth_consumer_key=canvas.lti_key,
-            oauth_consumer_secret=canvas.lti_secret,
             roles='Student',
             tool_id=TOOL_ID_ASSET_LIBRARY,
         )

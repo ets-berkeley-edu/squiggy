@@ -54,7 +54,6 @@ def lti_launch(request, tool_id):
         'lis_person_name_full': _str_strip,
         'oauth_consumer_key': _alpha_num,
         'oauth_nonce': _alpha_num,
-        'oauth_signature': _str_strip,
         'oauth_signature_method': _str_strip,
         'oauth_timestamp': _str_strip,
         'oauth_version': _str_strip,
@@ -70,7 +69,7 @@ def lti_launch(request, tool_id):
             lti_params[key] = validated_value
             return lti_params[key]
         else:
-            app.logger.warn(f'Invalid \'{key}\' parameter in LTI launch: {value}')
+            app.logger.warning(f'Invalid \'{key}\' parameter in LTI launch: {value}')
 
     if all(_fetch(key) for key in validation.keys()):
         app.logger.info(f'LTI launch params passed basic validation: {lti_params}')
@@ -87,10 +86,16 @@ def lti_launch(request, tool_id):
                 host=request.headers['Host'],
                 tool_id=tool_id,
             )
-            tool_provider = FlaskToolProvider.from_unpacked_request(
-                params=lti_params,
-                url=tool_metadata['launch_url'],
-                headers=dict(request.headers),
+            launch_url = tool_metadata['launch_url']
+            headers = dict(request.headers)
+            app.logger.info(f"""Begin FlaskToolProvider validation.
+                Launch URL = {launch_url}
+                request.form = {request.form.copy()}
+                Request headers: {headers}
+                Request URL: {request.url}
+            """)
+            tool_provider = FlaskToolProvider.from_flask_request(
+                request=request,
                 secret=lti_secret,
             )
             # TODO: We do not want an app.config['TESTING'] check in the conditional below. It is there because our
