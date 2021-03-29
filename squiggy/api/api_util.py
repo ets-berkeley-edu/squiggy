@@ -23,7 +23,23 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from functools import wraps
+
+from flask import current_app as app, request
+from flask_login import current_user
 from squiggy.lib.util import is_teaching
+
+
+def teacher_required(func):
+    @wraps(func)
+    def _teacher_required(*args, **kw):
+        is_authorized = current_user.is_authenticated and (current_user.is_admin or current_user.is_teaching)
+        if is_authorized:
+            return func(*args, **kw)
+        else:
+            app.logger.warning(f'Unauthorized request to {request.path}')
+            return app.login_manager.unauthorized()
+    return _teacher_required
 
 
 def can_update_asset(user, asset):
