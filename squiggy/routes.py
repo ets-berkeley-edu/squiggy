@@ -106,13 +106,15 @@ def _user_loader(user_id=None):
 
     user = LoginSession(user_id)
     if not user.is_authenticated:
-        # HTTP header identifies the Canvas course site
-        course_site_uuid = request.headers.get('Squiggy-Course-Site-UUID')
-        if course_site_uuid and '|' in course_site_uuid:
-            cookie_value = request.cookies.get(course_site_uuid)
-            canvas_api_domain, canvas_course_id = course_site_uuid.split('|')
-            user_id = to_int(cookie_value) if cookie_value else None
-            if canvas_api_domain and canvas_course_id and user_id:
+        # Cookie has Canvas domain
+        canvas_api_domain = request.cookies.get('Squiggy-Canvas-Api-Domain')
+        # HTTP header has course site ID
+        canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
+
+        if canvas_api_domain and canvas_course_id:
+            cookie_value = request.cookies.get(f'{canvas_api_domain}|{canvas_course_id}')
+            user_id = cookie_value and to_int(cookie_value)
+            if user_id:
                 candidate = LoginSession(user_id)
                 course = candidate.course
                 if course.canvas_api_domain == canvas_api_domain and str(course.canvas_course_id) == str(canvas_course_id):

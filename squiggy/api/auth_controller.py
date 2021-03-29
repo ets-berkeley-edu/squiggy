@@ -63,6 +63,7 @@ def logout():
     keys = [
         f'{canvas_api_domain}|{current_user.course.canvas_course_id}',
         f'{canvas_api_domain}_supports_custom_messaging',
+        'Squiggy-Canvas-Api-Domain',
     ]
     for key in keys:
         response.set_cookie(key, '', expires=0)
@@ -219,33 +220,33 @@ def _login_user(user_id, redirect_path=None, tool_id=None):
             response = redirect(location=f"{app.config['VUE_LOCALHOST_BASE_URL'] or ''}{redirect_path}")
         else:
             response = tolerant_jsonify(current_user.to_api_json())
-        _put_cookies(response)
+
+        canvas_api_domain = current_user.course.canvas_api_domain
+        canvas_course_id = current_user.course.canvas_course_id
+        response.set_cookie(
+            key='Squiggy-Canvas-Api-Domain',
+            value=canvas_api_domain,
+            samesite=None,
+            secure=True,
+        )
+        response.set_cookie(
+            key=f'{canvas_api_domain}|{canvas_course_id}',
+            value=str(current_user.user_id),
+            samesite=None,
+            secure=True,
+        )
+        canvas = Canvas.find_by_domain(canvas_api_domain)
+        response.set_cookie(
+            key=f'{canvas_api_domain}_supports_custom_messaging',
+            value=str(canvas.supports_custom_messaging),
+            samesite=None,
+            secure=True,
+        )
         return response
     elif tool_id:
         raise UnauthorizedRequestError(f'Unauthorized user during {tool_id} LTI launch (user_id = {user_id})')
     else:
         return tolerant_jsonify({'message': f'User {user_id} failed to authenticate.'}, 403)
-
-
-def _put_cookies(response):
-    canvas_api_domain = current_user.course.canvas_api_domain
-    key = f'{canvas_api_domain}|{current_user.course.canvas_course_id}'
-    if not request.cookies.get(key):
-        response.set_cookie(
-            key=key,
-            value=str(current_user.user_id),
-            samesite=None,
-            secure=True,
-        )
-    key = f'{canvas_api_domain}_supports_custom_messaging'
-    if not request.cookies.get(key):
-        canvas = Canvas.find_by_domain(canvas_api_domain)
-        response.set_cookie(
-            key=key,
-            value=str(canvas.supports_custom_messaging),
-            samesite=None,
-            secure=True,
-        )
 
 
 def _str_strip(s):
