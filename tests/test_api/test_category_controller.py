@@ -23,11 +23,47 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
+
+from squiggy.models.user import User
+
 unauthorized_user_id = '666'
 
 
-class TestCategoryController:
-    """Category API."""
+class TestCreateCategory:
+    """Create category API."""
+
+    @staticmethod
+    def _api_create_category(client, title='What goes on in your mind?', expected_status_code=200):
+        response = client.post(
+            '/api/category/create',
+            data=json.dumps({'title': title}),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_create_category(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        student = User.find_by_canvas_user_id(8765432)
+        fake_auth.login(student.id)
+        self._api_create_category(client, expected_status_code=401)
+
+    def test_create_category(self, client, fake_auth, authorized_user_id):
+        """Authorized user can create an category."""
+        fake_auth.login(authorized_user_id)
+        title = 'Globe of Frogs'
+        api_json = self._api_create_category(client=client, title=title)
+        assert 'id' in api_json
+        assert api_json['title'] == title
+
+
+class TestGetCategories:
+    """Categories API."""
 
     @classmethod
     def _api_get_categories(cls, client, expected_status_code=200):

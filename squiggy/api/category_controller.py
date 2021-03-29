@@ -23,8 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
+from flask import current_app as app, request
 from flask_login import current_user, login_required
+from squiggy.api.api_util import teacher_required
+from squiggy.lib.errors import BadRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.category import Category
 
@@ -34,3 +36,18 @@ from squiggy.models.category import Category
 def get_categories():
     categories = Category.get_categories_by_course_id(course_id=current_user.course.id)
     return tolerant_jsonify([c.to_api_json() for c in categories])
+
+
+@app.route('/api/category/create', methods=['POST'])
+@teacher_required
+def create_category():
+    params = request.get_json() or request.form
+    title = params.get('title')
+    if not title:
+        raise BadRequestError('Category creation requires title.')
+    category = Category.create(
+        canvas_assignment_name=title,
+        course_id=current_user.course.id,
+        title=title,
+    )
+    return tolerant_jsonify(category.to_api_json())

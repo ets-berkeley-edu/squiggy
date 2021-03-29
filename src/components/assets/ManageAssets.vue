@@ -3,17 +3,49 @@
     <BackToAssetLibrary anchor="assets-container" />
 
     <h2>Manage Assets</h2>
-    <h3>Custom Categories</h3>
-    <div>
+    <div class="pt-2">
+      <h3>Custom Categories</h3>
+    </div>
+    <div class="pt-2">
       Categories can be used to tag items and are a great way of classifying items within the Asset Library.
       The Asset Library can also be filtered by category.
     </div>
-    <div>
-      <ul>
-        <li v-for="category in categories" :key="category.id">{{ category.title }}</li>
-      </ul>
+    <div class="align-start d-flex pt-2">
+      <div class="pr-1 w-100">
+        <v-text-field
+          id="add-category-input"
+          v-model="category"
+          clearable
+          dense
+          filled
+          label="Add new category"
+          solo
+          type="text"
+          @keypress.enter="addCategory"
+        />
+      </div>
+      <div>
+        <v-btn id="add-category-btn" class="mt-1">
+          Add
+        </v-btn>
+      </div>
     </div>
-    <h3>Assignments</h3>
+    <v-card rounded tile>
+      <v-list-item
+        v-for="(category, index) in categories"
+        :key="index"
+        :class="{'grey lighten-4': index % 2 === 0}"
+        two-line
+      >
+        <v-list-item-content>
+          <v-list-item-title>{{ category.title }}</v-list-item-title>
+          <v-list-item-subtitle>Used by N items</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+    </v-card>
+    <div class="mt-4">
+      <h3>Assignments</h3>
+    </div>
     <div>
       Check the box next to the name of an Assignment in order to sync student submissions for that Assignment to
       the Asset Library. Each checked Assignment will appear as a category in the Asset Library, with all submissions
@@ -39,7 +71,7 @@
 <script>
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
-import {getCategories} from '@/api/categories'
+import {createCategory, getCategories} from '@/api/categories'
 
 export default {
   name: 'ManageAssets',
@@ -47,14 +79,26 @@ export default {
   mixins: [Context],
   data: () => ({
     assignments: undefined,
-    categories: undefined
+    categories: undefined,
+    category: undefined
   }),
   created() {
     this.$loading()
-    getCategories().then(data => {
-      this.categories = data
+    this.refresh().then(() => {
       this.$ready('Add a link asset')
     })
+  },
+  methods: {
+    addCategory() {
+      if (this.category) {
+        createCategory(this.category).then(this.refresh)
+      }
+    },
+    refresh() {
+      return getCategories().then(data => {
+        this.categories = data
+      })
+    }
   }
 }
 </script>
