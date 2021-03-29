@@ -58,8 +58,9 @@ Vue.config.errorHandler = function(error, vm, info) {
 }
 
 if (Vue.prototype.$isInIframe) {
-  // If we are in an iFrame then we grab course ID from Canvas context.
-  axios.defaults.headers['Squiggy-Canvas-Course-Id'] = _.get(window, 'ENV.course_id') || _.get(window, 'ENV.COURSE_ID')
+  // We are in an iFrame. Grab course ID from Canvas context.
+  const e = document.getElementById('custom_canvas_course_id')
+  axios.defaults.headers['Squiggy-Canvas-Course-Id'] = _.get(e, 'value')
 }
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
