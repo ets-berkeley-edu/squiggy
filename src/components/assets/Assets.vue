@@ -56,13 +56,16 @@ export default {
     if (isReturning) {
       ready()
     } else {
-      this.search().then(ready)
+      this.search().then(data => {
+        this.isComplete = !data.results.length
+        ready()
+      })
     }
   },
   methods: {
     fetch($state) {
-      this.nextPage().then(assets => {
-        if (assets.results.length) {
+      this.nextPage().then(data => {
+        if (data.results.length) {
           $state.loaded()
           this.$announcer.polite(`${this.assets.length} of ${this.totalAssetCount} assets loaded.`)
         } else {

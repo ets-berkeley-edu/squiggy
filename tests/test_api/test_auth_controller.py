@@ -27,8 +27,9 @@ from datetime import datetime
 import json
 
 from squiggy import std_commit
-from squiggy.merged.lti import TOOL_ID_ASSET_LIBRARY
+from squiggy.lib.lti import TOOL_ID_ASSET_LIBRARY
 from squiggy.models.canvas import Canvas
+from squiggy.models.course import Course
 from squiggy.models.user import User
 from tests.util import override_config
 
@@ -149,7 +150,6 @@ class TestLtiLaunchUrl:
             'lis_person_name_full': lis_person_name_full,
             'oauth_consumer_key': oauth_consumer_key,
             'oauth_nonce': 'kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pT',
-            'oauth_signature': '?????',  # TODO: We must solve the mystery of simulating Canvas LTI launch POST.
             'oauth_signature_method': 'HMAC-SHA1',
             'oauth_timestamp': str(int(datetime.now().timestamp())),
             'oauth_version': '1.0',
@@ -167,7 +167,10 @@ class TestLtiLaunchUrl:
         """User is created during LTI launch."""
         canvas_api_domain = 'bcourses.berkeley.edu'
         canvas = Canvas.find_by_domain(canvas_api_domain=canvas_api_domain)
-        canvas_course_id = 1502870
+        canvas_course_id = 2870150
+        # Verify that course is NOT in db, yet
+        assert not Course.query.filter_by(canvas_course_id=canvas_course_id).first()
+
         canvas_user_id = 45678901
         full_name = 'Dee Dee Ramone'
         external_tool_url = f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765'
@@ -211,7 +214,10 @@ class TestCookies:
 
             canvas_api_domain = user.course.canvas_api_domain
             canvas = Canvas.find_by_domain(canvas_api_domain)
-            _assert_cookie_value(key=f'{canvas_api_domain}_{user.course.id}', value=user.id)
+            _assert_cookie_value(
+                key=f'{canvas_api_domain}|{user.course.canvas_course_id}',
+                value=user.id,
+            )
             _assert_cookie_value(
                 key=f'{canvas_api_domain}_supports_custom_messaging',
                 value=canvas.supports_custom_messaging,
@@ -232,3 +238,52 @@ class TestCookies:
         user = User.find_by_id(authorized_user_id)
         fake_auth.login(user.id)
         self._assert_cookie(client=client, user=user)
+
+
+class TestCookieAuth:
+    """Auth by custom cookie."""
+
+    @staticmethod
+    def _api_assets_with_cookie_auth(
+            client,
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=1502870,
+            expected_status_code=200,
+    ):
+        response = client.post(
+            '/api/assets',
+            content_type='application/json',
+            data=json.dumps({}),
+            headers={'Squiggy-Course-Site-UUID': f'{canvas_api_domain}|{canvas_course_id}'},
+        )
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client):
+        """No cookie auth for anonymous user."""
+        self._api_assets_with_cookie_auth(client=client, expected_status_code=401)
+
+    def test_unauthorized(self, client):
+        """No cookie auth for unauthorized user."""
+        canvas_course_id = 1502871
+        unauthorized_user = User.find_by_canvas_user_id(canvas_user_id=654321)
+        assert unauthorized_user
+        assert unauthorized_user.course.canvas_course_id != canvas_course_id
+
+        canvas_api_domain = unauthorized_user.course.canvas_api_domain
+        client.set_cookie('localhost', f'{canvas_api_domain}|{canvas_course_id}', str(unauthorized_user.id))
+        self._api_assets_with_cookie_auth(canvas_course_id=canvas_course_id, client=client, expected_status_code=401)
+
+    def test_authorized(self, client):
+        """Cookie auth for authorized user."""
+        canvas_course_id = 1502870
+        authorized_user = User.find_by_canvas_user_id(canvas_user_id=654321)
+        assert authorized_user
+        assert authorized_user.course.canvas_course_id == canvas_course_id
+
+        canvas_api_domain = authorized_user.course.canvas_api_domain
+        client.set_cookie('localhost', f'{canvas_api_domain}|{canvas_course_id}', str(authorized_user.id))
+        self._api_assets_with_cookie_auth(canvas_course_id=canvas_course_id, client=client)
+
+        # Finally, log out and verify that cookie has been removed.
+        assert client.post('/api/auth/logout').status_code == 200
+        self._api_assets_with_cookie_auth(canvas_course_id=canvas_course_id, client=client, expected_status_code=401)

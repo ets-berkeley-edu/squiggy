@@ -56,12 +56,6 @@ export default {
   name: 'DevAuth',
   components: {Alert},
   mixins: [Context, Utils],
-  props: {
-    canvasDomains: {
-      required: true,
-      type: Array
-    }
-  },
   data: () => ({
     errors: [],
     password: undefined,

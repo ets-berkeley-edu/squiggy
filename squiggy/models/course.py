@@ -100,6 +100,7 @@ class Course(Base):
             name=None,
     ):
         course = cls(
+            active=True,
             asset_library_url=asset_library_url,
             canvas_api_domain=canvas_api_domain,
             canvas_course_id=canvas_course_id,

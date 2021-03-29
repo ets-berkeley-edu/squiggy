@@ -26,6 +26,9 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from oauthlib.oauth1 import RequestValidator
 from squiggy.models.canvas import Canvas
 
+TOOL_ID_ASSET_LIBRARY = 'suitec:asset_library'
+TOOL_ID_ENGAGEMENT_INDEX = 'suitec:engagement_index'
+
 
 class LtiRequestValidator(RequestValidator):
 
@@ -60,3 +63,27 @@ class LtiRequestValidator(RequestValidator):
     ):
         # TODO: RequestValidator requires that this subclass implement this method. For now, we skip this validation.
         return True
+
+
+def get_tool_metadata(host, tool_id):
+    is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
+    api_path = '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index'
+    launch_url = f"https://{host.rstrip('/')}{api_path}"
+    return {
+        TOOL_ID_ASSET_LIBRARY: {
+            'description': """
+                The Asset Library is where students and instructors can collect relevant materials for the course.
+                Materials can be seen by the other students in the class and can be discussed, liked, etc.
+            """,
+            'launch_url': launch_url,
+            'title': 'Asset Library',
+        },
+        TOOL_ID_ENGAGEMENT_INDEX: {
+            'description': """
+                The Engagement Index provides a leaderboard based on the student's activity in the course.
+                The Engagement Index will record activities such as discussion posts, likes, comments, etc.
+            """,
+            'launch_url': launch_url,
+            'title': 'Engagement Index',
+        },
+    }.get(tool_id, None)
