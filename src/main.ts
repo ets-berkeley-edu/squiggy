@@ -11,6 +11,10 @@ import VueKinesis from 'vue-kinesis'
 import VueMoment from 'vue-moment'
 import vuetify from './plugins/vuetify'
 
+console.log('------------------------')
+console.log(process.env)
+console.log('------------------------')
+
 const apiBaseUrl = process.env.VUE_APP_API_BASE_URL
 const isDebugMode = _.trim(process.env.VUE_APP_DEBUG).toLowerCase() === 'true'
 
