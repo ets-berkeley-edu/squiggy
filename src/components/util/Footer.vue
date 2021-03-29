@@ -6,10 +6,10 @@
     <v-container fluid class="pa-1">
       <v-row no-gutters justify="space-between">
         <v-col>
-          <div v-if="isInIframe || !$currentUser.isAuthenticated">
+          <div v-if="$isInIframe || !$currentUser.isAuthenticated">
             &copy; {{ new Date().getFullYear() }} Regents of the University of California. All Rights Reserved.
           </div>
-          <div v-if="!isInIframe && $currentUser.isAuthenticated" class="align-center d-flex">
+          <div v-if="!$isInIframe && $currentUser.isAuthenticated" class="align-center d-flex">
             <div>
               <v-btn
                 id="go-home-btn"
@@ -42,7 +42,7 @@
             </div>
           </div>
         </v-col>
-        <v-col v-if="!isInIframe">
+        <v-col v-if="!$isInIframe">
           <div class="float-right">
             <div class="align-center d-flex">
               <div>

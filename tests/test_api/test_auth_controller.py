@@ -246,7 +246,6 @@ class TestCookieAuth:
     @staticmethod
     def _api_assets_with_cookie_auth(
             client,
-            canvas_api_domain='bcourses.berkeley.edu',
             canvas_course_id=1502870,
             expected_status_code=200,
     ):
@@ -254,7 +253,7 @@ class TestCookieAuth:
             '/api/assets',
             content_type='application/json',
             data=json.dumps({}),
-            headers={'Squiggy-Course-Site-UUID': f'{canvas_api_domain}|{canvas_course_id}'},
+            headers={'Squiggy-Canvas-Course-Id': str(canvas_course_id)},
         )
         assert response.status_code == expected_status_code
 
@@ -270,6 +269,7 @@ class TestCookieAuth:
         assert unauthorized_user.course.canvas_course_id != canvas_course_id
 
         canvas_api_domain = unauthorized_user.course.canvas_api_domain
+        client.set_cookie('localhost', 'Squiggy-Canvas-Api-Domain', canvas_api_domain)
         client.set_cookie('localhost', f'{canvas_api_domain}|{canvas_course_id}', str(unauthorized_user.id))
         self._api_assets_with_cookie_auth(canvas_course_id=canvas_course_id, client=client, expected_status_code=401)
 
@@ -281,6 +281,7 @@ class TestCookieAuth:
         assert authorized_user.course.canvas_course_id == canvas_course_id
 
         canvas_api_domain = authorized_user.course.canvas_api_domain
+        client.set_cookie('localhost', 'Squiggy-Canvas-Api-Domain', canvas_api_domain)
         client.set_cookie('localhost', f'{canvas_api_domain}|{canvas_course_id}', str(authorized_user.id))
         self._api_assets_with_cookie_auth(canvas_course_id=canvas_course_id, client=client)
 
