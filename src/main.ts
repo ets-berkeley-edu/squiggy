@@ -57,11 +57,13 @@ Vue.config.errorHandler = function(error, vm, info) {
   })
 }
 
-if (Vue.prototype.$isInIframe) {
-  // We are in an iFrame. Grab course ID from Canvas context.
-  const e = document.getElementById('custom_canvas_course_id')
-  axios.defaults.headers['Squiggy-Canvas-Course-Id'] = _.get(e, 'value')
-}
+const params = new URLSearchParams(window.location.search)
+axios.defaults.headers['Squiggy-Canvas-Api-Domain'] = params.get('canvasApiDomain')
+axios.defaults.headers['Squiggy-Canvas-Course-Id'] = params.get('canvasCourseId')
+
+// TODO: Remove console logging when all is working well.
+console.log('canvasApiDomain = ' + params.get('canvasApiDomain'))
+console.log('canvasCourseId = ' + params.get('canvasCourseId'))
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data

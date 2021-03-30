@@ -110,9 +110,9 @@ class User(Base):
             canvas_full_name,
             canvas_user_id,
             course_id,
-            canvas_image=None,
-            canvas_email=None,
             canvas_course_sections=None,
+            canvas_email=None,
+            canvas_image=None,
     ):
         user = cls(
             canvas_course_role=canvas_course_role,
@@ -129,36 +129,9 @@ class User(Base):
         return user
 
     @classmethod
-    def find_or_create(
-            cls,
-            canvas_course_role,
-            canvas_enrollment_state,
-            canvas_full_name,
-            canvas_user_id,
-            course_id,
-            canvas_course_sections=None,
-            canvas_email=None,
-            canvas_image=None,
-    ):
-        where_clause = and_(
-            cls.course_id == course_id,
-            cls.canvas_user_id == canvas_user_id,
-        )
-        user = cls.query.filter(where_clause).one_or_none()
-        if not user:
-            user = cls(
-                canvas_course_role=canvas_course_role,
-                canvas_course_sections=canvas_course_sections,
-                canvas_email=canvas_email,
-                canvas_enrollment_state=canvas_enrollment_state,
-                canvas_full_name=canvas_full_name,
-                canvas_image=canvas_image,
-                canvas_user_id=canvas_user_id,
-                course_id=course_id,
-            )
-            db.session.add(user)
-            std_commit()
-        return user
+    def find_by_course_id(cls, canvas_user_id, course_id):
+        where_clause = and_(cls.course_id == course_id, cls.canvas_user_id == canvas_user_id)
+        return cls.query.filter(where_clause).one_or_none()
 
     @classmethod
     def get_users_by_course_id(cls, course_id):
