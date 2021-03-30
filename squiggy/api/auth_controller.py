@@ -31,7 +31,7 @@ from lti.contrib.flask import FlaskToolProvider
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
-from squiggy.lib.lti import get_tool_metadata, LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX
+from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX
 from squiggy.lib.util import to_int
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
@@ -63,7 +63,6 @@ def logout():
     keys = [
         f'{canvas_api_domain}|{current_user.course.canvas_course_id}',
         f'{canvas_api_domain}_supports_custom_messaging',
-        'Squiggy-Canvas-Api-Domain',
     ]
     for key in keys:
         response.set_cookie(key, '', expires=0)
@@ -144,23 +143,9 @@ def _lti_launch_authentication(tool_id):
             raise ResourceNotFoundError(f'Failed \'canvas\' lookup where canvas_api_domain = {canvas_api_domain}')
 
         if canvas.lti_key == lti_params['oauth_consumer_key']:
-            # TODO: How does Canvas deliver LTI_SECRET?
-            lti_secret = canvas.lti_secret
-            tool_metadata = get_tool_metadata(
-                host=request.headers['Host'],
-                tool_id=tool_id,
-            )
-            launch_url = tool_metadata['launch_url']
-            headers = dict(request.headers)
-            app.logger.info(f"""Begin FlaskToolProvider validation.
-                Launch URL = {launch_url}
-                request.form = {request.form.copy()}
-                Request headers: {headers}
-                Request URL: {request.url}
-            """)
             tool_provider = FlaskToolProvider.from_flask_request(
                 request=request,
-                secret=lti_secret,
+                secret=canvas.lti_secret,
             )
             # TODO: We do not want an app.config['TESTING'] check in the conditional below. It is there because our
             #       tests are failing on HMAC-signature verification. Let's fix after we get a successful LTI launch.
@@ -192,28 +177,35 @@ def _lti_launch_authentication(tool_id):
                     app.logger.info(f'Created course via LTI launch: {course.to_api_json()}')
 
                 canvas_user_id = lti_params['custom_canvas_user_id']
-                user = User.find_or_create(
-                    course_id=course.id,
-                    canvas_user_id=canvas_user_id,
-                    canvas_course_role=str(lti_params['roles']),
-                    canvas_enrollment_state=args.get('custom_canvas_enrollment_state') or 'active',
-                    canvas_full_name=lti_params['lis_person_name_full'],
-                    canvas_image=args.get('user_image'),  # TODO: Verify user_image.
-                    canvas_email=args.get('lis_person_contact_email_primary'),
-                    canvas_course_sections=None,  # TODO: Set by poller?
-                )
-                app.logger.info(f'Created, or updated, user (canvas_user_id={canvas_user_id}) during LTI launch.')
-
+                user = User.find_by_course_id(canvas_user_id=canvas_user_id, course_id=course.id)
+                if user:
+                    app.logger.info(f'Found user during LTI launch: canvas_user_id={canvas_user_id}, course_id={course.id}')
+                else:
+                    user = User.create(
+                        course_id=course.id,
+                        canvas_user_id=canvas_user_id,
+                        canvas_course_role=str(lti_params['roles']),
+                        canvas_enrollment_state=args.get('custom_canvas_enrollment_state') or 'active',
+                        canvas_full_name=lti_params['lis_person_name_full'],
+                        canvas_image=args.get('user_image'),  # TODO: Verify user_image.
+                        canvas_email=args.get('lis_person_contact_email_primary'),
+                        canvas_course_sections=None,  # TODO: Set by poller?
+                    )
+                    app.logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
             else:
                 raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
         else:
             raise BadRequestError(f"""
                 The \'oauth_consumer_key\' in request does not match {canvas_api_domain} lti_key in squiggy db.
             """)
-    return user, ('/assets' if is_asset_library else '/engage')
+    path = '/assets' if is_asset_library else '/engage'
+    params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
+    app.logger.info(f'LTI launch redirect: {path}?{params}')
+    return user, f'{path}?{params}'
 
 
 def _login_user(user_id, redirect_path=None, tool_id=None):
+    app.logger.info(f'_login_user: user_id={user_id}, redirect_path={redirect_path}, tool_id={tool_id}')
     authenticated = login_user(LoginSession(user_id), remember=True) and current_user.is_authenticated
     if authenticated:
         if redirect_path:
@@ -222,24 +214,23 @@ def _login_user(user_id, redirect_path=None, tool_id=None):
             response = tolerant_jsonify(current_user.to_api_json())
 
         canvas_api_domain = current_user.course.canvas_api_domain
-        canvas_course_id = current_user.course.canvas_course_id
-        response.set_cookie(
-            key='Squiggy-Canvas-Api-Domain',
-            value=canvas_api_domain,
-            samesite=None,
-            secure=True,
-        )
-        response.set_cookie(
-            key=f'{canvas_api_domain}|{canvas_course_id}',
-            value=str(current_user.user_id),
-            samesite=None,
-            secure=True,
-        )
         canvas = Canvas.find_by_domain(canvas_api_domain)
+        canvas_course_id = current_user.course.canvas_course_id
+        # Yummy cookies!
+        key = f'{canvas_api_domain}|{canvas_course_id}'
+        value = str(current_user.user_id)
+        response.set_cookie(
+            key=key,
+            value=value,
+            samesite='None',
+            secure=True,
+        )
+        app.logger.info(f'_login_user cookie: key={key} value={str(current_user.user_id)}')
+
         response.set_cookie(
             key=f'{canvas_api_domain}_supports_custom_messaging',
             value=str(canvas.supports_custom_messaging),
-            samesite=None,
+            samesite='None',
             secure=True,
         )
         return response

@@ -79,7 +79,7 @@ def register_routes(app):
     def after_request(response):
         if app.config['SQUIGGY_ENV'] == 'development':
             # In development the response can be shared with requesting code from any local origin.
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Squiggy-Course-Site-UUID'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Squiggy-Canvas-Api-Domain,Squiggy-Canvas-Course-Id'
             response.headers['Access-Control-Allow-Origin'] = app.config['VUE_LOCALHOST_BASE_URL']
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
@@ -98,18 +98,31 @@ def register_routes(app):
             else:
                 app.logger.debug(log_message)
 
+        # TODO: Remove the below
+        from flask_login import current_user
+        canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
+        canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
+        if canvas_api_domain and canvas_course_id:
+            response.set_cookie(
+                key=f'{canvas_api_domain}|{canvas_course_id}',
+                value=str(current_user.user_id),
+                samesite=None,
+                secure=True,
+            )
+        # TODO: Remove the above
+
         return response
 
 
 def _user_loader(user_id=None):
     from squiggy.lib.login_session import LoginSession
+    from flask import current_app as app
 
     user = LoginSession(user_id)
     if not user.is_authenticated:
-        # Cookie has Canvas domain
-        canvas_api_domain = request.cookies.get('Squiggy-Canvas-Api-Domain')
-        # HTTP header has course site ID
+        canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
         canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
+        app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
 
         if canvas_api_domain and canvas_course_id:
             cookie_value = request.cookies.get(f'{canvas_api_domain}|{canvas_course_id}')
@@ -120,5 +133,6 @@ def _user_loader(user_id=None):
                 if course.canvas_api_domain == canvas_api_domain and str(course.canvas_course_id) == str(canvas_course_id):
                     # User must be a member of the Canvas course site.
                     user = candidate
+                    app.logger.info(f'User {user.user_id} loaded.')
                     login_user(user)
     return user
