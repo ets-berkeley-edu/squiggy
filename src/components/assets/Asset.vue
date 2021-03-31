@@ -50,6 +50,9 @@ export default {
     getAsset(this.$route.params.id).then(data => {
       this.asset = data
       this.$ready(this.asset.title)
+      if (this.$isInIframe) {
+        window.top.location.href = `${window.top.location.href}?assetId=${this.asset.id}`
+      }
     })
   }
 }
