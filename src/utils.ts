@@ -25,6 +25,34 @@ export default {
       })
     }
   },
+  postIFrameMessage: (generator, callback?) => {
+    if (window.parent) {
+      const postMessage = () => {
+        // Parent will respond to the this embedded call with a message and scroll information.
+        if (callback) {
+          const eventType = 'message'
+          const processor = event => {
+            if (event && event.data) {
+              try {
+                callback(JSON.parse(event.data))
+                window.removeEventListener(eventType, processor)
+              } catch(error) {
+                return false
+              }
+            }
+          }
+          window.addEventListener(eventType, processor)
+        }
+        // Send the message to the parent container as a string-ified object
+        window.parent.postMessage(JSON.stringify(generator()), '*')
+        return true
+      }
+      Vue.prototype.$nextTick(() => {
+        let counter = 0
+        const job = setInterval(() => (postMessage() || ++counter > 3) && clearInterval(job), 500)
+      })
+    }
+  },
   putFocusNextTick: (id, cssSelector) => {
     const callable = () => {
         let el = document.getElementById(id)

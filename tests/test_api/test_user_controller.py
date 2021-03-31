@@ -26,6 +26,25 @@ ENHANCEMENTS, OR MODIFICATIONS.
 unauthorized_user_id = '666'
 
 
+class TestMyProfile:
+
+    @staticmethod
+    def _api_my_profile(client, expected_status_code=200):
+        response = client.get('/api/profile/my')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_admin_profile(self, client, fake_auth, authorized_user_id):
+        fake_auth.login(authorized_user_id)
+        api_json = self._api_my_profile(client)
+        assert api_json['id'] == authorized_user_id
+        course = api_json.get('course')
+        assert course
+        canvas = course.get('canvas')
+        assert canvas
+        assert canvas['canvasApiDomain'] == 'bcourses.berkeley.edu'
+
+
 class TestGetUsers:
     """User API."""
 

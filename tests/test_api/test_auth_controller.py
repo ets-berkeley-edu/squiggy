@@ -112,20 +112,6 @@ class TestDevAuth:
             assert client.post('/api/auth/logout').status_code == 200
 
 
-class TestAuthorization:
-
-    @staticmethod
-    def _api_my_profile(client, expected_status_code=200):
-        response = client.get('/api/profile/my')
-        assert response.status_code == expected_status_code
-        return response.json
-
-    def test_admin_profile(self, client, fake_auth, authorized_user_id):
-        fake_auth.login(authorized_user_id)
-        api_json = self._api_my_profile(client)
-        assert api_json['id'] == authorized_user_id
-
-
 class TestLtiLaunchUrl:
     """LTI Launch API."""
 
@@ -162,7 +148,7 @@ class TestLtiLaunchUrl:
             content_type='application/x-www-form-urlencoded',
             data=data,
             headers={
-                'Referer': f'{custom_external_tool_url}?assetId={asset_id}' if asset_id else custom_external_tool_url,
+                'Referer': f'{custom_external_tool_url}#suitec_assetId={asset_id}' if asset_id else custom_external_tool_url,
             },
         )
         assert response.status_code == expected_status_code

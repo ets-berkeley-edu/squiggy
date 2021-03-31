@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from dateutil.tz import tzutc
 from squiggy import db, std_commit
 from squiggy.models.base import Base
+from squiggy.models.canvas import Canvas
 
 
 class Course(Base):
@@ -126,9 +127,11 @@ class Course(Base):
         return course
 
     def to_api_json(self):
+        canvas = Canvas.find_by_domain(canvas_api_domain=self.canvas_api_domain)
         return {
             'active': self.active,
             'assetLibraryUrl': self.asset_library_url,
+            'canvas': canvas.to_api_json(),
             'canvasApiDomain': self.canvas_api_domain,
             'canvasCourseId': self.canvas_course_id,
             'enableDailyNotifications': self.enable_daily_notifications,
