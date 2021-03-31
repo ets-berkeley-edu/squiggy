@@ -82,9 +82,9 @@ def lti_launch_engagement_index():
 
 
 def _canvas_external_tool_url(s, headers):
-    referrer = headers.get('Referer')
+    referrer = (headers.get('Referer') or '').split('?')[0]
     pattern = '/external_tools/(\d+)'
-    if re.search(pattern, referrer or ''):
+    if re.search(pattern, referrer):
         return referrer
     external_tool_url = (_str_strip(s) or '').replace('api/v1/', '')
     return external_tool_url if re.search(pattern, external_tool_url) else None
@@ -106,7 +106,6 @@ def _lti_launch_authentication(tool_id):
         value = _str_strip(s)
         return value if value.isalnum() else None
 
-    user = None
     args = request.form
     lti_params = {}
     validation = {
@@ -142,66 +141,70 @@ def _lti_launch_authentication(tool_id):
         if not canvas:
             raise ResourceNotFoundError(f'Failed \'canvas\' lookup where canvas_api_domain = {canvas_api_domain}')
 
-        if canvas.lti_key == lti_params['oauth_consumer_key']:
-            tool_provider = FlaskToolProvider.from_flask_request(
-                request=request,
-                secret=canvas.lti_secret,
-            )
-            # TODO: We do not want an app.config['TESTING'] check in the conditional below. It is there because our
-            #       tests are failing on HMAC-signature verification. Let's fix after we get a successful LTI launch.
-            valid_request = tool_provider.is_valid_request(LtiRequestValidator(canvas))
-            if valid_request or app.config['TESTING'] is True:
-                app.logger.info(f'FlaskToolProvider has validated {canvas_api_domain} LTI launch request.')
+        if canvas.lti_key != lti_params['oauth_consumer_key']:
+            raise BadRequestError(f'oauth_consumer_key does not match {canvas_api_domain} lti_key in squiggy db.')
 
-                external_tool_url = lti_params['custom_external_tool_url']
-                canvas_course_id = lti_params['custom_canvas_course_id']
-                course = Course.find_by_canvas_course_id(
-                    canvas_api_domain=canvas_api_domain,
-                    canvas_course_id=canvas_course_id,
-                )
-                if course:
-                    course = Course.update(
-                        asset_library_url=external_tool_url if is_asset_library else course.asset_library_url,
-                        course_id=course.id,
-                        engagement_index_url=external_tool_url if is_engagement_index else course.engagement_index_url,
-                    )
-                    app.logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
-                else:
-                    course = Course.create(
-                        asset_library_url=external_tool_url if is_asset_library else None,
-                        canvas_api_domain=canvas_api_domain,
-                        canvas_course_id=canvas_course_id,
-                        engagement_index_url=external_tool_url if is_engagement_index else None,
-                        name=args.get('context_title'),
-                    )
-                    app.logger.info(f'Created course via LTI launch: {course.to_api_json()}')
+        tool_provider = FlaskToolProvider.from_flask_request(
+            request=request,
+            secret=canvas.lti_secret,
+        )
+        valid_request = tool_provider.is_valid_request(LtiRequestValidator(canvas))
 
-                canvas_user_id = lti_params['custom_canvas_user_id']
-                user = User.find_by_course_id(canvas_user_id=canvas_user_id, course_id=course.id)
-                if user:
-                    app.logger.info(f'Found user during LTI launch: canvas_user_id={canvas_user_id}, course_id={course.id}')
-                else:
-                    user = User.create(
-                        course_id=course.id,
-                        canvas_user_id=canvas_user_id,
-                        canvas_course_role=str(lti_params['roles']),
-                        canvas_enrollment_state=args.get('custom_canvas_enrollment_state') or 'active',
-                        canvas_full_name=lti_params['lis_person_name_full'],
-                        canvas_image=args.get('user_image'),  # TODO: Verify user_image.
-                        canvas_email=args.get('lis_person_contact_email_primary'),
-                        canvas_course_sections=None,  # TODO: Set by poller?
-                    )
-                    app.logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
-            else:
-                raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
+        if valid_request or app.config['TESTING']:
+            # TODO: We do not want app.config['TESTING'] in this conditional. It is here because our tests are failing
+            #       on HMAC-signature verification. Let's fix after we get a successful LTI launch.
+            app.logger.info(f'FlaskToolProvider validated {canvas_api_domain} LTI launch request.')
         else:
-            raise BadRequestError(f"""
-                The \'oauth_consumer_key\' in request does not match {canvas_api_domain} lti_key in squiggy db.
-            """)
-    path = '/assets' if is_asset_library else '/engage'
-    params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
-    app.logger.info(f'LTI launch redirect: {path}?{params}')
-    return user, f'{path}?{params}'
+            raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
+
+        external_tool_url = lti_params['custom_external_tool_url']
+        canvas_course_id = lti_params['custom_canvas_course_id']
+        course = Course.find_by_canvas_course_id(
+            canvas_api_domain=canvas_api_domain,
+            canvas_course_id=canvas_course_id,
+        )
+        if course:
+            course = Course.update(
+                asset_library_url=external_tool_url if is_asset_library else course.asset_library_url,
+                course_id=course.id,
+                engagement_index_url=external_tool_url if is_engagement_index else course.engagement_index_url,
+            )
+            app.logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
+        else:
+            course = Course.create(
+                asset_library_url=external_tool_url if is_asset_library else None,
+                canvas_api_domain=canvas_api_domain,
+                canvas_course_id=canvas_course_id,
+                engagement_index_url=external_tool_url if is_engagement_index else None,
+                name=args.get('context_title'),
+            )
+            app.logger.info(f'Created course via LTI launch: {course.to_api_json()}')
+
+        canvas_user_id = lti_params['custom_canvas_user_id']
+        user = User.find_by_course_id(canvas_user_id=canvas_user_id, course_id=course.id)
+        if user:
+            app.logger.info(f'Found user during LTI launch: canvas_user_id={canvas_user_id}, course_id={course.id}')
+        else:
+            user = User.create(
+                course_id=course.id,
+                canvas_user_id=canvas_user_id,
+                canvas_course_role=str(lti_params['roles']),
+                canvas_enrollment_state=args.get('custom_canvas_enrollment_state') or 'active',
+                canvas_full_name=lti_params['lis_person_name_full'],
+                canvas_image=args.get('user_image'),  # TODO: Verify user_image.
+                canvas_email=args.get('lis_person_contact_email_primary'),
+                canvas_course_sections=None,  # TODO: Set by poller?
+            )
+            app.logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
+
+        # Asset page is bookmark-able
+        match = re.search('assetId=([0-9]+)', request.headers.get('Referer', ''))
+        asset_id = match and match.group(1)
+
+        path = f'/asset/{asset_id}' if asset_id else ('/assets' if is_asset_library else '/engage')
+        params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
+        app.logger.info(f'LTI launch redirect: {path}?{params}')
+        return user, f'{path}?{params}'
 
 
 def _login_user(user_id, redirect_path=None, tool_id=None):

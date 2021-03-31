@@ -140,6 +140,7 @@ class TestLtiLaunchUrl:
             oauth_consumer_key,
             roles,
             tool_id,
+            asset_id=None,
             expected_status_code=302,
     ):
         data = {
@@ -158,10 +159,14 @@ class TestLtiLaunchUrl:
         is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
         response = client.post(
             '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index',
-            data=data,
             content_type='application/x-www-form-urlencoded',
+            data=data,
+            headers={
+                'Referer': f'{custom_external_tool_url}?assetId={asset_id}' if asset_id else custom_external_tool_url,
+            },
         )
         assert response.status_code == expected_status_code
+        return response
 
     def test_create_user_at_lti_launch(self, client):
         """User is created during LTI launch."""
@@ -174,28 +179,42 @@ class TestLtiLaunchUrl:
         canvas_user_id = 45678901
         full_name = 'Dee Dee Ramone'
         external_tool_url = f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765'
-        self._api_auth_lti_launch(
-            client=client,
-            custom_canvas_api_domain=canvas.canvas_api_domain,
-            custom_canvas_course_id=canvas_course_id,
-            custom_canvas_user_id=canvas_user_id,
-            custom_external_tool_url=external_tool_url,
-            lis_person_name_full=full_name,
-            oauth_consumer_key=canvas.lti_key,
-            roles='Student',
-            tool_id=TOOL_ID_ASSET_LIBRARY,
-        )
-        std_commit(allow_test_environment=True)
 
-        user = User.find_by_canvas_user_id(canvas_user_id)
-        assert user
-        assert user.canvas_full_name == full_name
-        assert user.canvas_user_id == canvas_user_id
+        def _create_user_at_lti_launch(_asset_id=None):
+            _response = self._api_auth_lti_launch(
+                asset_id=_asset_id,
+                client=client,
+                custom_canvas_api_domain=canvas.canvas_api_domain,
+                custom_canvas_course_id=canvas_course_id,
+                custom_canvas_user_id=canvas_user_id,
+                custom_external_tool_url=external_tool_url,
+                lis_person_name_full=full_name,
+                oauth_consumer_key=canvas.lti_key,
+                roles='Student',
+                tool_id=TOOL_ID_ASSET_LIBRARY,
+            )
+            std_commit(allow_test_environment=True)
 
-        course = user.course
-        assert course.canvas_course_id == canvas_course_id
-        assert course.engagement_index_url is None
-        assert course.asset_library_url == external_tool_url
+            user = User.find_by_canvas_user_id(canvas_user_id)
+            assert user
+            assert user.canvas_full_name == full_name
+            assert user.canvas_user_id == canvas_user_id
+
+            course = user.course
+            assert course.canvas_course_id == canvas_course_id
+            assert course.engagement_index_url is None
+            assert course.asset_library_url == external_tool_url
+            return _response
+
+        response = _create_user_at_lti_launch()
+        assert f'/assets?canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}' in response.location
+        # Redirect to /asset page when query args include 'assetId'
+        asset_id = 8760
+        response = _create_user_at_lti_launch(_asset_id=asset_id)
+        assert f'/asset/{asset_id}?canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}' in response.location
+        # Expect no duplicates
+        assert len(User.query.filter_by(canvas_user_id=canvas_user_id).all()) == 1
+        assert len(Course.query.filter_by(canvas_course_id=canvas_course_id).all()) == 1
 
 
 class TestCookies:
