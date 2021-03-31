@@ -19,7 +19,7 @@
         @click="go(`/asset/${asset.id}`)"
       >
         <v-sheet elevation="1">
-          <v-img class="thumbnail" :src="thumbnailUrl || imgNotFound" @error="imgError">
+          <v-img class="thumbnail" :src="thumbnailUrl" @error="setImageError">
             <v-card-text class="asset-metadata">
               <div class="mb-3">
                 {{ asset.title }}
@@ -69,13 +69,20 @@ export default {
   },
   data: function() {
     return {
-      imgNotFound: require('@/assets/img-not-found.png'),
-      thumbnailUrl: this.asset.thumbnailUrl
+      imageError: false,
+    }
+  },
+  computed: {
+    thumbnailUrl: function () {
+      if (!this.asset.thumbnailUrl || this.imageError) {
+        return require('@/assets/img-not-found.png')
+      }
+      return this.asset.thumbnailUrl
     }
   },
   methods: {
-    imgError() {
-      this.thumbnailUrl = this.imgNotFound
+    setImageError() {
+      this.imageError = true
     }
   }
 }
