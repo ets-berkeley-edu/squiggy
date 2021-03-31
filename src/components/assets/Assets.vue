@@ -73,6 +73,7 @@ export default {
           this.isComplete = true
           this.$announcer.polite(`All ${this.totalAssetCount} assets have loaded.`)
         }
+        this.resizeIFrame()
       })
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true}))

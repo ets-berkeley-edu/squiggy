@@ -19,6 +19,7 @@ const isDebugMode = _.trim(process.env.VUE_APP_DEBUG).toLowerCase() === 'true'
 Vue.prototype.$_ = _
 Vue.prototype.$isInIframe = !!window.parent.frames.length
 Vue.prototype.$loading = (noSpinner?: boolean) => store.dispatch('context/loadingStart', noSpinner)
+Vue.prototype.$postIFrameMessage = utils.postIFrameMessage
 Vue.prototype.$putFocusNextTick = utils.putFocusNextTick
 Vue.prototype.$ready = (label, focusTarget?) => store.dispatch('context/loadingComplete', {label, focusTarget})
 
@@ -67,6 +68,10 @@ console.log('canvasCourseId = ' + params.get('canvasCourseId'))
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
+  utils.postIFrameMessage(() => ({
+    subject: 'changeParent',
+    scrollToTop: true
+  }))
 
   axios.get(`${apiBaseUrl}/api/config`).then(data => {
     Vue.prototype.$config = data

@@ -82,7 +82,9 @@ def lti_launch_engagement_index():
 
 
 def _canvas_external_tool_url(s, headers):
-    referrer = (headers.get('Referer') or '').split('?')[0]
+    referrer = headers.get('Referer') or ''
+    for separator in ('#', '?'):
+        referrer = referrer.split(separator)[0]
     pattern = '/external_tools/(\d+)'
     if re.search(pattern, referrer):
         return referrer
@@ -198,7 +200,7 @@ def _lti_launch_authentication(tool_id):
             app.logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
 
         # Asset page is bookmark-able
-        match = re.search('assetId=([0-9]+)', request.headers.get('Referer', ''))
+        match = re.search('suitec_assetId=([0-9]+)', request.headers.get('Referer', ''))
         asset_id = match and match.group(1)
 
         path = f'/asset/{asset_id}' if asset_id else ('/assets' if is_asset_library else '/engage')
