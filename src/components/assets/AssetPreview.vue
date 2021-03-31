@@ -147,7 +147,7 @@ export default {
       }
     },
     getVideoUrl(asset) {
-      return asset.preview_metadata.converted_video || `${this.$config.apiBaseUrl}/api/asset/${asset.id}/download`
+      return asset.previewMetadata.converted_video || `${this.$config.apiBaseUrl}/api/asset/${asset.id}/download`
     },
     imgError() {
       this.imageUrl = require('@/assets/img-not-found.png')
