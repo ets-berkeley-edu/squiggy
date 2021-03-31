@@ -25,6 +25,16 @@ export default {
       })
     }
   },
+  extractBookmarkId: (to, type) => {
+    if (to.hash) {
+      const regex = new RegExp(`#${type}:\\d+`, 'g' )
+      let match = to.hash.match(regex)
+      match = _.size(match) && match[0].match(/\d+/g)
+      return _.size(match) && match[0]
+    } else {
+      return null
+    }
+  },
   putFocusNextTick: (id, cssSelector) => {
     const callable = () => {
         let el = document.getElementById(id)

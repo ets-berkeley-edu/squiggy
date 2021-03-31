@@ -50,6 +50,7 @@ export default {
     getAsset(this.$route.params.id).then(data => {
       this.asset = data
       this.$ready(this.asset.title)
+      location.hash = `#asset:${this.asset.id}`
     })
   }
 }
