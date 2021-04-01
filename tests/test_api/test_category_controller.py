@@ -66,8 +66,8 @@ class TestGetCategories:
     """Categories API."""
 
     @classmethod
-    def _api_get_categories(cls, client, expected_status_code=200):
-        response = client.get('/api/categories')
+    def _api_get_categories(cls, client, expected_status_code=200, include_hidden=False):
+        response = client.get(f'/api/categories?includeHidden={include_hidden}')
         assert response.status_code == expected_status_code
         return response.json
 
@@ -80,9 +80,13 @@ class TestGetCategories:
         fake_auth.login(unauthorized_user_id)
         self._api_get_categories(client, expected_status_code=401)
 
-    def test_admin(self, client, fake_auth, authorized_user_id):
-        """Returns a well-formed response."""
-        fake_auth.login(authorized_user_id)
-        api_json = self._api_get_categories(client)
-        assert len(api_json)
-        assert 'title' in api_json[0]
+    def test_authorized(self, client, authorized_user_id, fake_auth, mock_asset):
+        """Authorized user can get all categories."""
+        fake_auth.login(mock_asset.users[0].id)
+        categories_all = self._api_get_categories(client, include_hidden=True)
+        categories_visible = self._api_get_categories(client, include_hidden=False)
+
+        assert len(categories_all) > len(categories_visible)
+        category = categories_visible[0]
+        assert category.get('title')
+        assert category.get('assetCount') > 0

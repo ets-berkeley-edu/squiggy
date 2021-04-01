@@ -28,14 +28,19 @@ from flask_login import current_user, login_required
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.errors import BadRequestError
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.util import to_bool_or_none
 from squiggy.models.category import Category
 
 
 @app.route('/api/categories')
 @login_required
 def get_categories():
-    categories = Category.get_categories_by_course_id(course_id=current_user.course.id)
-    return tolerant_jsonify([c.to_api_json() for c in categories])
+    include_hidden = to_bool_or_none(request.args.get('includeHidden'))
+    categories = Category.get_categories_by_course_id(
+        course_id=current_user.course.id,
+        include_hidden=include_hidden,
+    )
+    return tolerant_jsonify(categories)
 
 
 @app.route('/api/category/create', methods=['POST'])

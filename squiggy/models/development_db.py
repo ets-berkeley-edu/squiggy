@@ -195,28 +195,32 @@ def _create_users(courses):
 
 def _create_assets(courses, users):
     course_id = courses[0].id
-    category = Category(
-        canvas_assignment_name='Linger on your pale blue eyes',
-        course_id=course_id,
-        title='Thought of you as my mountain top',
-        canvas_assignment_id=98765,
-        visible=True,
-    )
-    db.session.add(category)
-    std_commit(allow_test_environment=True)
 
-    user = users[0]
+    def _create_category(visible):
+        category = Category.create(
+            canvas_assignment_id=98765,
+            canvas_assignment_name=f'Linger on your pale blue eyes (visible={visible})',
+            course_id=course_id,
+            title=f'Thought of you as my mountain top (visible={visible})',
+            visible=visible,
+        )
+        db.session.add(category)
+        return category
+
+    category_visible = _create_category(True)
+    category_hidden = _create_category(False)
+    std_commit(allow_test_environment=True)
 
     assets = []
     for a in _test_assets:
         asset = Asset.create(
             asset_type=a['asset_type'],
-            categories=[category],
+            categories=[category_hidden, category_visible],
             course_id=course_id,
             description=None,
             title=a['title'],
             url=a['url'],
-            users=[user],
+            users=[users[0]],
         )
         db.session.add(asset)
         assets.append(asset)

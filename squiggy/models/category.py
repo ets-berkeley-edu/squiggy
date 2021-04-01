@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from dateutil.tz import tzutc
+from sqlalchemy.sql import desc
 from squiggy import db, std_commit
 from squiggy.models.base import Base
 
@@ -76,10 +77,10 @@ class Category(Base):
             visible=True,
     ):
         category = cls(
+            canvas_assignment_id=canvas_assignment_id,
             canvas_assignment_name=canvas_assignment_name,
             course_id=course_id,
             title=title,
-            canvas_assignment_id=canvas_assignment_id,
             visible=visible,
         )
         db.session.add(category)
@@ -87,16 +88,36 @@ class Category(Base):
         return category
 
     @classmethod
-    def get_categories_by_course_id(cls, course_id):
-        return cls.query.filter_by(course_id=course_id).all()
+    def get_categories_by_course_id(cls, course_id, include_hidden=False):
+        query = cls.query.filter_by(course_id=course_id) if include_hidden else cls.query.filter_by(course_id=course_id, visible=True)
+        categories = query.order_by(desc(cls.created_at)).all()
+
+        sql = """SELECT
+            c.id, (SELECT COUNT(*)::int FROM asset_categories WHERE category_id = c.id) AS asset_count
+            FROM categories AS c
+            WHERE c.id =  ANY(:category_ids)
+        """
+        results = db.session.execute(sql, {'category_ids': [c.id for c in categories]})
+        asset_count_lookup = dict((row['id'], row['asset_count']) for row in results)
+
+        def _to_json(c):
+            return {
+                **c.to_api_json(),
+                **{
+                    'assetCount': asset_count_lookup.get(c.id, None),
+                },
+            }
+        return [_to_json(category) for category in categories]
 
     @classmethod
     def find_by_id(cls, category_id):
         return cls.query.filter_by(id=category_id).first()
 
     def to_api_json(self):
+        asset_count = 2
         return {
             'id': self.id,
+            'assetCount': asset_count,
             'canvas_assignment_id': self.canvas_assignment_id,
             'canvas_assignment_name': self.canvas_assignment_name,
             'course_id': self.course_id,

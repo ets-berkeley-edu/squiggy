@@ -152,10 +152,17 @@ def fake_sts(app):
 
 @pytest.fixture(scope='function')
 def mock_asset(app, db_session):
-    category = Category.create(
+    category_hidden = Category.create(
         canvas_assignment_name='Just look into her false colored eyes',
         course_id=1,
-        title='What a clown',
+        title='What a clown (visible=False)',
+        canvas_assignment_id=98765,
+        visible=False,
+    )
+    category_visible = Category.create(
+        canvas_assignment_name='Just look into her false colored eyes',
+        course_id=1,
+        title='What a clown (visible=True)',
         canvas_assignment_id=98765,
         visible=True,
     )
@@ -173,7 +180,7 @@ def mock_asset(app, db_session):
     unique_token = datetime.now().isoformat()
     asset = Asset.create(
         asset_type='link',
-        categories=[category],
+        categories=[category_hidden, category_visible],
         course_id=course.id,
         description=None,
         download_url=f"s3://{app.config['AWS_S3_BUCKET_FOR_ASSETS']}/asset/{course.id}_{canvas_user_id}_{unique_token}.pdf",
