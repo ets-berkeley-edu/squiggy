@@ -37,19 +37,94 @@
       </div>
     </div>
     <v-card rounded tile>
-      <v-list-item
-        v-for="(category, index) in categories"
-        :key="index"
-        two-line
-      >
-        <v-list-item-content>
-          <v-list-item-title :id="`category-${category.id}-title`">{{ category.title }}</v-list-item-title>
-          <v-list-item-subtitle :id="`category-${category.id}-asset-count`">
-            {{ pluralize('asset', category.assetCount, {0: 'No', 1: 'Used by one', 'other': `Used by ${category.assetCount}`}) }}
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
+      <v-list>
+        <v-list-item-group>
+          <template v-for="(category, index) in categories">
+            <v-list-item :key="category.id">
+              <template #default="{}">
+                <v-list-item-content>
+                  <v-list-item-title :id="`category-${category.id}-title`">{{ category.title }}</v-list-item-title>
+                  <v-list-item-subtitle
+                    v-if="category.description"
+                    :id="`category-${category.id}-description`"
+                  >
+                    {{ category.description }}
+                  </v-list-item-subtitle>
+                  <v-list-item-subtitle :id="`category-${category.id}-asset-count`">
+                    {{ pluralize('asset', category.assetCount, {0: 'No', 1: 'Used by one', 'other': `Used by ${category.assetCount}`}) }}
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+                <v-list-item-action>
+                  <div class="d-flex">
+                    <div class="mr-2">
+                      <v-btn
+                        :id="`edit-category-${category.id}-btn`"
+                        class="text-no-wrap"
+                        icon
+                        @click="edit(category)"
+                        @keypress.enter="edit(category)"
+                      >
+                        <font-awesome-icon class="mr-2" icon="pencil-alt" />
+                        <span class="sr-only">Edit category {{ category.title }}</span>
+                      </v-btn>
+                    </div>
+                    <div>
+                      <v-btn
+                        :id="`delete-category-${category.id}-btn`"
+                        class="mr-3"
+                        icon
+                        @click="confirmDelete(category)"
+                        @keypress.enter="confirmDelete(category)"
+                      >
+                        <font-awesome-icon class="mr-2" icon="trash" />
+                        <span class="sr-only">Delete category {{ $_.get(selected, 'title') }}</span>
+                      </v-btn>
+                    </div>
+                  </div>
+                </v-list-item-action>
+              </template>
+            </v-list-item>
+            <v-divider v-if="index < categories.length - 1" :key="index" />
+          </template>
+        </v-list-item-group>
+      </v-list>
     </v-card>
+
+    <v-dialog v-model="isDialogOpen" width="800">
+      <v-card>
+        <v-card-title id="delete-dialog-title" tabindex="-1">Delete Category?</v-card-title>
+        <v-card-text class="pt-3">
+          Are you sure you want to delete
+          <span :id="`category-title-confirm-delete`" class="font-weight-bold text-no-wrap">{{ $_.get(selected, 'title') }}</span>?
+        </v-card-text>
+        <v-divider />
+        <v-card-actions>
+          <v-spacer />
+          <div class="d-flex flex-row-reverse pa-2">
+            <div>
+              <v-btn
+                id="confirm-delete-btn"
+                color="primary"
+                @click="deleteConfirmed"
+                @keypress.enter="deleteConfirmed"
+              >
+                Confirm
+              </v-btn>
+            </div>
+            <div class="mr-2">
+              <v-btn
+                id="cancel-delete-btn"
+                @click="cancelDelete"
+                @keypress.enter="cancelDelete"
+              >
+                Cancel
+              </v-btn>
+            </div>
+          </div>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <div class="mt-4">
       <h3>Assignments</h3>
     </div>
@@ -79,7 +154,7 @@
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {createCategory, getCategories} from '@/api/categories'
+import {createCategory, deleteCategory, getCategories} from '@/api/categories'
 
 export default {
   name: 'ManageAssets',
@@ -88,12 +163,21 @@ export default {
   data: () => ({
     assignments: undefined,
     categories: undefined,
-    model: undefined
+    isDialogOpen: undefined,
+    model: undefined,
+    selected: undefined
   }),
+  watch: {
+    isDialogOpen(value) {
+      if (!value) {
+        this.selected = null
+      }
+    }
+  },
   created() {
     this.$loading()
     this.refresh().then(() => {
-      this.$ready('Add a link asset')
+      this.$ready('Manage categories')
     })
   },
   methods: {
@@ -101,6 +185,29 @@ export default {
       if (this.model) {
         createCategory(this.model).then(this.refresh)
       }
+    },
+    cancelDelete() {
+      this.$putFocusNextTick(`category-${this.selected.id}-title`)
+      this.isDialogOpen = false
+      this.$announcer.polite('Canceled')
+    },
+    confirmDelete(category) {
+      this.selected = category
+      this.isDialogOpen = true
+      this.$announcer.polite('Confirm delete')
+      this.$putFocusNextTick('delete-dialog-title')
+    },
+    deleteConfirmed() {
+      let categoryId = this.selected.id
+      this.isDialogOpen = false
+      deleteCategory(categoryId).then(() => {
+        this.selected = null
+        this.$announcer.polite('Deleted')
+      }).then(this.refresh)
+    },
+    edit(category) {
+      this.selected = category
+      this.$announcer.polite(`Edit category ${this.selected.title}`)
     },
     refresh() {
       return getCategories(true).then(data => {
