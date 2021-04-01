@@ -13,7 +13,7 @@
           Edit Details
         </v-btn>
       </div>
-      <div class="mr-2">
+      <div v-if="downloadUrl" class="mr-2">
         <v-btn id="download-asset-btn" :href="downloadUrl">
           <font-awesome-icon class="mr-2" icon="download" />
           Download
@@ -87,7 +87,9 @@ export default {
     downloadUrl: undefined
   }),
   created() {
-    this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
+    if (this.asset.assetType === 'file') {
+      this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
+    }
   },
   methods: {
     cancelDelete() {
