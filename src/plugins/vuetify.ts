@@ -5,16 +5,27 @@ import Vuetify from 'vuetify/lib'
 import {library} from '@fortawesome/fontawesome-svg-core'
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome'
 import {fas} from '@fortawesome/free-solid-svg-icons'
+import {far} from '@fortawesome/free-regular-svg-icons'
 
 // Find icons at https://fontawesome.com/icons
 Vue.component('font-awesome-icon', FontAwesomeIcon) // eslint-disable-line vue/component-definition-name-casing
+library.add(far)
 library.add(fas)
 
 Vue.use(Vuetify)
 
 export default new Vuetify( {
   icons: {
-    iconfont: 'faSvg'
+    iconfont: 'faSvg',
+    values: {
+      // See https://stackoverflow.com/questions/58712633/could-not-find-one-or-more-icons-warning-with-vuejs-application
+      checkboxOff: {
+        component: FontAwesomeIcon,
+        props: {
+          icon: ['far', 'square']
+        }
+      }
+    }
   },
   theme: {
     themes: {

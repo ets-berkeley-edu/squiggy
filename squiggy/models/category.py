@@ -138,10 +138,10 @@ class Category(Base):
     def to_api_json(self):
         return {
             'id': self.id,
-            'canvas_assignment_id': self.canvas_assignment_id,
-            'canvas_assignment_name': self.canvas_assignment_name,
-            'course_id': self.course_id,
-            'deleted_at': _isoformat(self.deleted_at),
+            'canvasAssignmentId': self.canvas_assignment_id,
+            'canvasAssignmentName': self.canvas_assignment_name,
+            'courseId': self.course_id,
+            'deletedAt': _isoformat(self.deleted_at),
             'title': self.title,
             'visible': self.visible,
             'createdAt': _isoformat(self.created_at),
