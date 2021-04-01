@@ -6,7 +6,7 @@
       <v-card class="mt-3 pa-2" outlined>
         <v-card-text>
           <div class="asset-image-container">
-            <AssetPreview :asset="asset" :contain="true" :max-height="540" />
+            <AssetPreview :asset="asset" :contain="true" />
           </div>
           <AssetOverview :asset="asset" />
         </v-card-text>
@@ -55,9 +55,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.asset-image-container {
-  height: 540px;
-}
-</style>
