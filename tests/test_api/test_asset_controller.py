@@ -300,8 +300,8 @@ class TestUpdateAsset:
         self._verify_update_asset(client, mock_asset, mock_category)
 
     def _verify_update_asset(self, client, mock_asset, mock_category):
-        mock_asset.title = "'I'll be your mirror'"
-        mock_asset.description = "'Reflect what you are, in case you don't know'"
+        mock_asset.title = "I'll be your mirror"
+        mock_asset.description = "Reflect what you are, in case you don't know"
         mock_asset.categories = [mock_category]
         api_json = self._api_update_asset(client, asset=mock_asset)
         assert api_json['id'] == mock_asset.id
