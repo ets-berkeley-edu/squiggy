@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app, request
+from flask_cors import cross_origin
 from flask_login import current_user, login_required
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.errors import BadRequestError
@@ -40,7 +41,7 @@ def get_categories():
         course_id=current_user.course.id,
         include_hidden=include_hidden,
     )
-    return tolerant_jsonify(categories)
+    return tolerant_jsonify(Category.to_decorated_json(categories))
 
 
 @app.route('/api/category/create', methods=['POST'])
@@ -54,5 +55,31 @@ def create_category():
         canvas_assignment_name=title,
         course_id=current_user.course.id,
         title=title,
+    )
+    return tolerant_jsonify(category.to_api_json())
+
+
+@app.route('/api/category/<category_id>/delete', methods=['DELETE'])
+@teacher_required
+@cross_origin(allow_headers=['Content-Type'])
+def delete(category_id):
+    Category.delete(category_id)
+    return tolerant_jsonify({'message': f'Category {category_id} deleted'}), 200
+
+
+@app.route('/api/category/update', methods=['POST'])
+@teacher_required
+def update_category():
+    params = request.get_json()
+    category_id = params.get('categoryId')
+    title = params.get('title')
+    visible = to_bool_or_none(params.get('visible'))
+    category = Category.find_by_id(category_id) if category_id else None
+    if not category or not title:
+        raise BadRequestError('Category update requires categoryId and title.')
+    category = Category.update(
+        category_id=category_id,
+        title=title,
+        visible=category.visible if visible is None else visible,
     )
     return tolerant_jsonify(category.to_api_json())

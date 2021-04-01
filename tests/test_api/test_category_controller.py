@@ -62,6 +62,27 @@ class TestCreateCategory:
         assert api_json['title'] == title
 
 
+class TestDeleteCategory:
+    """Delete Category API."""
+
+    def test_not_authenticated(self, client, mock_category):
+        """Denies anonymous user."""
+        assert client.delete(f'/api/category/{mock_category.id}/delete').status_code == 401
+
+    def test_unauthorized(self, client, fake_auth, mock_category):
+        """Denies unauthorized user."""
+        student = User.find_by_canvas_user_id(8765432)
+        fake_auth.login(student.id)
+        assert client.delete(f'/api/category/{mock_category.id}/delete').status_code == 401
+
+    def test_delete_group(self, client, fake_auth, mock_category):
+        """Teacher can delete category."""
+        teacher = User.find_by_canvas_user_id(9876543)
+        fake_auth.login(teacher.id)
+        assert client.delete(f'/api/category/{mock_category.id}/delete').status_code == 200
+        assert client.get(f'/api/category/{mock_category.id}').status_code == 404
+
+
 class TestGetCategories:
     """Categories API."""
 
@@ -87,6 +108,57 @@ class TestGetCategories:
         categories_visible = self._api_get_categories(client, include_hidden=False)
 
         assert len(categories_all) > len(categories_visible)
-        category = categories_visible[0]
+        category = categories_visible[-1]
         assert category.get('title')
         assert category.get('assetCount') > 0
+
+
+class TestUpdateCategory:
+    """Update category API."""
+
+    @staticmethod
+    def _api_update_category(client, category_id, title, expected_status_code=200, visible=True):
+        params = {
+            'categoryId': category_id,
+            'title': title,
+            'visible': visible,
+        }
+        response = client.post(
+            '/api/category/update',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client, mock_category):
+        """Denies anonymous user."""
+        self._api_update_category(
+            client,
+            category_id=mock_category.id,
+            expected_status_code=401,
+            title='I\'ve been out walking',
+        )
+
+    def test_unauthorized(self, client, fake_auth, mock_category):
+        """Denies unauthorized user."""
+        student = User.find_by_canvas_user_id(8765432)
+        fake_auth.login(student.id)
+        self._api_update_category(
+            client,
+            category_id=mock_category.id,
+            expected_status_code=401,
+            title='I don\'t do too much talking',
+        )
+
+    def _verify_update_category(self, client, fake_auth, mock_category):
+        teacher = User.find_by_canvas_user_id(9876543)
+        fake_auth.login(teacher.id)
+
+        title = "I've stopped my rambling, I don't do too much gambling these days"
+        visible = not mock_category.visible
+        api_json = self._api_update_category(client, category_id=mock_category.id, title=title, visible=visible)
+
+        assert api_json['id'] == mock_category.id
+        assert api_json['title'] == mock_category.title
+        assert api_json['visible'] is visible

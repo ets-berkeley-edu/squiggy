@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from datetime import datetime
 import json
 import os
-import random
+from random import randint, randrange
 
 from moto import mock_sts  # noqa
 import pytest  # noqa
@@ -152,22 +152,26 @@ def fake_sts(app):
 
 @pytest.fixture(scope='function')
 def mock_asset(app, db_session):
+    course = Course.create(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=randrange(1000000),
+    )
     category_hidden = Category.create(
         canvas_assignment_name='Just look into her false colored eyes',
-        course_id=1,
+        course_id=course.id,
         title='What a clown (visible=False)',
         canvas_assignment_id=98765,
         visible=False,
     )
     category_visible = Category.create(
         canvas_assignment_name='Just look into her false colored eyes',
-        course_id=1,
+        course_id=course.id,
         title='What a clown (visible=True)',
         canvas_assignment_id=98765,
         visible=True,
     )
     course = Course.query.order_by(Course.name).all()[0]
-    canvas_user_id = str(random.randint(1000000, 9999999))
+    canvas_user_id = str(randint(1000000, 9999999))
     user = User.create(
         canvas_course_role='Student',
         canvas_course_sections=[],
