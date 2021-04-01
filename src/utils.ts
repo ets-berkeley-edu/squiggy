@@ -25,6 +25,14 @@ export default {
       })
     }
   },
+  extractBookmarkId: (to, type) => {
+    if (to.hash) {
+      const match = to.hash.match(new RegExp(`.*#suitec_${type}=(\\d+)`))
+      return _.size(match) && match[1]
+    } else {
+      return null
+    }
+  },
   postIFrameMessage: (generator, callback?) => {
     if (window.parent) {
       const postMessage = () => {

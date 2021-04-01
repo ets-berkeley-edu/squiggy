@@ -126,7 +126,6 @@ class TestLtiLaunchUrl:
             oauth_consumer_key,
             roles,
             tool_id,
-            asset_id=None,
             expected_status_code=302,
     ):
         data = {
@@ -147,9 +146,7 @@ class TestLtiLaunchUrl:
             '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index',
             content_type='application/x-www-form-urlencoded',
             data=data,
-            headers={
-                'Referer': f'{custom_external_tool_url}#suitec_assetId={asset_id}' if asset_id else custom_external_tool_url,
-            },
+            headers={'Referer': custom_external_tool_url},
         )
         assert response.status_code == expected_status_code
         return response
@@ -166,9 +163,8 @@ class TestLtiLaunchUrl:
         full_name = 'Dee Dee Ramone'
         external_tool_url = f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765'
 
-        def _create_user_at_lti_launch(_asset_id=None):
+        def _create_user_at_lti_launch():
             _response = self._api_auth_lti_launch(
-                asset_id=_asset_id,
                 client=client,
                 custom_canvas_api_domain=canvas.canvas_api_domain,
                 custom_canvas_course_id=canvas_course_id,
@@ -194,10 +190,6 @@ class TestLtiLaunchUrl:
 
         response = _create_user_at_lti_launch()
         assert f'/assets?canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}' in response.location
-        # Redirect to /asset page when query args include 'assetId'
-        asset_id = 8760
-        response = _create_user_at_lti_launch(_asset_id=asset_id)
-        assert f'/asset/{asset_id}?canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}' in response.location
         # Expect no duplicates
         assert len(User.query.filter_by(canvas_user_id=canvas_user_id).all()) == 1
         assert len(Course.query.filter_by(canvas_course_id=canvas_course_id).all()) == 1
