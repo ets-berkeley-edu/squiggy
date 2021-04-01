@@ -199,11 +199,7 @@ def _lti_launch_authentication(tool_id):
             )
             app.logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
 
-        # Asset page is bookmark-able
-        match = re.search('suitec_assetId=([0-9]+)', request.headers.get('Referer', ''))
-        asset_id = match and match.group(1)
-
-        path = f'/asset/{asset_id}' if asset_id else ('/assets' if is_asset_library else '/engage')
+        path = '/assets' if is_asset_library else '/engage'
         params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
         app.logger.info(f'LTI launch redirect: {path}?{params}')
         return user, f'{path}?{params}'

@@ -11,6 +11,7 @@ import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
 import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
+import utils from '@/utils'
 import Vue from 'vue'
 
 Vue.use(Router)
@@ -49,6 +50,14 @@ const router = new Router({
           }
         },
         {
+          beforeEnter: (to: any, from: any, next: any) => {
+            const assetId = utils.extractBookmarkId(to, 'assetId')
+            if (assetId) {
+              next(`/asset/${assetId}`)
+            } else {
+              next()
+            }
+          },
           path: '/assets',
           component: Assets,
           meta: {
