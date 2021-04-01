@@ -14,18 +14,24 @@
       <div class="pr-1 w-100">
         <v-text-field
           id="add-category-input"
-          v-model="category"
+          v-model="model"
           clearable
           dense
           filled
           label="Add new category"
           solo
           type="text"
+          @click="addCategory"
           @keypress.enter="addCategory"
         />
       </div>
       <div>
-        <v-btn id="add-category-btn" class="mt-1">
+        <v-btn
+          id="add-category-btn"
+          class="mt-1"
+          @click="addCategory"
+          @keypress.enter="addCategory"
+        >
           Add
         </v-btn>
       </div>
@@ -34,12 +40,13 @@
       <v-list-item
         v-for="(category, index) in categories"
         :key="index"
-        :class="{'grey lighten-4': index % 2 === 0}"
         two-line
       >
         <v-list-item-content>
-          <v-list-item-title>{{ category.title }}</v-list-item-title>
-          <v-list-item-subtitle>Used by N items</v-list-item-subtitle>
+          <v-list-item-title :id="`category-${category.id}-title`">{{ category.title }}</v-list-item-title>
+          <v-list-item-subtitle :id="`category-${category.id}-asset-count`">
+            {{ pluralize('asset', category.assetCount, {0: 'No', 1: 'Used by one', 'other': `Used by ${category.assetCount}`}) }}
+          </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
     </v-card>
@@ -71,16 +78,17 @@
 <script>
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
+import Utils from '@/mixins/Utils'
 import {createCategory, getCategories} from '@/api/categories'
 
 export default {
   name: 'ManageAssets',
   components: {BackToAssetLibrary},
-  mixins: [Context],
+  mixins: [Context, Utils],
   data: () => ({
     assignments: undefined,
     categories: undefined,
-    category: undefined
+    model: undefined
   }),
   created() {
     this.$loading()
@@ -90,12 +98,12 @@ export default {
   },
   methods: {
     addCategory() {
-      if (this.category) {
-        createCategory(this.category).then(this.refresh)
+      if (this.model) {
+        createCategory(this.model).then(this.refresh)
       }
     },
     refresh() {
-      return getCategories().then(data => {
+      return getCategories(true).then(data => {
         this.categories = data
       })
     }
