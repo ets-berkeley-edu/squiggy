@@ -76,6 +76,11 @@ S3_REGION = 'us-west-2'
 # Used to encrypt session cookie.
 SECRET_KEY = 'secret'
 
+# Required for session cookie to work inside iframes on Chrome.
+SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+
 # Save DB changes at the end of a request.
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 

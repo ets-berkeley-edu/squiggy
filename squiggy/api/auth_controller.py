@@ -65,7 +65,7 @@ def logout():
         f'{canvas_api_domain}_supports_custom_messaging',
     ]
     for key in keys:
-        response.set_cookie(key, '', expires=0)
+        response.set_cookie(key, '', samesite='None', secure=True, expires=0)
 
     logout_user()
     return response

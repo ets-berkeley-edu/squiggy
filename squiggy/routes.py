@@ -106,7 +106,7 @@ def register_routes(app):
             response.set_cookie(
                 key=f'{canvas_api_domain}|{canvas_course_id}',
                 value=str(current_user.user_id),
-                samesite=None,
+                samesite='None',
                 secure=True,
             )
         # TODO: Remove the above
