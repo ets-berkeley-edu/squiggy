@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="assetlibrary-item-preview-outer">
     <div v-if="asset.previewStatus === 'done'" class="assetlibrary-item-preview">
       <div v-if="asset.assetType === 'file' && !asset.pdfUrl && !videoUrl && asset.imageUrl">
         <v-img
@@ -221,6 +221,10 @@ export default {
 
 .assetlibrary-item-preview-message i.fa-spinner {
   margin-right: 5px;
+}
+
+.assetlibrary-item-preview-outer {
+  text-align: center;
 }
 
 </style>
