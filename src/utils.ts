@@ -2,6 +2,59 @@ import _ from 'lodash'
 import router from './router'
 import Vue from 'vue'
 
+const $_postIFrameMessage = (generator, callback?) => {
+  if (window.parent) {
+    const postMessage = () => {
+      // Parent will respond to the this embedded call with a message and scroll information.
+      if (callback) {
+        const eventType = 'message'
+        const processor = event => {
+          if (event && event.data) {
+            try {
+              callback(JSON.parse(event.data))
+              window.removeEventListener(eventType, processor)
+            } catch(error) {
+              return false
+            }
+          }
+        }
+        window.addEventListener(eventType, processor)
+      }
+      // Send the message to the parent container as a string-ified object
+      window.parent.postMessage(JSON.stringify(generator()), '*')
+      return true
+    }
+    Vue.prototype.$nextTick(() => {
+      let counter = 0
+      const job = setInterval(() => (postMessage() || ++counter > 3) && clearInterval(job), 500)
+    })
+  }
+}
+
+const $_getUrlParamPerPrefix = (context, key, prefix) => {
+  let value
+  const url = new URL(context.location)
+  if (url.hash && _.includes(url.hash, '=')) {
+    const hash = url.hash.replace('#', '')
+    const split = hash.split('=')
+    if (split[0] === `${prefix}${key}`) {
+      value = split[1]
+    }
+  }
+  return value || new URLSearchParams(context.location.search).get(`${prefix}${key}`)
+}
+
+const $_getParentUrlParam = key => {
+  return new Promise(resolve => {
+    // See getParentUrlData() in legacy SuiteC
+    const callback = context => {
+      const location = _.get(context, 'location')
+      return resolve(location ? $_getUrlParamPerPrefix(context, key, 'suitec_') : null)
+    }
+    $_postIFrameMessage(() => ({subject: 'getParent'}), callback)
+  })
+}
+
 export default {
   axiosErrorHandler: error => {
     const errorStatus = _.get(error, 'response.status')
@@ -25,42 +78,17 @@ export default {
       })
     }
   },
-  extractBookmarkId: (to, type) => {
-    if (to.hash) {
-      const match = to.hash.match(new RegExp(`.*#suitec_${type}=(\\d+)`))
-      return _.size(match) && match[1]
-    } else {
-      return null
-    }
-  },
-  postIFrameMessage: (generator, callback?) => {
-    if (window.parent) {
-      const postMessage = () => {
-        // Parent will respond to the this embedded call with a message and scroll information.
-        if (callback) {
-          const eventType = 'message'
-          const processor = event => {
-            if (event && event.data) {
-              try {
-                callback(JSON.parse(event.data))
-                window.removeEventListener(eventType, processor)
-              } catch(error) {
-                return false
-              }
-            }
-          }
-          window.addEventListener(eventType, processor)
-        }
-        // Send the message to the parent container as a string-ified object
-        window.parent.postMessage(JSON.stringify(generator()), '*')
-        return true
+  extractBookmarkId: (to, key) => {
+    return new Promise(resolve => {
+      if (Vue.prototype.$isInIframe && Vue.prototype.$supportsCustomMessaging) {
+        $_getParentUrlParam(key).then(value => resolve(value))
+      } else {
+        const value = $_getUrlParamPerPrefix(window, key, 'suitec_')
+        return resolve(value)
       }
-      Vue.prototype.$nextTick(() => {
-        let counter = 0
-        const job = setInterval(() => (postMessage() || ++counter > 3) && clearInterval(job), 500)
-      })
-    }
+    })
   },
+  postIFrameMessage: $_postIFrameMessage,
   putFocusNextTick: (id, cssSelector) => {
     const callable = () => {
         let el = document.getElementById(id)

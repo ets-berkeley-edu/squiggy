@@ -1,9 +1,6 @@
 <script>
 import _ from 'lodash'
-import Vue from 'vue'
 import VueScrollTo from 'vue-scrollto'
-
-const $_supportsCustomMessaging = () => _.get(Vue.prototype.$currentUser, 'course.canvas.supportsCustomMessaging')
 
 export default {
   name: 'Utils',
@@ -36,7 +33,7 @@ export default {
       this.$postIFrameMessage(() => ({
         // If Canvas instance supports custom messaging then send our custom 'changeParent' event (see above).
         height: document.body.offsetHeight,
-        subject: $_supportsCustomMessaging() ? 'changeParent' : 'lti.frameResize'
+        subject: this.$supportsCustomMessaging ? 'changeParent' : 'lti.frameResize'
       }))
     },
     scrollTo: (element, timeout=1000) => setTimeout(() => VueScrollTo.scrollTo(element), timeout),
@@ -44,7 +41,7 @@ export default {
       window.scrollTo(0, 0)
       // If running as BasicLTI then we also scroll parent window to top.
       if (window.parent) {
-        if ($_supportsCustomMessaging()) {
+        if (this.$supportsCustomMessaging) {
           // If hosting Canvas supports our custom 'changeParent' cross-window event then use it.
           this.$postIFrameMessage(() => ({subject: 'changeParent', scrollToTop: true}))
         } else {
@@ -54,7 +51,7 @@ export default {
       }
     },
     setParentHash(params) {
-      if ($_supportsCustomMessaging()) {
+      if (this.$supportsCustomMessaging) {
         this.$postIFrameMessage(() => ({
           subject: 'setParentHash',
           hash: _.map(params, (value, key) => `suitec_${key}=${encodeURIComponent(value)}`).join('&')

@@ -51,12 +51,13 @@ const router = new Router({
         },
         {
           beforeEnter: (to: any, from: any, next: any) => {
-            const assetId = utils.extractBookmarkId(to, 'assetId')
-            if (assetId) {
-              next(`/asset/${assetId}`)
-            } else {
-              next()
-            }
+            utils.extractBookmarkId(to, 'assetId').then(assetId => {
+              if (assetId) {
+                next(`/asset/${assetId}`)
+              } else {
+                next()
+              }
+            })
           },
           path: '/assets',
           component: Assets,
