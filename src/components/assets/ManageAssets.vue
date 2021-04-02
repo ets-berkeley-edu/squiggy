@@ -1,7 +1,9 @@
 <template>
   <div v-if="!isLoading">
     <BackToAssetLibrary anchor="assets-container" />
-    <h2>Manage Assets</h2>
+    <div class="mt-2">
+      <h2>Manage Assets</h2>
+    </div>
     <div class="mt-2">
       <ManageCategories :categories="categories" :refresh="refresh" />
     </div>

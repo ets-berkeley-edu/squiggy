@@ -1,5 +1,5 @@
 <template>
-  <div :id="comment ? `edit-comment-${comment.id}` : 'new-comment-form'">
+  <div>
     <v-textarea
       :id="parent ? `reply-to-comment-${parent.id}-body-textarea` : (comment ? `comment-${comment.id}-body-textarea` : 'comment-body-textarea')"
       v-model="body"
@@ -14,9 +14,10 @@
     <div class="align-start d-flex flex-row-reverse text-right">
       <div>
         <v-btn
-          id="save-comment-btn"
+          :id="parent ? 'save-reply-btn' : (comment ? 'save-comment-btn' : 'create-comment-btn')"
           color="primary"
           :disabled="!$_.trim(body) || disable || isSaving"
+          small
           @click="create"
         >
           <font-awesome-icon
@@ -31,7 +32,9 @@
       </div>
       <div v-if="comment || parent">
         <v-btn
+          :id="parent ? 'cancel-reply-btn' : (comment ? 'cancel-comment-edit-btn' : 'cancel-comment-create-btn')"
           :disabled="isSaving"
+          small
           text
           @click="cancel"
           @keypress.enter="cancel"
