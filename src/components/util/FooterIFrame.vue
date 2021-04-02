@@ -1,15 +1,12 @@
 <template>
-  <v-footer
-    id="footer"
-    app
-  >
+  <v-footer id="footer">
     <v-container fluid class="pa-1">
       <v-row no-gutters justify="space-between">
         <v-col>
-          <div v-if="$isInIframe || !$currentUser.isAuthenticated">
+          <div>
             &copy; {{ new Date().getFullYear() }} Regents of the University of California. All Rights Reserved.
           </div>
-          <div v-if="!$isInIframe && $currentUser.isAuthenticated" class="align-center d-flex">
+          <div class="align-center d-flex">
             <div>
               <v-btn
                 id="go-home-btn"
@@ -42,24 +39,6 @@
             </div>
           </div>
         </v-col>
-        <v-col v-if="!$isInIframe">
-          <div class="float-right">
-            <div class="align-center d-flex">
-              <div>
-                {{ $_.get($announcer, 'data.content') }}
-              </div>
-              <div v-if="$currentUser.isAuthenticated && $_.get($announcer, 'data.content')" class="pl-2">
-                |
-              </div>
-              <div v-if="$currentUser.isAuthenticated">
-                <v-btn id="log-out-btn" icon @click="logOut">
-                  <span class="sr-only">Log Out</span>
-                  <font-awesome-icon icon="sign-out-alt" size="lg" />
-                </v-btn>
-              </div>
-            </div>
-          </div>
-        </v-col>
       </v-row>
     </v-container>
   </v-footer>
@@ -67,18 +46,10 @@
 
 <script>
 import Context from '@/mixins/Context'
-import Iframe from '@/mixins/Iframe'
 import Utils from '@/mixins/Utils'
-import {getCasLogoutUrl} from '@/api/auth'
 
 export default {
-  name: 'Footer',
-  mixins: [Context, Iframe, Utils],
-  methods: {
-    logOut() {
-      this.$announcer.polite('Logging out')
-      getCasLogoutUrl().then(() => window.location.href = '/')
-    }
-  }
+  name: 'FooterIFrame',
+  mixins: [Context, Utils]
 }
 </script>

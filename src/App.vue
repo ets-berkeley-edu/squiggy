@@ -2,17 +2,19 @@
   <v-app :id="$vuetify.theme.dark ? 'dark' : 'light'">
     <VueAnnouncer />
     <router-view :key="stripAnchorRef($route.fullPath)" />
-    <Footer />
+    <FooterIFrame v-if="$isInIframe" />
+    <FooterStandalone v-if="!$isInIframe && $currentUser.isAuthenticated" />
   </v-app>
 </template>
 
 <script>
-import Footer from '@/components/util/Footer'
+import FooterStandalone from '@/components/util/FooterStandalone'
+import FooterIFrame from '@/components/util/FooterIFrame'
 import Util from '@/mixins/Utils'
 
 export default {
   name: 'App',
-  components: {Footer},
+  components: {FooterStandalone, FooterIFrame},
   mixins: [Util]
 }
 </script>
