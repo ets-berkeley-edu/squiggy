@@ -68,6 +68,8 @@ console.log('canvasCourseId = ' + params.get('canvasCourseId'))
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
+  Vue.prototype.$supportsCustomMessaging = _.get(Vue.prototype.$currentUser, 'course.canvas.supportsCustomMessaging')
+
   utils.postIFrameMessage(() => ({
     subject: 'changeParent',
     scrollToTop: true

@@ -1,11 +1,9 @@
 <script>
-import Vue from 'vue'
-
 export default {
   name: 'Iframe',
   methods: {
     iframeParentLocation(location) {
-      if (Vue.prototype.$isInIframe) {
+      if (this.$isInIframe) {
         const message = JSON.stringify(
           {
             subject: 'changeParent',
@@ -21,7 +19,7 @@ export default {
       }
     },
     iframeScrollToTop() {
-      if (Vue.prototype.$isInIframe) {
+      if (this.$isInIframe) {
         const message = JSON.stringify(
           {
             subject: 'changeParent',
