@@ -1,9 +1,11 @@
 <script>
+import store from '@/store'
+
 export default {
   name: 'Iframe',
   methods: {
     iframeParentLocation(location) {
-      if (this.$isInIframe) {
+      if (store.getters['context/isInIframe']) {
         const message = JSON.stringify(
           {
             subject: 'changeParent',
@@ -19,7 +21,7 @@ export default {
       }
     },
     iframeScrollToTop() {
-      if (this.$isInIframe) {
+      if (store.getters['context/isInIframe']) {
         const message = JSON.stringify(
           {
             subject: 'changeParent',

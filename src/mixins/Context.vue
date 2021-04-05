@@ -1,10 +1,21 @@
 <script>
-import {mapGetters} from 'vuex'
+import {mapActions, mapGetters} from 'vuex'
 
 export default {
   name: 'Context',
   computed: {
-    ...mapGetters('context', ['isLoading', 'noSpinnerWhenLoading'])
+    ...mapGetters('context', [
+      'isInIframe',
+      'isLoading',
+      'noSpinnerWhenLoading'
+    ])
+  },
+  methods: {
+    ...mapActions('context', [
+      'clearBookmarkHash',
+      'getBookmarkHash',
+      'rewriteBookmarkHash'
+    ])
   }
 }
 </script>

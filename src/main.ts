@@ -17,9 +17,7 @@ const isDebugMode = _.trim(process.env.VUE_APP_DEBUG).toLowerCase() === 'true'
 
 // Vue prototype
 Vue.prototype.$_ = _
-Vue.prototype.$isInIframe = !!window.parent.frames.length
 Vue.prototype.$loading = (noSpinner?: boolean) => store.dispatch('context/loadingStart', noSpinner)
-Vue.prototype.$postIFrameMessage = utils.postIFrameMessage
 Vue.prototype.$putFocusNextTick = utils.putFocusNextTick
 Vue.prototype.$ready = (label, focusTarget?) => store.dispatch('context/loadingComplete', {label, focusTarget})
 
@@ -70,21 +68,30 @@ axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
   Vue.prototype.$supportsCustomMessaging = _.get(Vue.prototype.$currentUser, 'course.canvas.supportsCustomMessaging')
 
-  utils.postIFrameMessage(() => ({
-    subject: 'changeParent',
-    scrollToTop: true
-  }))
+  const mount = () => {
+    axios.get(`${apiBaseUrl}/api/config`).then(data => {
+      Vue.prototype.$config = data
+      Vue.prototype.$config.apiBaseUrl = apiBaseUrl
+      Vue.prototype.$config.isVueAppDebugMode = isDebugMode
 
-  axios.get(`${apiBaseUrl}/api/config`).then(data => {
-    Vue.prototype.$config = data
-    Vue.prototype.$config.apiBaseUrl = apiBaseUrl
-    Vue.prototype.$config.isVueAppDebugMode = isDebugMode
+      new Vue({
+        router,
+        store,
+        vuetify,
+        render: h => h(App),
+      }).$mount('#app')
+    })
+  }
+  const isInIframe = !!window.parent.frames.length
+  if (isInIframe) {
+    store.dispatch('context/postIFrameMessage', {
+      generator: () => ({
+        subject: 'changeParent',
+        scrollToTop: true
+      })
+    }).then(mount)
 
-    new Vue({
-      router,
-      store,
-      vuetify,
-      render: h => h(App),
-    }).$mount('#app')
-  })
+  } else {
+    mount()
+  }
 })

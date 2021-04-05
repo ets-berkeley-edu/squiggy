@@ -19,7 +19,7 @@ export default {
     navItems: undefined,
   }),
   created() {
-    if (!this.$isInIframe) {
+    if (!this.isInIframe) {
       this.prefersColorScheme()
     }
   },

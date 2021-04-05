@@ -11,7 +11,7 @@ import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
 import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
-import utils from '@/utils'
+import store from '@/store'
 import Vue from 'vue'
 
 Vue.use(Router)
@@ -51,9 +51,9 @@ const router = new Router({
         },
         {
           beforeEnter: (to: any, from: any, next: any) => {
-            utils.extractBookmarkId(to, 'assetId').then(assetId => {
-              if (assetId) {
-                next(`/asset/${assetId}`)
+            store.dispatch('context/getBookmarkHash').then(params => {
+              if (params.assetId) {
+                next(`/asset/${params.assetId}`)
               } else {
                 next()
               }
