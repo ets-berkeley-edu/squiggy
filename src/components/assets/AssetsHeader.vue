@@ -221,13 +221,26 @@ export default {
     }
   },
   created() {
-    getUsers().then(data => {
-      this.users = data
-      getCategories().then(data => {
-        this.categories = data
-        this.expanded = !!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId)
-        this.isBusy = false
+    const loadUsers = () => {
+      getUsers().then(data => {
+        this.users = data
+        getCategories().then(data => {
+          this.categories = data
+          this.expanded = !!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId)
+          this.isBusy = false
+        })
       })
+    }
+    this.getBookmarkHash().then(bookmarkHash => {
+      if (bookmarkHash.length) {
+        this.setAssetType(bookmarkHash.assetType)
+        this.setCategoryId(bookmarkHash.categoryId)
+        this.setOrderBy(bookmarkHash.orderBy)
+        this.setUserId(bookmarkHash.userId)
+        this.search().then(loadUsers)
+      } else {
+        loadUsers()
+      }
     })
   },
   methods: {
@@ -236,10 +249,12 @@ export default {
       this.alertType = null
     },
     toggle() {
+      let orderBy = 'recent'
       this.setAssetType(null)
       this.setCategoryId(null)
-      this.setOrderBy('recent')
+      this.setOrderBy(orderBy)
       this.setUserId(null)
+      this.rewriteBookmarkHash({orderBy})
       this.alert = null
       this.alertType = null
       this.expanded = !this.expanded
@@ -251,6 +266,13 @@ export default {
         this.isBusy = true
         this.$announcer.polite('Searching')
         this.search().then(data => {
+          this.rewriteBookmarkHash({
+            assetType: this.assetType,
+            categoryId: this.categoryId,
+            keywords: this.keywords,
+            orderBy: this.orderBy,
+            userId: this.userId
+          })
           this.isBusy = false
           if (data.total) {
             this.alertType = 'info'

@@ -50,8 +50,11 @@ export default {
     getAsset(this.$route.params.id).then(data => {
       this.asset = data
       this.$ready(this.asset.title)
-      this.setParentHash({assetId: this.asset.id})
+      this.rewriteBookmarkHash({assetId: this.asset.id})
     })
+  },
+  destroyed() {
+    this.clearBookmarkHash()
   }
 }
 </script>

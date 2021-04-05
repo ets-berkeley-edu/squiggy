@@ -1,6 +1,8 @@
 <script>
 import _ from 'lodash'
+import Vue from 'vue'
 import VueScrollTo from 'vue-scrollto'
+import {mapActions, mapGetters} from 'vuex'
 
 export default {
   name: 'Utils',
@@ -10,7 +12,15 @@ export default {
       notBlank: v => !!_.trim(v) || 'Required'
     }
   }),
+  computed: {
+    ...mapGetters('context', [
+      'isInIframe'
+    ])
+  },
   methods: {
+    ...mapActions('context', [
+      'postIFrameMessage'
+    ]),
     getApiErrorMessage: (data) => _.get(data, 'response.data.message') || data.message || _.get(data, 'response.statusText'),
     getPossessive(comment) {
       return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
@@ -30,32 +40,29 @@ export default {
       return (`${substitutions[count] || substitutions['other'] || count} ` + (count === 1 ? noun : `${noun}${pluralSuffix}`))
     },
     resizeIFrame() {
-      this.$postIFrameMessage(() => ({
-        // If Canvas instance supports custom messaging then send our custom 'changeParent' event (see above).
-        height: document.body.offsetHeight,
-        subject: this.$supportsCustomMessaging ? 'changeParent' : 'lti.frameResize'
-      }))
+      if (this.isInIframe && Vue.prototype.$supportsCustomMessaging) {
+        // If Canvas instance supports custom messaging then send our custom 'changeParent' event.
+        const generator = () => ({
+          height: document.body.offsetHeight,
+          subject: this.$supportsCustomMessaging ? 'changeParent' : 'lti.frameResize'
+        })
+        this.postIFrameMessage({generator, callback: _.noop})
+      }
     },
     scrollTo: (element, timeout=1000) => setTimeout(() => VueScrollTo.scrollTo(element), timeout),
     scrollToLtiTop: () => {
       window.scrollTo(0, 0)
       // If running as BasicLTI then we also scroll parent window to top.
-      if (window.parent) {
+      if (this.isInIframe) {
         if (this.$supportsCustomMessaging) {
           // If hosting Canvas supports our custom 'changeParent' cross-window event then use it.
-          this.$postIFrameMessage(() => ({subject: 'changeParent', scrollToTop: true}))
+          const generator = () => ({subject: 'changeParent', scrollToTop: true})
+          this.postIFrameMessage({generator, callback: _.noop})
         } else {
           // Otherwise, use the standard Canvas event.
-          this.$postIFrameMessage(() => ({subject: 'lti.scrollToTop'}))
+          const generator = () => ({subject: 'lti.scrollToTop'})
+          this.postIFrameMessage({generator, callback: _.noop})
         }
-      }
-    },
-    setParentHash(params) {
-      if (this.$supportsCustomMessaging) {
-        this.$postIFrameMessage(() => ({
-          subject: 'setParentHash',
-          hash: _.map(params, (value, key) => `suitec_${key}=${encodeURIComponent(value)}`).join('&')
-        }))
       }
     },
     stripAnchorRef: path => _.split(path, '#', 1)[0],
