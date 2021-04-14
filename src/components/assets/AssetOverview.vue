@@ -57,9 +57,10 @@
       >
         Source:
       </v-col>
-      <v-col>
-        {{ asset.source || '&mdash;' }}
+      <v-col v-if="sourceUrl">
+        <a :href="sourceUrl" target="_blank">{{ sourceUrl }}</a>
       </v-col>
+      <v-col v-if="!sourceUrl">&mdash;</v-col>
     </v-row>
     <v-row justify="start">
       <v-col
@@ -108,10 +109,12 @@ export default {
     }
   },
   data: () => ({
-    imageUrl: undefined
+    imageUrl: undefined,
+    sourceUrl: undefined
   }),
   created() {
     this.imageUrl = this.asset.imageUrl || require('@/assets/img-not-found.png')
+    this.sourceUrl = this.asset.source || this.asset.url
   },
   methods: {
     like() {
