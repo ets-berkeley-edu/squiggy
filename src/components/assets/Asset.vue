@@ -43,18 +43,34 @@ export default {
   },
   mixins: [Context, Utils],
   data: () => ({
-    asset: undefined
+    asset: undefined,
+    refreshPreviewTimeout: undefined
   }),
   created() {
     this.$loading()
-    getAsset(this.$route.params.id).then(data => {
+    this.fetchAsset().then(data => {
       this.asset = data
       this.$ready(this.asset.title)
       this.rewriteBookmarkHash({assetId: this.asset.id})
     })
   },
   destroyed() {
+    clearTimeout(this.refreshPreviewTimeout)
     this.clearBookmarkHash()
+  },
+  methods: {
+    fetchAsset() {
+      return getAsset(this.$route.params.id).then(data => {
+        if (data && data.previewStatus === 'pending') {
+          this.scheduleRefreshPreview()
+        }
+        return data
+      })
+    },
+    scheduleRefreshPreview() {
+      clearTimeout(this.refreshPreviewTimeout)
+      this.refreshPreviewTimeout = setTimeout(this.fetchAsset, 2000)
+    }
   }
 }
 </script>
