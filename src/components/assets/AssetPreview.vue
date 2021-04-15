@@ -1,6 +1,6 @@
 <template>
   <div class="assetlibrary-item-preview-outer">
-    <div v-if="asset.previewStatus === 'done'" class="assetlibrary-item-preview">
+    <div v-if="previewStatus === 'done'" class="assetlibrary-item-preview">
       <div v-if="asset.assetType === 'file' && !asset.pdfUrl && !videoUrl && asset.imageUrl">
         <v-img
           :id="`asset-preview-image-${asset.id}`"
@@ -72,14 +72,14 @@
       </div>
     </div>
     <div
-      v-if="asset.previewStatus === 'pending'"
+      v-if="previewStatus === 'pending'"
       class="assetlibrary-item-preview-message"
     >
       <font-awesome-icon icon="spinner" spin />
       Preparing a preview...
     </div>
     <div
-      v-if="asset.previewStatus === 'unsupported' || asset.previewStatus === 'error'"
+      v-if="previewStatus === 'unsupported' || previewStatus === 'error'"
       class="assetlibrary-item-preview-message"
     >
       No preview available.
@@ -113,12 +113,22 @@ export default {
     videoUrl: undefined,
     width: undefined
   }),
+  computed: {
+    previewStatus() {
+      return this.asset.previewStatus
+    }
+  },
   created() {
     this.decorateAssetFeed()
   },
+  watch: {
+    previewStatus() {
+      this.decorateAssetFeed()
+    }
+  },
   methods: {
     decorateAssetFeed() {
-      if (this.asset.previewStatus === 'done') {
+      if (this.previewStatus === 'done') {
         if (this.asset.assetType === 'file') {
           if (this.asset.pdfUrl) {
             this.embedUrl = this.$config.staticPath + '/viewer/viewer.html?file=' + encodeURIComponent(this.asset.pdfUrl)
