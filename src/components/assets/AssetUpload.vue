@@ -10,6 +10,14 @@
       @drop.prevent="addFile"
       @dragover.prevent
     >
+      <Alert
+        v-if="alert"
+        id="asset-library-file-upload"
+        class="my-2"
+        :messages="[alert]"
+        type="error"
+        width="auto"
+      />
       <div class="file-upload-box-icon"><font-awesome-icon icon="cloud-upload-alt" /></div>
       <div class="file-upload-box-text">Drop file to upload</div>
       <div class="file-upload-box-text">or</div>
@@ -107,6 +115,7 @@
 
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
+import Alert from '@/components/util/Alert'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
@@ -115,9 +124,10 @@ import {getCategories} from '@/api/categories'
 
 export default {
   name: 'AssetUpload',
-  components: {AccessibleSelect, BackToAssetLibrary},
+  components: {AccessibleSelect, Alert, BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
+    alert: undefined,
     categories: undefined,
     categoryId: undefined,
     description: undefined,
@@ -148,10 +158,15 @@ export default {
       this.selectFile(e.target.files)
     },
     selectFile(files) {
+      this.alert = null
       if (this.$_.size(files) > 0) {
-        this.file = files[0]
-        this.title = this.file.name
-        this.$announcer.polite(`${this.file} added`)
+        if (files[0].size > 10485760) {
+          this.alert = `The file "${files[0].name}" is too large. Files can be maximum 10MB in size.`
+        } else {
+          this.file = files[0]
+          this.title = this.file.name
+          this.$announcer.polite(`${this.file} added`)
+        }
       }
     },
     upload() {
