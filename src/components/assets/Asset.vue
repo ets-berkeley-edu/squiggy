@@ -48,8 +48,7 @@ export default {
   }),
   created() {
     this.$loading()
-    this.fetchAsset().then(data => {
-      this.asset = data
+    this.fetchAsset().then(() => {
       this.$ready(this.asset.title)
       this.rewriteBookmarkHash({assetId: this.asset.id})
     })
@@ -61,10 +60,10 @@ export default {
   methods: {
     fetchAsset() {
       return getAsset(this.$route.params.id).then(data => {
+        this.asset = data
         if (data && data.previewStatus === 'pending') {
           this.scheduleRefreshPreview()
         }
-        return data
       })
     },
     scheduleRefreshPreview() {
