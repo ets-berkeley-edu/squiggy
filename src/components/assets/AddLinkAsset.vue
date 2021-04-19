@@ -21,6 +21,7 @@
               :rules="urlRules"
               required
               outlined
+              @blur="ensureUrlPrefix"
               @keydown.enter="submit"
             />
           </v-col>
@@ -137,7 +138,13 @@ export default {
     })
   },
   methods: {
+    ensureUrlPrefix() {
+      if (this.url && this.url.indexOf('://') === -1) {
+        this.url = `http://${this.url}`
+      }
+    },
     submit() {
+      this.ensureUrlPrefix()
       createLinkAsset(this.categoryId, this.description, this.title, this.url).then(() => {
         this.go('/assets')
       })
