@@ -2,7 +2,7 @@
   <div v-if="!isLoading">
     <BackToAssetLibrary />
 
-    <v-form @submit="submit">
+    <v-form v-model="linkAssetValid" @submit="submit">
       <v-container class="mt-2" fluid>
         <v-row justify="start">
           <v-col>
@@ -18,7 +18,8 @@
               id="asset-url-input"
               v-model="url"
               label="Paste or type a URL here"
-              maxlength="255"
+              :rules="urlRules"
+              required
               outlined
               @keydown.enter="submit"
             />
@@ -33,7 +34,8 @@
               id="asset-title-input"
               v-model="title"
               label="Enter a title"
-              maxlength="255"
+              :rules="titleRules"
+              required
               outlined
               @keydown.enter="submit"
             />
@@ -75,7 +77,7 @@
                 <v-btn
                   id="add-link-btn"
                   color="primary"
-                  :disabled="disable"
+                  :disabled="!linkAssetValid"
                   elevation="1"
                   @click="submit"
                 >
@@ -109,9 +111,17 @@ export default {
     categories: undefined,
     categoryId: undefined,
     description: undefined,
-    title: undefined,
-    url: undefined,
-    valid: true
+    linkAssetValid: false,
+    title: '',
+    titleRules: [
+      v => !!v || 'Please enter a title',
+      v => v.length <= 255 || 'Title must be 255 characters or less',
+    ],
+    url: '',
+    urlRules: [
+      v => !!v || 'Please enter a URL',
+      v => v.length <= 255 || 'URL must be 255 characters or less',
+    ]
   }),
   computed: {
     disable() {
