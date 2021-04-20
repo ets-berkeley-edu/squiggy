@@ -287,6 +287,50 @@ class Asset(Base):
 
         return results
 
+    def add_like(self, user):
+        like_activity = Activity.create_unless_exists(
+            activity_type='asset_like',
+            course_id=self.course_id,
+            user_id=user.get_id(),
+            object_type='asset',
+            object_id=self.id,
+            asset_id=self.id,
+        )
+        if like_activity:
+            for asset_owner in self.users:
+                Activity.create_unless_exists(
+                    activity_type='get_asset_like',
+                    course_id=self.course_id,
+                    user_id=asset_owner.id,
+                    object_type='asset',
+                    object_id=self.id,
+                    asset_id=self.id,
+                    actor_id=user.get_id(),
+                    reciprocal_id=like_activity.id,
+                )
+        self.likes = Activity.query.filter_by(asset_id=self.id, activity_type='asset_like').count()
+        db.session.add(self)
+        std_commit()
+        return True
+
+    def remove_like(self, user):
+        db.session.query(Activity).filter_by(
+            object_id=self.id,
+            object_type='asset',
+            activity_type='asset_like',
+            user_id=user.get_id(),
+        ).delete()
+        db.session.query(Activity).filter_by(
+            object_id=self.id,
+            object_type='asset',
+            activity_type='get_asset_like',
+            actor_id=user.get_id(),
+        ).delete()
+        self.likes = Activity.query.filter_by(object_id=self.id, object_type='asset', activity_type='asset_like').count()
+        db.session.add(self)
+        std_commit()
+        return True
+
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
             self.preview_status = kwargs['preview_status']

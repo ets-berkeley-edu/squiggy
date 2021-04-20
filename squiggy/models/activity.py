@@ -136,6 +136,11 @@ class Activity(Base):
         return activity
 
     @classmethod
+    def create_unless_exists(cls, **kwargs):
+        if cls.query.filter_by(**kwargs).count() == 0:
+            return cls.create(**kwargs)
+
+    @classmethod
     def find_by_object_id(cls, object_type, object_id):
         return cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).all()
 
