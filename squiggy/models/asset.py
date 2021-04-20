@@ -331,6 +331,32 @@ class Asset(Base):
         std_commit()
         return True
 
+    def increment_views(self, user):
+        view_activity = Activity.create_unless_exists(
+            activity_type='asset_view',
+            course_id=self.course_id,
+            user_id=user.id,
+            object_type='asset',
+            object_id=self.id,
+            asset_id=self.id,
+        )
+        if view_activity:
+            for asset_owner in self.users:
+                Activity.create_unless_exists(
+                    activity_type='get_asset_view',
+                    course_id=self.course_id,
+                    user_id=asset_owner.id,
+                    object_type='asset',
+                    object_id=self.id,
+                    asset_id=self.id,
+                    actor_id=user.id,
+                    reciprocal_id=view_activity.id,
+                )
+        self.views = Activity.query.filter_by(asset_id=self.id, activity_type='asset_view').count()
+        db.session.add(self)
+        std_commit()
+        return True
+
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
             self.preview_status = kwargs['preview_status']

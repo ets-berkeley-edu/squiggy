@@ -69,6 +69,26 @@ class TestGetAsset:
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['id'] == mock_asset.id
 
+    def test_increment_asset_view_count(self, client, fake_auth, mock_asset):
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
+        # Instructor 1 increments view count.
+        fake_auth.login(instructors[0].id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['views'] == 1
+        # Instructor 2 increments view count.
+        fake_auth.login(instructors[1].id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['views'] == 2
+        # Repeat views do not increment,
+        fake_auth.login(instructors[0].id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['views'] == 2
+        # Views by asset owners do not increment.
+        fake_auth.login(mock_asset.users[0].id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['views'] == 2
+
 
 class TestDownloadAsset:
     """Download Asset API."""

@@ -65,6 +65,8 @@ def download(asset_id):
 def get_asset(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
     if asset and can_view_asset(asset=asset, user=current_user):
+        if current_user.user not in asset.users:
+            asset.increment_views(current_user.user)
         return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
     else:
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
