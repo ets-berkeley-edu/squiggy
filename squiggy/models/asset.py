@@ -346,9 +346,21 @@ class Asset(Base):
         std_commit()
         return True
 
-    def to_api_json(self):
+    def to_api_json(self, user_id=None):
         image_url = get_s3_signed_url(self.image_url)
         pdf_url = get_s3_signed_url(self.pdf_url)
+
+        liked = False
+        if user_id:
+            like_query = Activity.query.filter_by(
+                object_id=self.id,
+                object_type='asset',
+                activity_type='asset_like',
+                user_id=user_id,
+            )
+            if like_query.first() is not None:
+                liked = True
+
         return {
             'id': self.id,
             'assetType': self.asset_type,
@@ -361,6 +373,7 @@ class Asset(Base):
             'dislikes': self.dislikes,
             'downloadUrl': self.download_url,
             'imageUrl': image_url,
+            'liked': liked,
             'likes': self.likes,
             'mime': self.mime,
             'pdfUrl': pdf_url,

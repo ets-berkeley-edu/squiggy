@@ -65,7 +65,7 @@ def download(asset_id):
 def get_asset(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
     if asset and can_view_asset(asset=asset, user=current_user):
-        return tolerant_jsonify(asset.to_api_json())
+        return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
     else:
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
 
@@ -156,20 +156,20 @@ def delete_asset(asset_id):
     return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
 
 
-@app.route('/api/asset/<asset_id>/like')
+@app.route('/api/asset/<asset_id>/like', methods=['POST'])
 @login_required
 def like_asset(asset_id):
     asset = _get_asset_for_like(asset_id)
     asset.add_like(user=current_user)
-    return tolerant_jsonify(asset.to_api_json())
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
 
 
-@app.route('/api/asset/<asset_id>/remove_like')
+@app.route('/api/asset/<asset_id>/remove_like', methods=['POST'])
 @login_required
 def remove_like_asset(asset_id):
     asset = _get_asset_for_like(asset_id)
     asset.remove_like(user=current_user)
-    return tolerant_jsonify(asset.to_api_json())
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
 
 
 @app.route('/api/asset/update', methods=['POST'])
@@ -191,7 +191,7 @@ def update_asset():
         description=description,
         title=title,
     )
-    return tolerant_jsonify(asset.to_api_json())
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
 
 
 def _get(_dict, key, default_value=None):

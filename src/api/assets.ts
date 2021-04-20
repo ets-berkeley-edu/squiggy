@@ -70,5 +70,9 @@ export function getAssets(
 }
 
 export function likeAsset(assetId) {
-  return axios.get(`${utils.apiBaseUrl()}/api/asset/${assetId}/like`)
+  return axios.post(`${utils.apiBaseUrl()}/api/asset/${assetId}/like`)
+}
+
+export function removeLikeAsset(assetId) {
+  return axios.post(`${utils.apiBaseUrl()}/api/asset/${assetId}/remove_like`)
 }

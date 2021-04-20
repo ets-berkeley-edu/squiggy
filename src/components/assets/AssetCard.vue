@@ -35,7 +35,7 @@
             <div>
               <div class="align-center d-flex">
                 <div class="pr-3">
-                  <font-awesome-icon icon="thumbs-up" />
+                  <font-awesome-icon icon="thumbs-up" :class="{'asset-icon-liked': asset.liked}" />
                   {{ asset.likes }}
                 </div>
                 <div class="pr-3">
@@ -91,6 +91,9 @@ export default {
 <style scoped>
 .actions {
   padding: 6px 12px 4px 0;
+}
+.asset-icon-liked {
+  color: #4172b4 !important;
 }
 .asset-metadata {
   background-color: #333;
