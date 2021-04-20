@@ -22,11 +22,13 @@
                 <v-btn
                   id="like-asset-btn"
                   icon
-                  @click="like"
-                  @keypress.enter.prevent="like"
+                  class="like-asset-btn"
+                  :class="{'like-asset-btn-liked': liked}"
+                  @click="toggleLike"
+                  @keypress.enter.prevent="toggleLike"
                 >
                   <font-awesome-icon icon="thumbs-up" />
-                  <span id="asset-like-count" class="ml-1">{{ asset.likes }}</span>
+                  <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
                 </v-btn>
               </div>
               <div class="mr-5">
@@ -96,7 +98,7 @@
 import Avatar from '@/components/user/Avatar'
 import OxfordJoin from '@/components/util/OxfordJoin'
 import Utils from '@/mixins/Utils'
-import {likeAsset} from '@/api/assets'
+import {likeAsset, removeLikeAsset} from '@/api/assets'
 
 export default {
   name: 'AssetOverview',
@@ -110,18 +112,42 @@ export default {
   },
   data: () => ({
     imageUrl: undefined,
+    likeCount: undefined,
+    liked: undefined,
     sourceUrl: undefined
   }),
   created() {
     this.imageUrl = this.asset.imageUrl || require('@/assets/img-not-found.png')
+    this.likeCount = this.asset.likes
+    this.liked = this.asset.liked
     this.sourceUrl = this.asset.source || this.asset.url
   },
   methods: {
-    like() {
-      likeAsset(this.asset.id).then(asset => {
-        this.$announcer.polite(`You liked '${asset.title}'`)
-      })
+    toggleLike() {
+      if (this.liked) {
+        removeLikeAsset(this.asset.id).then(data => {
+          this.likeCount = data.likes
+          this.liked = data.liked
+          this.$announcer.polite(`You removed your like from '${data.title}'`)
+        })
+      } else {
+        likeAsset(this.asset.id).then(data => {
+          this.likeCount = data.likes
+          this.liked = data.liked
+          this.$announcer.polite(`You liked '${data.title}'`)
+        })
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+.like-asset-btn:hover {
+  color: #719fdd;
+}
+
+.like-asset-btn-liked {
+  color: #4172b4 !important;
+}
+</style>

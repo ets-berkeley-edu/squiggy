@@ -354,13 +354,13 @@ class TestLikeAsset:
 
     @staticmethod
     def _api_like_asset(asset_id, client, expected_status_code=200):
-        response = client.get(f'/api/asset/{asset_id}/like')
+        response = client.post(f'/api/asset/{asset_id}/like')
         assert response.status_code == expected_status_code
         return response
 
     @staticmethod
     def _api_remove_like_asset(asset_id, client, expected_status_code=200):
-        response = client.get(f'/api/asset/{asset_id}/remove_like')
+        response = client.post(f'/api/asset/{asset_id}/remove_like')
         assert response.status_code == expected_status_code
         return response
 
@@ -401,10 +401,13 @@ class TestLikeAsset:
         fake_auth.login(different_user.id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['likes'] == 0
+        assert asset['liked'] is False
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
+        assert response.json['liked'] is True
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['likes'] == 1
+        assert asset['liked'] is True
 
     def test_likes_same_user_does_not_increment(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
@@ -423,15 +426,19 @@ class TestLikeAsset:
         fake_auth.login(different_user_1.id)
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
+        assert response.json['liked'] is True
         fake_auth.login(different_user_2.id)
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 2
+        assert response.json['liked'] is True
         fake_auth.login(different_user_1.id)
         response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
+        assert response.json['liked'] is False
         fake_auth.login(different_user_2.id)
         response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 0
+        assert response.json['liked'] is False
 
     def test_errant_remove_like_does_not_decrement(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
@@ -439,5 +446,7 @@ class TestLikeAsset:
         fake_auth.login(different_user.id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['likes'] == 0
+        assert asset['liked'] is False
         response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 0
+        assert response.json['liked'] is False
