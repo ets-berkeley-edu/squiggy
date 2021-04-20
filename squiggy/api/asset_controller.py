@@ -159,12 +159,17 @@ def delete_asset(asset_id):
 @app.route('/api/asset/<asset_id>/like')
 @login_required
 def like_asset(asset_id):
-    asset = Asset.find_by_id(asset_id=asset_id)
-    if asset and can_view_asset(asset=asset, user=current_user):
-        # TODO: Implement Asset.like and write pytests
-        return tolerant_jsonify(asset.to_api_json())
-    else:
-        raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
+    asset = _get_asset_for_like(asset_id)
+    asset.add_like(user=current_user)
+    return tolerant_jsonify(asset.to_api_json())
+
+
+@app.route('/api/asset/<asset_id>/remove_like')
+@login_required
+def remove_like_asset(asset_id):
+    asset = _get_asset_for_like(asset_id)
+    asset.remove_like(user=current_user)
+    return tolerant_jsonify(asset.to_api_json())
 
 
 @app.route('/api/asset/update', methods=['POST'])
@@ -199,6 +204,16 @@ def _load_json(path):
         return json.load(file)
     except (FileNotFoundError, KeyError, TypeError):
         return None
+
+
+def _get_asset_for_like(asset_id):
+    asset = Asset.find_by_id(asset_id=asset_id)
+    if not asset or not can_view_asset(asset=asset, user=current_user):
+        raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
+    elif current_user.user in asset.users:
+        raise BadRequestError('You cannot like your own asset.')
+    else:
+        return asset
 
 
 def _get_upload_from_http_post():

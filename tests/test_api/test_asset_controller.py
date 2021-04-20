@@ -25,38 +25,40 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 import os
+from random import randrange
 
 from moto import mock_s3
 from squiggy import std_commit
 from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
+from squiggy.models.user import User
 from tests.util import mock_s3_bucket
 
 unauthorized_user_id = '666'
 
 
+def _api_get_asset(asset_id, client, expected_status_code=200):
+    response = client.get(f'/api/asset/{asset_id}')
+    assert response.status_code == expected_status_code
+    return response.json
+
+
 class TestGetAsset:
     """Asset API."""
 
-    @staticmethod
-    def _api_asset(asset_id, client, expected_status_code=200):
-        response = client.get(f'/api/asset/{asset_id}')
-        assert response.status_code == expected_status_code
-        return response.json
-
     def test_anonymous(self, client, mock_asset):
         """Denies anonymous user."""
-        self._api_asset(asset_id=1, client=client, expected_status_code=401)
+        _api_get_asset(asset_id=1, client=client, expected_status_code=401)
 
     def test_unauthorized(self, client, fake_auth, mock_asset):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_asset(asset_id=1, client=client, expected_status_code=401)
+        _api_get_asset(asset_id=1, client=client, expected_status_code=401)
 
     def test_owner_view_asset(self, client, fake_auth, mock_asset, mock_category):
         """Authorized user can view asset."""
         fake_auth.login(mock_asset.users[0].id)
-        asset = self._api_asset(asset_id=mock_asset.id, client=client)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['id'] == mock_asset.id
 
     def test_teacher_view_asset(self, client, fake_auth, mock_asset):
@@ -64,7 +66,7 @@ class TestGetAsset:
         course = Course.find_by_id(mock_asset.course_id)
         instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
-        asset = self._api_asset(asset_id=mock_asset.id, client=client)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['id'] == mock_asset.id
 
 
@@ -345,3 +347,97 @@ class TestDeleteAsset:
         std_commit(allow_test_environment=True)
         response = client.get(f'/api/asset/{asset_id}')
         assert response.status_code == 404
+
+
+class TestLikeAsset:
+    """Like asset API."""
+
+    @staticmethod
+    def _api_like_asset(asset_id, client, expected_status_code=200):
+        response = client.get(f'/api/asset/{asset_id}/like')
+        assert response.status_code == expected_status_code
+        return response
+
+    @staticmethod
+    def _api_remove_like_asset(asset_id, client, expected_status_code=200):
+        response = client.get(f'/api/asset/{asset_id}/remove_like')
+        assert response.status_code == expected_status_code
+        return response
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_like_asset(asset_id=1, client=client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_like_asset(asset_id=1, client=client, expected_status_code=401)
+
+    def test_like_asset_by_owner(self, client, fake_auth, mock_asset):
+        """User can't like own asset."""
+        fake_auth.login(mock_asset.users[0].id)
+        self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=400)
+
+    def test_like_asset_by_non_course_user(self, client, fake_auth, mock_asset):
+        """A user in a different course can't like an asset."""
+        second_course = Course.create(
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=randrange(1000000),
+        )
+        second_course_user = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='Doug Yule',
+            canvas_user_id=randrange(1000000),
+            course_id=second_course.id,
+        )
+        fake_auth.login(second_course_user.id)
+        self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=404)
+
+    def test_like_asset_by_course_user(self, client, fake_auth, mock_asset):
+        """Another user in the same court can like an asset."""
+        course_users = Course.find_by_id(mock_asset.course_id).users
+        different_user = next(user for user in course_users if user not in mock_asset.users)
+        fake_auth.login(different_user.id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['likes'] == 0
+        response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 1
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['likes'] == 1
+
+    def test_likes_same_user_does_not_increment(self, client, fake_auth, mock_asset):
+        course_users = Course.find_by_id(mock_asset.course_id).users
+        different_user = next(user for user in course_users if user not in mock_asset.users)
+        fake_auth.login(different_user.id)
+        response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 1
+        response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 1
+
+    def test_likes_multiple_users_increment_remove_likes_decrement(self, client, fake_auth, mock_asset):
+        course_users = Course.find_by_id(mock_asset.course_id).users
+        user_iterator = (user for user in course_users if user not in mock_asset.users)
+        different_user_1 = next(user_iterator)
+        different_user_2 = next(user_iterator)
+        fake_auth.login(different_user_1.id)
+        response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 1
+        fake_auth.login(different_user_2.id)
+        response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 2
+        fake_auth.login(different_user_1.id)
+        response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 1
+        fake_auth.login(different_user_2.id)
+        response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 0
+
+    def test_errant_remove_like_does_not_decrement(self, client, fake_auth, mock_asset):
+        course_users = Course.find_by_id(mock_asset.course_id).users
+        different_user = next(user for user in course_users if user not in mock_asset.users)
+        fake_auth.login(different_user.id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['likes'] == 0
+        response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
+        assert response.json['likes'] == 0
