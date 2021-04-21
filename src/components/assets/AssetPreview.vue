@@ -185,13 +185,7 @@ export default {
 }
 
 @media only screen and (min-width : 768px) {
-  .assetlibrary-item-preview {
-    line-height: 400px;
-    max-height: 720px;
-  }
-
   .assetlibrary-item-preview .preview-image {
-    max-height: 720px;
     padding: 5px;
   }
 
