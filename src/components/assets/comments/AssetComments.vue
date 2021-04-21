@@ -124,6 +124,10 @@ export default {
       default: undefined,
       required: false,
       type: Number
+    },
+    updateCommentCount: {
+      required: true,
+      type: Function
     }
   },
   data: () => ({
@@ -149,6 +153,7 @@ export default {
       this.replyToCommentId = null
       getComments(this.assetId).then(data => {
         this.comments = data
+        this.updateCommentCount(data.length + this.$_.sumBy(data, c => c.replies.length))
         if (comment) {
           this.scrollTo(`#comment-${comment.id}`, 0)
         }
