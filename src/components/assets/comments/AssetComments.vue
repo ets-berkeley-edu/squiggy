@@ -41,9 +41,12 @@
                 :comment="comment"
               />
             </div>
-            <div v-if="editCommentId !== comment.id" :id="`comment-${comment.id}-body`">
-              {{ comment.body }}
-            </div>
+            <div
+              v-if="editCommentId !== comment.id"
+              :id="`comment-${comment.id}-body`"
+              v-linkified
+              v-html="comment.body"
+            />
             <div
               v-for="reply in comment.replies"
               :key="reply.id"
@@ -73,9 +76,12 @@
                     :comment="reply"
                   />
                 </div>
-                <div v-if="editCommentId !== reply.id" :id="`comment-${reply.id}-body`">
-                  {{ reply.body }}
-                </div>
+                <div
+                  v-if="editCommentId !== reply.id"
+                  :id="`comment-${reply.id}-body`"
+                  v-linkified
+                  v-html="reply.body"
+                />
               </div>
             </div>
             <div v-if="replyToCommentId === comment.id" class="pl-6 pt-5">

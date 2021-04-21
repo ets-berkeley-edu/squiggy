@@ -55,6 +55,7 @@
     "typescript": "^4.2.3",
     "vue-cli-plugin-vuetify": "^2.2.2",
     "vue-eslint-parser": "^7.6.0",
+    "vue-linkify": "1.0.1",
     "vue-template-compiler": "^2.6.12",
     "vuetify-loader": "^1.7.2"
   },
