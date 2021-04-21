@@ -141,6 +141,10 @@ class Activity(Base):
             return cls.create(**kwargs)
 
     @classmethod
+    def delete_by_object_id(cls, object_type, object_id):
+        cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).delete()
+
+    @classmethod
     def find_by_object_id(cls, object_type, object_id):
         return cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).all()
 

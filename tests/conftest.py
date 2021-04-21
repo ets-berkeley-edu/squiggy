@@ -195,7 +195,7 @@ def mock_asset(app, db_session):
     for test_comment in _get_mock_comments():
         comment = Comment.create(asset=asset, body=test_comment['body'], user_id=user.id)
         for reply in test_comment.get('replies', []):
-            Comment.create(
+            reply = Comment.create(
                 asset=asset,
                 body=reply['body'],
                 parent_id=comment.id,
