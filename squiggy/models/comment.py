@@ -34,10 +34,12 @@ class Comment(Base):
     __tablename__ = 'comments'
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    asset_id = db.Column(db.Integer, nullable=False)
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
     user_id = db.Column(db.Integer)
     body = db.Column(db.Text, nullable=False)
     parent_id = db.Column(db.Integer)
+
+    asset = db.relationship('Asset', back_populates='comments')
 
     def __init__(
             self,
@@ -63,8 +65,12 @@ class Comment(Base):
     def delete(cls, comment_id):
         comment = cls.query.filter_by(id=comment_id).first()
         if comment:
+            asset = comment.asset
             db.session.delete(comment)
-            std_commit()
+            Activity.delete_by_object_id(object_type='comment', object_id=comment_id)
+            std_commit(allow_test_environment=True)
+            if asset:
+                asset.refresh_comments_count()
 
     @classmethod
     def find_by_id(cls, comment_id):
@@ -79,8 +85,9 @@ class Comment(Base):
             parent_id=parent_id,
         )
         db.session.add(comment)
-        std_commit()
+        std_commit(allow_test_environment=True)
         _create_activities_per_new_comment(asset=asset, comment=comment)
+        asset.refresh_comments_count()
         return comment
 
     @classmethod
@@ -123,30 +130,32 @@ class Comment(Base):
 def _create_activities_per_new_comment(asset, comment):
     if asset.visible:
         course_id = asset.course_id
-        Activity.create(
-            activity_type='asset_comment',
-            course_id=course_id,
-            user_id=comment.user_id,
-            object_type='comment',
-            object_id=comment.id,
-            asset_id=asset.id,
-        )
-        for user in asset.users:
+        if comment.user_id not in [user.id for user in asset.users]:
             Activity.create(
-                activity_type='get_asset_comment',
+                activity_type='asset_comment',
                 course_id=course_id,
-                user_id=user.id,
+                user_id=comment.user_id,
                 object_type='comment',
                 object_id=comment.id,
                 asset_id=asset.id,
             )
+            for user in asset.users:
+                Activity.create(
+                    activity_type='get_asset_comment',
+                    course_id=course_id,
+                    user_id=user.id,
+                    object_type='comment',
+                    object_id=comment.id,
+                    asset_id=asset.id,
+                )
         if comment.parent_id:
             parent = Comment.find_by_id(comment.parent_id)
-            Activity.create(
-                activity_type='get_asset_comment_reply',
-                course_id=course_id,
-                user_id=parent.user_id,
-                object_type='comment',
-                object_id=parent.id,
-                asset_id=asset.id,
-            )
+            if parent.user_id != comment.user_id:
+                Activity.create(
+                    activity_type='get_asset_comment_reply',
+                    course_id=course_id,
+                    user_id=parent.user_id,
+                    object_type='comment',
+                    object_id=parent.id,
+                    asset_id=asset.id,
+                )

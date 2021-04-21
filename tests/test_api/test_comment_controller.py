@@ -31,6 +31,7 @@ from squiggy.models.activity import Activity
 from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
+from tests.test_api.test_asset_controller import _api_get_asset
 
 unauthorized_user_id = '666'
 
@@ -65,6 +66,9 @@ class TestCreateComments:
     def test_admin(self, authorized_user_id, client, fake_auth, mock_asset):
         """Returns a well-formed response."""
         fake_auth.login(authorized_user_id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        initial_comment_count = asset['commentCount']
+        assert initial_comment_count > 0
         api_json = self._api_create_comment(
             asset_id=mock_asset.id,
             body='I\'m in the phone booth, it\'s the one across the hall',
@@ -77,6 +81,8 @@ class TestCreateComments:
         activities = Activity.find_by_object_id(object_type='comment', object_id=comment_id)
         assert len(activities) > 0
         assert activities[0].asset_id == mock_asset.id
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['commentCount'] == initial_comment_count + 1
 
         # Reply
         self._api_create_comment(
@@ -96,6 +102,8 @@ class TestCreateComments:
         activities = Activity.find_by_object_id(object_type='comment', object_id=replies[0]['id'])
         assert len(activities) > 0
         assert activities[0].asset_id == mock_asset.id
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['commentCount'] == initial_comment_count + 2
 
 
 class TestGetComments:
@@ -122,6 +130,8 @@ class TestGetComments:
         assert len(replies) == 2
         assert 'all tomorrow\'s parties' in replies[0]['body']
         assert 'Sunday\'s clown' in replies[1]['body']
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['commentCount'] == 4
 
 
 class TestUpdateComment:
@@ -206,6 +216,9 @@ class TestDeleteComment:
         self._verify_delete_comment(mock_asset, client)
 
     def _verify_delete_comment(self, asset, client):
+        asset_feed = _api_get_asset(asset_id=asset.id, client=client)
+        initial_comment_count = asset_feed['commentCount']
+        assert initial_comment_count > 0
         comment = Comment.get_comments(asset_id=asset.id)[0]
         comment_id = comment['id']
         self._api_delete_comment(comment_id=comment_id, client=client)
@@ -213,6 +226,10 @@ class TestDeleteComment:
         comments = _api_get_comments(asset_id=asset.id, client=client)
         comment_ids = list(map(lambda c: c['id'], comments))
         assert comment_id not in comment_ids
+        asset_feed = _api_get_asset(asset_id=asset.id, client=client)
+        assert asset_feed['commentCount'] == initial_comment_count - 1
+        activities = Activity.find_by_object_id(object_type='comment', object_id=comment_id)
+        assert len(activities) == 0
 
 
 def _api_get_comments(asset_id, client, expected_status_code=200):

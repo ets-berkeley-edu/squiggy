@@ -89,6 +89,7 @@ class Asset(Base):
         secondary=asset_user_table,
         backref='assets',
     )
+    comments = db.relationship('Comment', back_populates='asset', cascade='all, delete-orphan')
 
     def __init__(
         self,
@@ -356,6 +357,12 @@ class Asset(Base):
         db.session.add(self)
         std_commit()
         return True
+
+    def refresh_comments_count(self):
+        self.comment_count = len(self.comments)
+        db.session.add(self)
+        std_commit()
+        return self.comment_count
 
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
