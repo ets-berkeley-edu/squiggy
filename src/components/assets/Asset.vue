@@ -16,7 +16,7 @@
       <AssetActivityTimeline :asset="asset" />
       -->
       <div class="mt-3 px-2">
-        <AssetComments :asset-id="asset.id" />
+        <AssetComments :asset-id="asset.id" :update-comment-count="updateCommentCount" />
       </div>
     </div>
   </div>
@@ -69,6 +69,9 @@ export default {
     scheduleRefreshPreview() {
       clearTimeout(this.refreshPreviewTimeout)
       this.refreshPreviewTimeout = setTimeout(this.fetchAsset, 2000)
+    },
+    updateCommentCount(count) {
+      this.asset.commentCount = count
     }
   }
 }
