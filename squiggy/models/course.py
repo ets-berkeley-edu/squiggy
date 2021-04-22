@@ -42,6 +42,7 @@ class Course(Base):
     enable_weekly_notifications = db.Column(db.Boolean, default=True, nullable=False)
     engagement_index_url = db.Column(db.String(255))
     name = db.Column(db.String(255))
+    last_polled = db.Column(db.DateTime)
 
     users = db.relationship('User', back_populates='course')
 
@@ -140,6 +141,7 @@ class Course(Base):
             'engagementIndexUrl': self.engagement_index_url,
             'id': self.id,
             'name': self.name,
+            'lastPolled': _isoformat(self.last_polled),
             'createdAt': _isoformat(self.created_at),
             'updatedAt': _isoformat(self.updated_at),
         }

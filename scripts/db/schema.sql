@@ -233,6 +233,18 @@ ALTER TABLE ONLY canvas
 
 --
 
+CREATE TABLE canvas_poller_api_keys (
+    canvas_api_domain character varying(255) NOT NULL,
+    api_key character varying(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
+ALTER TABLE ONLY canvas_poller_api_keys
+    ADD CONSTRAINT canvas_poller_api_keys_pkey PRIMARY KEY (canvas_api_domain, api_key);
+
+--
+
 CREATE TABLE categories (
     id integer NOT NULL,
     title character varying(255) NOT NULL,
@@ -295,6 +307,7 @@ CREATE TABLE courses (
     enable_weekly_notifications boolean DEFAULT true NOT NULL,
     engagement_index_url character varying(255),
     name character varying(255),
+    last_polled TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
@@ -310,6 +323,8 @@ ALTER TABLE ONLY courses ALTER COLUMN id SET DEFAULT nextval('courses_id_seq'::r
 
 ALTER TABLE ONLY courses
     ADD CONSTRAINT courses_pkey PRIMARY KEY (id);
+
+CREATE INDEX courses_last_polled_idx ON courses USING btree (last_polled);
 
 --
 
@@ -366,6 +381,8 @@ ALTER TABLE ONLY asset_users
     ADD CONSTRAINT asset_users_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY assets
     ADD CONSTRAINT assets_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY canvas_poller_api_keys
+    ADD CONSTRAINT canvas_poller_api_keys_canvas_api_domain_fkey FOREIGN KEY (canvas_api_domain) REFERENCES canvas(canvas_api_domain) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY categories
     ADD CONSTRAINT categories_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY comments
