@@ -58,6 +58,9 @@ ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_us
 
 ALTER TABLE IF EXISTS ONLY public.courses DROP CONSTRAINT IF EXISTS courses_canvas_api_domain_fkey;
 
+ALTER TABLE IF EXISTS ONLY public.canvas_poller_api_keys
+  DROP CONSTRAINT IF EXISTS canvas_poller_api_keys_canvas_api_domain_fkey;
+
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_course_id_fkey;
 
 --
@@ -78,6 +81,9 @@ ALTER TABLE IF EXISTS public.assets ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_key_key;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_secret_key;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_pkey;
+
+ALTER TABLE IF EXISTS ONLY public.canvas_poller_api_keys
+  DROP CONSTRAINT IF EXISTS canvas_poller_api_keys_pkey;
 
 ALTER TABLE IF EXISTS ONLY public.categories DROP CONSTRAINT IF EXISTS categories_pkey;
 ALTER TABLE IF EXISTS public.categories ALTER COLUMN id DROP DEFAULT;
@@ -116,6 +122,7 @@ DROP TABLE IF EXISTS public.asset_users;
 DROP SEQUENCE IF EXISTS public.assets_id_seq;
 DROP TABLE IF EXISTS public.assets;
 DROP TABLE IF EXISTS public.canvas;
+DROP TABLE IF EXISTS public.canvas_poller_api_keys;
 DROP SEQUENCE IF EXISTS public.categories_id_seq;
 DROP TABLE IF EXISTS public.categories;
 DROP SEQUENCE IF EXISTS public.comments_id_seq;
