@@ -2,6 +2,7 @@ import 'vuetify/dist/vuetify.min.css'
 import _ from 'lodash'
 import App from './App.vue'
 import axios from 'axios'
+import linkify from 'vue-linkify'
 import moment from 'moment-timezone'
 import router from './router'
 import store from './store'
@@ -24,6 +25,8 @@ Vue.prototype.$ready = (label, focusTarget?) => store.dispatch('context/loadingC
 Vue.use(VueAnnouncer)
 Vue.use(VueMoment, {moment})
 Vue.use(VueKinesis)
+
+Vue.directive('linkified', linkify)
 
 // Axios
 axios.defaults.withCredentials = true
