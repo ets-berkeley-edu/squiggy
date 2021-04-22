@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import Flask
 from squiggy import db
 from squiggy.configs import load_configs
+from squiggy.lib.canvas_poller import launch_pollers
 from squiggy.logger import initialize_logger
 from squiggy.routes import register_routes
 
@@ -39,5 +40,7 @@ def create_app():
 
     with app.app_context():
         register_routes(app)
+        if app.config['CANVAS_POLLER']:
+            launch_pollers()
 
     return app

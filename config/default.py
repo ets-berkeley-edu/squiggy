@@ -43,6 +43,8 @@ CANVAS_BASE_URL = 'https://ucberkeley.foo.instructure.com'
 CAS_SERVER = 'https://auth-test.berkeley.edu/cas/'
 CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'
 
+CANVAS_POLLER = True
+
 # Some defaults.
 CSRF_ENABLED = True
 CSRF_SESSION_KEY = 'secret'

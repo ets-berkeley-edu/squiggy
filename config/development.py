@@ -26,6 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 # Development environment.
 DEBUG = True
 
+CANVAS_POLLER = False
+
 DEVELOPER_AUTH_ENABLED = True
 
 INDEX_HTML = 'public/index.html'

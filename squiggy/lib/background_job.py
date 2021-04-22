@@ -23,40 +23,51 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy import db, std_commit
-from squiggy.models.base import Base
+
+import os
+from threading import Thread
+
+from flask import current_app as app
 
 
-class CanvasPollerApiKey(Base):
-    __tablename__ = 'canvas_poller_api_keys'
+"""Parent class for background jobs."""
 
-    canvas_api_domain = db.Column(db.String(255), nullable=False, primary_key=True)
-    api_key = db.Column(db.String(255), nullable=False, primary_key=True)
 
-    def __init__(
-        self,
-        canvas_api_domain,
-        api_key,
-    ):
-        self.api_key = api_key
-        self.canvas_api_domain = canvas_api_domain
+class BackgroundJob(object):
 
-    def __repr__(self):
-        return f"""<Course
-                    api_key={self.api_key},
-                    canvas_api_domain={self.canvas_api_domain}
-                """
+    def __init__(self, **kwargs):
+        self.job_args = kwargs
 
-    @classmethod
-    def create(cls, canvas_api_domain, api_key):
-        api_key = cls(
-            canvas_api_domain=canvas_api_domain,
-            api_key=api_key,
-        )
-        db.session.add(api_key)
-        std_commit()
-        return api_key
+    def run(self, **kwargs):
+        pass
 
-    @classmethod
-    def find_by_domain(cls, canvas_api_domain):
-        return cls.query.filter_by(canvas_api_domain=canvas_api_domain).all()
+    def run_async(self, **async_opts):
+        if os.environ.get('SQUIGGY_ENV') in ['test', 'testext']:
+            app.logger.info('Test run in progress; will not muddy the waters by actually kicking off a background thread.')
+            return True
+        app.logger.info('About to start background thread.')
+        app_arg = app._get_current_object()
+        self.job_args.update(async_opts)
+        kwargs = self.job_args
+        thread = Thread(target=self.run_in_app_context, args=[app_arg], kwargs=kwargs, daemon=True)
+        thread.start()
+        return True
+
+    def run_in_app_context(self, app_arg, **kwargs):
+        with app_arg.app_context():
+            self.run_wrapped(**kwargs)
+
+    def run_wrapped(self, **kwargs):
+        try:
+            result = self.run(**kwargs)
+        except BackgroundJobError as e:
+            app.logger.error(e)
+            result = None
+        except Exception as e:
+            app.logger.exception(e)
+            result = None
+        return result
+
+
+class BackgroundJobError(Exception):
+    pass
