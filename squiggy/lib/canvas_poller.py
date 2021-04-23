@@ -51,17 +51,56 @@ class CanvasPoller(BackgroundJob):
 
         while True:
             course = db.session.query(Course) \
-                .filter_by(canvas_api_domain=canvas_api_domain) \
+                .filter_by(canvas_api_domain=canvas_api_domain, active=True) \
                 .order_by(nullsfirst(Course.last_polled.asc())) \
                 .with_for_update() \
                 .first()
-            app.logger.info(f"Will poll course {course.id}, {course.canvas_api_domain}, last polled {course.last_polled or 'never'}")
+            app.logger.info(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
             course.last_polled = datetime.now()
             db.session.add(course)
             std_commit()
 
-            self.poll_course(course.id)
+            try:
+                self.poll_course(course)
+            except Exception as e:
+                app.logger.error(f'Failed to poll course {_format_course(course)}')
+                app.logger.exception(e)
             sleep(5)
 
-    def poll_course(self, course_id):
-        pass
+    def poll_course(self, db_course):
+        api_course = self.canvas.get_course(db_course.canvas_course_id)
+        self.poll_tab_configuration(db_course, api_course)
+
+    def poll_tab_configuration(self, db_course, api_course):
+        tabs = api_course.get_tabs()
+        course_updates = {}
+        has_active_tools = False
+
+        if db_course.asset_library_url:
+            asset_library_tab = next((t for t in tabs if db_course.asset_library_url.endswith(t.html_url)), None)
+            if not asset_library_tab or getattr(asset_library_tab, 'hidden', None):
+                app.logger.info(f'No active tab found for Asset Library, will remove URL from db: {_format_course(db_course)}')
+                course_updates['asset_library_url'] = None
+            else:
+                has_active_tools = True
+        if db_course.engagement_index_url:
+            engagement_index_tab = next((t for t in tabs if db_course.engagement_index_url.endswith(t.html_url)), None)
+            if not engagement_index_tab or getattr(engagement_index_tab, 'hidden', None):
+                app.logger.info(f'No active tab found for Engagement Index, will remove URL from db: {_format_course(db_course)}')
+                course_updates['engagement_index_url'] = None
+            else:
+                has_active_tools = True
+
+        if not has_active_tools:
+            app.logger.info(f'No active tools found for course, will mark inactive: {_format_course(db_course)}')
+            course_updates['active'] = False
+
+        if course_updates:
+            for key, value in course_updates.items():
+                setattr(db_course, key, value)
+                db.session.add(db_course)
+            std_commit()
+
+
+def _format_course(course):
+    return f'course {course.canvas_course_id}, {course.canvas_api_domain}'
