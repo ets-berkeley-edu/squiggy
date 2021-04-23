@@ -33,6 +33,7 @@ from squiggy.externals.canvas import get_canvas
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.models.canvas_poller_api_key import CanvasPollerApiKey
 from squiggy.models.course import Course
+from squiggy.models.user import User
 
 
 def launch_pollers():
@@ -69,7 +70,9 @@ class CanvasPoller(BackgroundJob):
 
     def poll_course(self, db_course):
         api_course = self.canvas.get_course(db_course.canvas_course_id)
-        self.poll_tab_configuration(db_course, api_course)
+        if self.poll_tab_configuration(db_course, api_course) is False:
+            return
+        self.poll_users(db_course, api_course)
 
     def poll_tab_configuration(self, db_course, api_course):
         tabs = api_course.get_tabs()
@@ -98,8 +101,72 @@ class CanvasPoller(BackgroundJob):
         if course_updates:
             for key, value in course_updates.items():
                 setattr(db_course, key, value)
-                db.session.add(db_course)
+            db.session.add(db_course)
             std_commit()
+
+        return course_updates.get('active', True)
+
+    def poll_users(self, db_course, api_course):  # noqa C901
+        db_users_by_canvas_id = {u.canvas_user_id: u for u in db_course.users}
+
+        api_sections = list(api_course.get_sections(include=['students']))
+        app.logger.info(f'Retrieved {len(api_sections)} sections from Canvas: {_format_course(db_course)}')
+        api_sections_by_user_id = {}
+        for s in api_sections:
+            for u in s.students:
+                user_id = u['id']
+                if api_sections_by_user_id.get(user_id):
+                    api_sections_by_user_id[user_id].append(s.name)
+                else:
+                    api_sections_by_user_id[user_id] = [s.name]
+
+        api_users = list(api_course.get_users(include=['enrollments', 'avatar_url', 'email']))
+        app.logger.info(f'Retrieved {len(api_users)} users from Canvas: {_format_course(db_course)}')
+        api_user_ids = set()
+        for u in api_users:
+            api_user_ids.add(u.id)
+            enrollment_state = 'active'
+            course_role = 'Student'
+            enrollment = next((e for e in u.enrollments if e['course_id'] == db_course.canvas_course_id), None)
+            if not enrollment:
+                enrollment_state = 'completed'
+            else:
+                if enrollment['enrollment_state'] in ['active', 'completed', 'inactive', 'invited', 'rejected']:
+                    enrollment_state = enrollment['enrollment_state']
+                if enrollment['role'] in ['Adv Designer', 'DesignerEnrollment', 'TaEnrollment', 'TeacherEnrollment']:
+                    course_role = 'urn:lti:role:ims/lis/Instructor'
+
+            user_attributes = {
+                'canvas_course_role': course_role,
+                'canvas_enrollment_state': enrollment_state,
+                'canvas_full_name': u.name,
+                'canvas_user_id': u.id,
+                'course_id': db_course.id,
+                'canvas_course_sections': api_sections_by_user_id.get(u.id, []),
+                'canvas_email': getattr(u, 'email', None),
+                'canvas_image': getattr(u, 'avatar_url', None),
+            }
+            db_user = db_users_by_canvas_id.get(u.id)
+            if not db_user:
+                app.logger.debug(f'Adding new user {u.id}: {_format_course(db_course)}')
+                db_users_by_canvas_id[u.id] = User.create(**user_attributes)
+            else:
+                updated = False
+                for key, value in user_attributes.items():
+                    if getattr(db_user, key, None) != value:
+                        setattr(db_user, key, value)
+                        updated = True
+                if updated:
+                    app.logger.debug(f'Updating info for user {db_user.canvas_user_id}: {_format_course(db_course)}')
+                    db.session.add(db_user)
+                    std_commit()
+
+        for db_user in db_users_by_canvas_id.values():
+            if db_user.canvas_user_id not in api_user_ids and db_user.canvas_enrollment_state != 'inactive':
+                app.logger.debug(f'Marking user {db_user.canvas_user_id} as inactive: {_format_course(db_course)}')
+                db_user.canvas_enrollment_state = 'inactive'
+                db.session.add(db_user)
+        std_commit()
 
 
 def _format_course(course):
