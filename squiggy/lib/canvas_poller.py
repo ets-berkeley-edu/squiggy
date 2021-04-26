@@ -32,6 +32,7 @@ from squiggy import db, std_commit
 from squiggy.externals.canvas import get_canvas
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.models.canvas_poller_api_key import CanvasPollerApiKey
+from squiggy.models.category import Category
 from squiggy.models.course import Course
 from squiggy.models.user import User
 
@@ -72,7 +73,8 @@ class CanvasPoller(BackgroundJob):
         api_course = self.canvas.get_course(db_course.canvas_course_id)
         if self.poll_tab_configuration(db_course, api_course) is False:
             return
-        self.poll_users(db_course, api_course)
+        users_by_canvas_id = self.poll_users(db_course, api_course)
+        self.poll_assignments(db_course, api_course, users_by_canvas_id)
 
     def poll_tab_configuration(self, db_course, api_course):
         tabs = api_course.get_tabs()
@@ -167,6 +169,60 @@ class CanvasPoller(BackgroundJob):
                 db_user.canvas_enrollment_state = 'inactive'
                 db.session.add(db_user)
         std_commit()
+        return db_users_by_canvas_id
+
+    def poll_assignments(self, db_course, api_course, users_by_canvas_id):
+        course_categories = Category.query.filter_by(course_id=db_course.id).all()
+        assignments = list(api_course.get_assignments())
+        app.logger.info(f'Retrieved {len(assignments)} assignments from Canvas: {_format_course(db_course)}')
+        for assignment in assignments:
+            # Ignore unpublished assignments.
+            if not getattr(assignment, 'published', None):
+                continue
+            # Don't create submission activities for assigned discussions.
+            submission_types = getattr(assignment, 'submission_types', [])
+            if 'discussion_topic' in submission_types:
+                continue
+
+            assignment_category = next((c for c in course_categories if c.canvas_assignment_id == assignment.id), None)
+            is_syncable = 'online_url' in submission_types or 'online_upload' in submission_types
+            if not is_syncable and not assignment_category:
+                app.logger.debug(f'Skipping non-syncable assignment (id {assignment.id}) with no associated category: {_format_course(db_course)}')
+                continue
+
+            # If the assignment is not syncable and the associated category exists but has no assets, remove it from the
+            # database.
+            if not is_syncable and len(assignment_category.assets) == 0:
+                db.session.delete(assignment_category)
+                std_commit()
+
+            # Create a category for an assignment if it doesn't exist yet, by default not visible.
+            if not assignment_category:
+                assignment_category = Category.create(
+                    canvas_assignment_name=assignment.name,
+                    course_id=db_course.id,
+                    title=assignment.name,
+                    canvas_assignment_id=assignment.id,
+                    visible=False,
+                )
+            # Update the category title if the assignment name has changed and there has been no manual update.
+            elif assignment_category.canvas_assignment_name != assignment.name:
+                if assignment_category.title == assignment_category.canvas_assignment_name:
+                    assignment_category.title = assignment.name
+                    assignment_category.canvas_assignment_name = assignment.name
+                    db.session.add(assignment_category)
+                    std_commit()
+
+            self.poll_assignment_submissions(db_course, api_course, users_by_canvas_id)
+
+        # Remove any empty categories no longer corresponding to an active assignment.
+        for course_category in Category.query.filter_by(course_id=db_course.id).all():
+            if len(course_category.assets) == 0:
+                db.session.delete(course_category)
+                std_commit()
+
+    def poll_assignment_submissions(self, db_course, api_course, users_by_canvas_id):
+        pass
 
 
 def _format_course(course):
