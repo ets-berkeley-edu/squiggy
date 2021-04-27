@@ -24,13 +24,18 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from datetime import datetime
+from io import BytesIO
 from time import sleep
+from urllib.request import urlopen
 
 from flask import current_app as app
 from sqlalchemy import nullsfirst
+from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
 from squiggy.externals.canvas import get_canvas
 from squiggy.lib.background_job import BackgroundJob
+from squiggy.models.activity import Activity
+from squiggy.models.asset import Asset
 from squiggy.models.canvas_poller_api_key import CanvasPollerApiKey
 from squiggy.models.category import Category
 from squiggy.models.course import Course
@@ -195,6 +200,7 @@ class CanvasPoller(BackgroundJob):
             if not is_syncable and len(assignment_category.assets) == 0:
                 db.session.delete(assignment_category)
                 std_commit()
+                continue
 
             # Create a category for an assignment if it doesn't exist yet, by default not visible.
             if not assignment_category:
@@ -213,7 +219,7 @@ class CanvasPoller(BackgroundJob):
                     db.session.add(assignment_category)
                     std_commit()
 
-            self.poll_assignment_submissions(db_course, api_course, users_by_canvas_id)
+            self.poll_assignment_submissions(assignment, assignment_category, db_course, api_course, users_by_canvas_id)
 
         # Remove any empty categories no longer corresponding to an active assignment.
         for course_category in Category.query.filter_by(course_id=db_course.id).all():
@@ -221,8 +227,184 @@ class CanvasPoller(BackgroundJob):
                 db.session.delete(course_category)
                 std_commit()
 
-    def poll_assignment_submissions(self, db_course, api_course, users_by_canvas_id):
-        pass
+    def poll_assignment_submissions(self, assignment, category, db_course, api_course, users_by_canvas_id):
+        if not getattr(assignment, 'has_submitted_submissions', False):
+            app.logger.debug(f'Ignoring assignment (id {assignment.id}) without submissions: {_format_course(db_course)}')
+            return
+
+        def _is_submission_active(s):
+            pending_states = ['unsubmitted', 'pending_upload']
+            if getattr(s, 'workflow_state', None) in pending_states:
+                return False
+            # A file upload submission is ready for processing only if all file attachments are ready.
+            if getattr(s, 'submission_type', None) == 'online_upload':
+                attachments = getattr(s, 'attachments', [])
+                for attachment in attachments:
+                    if getattr(s, 'workflow_state', None) in pending_states:
+                        return False
+            return True
+
+        submissions = list(assignment.get_submissions())
+        active_submissions = [s for s in submissions if _is_submission_active(s)]
+        app.logger.info(
+            f'Got {len(submissions)} submissions, will process {len(active_submissions)} active submissions: '
+            f'assignment {assignment.id}, {_format_course(db_course)}')
+        if len(active_submissions) > 0:
+            self.sync_submissions(db_course, category, assignment, active_submissions, users_by_canvas_id)
+
+    def sync_submissions(self, course, category, assignment, submissions, users_by_canvas_id):
+        activity_index = self.index_activities(
+            Activity.query.filter_by(
+                course_id=course.id,
+                activity_type='assignment_submit',
+                object_type='canvas_submission',
+                object_id=assignment.id,
+            ).options(
+                joinedload(Activity.user),
+            ),
+        )
+        submission_activity_index = activity_index.get('assignment_submit', {}).get(assignment.id, {})
+        file_submission_tracker = {}
+        link_submission_tracker = {}
+
+        for submission in submissions:
+            # Skip if the user is no longer in the course.
+            canvas_user_id = getattr(submission, 'user_id', None)
+            submission_user = users_by_canvas_id.get(canvas_user_id, None)
+            if not submission_user:
+                continue
+
+            self.handle_submission_activities(course, submission_user, category, assignment, submission, submission_activity_index)
+
+            previous_submissions = submission_user.assets.filter_by(canvas_assignment_id=assignment.id, deleted_at=None).all()
+            if previous_submissions:
+                for s in previous_submissions:
+                    s.deleted_at = datetime.now()
+                    db.session.add(s)
+                app.logger.debug(
+                    f'Deleted {len(previous_submissions)} assets for older submissions: '
+                    f'user {canvas_user_id}, assignment {assignment.id}, {_format_course(course)}')
+
+            # If sync is not enabled for this assignment, return without pulling down any new attachments.
+            if not category.visible:
+                continue
+
+            submission_type = getattr(submission, 'submission_type', None)
+            if submission_type == 'online_url':
+                self.create_link_submission_asset(course, submission_user, category, assignment, submission, link_submission_tracker)
+            elif submission_type == 'online_upload':
+                self.create_file_submission_assets(course, submission_user, category, assignment, submission, file_submission_tracker)
+
+    def handle_submission_activities(self, course, user, category, assignment, submission, submission_activity_index):
+        submission_metadata = {
+            'submission_id': submission.id,
+            'attempt': getattr(submission, 'attempt', None),
+            'file_sync_enabled': category.visible,
+        }
+        existing_activity = submission_activity_index.get(user.canvas_user_id, None)
+        if existing_activity:
+            # If we've already seen this submission attempt and there's been no change in visibility settings,
+            # skip attachment processing.
+            if (
+                existing_activity.metadata
+                and existing_activity.metadata.get('attempt', None) == submission_metadata['attempt']
+                and existing_activity.metadata.get('file_sync_enabled', None) == submission_metadata['file_sync_enabled']
+            ):
+                return
+            # Otherwise the existing activity needs updating.
+            else:
+                existing_activity.metadata = submission_metadata
+                db.session.add(existing_activity)
+                std_commit()
+        else:
+            submission_activity_index[user.canvas_user_id] = Activity.create(
+                activity_type='assignment_submit',
+                course_id=course.id,
+                user_id=user.id,
+                object_type='canvas_submission',
+                object_id=assignment.id,
+                activity_metadata=submission_metadata,
+            )
+
+    def create_link_submission_asset(self, course, user, category, assignment, submission, link_submission_tracker):
+        try:
+            existing_submission_asset = link_submission_tracker.get(submission.url, None)
+            if existing_submission_asset:
+                app.logger.debug(f'Adding new user to existing link asset: user {user.canvas_user_id}, asset {existing_submission_asset.id}.')
+                existing_submission_asset.users.append(user)
+                db.session.add(existing_submission_asset)
+                std_commit()
+            else:
+                app.logger.info(
+                    f'Will create link asset for submission: '
+                    f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
+                link_submission_tracker[submission.url] = Asset.create(
+                    asset_type='link',
+                    canvas_assignment_id=assignment.id,
+                    categories=[category],
+                    course_id=course.id,
+                    source=submission.url,
+                    title=submission.url,
+                    url=submission.url,
+                    users=[user],
+                    create_activity=False,
+                )
+        except Exception as e:
+            app.logger.error(
+                f'Failed to create link asset for an assignment submission: '
+                f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
+            app.logger.exception(e)
+
+    def create_file_submission_assets(self, course, user, category, assignment, submission, file_submission_tracker):
+        app.logger.info(
+            f'Will create file assets for submission attachments: '
+            f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
+        for attachment in getattr(submission, 'attachments', []):
+            try:
+                if attachment['size'] > 10485760:
+                    app.logger.debug('Attachment too large, will not process.')
+                    continue
+                existing_submission_asset = file_submission_tracker.get(attachment.id, None)
+                if existing_submission_asset:
+                    app.logger.debug(f'Adding new user to existing file asset: user {user.canvas_user_id}, asset {existing_submission_asset.id}.')
+                    existing_submission_asset.users.append(user)
+                    db.session.add(existing_submission_asset)
+                    std_commit()
+                else:
+                    s3_attrs = Asset.upload_to_s3(
+                        filename=attachment['filename'],
+                        byte_stream=BytesIO(urlopen(attachment['url']).read()),
+                        course_id=course.id,
+                    )
+                    file_submission_tracker[attachment.id] = Asset.create(
+                        asset_type='file',
+                        canvas_assignment_id=assignment.id,
+                        categories=[category],
+                        course_id=course.id,
+                        download_url=s3_attrs.get('download_url', None),
+                        mime=s3_attrs.get('content_type', None),
+                        title=attachment['filename'],
+                        users=[user],
+                        create_activity=False,
+                    )
+            except Exception as e:
+                app.logger.error(
+                    f'Failed to create file asset for an attachment: '
+                    f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
+                app.logger.exception(e)
+
+    def index_activities(self, query):
+        activities = query.all()
+        index = {}
+        for a in activities:
+            activity_key = a.object_id
+            if a.activity_type in ['discussion_entry', 'get_discussion_entry_reply']:
+                activity_key = activity_key + '_' + getattr(a.metadata, 'entryId', '')
+            canvas_user_id = a.user.canvas_user_id
+            index[canvas_user_id] = index[canvas_user_id] or {}
+            index[canvas_user_id][a.activity_type] = index[canvas_user_id][a.activity_type] or {}
+            index[canvas_user_id][a.activity_type][activity_key] = index[canvas_user_id][a.activity_type][activity_key] or {}
+        return index
 
 
 def _format_course(course):

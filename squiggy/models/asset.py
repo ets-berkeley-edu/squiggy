@@ -23,20 +23,23 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from datetime import datetime
 from itertools import groupby
+import os
 import re
 
+from flask import current_app as app
+import magic
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
-from squiggy.lib.aws import get_s3_signed_url
+from squiggy.lib.aws import get_s3_signed_url, put_binary_data_to_s3
+from squiggy.lib.errors import InternalServerError
 from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import camelize, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset_category import asset_category_table
-from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
-from squiggy.models.user import User
 
 assets_sort_by_options = {
     'recent': 'Most recent',
@@ -84,17 +87,14 @@ class Asset(Base):
         secondary=asset_category_table,
         backref='assets',
     )
-    users = db.relationship(
-        User.__name__,
-        secondary=asset_user_table,
-        backref='assets',
-    )
+
     comments = db.relationship('Comment', back_populates='asset', cascade='all, delete-orphan')
 
     def __init__(
         self,
         asset_type,
         course_id,
+        canvas_assignment_id=None,
         categories=None,
         description=None,
         download_url=None,
@@ -106,6 +106,7 @@ class Asset(Base):
         visible=True,
     ):
         self.asset_type = asset_type
+        self.canvas_assignment_id = canvas_assignment_id
         self.categories = categories or []
         self.course_id = course_id
         self.description = description
@@ -123,13 +124,15 @@ class Asset(Base):
                     categories={self.categories},
                     users={self.users},
                     course_id={self.course_id},
+                    canvas_assignment_id={self.canvas_assignment_id},
                     description={self.description},
                     source={self.source},
                     title={self.title},
                     url={self.url},
                     visible={self.visible},
                     created_at={self.created_at},
-                    updated_at={self.updated_at}>
+                    updated_at={self.updated_at}>,
+                    deleted_at={self.deleted_at}>
                 """
 
     @classmethod
@@ -150,6 +153,7 @@ class Asset(Base):
             source=None,
             url=None,
             visible=True,
+            create_activity=True,
     ):
         asset = cls(
             asset_type=asset_type,
@@ -171,7 +175,7 @@ class Asset(Base):
         generate_previews(asset.id, preview_url)
 
         # Invisible assets generate no activities.
-        if visible:
+        if visible and create_activity is not False:
             for user in users:
                 Activity.create(
                     activity_type='asset_add',
@@ -287,6 +291,23 @@ class Asset(Base):
         }
 
         return results
+
+    @classmethod
+    def upload_to_s3(cls, filename, byte_stream, course_id):
+        bucket = app.config['S3_BUCKET']
+        # S3 key begins with course id, reversed for performant key distribution, padded for readability.
+        reverse_course = str(course_id)[::-1].rjust(7, '0')
+        (basename, extension) = os.path.splitext(filename)
+        # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
+        key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{basename[0:170]}{extension}"
+        content_type = magic.from_buffer(byte_stream, mime=True)
+        if put_binary_data_to_s3(bucket, key, byte_stream, content_type):
+            return {
+                'content_type': content_type,
+                'download_url': f's3://{bucket}/{key}',
+            }
+        else:
+            raise InternalServerError('Could not upload file.')
 
     def add_like(self, user):
         like_activity = Activity.create_unless_exists(
