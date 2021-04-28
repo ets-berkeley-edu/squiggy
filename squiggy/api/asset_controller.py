@@ -25,15 +25,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from datetime import datetime
 import json
-import os
 import re
 
 from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
-import magic
 from squiggy.api.api_util import can_update_asset, can_view_asset
-from squiggy.lib.aws import put_binary_data_to_s3, stream_object
-from squiggy.lib.errors import BadRequestError, InternalServerError, ResourceNotFoundError
+from squiggy.lib.aws import stream_object
+from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
@@ -114,29 +112,22 @@ def create_asset():
     if not current_user.course:
         raise BadRequestError('Course data not found')
 
-    content_type = None
-    download_url = None
+    s3_attrs = {}
     if asset_type == 'file':
         file_upload = _get_upload_from_http_post()
-        # S3 key begins with course id, reversed for performant key distribution, padded for readability.
-        bucket = app.config['S3_BUCKET']
-        reverse_course = str(current_user.course.id)[::-1].rjust(7, '0')
-        (filename, extension) = os.path.splitext(file_upload['name'])
-        # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
-        key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{filename[0:170]}{extension}"
-        content_type = magic.from_buffer(file_upload['byte_stream'], mime=True)
-        if put_binary_data_to_s3(bucket, key, file_upload['byte_stream'], content_type):
-            download_url = f's3://{bucket}/{key}'
-        else:
-            raise InternalServerError('Could not upload file.')
+        s3_attrs = Asset.upload_to_s3(
+            filename=file_upload['name'],
+            byte_stream=file_upload['byte_stream'],
+            course_id=current_user.course.id,
+        )
 
     asset = Asset.create(
         asset_type=asset_type,
         categories=category_id and [Category.find_by_id(category_id)],
         course_id=current_user.course.id,
         description=description,
-        download_url=download_url,
-        mime=content_type,
+        download_url=s3_attrs.get('download_url', None),
+        mime=s3_attrs.get('content_type', None),
         source=source,
         title=title,
         url=url,

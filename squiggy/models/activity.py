@@ -68,9 +68,11 @@ class Activity(Base):
     activity_metadata = db.Column('metadata', JSON)
     asset_id = db.Column(db.Integer)
     course_id = db.Column(db.Integer, nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     actor_id = db.Column(db.Integer)
     reciprocal_id = db.Column(db.Integer)
+
+    user = db.relationship('User')
 
     def __init__(
         self,

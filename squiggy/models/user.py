@@ -29,6 +29,7 @@ from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, to_int
+from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.course import Course
 
@@ -60,6 +61,12 @@ class User(Base):
     share_points = db.Column(db.Boolean, default=False)
     last_activity = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
+    assets = db.relationship(
+        'Asset',
+        secondary=asset_user_table,
+        backref='users',
+        lazy='dynamic',
+    )
     course = db.relationship(Course.__name__, back_populates='users')
 
     def __init__(
