@@ -62,6 +62,9 @@ class CanvasPoller(BackgroundJob):
                 .order_by(nullsfirst(Course.last_polled.asc())) \
                 .with_for_update() \
                 .first()
+            if not course:
+                app.logger.info(f'No active courses found, poller exiting: {canvas_api_domain}')
+                break
             app.logger.info(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
             course.last_polled = datetime.now()
             db.session.add(course)
@@ -80,6 +83,7 @@ class CanvasPoller(BackgroundJob):
             return
         users_by_canvas_id = self.poll_users(db_course, api_course)
         self.poll_assignments(db_course, api_course, users_by_canvas_id)
+        self.poll_discussions(db_course, api_course, users_by_canvas_id)
 
     def poll_tab_configuration(self, db_course, api_course):
         tabs = api_course.get_tabs()
@@ -120,7 +124,7 @@ class CanvasPoller(BackgroundJob):
         app.logger.info(f'Retrieved {len(api_sections)} sections from Canvas: {_format_course(db_course)}')
         api_sections_by_user_id = {}
         for s in api_sections:
-            for u in s.students:
+            for u in (s.students or []):
                 user_id = u['id']
                 if api_sections_by_user_id.get(user_id):
                     api_sections_by_user_id[user_id].append(s.name)
@@ -306,14 +310,14 @@ class CanvasPoller(BackgroundJob):
             # If we've already seen this submission attempt and there's been no change in visibility settings,
             # skip attachment processing.
             if (
-                existing_activity.metadata
-                and existing_activity.metadata.get('attempt', None) == submission_metadata['attempt']
-                and existing_activity.metadata.get('file_sync_enabled', None) == submission_metadata['file_sync_enabled']
+                existing_activity.activity_metadata
+                and existing_activity.activity_metadata.get('attempt', None) == submission_metadata['attempt']
+                and existing_activity.activity_metadata.get('file_sync_enabled', None) == submission_metadata['file_sync_enabled']
             ):
                 return
             # Otherwise the existing activity needs updating.
             else:
-                existing_activity.metadata = submission_metadata
+                existing_activity.activity_metadata = submission_metadata
                 db.session.add(existing_activity)
                 std_commit()
         else:
@@ -393,17 +397,106 @@ class CanvasPoller(BackgroundJob):
                     f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
                 app.logger.exception(e)
 
+    def poll_discussions(self, db_course, api_course, users_by_canvas_id):
+        discussion_topics = list(api_course.get_discussion_topics())
+        if not discussion_topics:
+            return
+
+        app.logger.info(f'Retrieved {len(discussion_topics)} discussion topics from Canvas: {_format_course(db_course)}')
+        discussion_activity_index = self.index_activities(
+            Activity.query.filter(
+                Activity.course_id == db_course.id,
+                Activity.activity_type.in_(['discussion_entry', 'discussion_topic', 'get_discussion_entry_reply']),
+            ).options(
+                joinedload(Activity.user),
+            ),
+        )
+        for topic in discussion_topics:
+            try:
+                if not getattr(topic, 'published', False):
+                    continue
+                # Don't create a discussion_topic for an assigned discussion as these are set up by instructors.
+                if not getattr(topic, 'assignment', None):
+                    if not discussion_activity_index.get(topic.author['id'], {}).get('discussion_topic', {}).get(topic.id):
+                        user = users_by_canvas_id.get(topic.author['id'], None)
+                        if user:
+                            Activity.create(
+                                activity_type='discussion_topic',
+                                course_id=db_course.id,
+                                user_id=user.id,
+                                object_type='canvas_discussion',
+                                object_id=topic.id,
+                            )
+                if not getattr(topic, 'discussion_subentry_count', 0):
+                    continue
+                entries = list(topic.get_topic_entries())
+                app.logger.info(f'Retrieved {len(entries)} discussion topics from Canvas: discussion {topic.id}, {_format_course(db_course)}')
+                for entry in entries:
+                    self.create_discussion_entry_activities(entry, topic, db_course, users_by_canvas_id, discussion_activity_index)
+            except Exception as e:
+                app.logger.error(f'Failed to poll a discussion topic: topic {topic.id}, {_format_course(db_course)}')
+                app.logger.exception(e)
+
+    def create_discussion_entry_activities(self, entry, topic, course, users_by_canvas_id, discussion_activity_index):
+        # Users creating an entry on their own topic get no activity credit.
+        if entry.user_id != topic.author['id']:
+            if not discussion_activity_index.get(entry.user_id, {}).get('discussion_entry', {}).get(f'{topic.id}_{entry.id}'):
+                user = users_by_canvas_id.get(entry.user_id, None)
+                if user:
+                    Activity.create(
+                        activity_type='discussion_entry',
+                        course_id=course.id,
+                        user_id=user.id,
+                        object_type='canvas_discussion',
+                        object_id=topic.id,
+                        activity_metadata={'entryId': entry.id},
+                    )
+        replies = list(getattr(entry, 'recent_replies', []))
+        for reply in replies:
+            parent = entry if entry.id == reply['parent_id'] else next((r for r in replies if r['id'] == reply['parent_id']), None)
+            if not parent:
+                continue
+            parent_user_id = getattr(parent, 'user_id', None) or parent.get('user_id', None)
+            reply_user_id = reply.get('user_id', None)
+            if not parent_user_id or not reply_user_id or parent_user_id == reply_user_id:
+                continue
+            parent_user = users_by_canvas_id.get(parent_user_id, None)
+            reply_user = users_by_canvas_id.get(reply.get('user_id', None), None)
+            if not parent_user or not reply_user:
+                continue
+            reply_entry_activity = discussion_activity_index.get(reply_user_id, {}).get('discussion_entry', {}).get(f'{topic.id}_{entry.id}')
+            if not reply_entry_activity:
+                reply_entry_activity = Activity.create(
+                    activity_type='discussion_entry',
+                    course_id=course.id,
+                    user_id=reply_user.id,
+                    object_type='canvas_discussion',
+                    object_id=topic.id,
+                    activity_metadata={'entryId': entry.id},
+                )
+            if not discussion_activity_index.get(parent_user_id, {}).get('get_discussion_entry_reply', {}).get(f'{topic.id}_{entry.id}'):
+                Activity.create(
+                    activity_type='get_discussion_entry_reply',
+                    course_id=course.id,
+                    user_id=parent_user.id,
+                    object_type='canvas_discussion',
+                    object_id=topic.id,
+                    actor_id=reply_user.id,
+                    reciprocal_id=reply_entry_activity.id,
+                    activity_metadata={'entryId': entry.id},
+                )
+
     def index_activities(self, query):
         activities = query.all()
         index = {}
         for a in activities:
             activity_key = a.object_id
             if a.activity_type in ['discussion_entry', 'get_discussion_entry_reply']:
-                activity_key = activity_key + '_' + getattr(a.metadata, 'entryId', '')
+                activity_key = f"{activity_key}_{a.activity_metadata.get('entryId', '')}"
             canvas_user_id = a.user.canvas_user_id
-            index[canvas_user_id] = index[canvas_user_id] or {}
-            index[canvas_user_id][a.activity_type] = index[canvas_user_id][a.activity_type] or {}
-            index[canvas_user_id][a.activity_type][activity_key] = index[canvas_user_id][a.activity_type][activity_key] or {}
+            index[canvas_user_id] = index.get(canvas_user_id, {})
+            index[canvas_user_id][a.activity_type] = index[canvas_user_id].get(a.activity_type, {})
+            index[canvas_user_id][a.activity_type][activity_key] = a
         return index
 
 
