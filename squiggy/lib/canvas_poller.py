@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from datetime import datetime
-from io import BytesIO
 from time import sleep
 from urllib.request import urlopen
 
@@ -184,6 +183,7 @@ class CanvasPoller(BackgroundJob):
         course_categories = Category.query.filter_by(course_id=db_course.id).all()
         assignments = list(api_course.get_assignments())
         app.logger.info(f'Retrieved {len(assignments)} assignments from Canvas: {_format_course(db_course)}')
+        assignment_ids = set()
         for assignment in assignments:
             # Ignore unpublished assignments.
             if not getattr(assignment, 'published', None):
@@ -193,6 +193,7 @@ class CanvasPoller(BackgroundJob):
             if 'discussion_topic' in submission_types:
                 continue
 
+            assignment_ids.add(assignment.id)
             assignment_category = next((c for c in course_categories if c.canvas_assignment_id == assignment.id), None)
             is_syncable = 'online_url' in submission_types or 'online_upload' in submission_types
             if not is_syncable and not assignment_category:
@@ -227,7 +228,11 @@ class CanvasPoller(BackgroundJob):
 
         # Remove any empty categories no longer corresponding to an active assignment.
         for course_category in Category.query.filter_by(course_id=db_course.id).all():
-            if len(course_category.assets) == 0:
+            if (
+                course_category.canvas_assignment_id
+                and course_category.canvas_assignment_id not in assignment_ids
+                and not len(course_category.assets)
+            ):
                 db.session.delete(course_category)
                 std_commit()
 
@@ -267,7 +272,6 @@ class CanvasPoller(BackgroundJob):
                 joinedload(Activity.user),
             ),
         )
-        submission_activity_index = activity_index.get('assignment_submit', {}).get(assignment.id, {})
         file_submission_tracker = {}
         link_submission_tracker = {}
 
@@ -278,7 +282,9 @@ class CanvasPoller(BackgroundJob):
             if not submission_user:
                 continue
 
-            self.handle_submission_activities(course, submission_user, category, assignment, submission, submission_activity_index)
+            sync_assets = self.handle_submission_activities(course, submission_user, category, assignment, submission, activity_index)
+            if sync_assets is False:
+                continue
 
             previous_submissions = submission_user.assets.filter_by(canvas_assignment_id=assignment.id, deleted_at=None).all()
             if previous_submissions:
@@ -299,29 +305,32 @@ class CanvasPoller(BackgroundJob):
             elif submission_type == 'online_upload':
                 self.create_file_submission_assets(course, submission_user, category, assignment, submission, file_submission_tracker)
 
-    def handle_submission_activities(self, course, user, category, assignment, submission, submission_activity_index):
+    def handle_submission_activities(self, course, user, category, assignment, submission, activity_index):
         submission_metadata = {
             'submission_id': submission.id,
             'attempt': getattr(submission, 'attempt', None),
             'file_sync_enabled': category.visible,
         }
-        existing_activity = submission_activity_index.get(user.canvas_user_id, None)
+        activity_index[user.canvas_user_id] = activity_index.get(user.canvas_user_id, {})
+        activity_index[user.canvas_user_id]['assignment_submit'] = activity_index[user.canvas_user_id].get('assignment_submit', {})
+        existing_activity = activity_index[user.canvas_user_id]['assignment_submit'].get(assignment.id, None)
         if existing_activity:
             # If we've already seen this submission attempt and there's been no change in visibility settings,
-            # skip attachment processing.
+            # skip submission processing.
             if (
                 existing_activity.activity_metadata
                 and existing_activity.activity_metadata.get('attempt', None) == submission_metadata['attempt']
                 and existing_activity.activity_metadata.get('file_sync_enabled', None) == submission_metadata['file_sync_enabled']
             ):
-                return
-            # Otherwise the existing activity needs updating.
+                return False
+            # Otherwise the existing activity needs updating and the submission should be processed.
             else:
                 existing_activity.activity_metadata = submission_metadata
                 db.session.add(existing_activity)
                 std_commit()
+                return True
         else:
-            submission_activity_index[user.canvas_user_id] = Activity.create(
+            activity_index[user.canvas_user_id]['assignment_submit'][assignment.id] = Activity.create(
                 activity_type='assignment_submit',
                 course_id=course.id,
                 user_id=user.id,
@@ -329,6 +338,7 @@ class CanvasPoller(BackgroundJob):
                 object_id=assignment.id,
                 activity_metadata=submission_metadata,
             )
+            return True
 
     def create_link_submission_asset(self, course, user, category, assignment, submission, link_submission_tracker):
         try:
@@ -368,7 +378,7 @@ class CanvasPoller(BackgroundJob):
                 if attachment['size'] > 10485760:
                     app.logger.debug('Attachment too large, will not process.')
                     continue
-                existing_submission_asset = file_submission_tracker.get(attachment.id, None)
+                existing_submission_asset = file_submission_tracker.get(attachment['id'], None)
                 if existing_submission_asset:
                     app.logger.debug(f'Adding new user to existing file asset: user {user.canvas_user_id}, asset {existing_submission_asset.id}.')
                     existing_submission_asset.users.append(user)
@@ -377,10 +387,10 @@ class CanvasPoller(BackgroundJob):
                 else:
                     s3_attrs = Asset.upload_to_s3(
                         filename=attachment['filename'],
-                        byte_stream=BytesIO(urlopen(attachment['url']).read()),
+                        byte_stream=urlopen(attachment['url']).read(),
                         course_id=course.id,
                     )
-                    file_submission_tracker[attachment.id] = Asset.create(
+                    file_submission_tracker[attachment['id']] = Asset.create(
                         asset_type='file',
                         canvas_assignment_id=assignment.id,
                         categories=[category],
