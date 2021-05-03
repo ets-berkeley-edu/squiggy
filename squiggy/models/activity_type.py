@@ -70,6 +70,39 @@ class ActivityType(Base):
         std_commit()
         return activity_type_instance
 
+    @classmethod
+    def get_activity_type_configuration(cls, course_id):
+        activity_configs = []
+        per_course_configs = cls.query.filter_by(course_id=course_id).all()
+        for default_config in DEFAULT_ACTIVITY_TYPE_CONFIGURATION:
+            activity_config = default_config.copy()
+            per_course_config = next((c for c in per_course_configs if c.activity_type == activity_config['type']), None)
+            if per_course_config:
+                activity_config['enabled'] = per_course_config.enabled
+                activity_config['points'] = per_course_config.points
+            activity_configs.append(activity_config)
+        return activity_configs
+
+    @classmethod
+    def update_activity_type_configuration(cls, course_id, updates):
+        existing_configs = cls.query.filter_by(course_id=course_id).all()
+        for update in updates:
+            existing_config = next((c for c in existing_configs if c.activity_type == update['type']), None)
+            if existing_config:
+                existing_config.enabled = update['enabled']
+                existing_config.points = update['points']
+                db.session.add(existing_config)
+            else:
+                new_config = cls(
+                    activity_type=update['type'],
+                    course_id=course_id,
+                    enabled=update['enabled'],
+                    points=update['points'],
+                )
+                db.session.add(new_config)
+        std_commit()
+        return True
+
     def to_api_json(self):
         return {
             'id': self.id,
@@ -80,3 +113,79 @@ class ActivityType(Base):
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+DEFAULT_ACTIVITY_TYPE_CONFIGURATION = [
+    {
+        'type': 'asset_add',
+        'title': 'Add a new asset to the Asset Library',
+        'points': 5,
+        'enabled': True,
+    },
+    {
+        'type': 'asset_comment',
+        'title': 'Comment on an asset in the Asset Library',
+        'points': 3,
+        'enabled': True,
+    },
+    {
+        'type': 'asset_like',
+        'title': 'Like an asset in the Asset Library',
+        'points': 1,
+        'enabled': True,
+    },
+    {
+        'type': 'asset_view',
+        'title': 'View an asset in the Asset Library',
+        'points': 0,
+        'enabled': True,
+    },
+    {
+        'type': 'assignment_submit',
+        'title': 'Submit a new assignment in Assignments',
+        'points': 20,
+        'enabled': True,
+    },
+    {
+        'type': 'discussion_entry',
+        'title': 'Add an entry on a topic in Discussions',
+        'points': 3,
+        'enabled': True,
+    },
+    {
+        'type': 'discussion_topic',
+        'title': 'Add a new topic in Discussions',
+        'points': 5,
+        'enabled': True,
+    },
+    {
+        'type': 'get_asset_comment',
+        'title': 'Receive a comment in the Asset Library',
+        'points': 1,
+        'enabled': True,
+    },
+    {
+        'type': 'get_asset_comment_reply',
+        'title': 'Receive a reply on a comment in the Asset Library',
+        'points': 1,
+        'enabled': True,
+    },
+    {
+        'type': 'get_asset_like',
+        'title': 'Receive a like in the Asset Library',
+        'points': 1,
+        'enabled': True,
+    },
+    {
+        'type': 'get_asset_view',
+        'title': 'Receive a view in the Asset Library',
+        'points': 0,
+        'enabled': True,
+    },
+    {
+        'type': 'get_discussion_entry_reply',
+        'title': 'Receive a reply on an entry in Discussions',
+        'points': 1,
+        'enabled': True,
+    },
+]
