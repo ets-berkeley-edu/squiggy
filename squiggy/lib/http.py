@@ -23,11 +23,14 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import csv
+from datetime import datetime
 import urllib
 
 from flask import current_app as app, Response
 import requests
 import simplejson as json
+from werkzeug.wrappers import ResponseStream
 
 
 class ResponseExceptionWrapper:
@@ -69,6 +72,20 @@ def request(url, headers={}, method='get', **kwargs):
         return ResponseExceptionWrapper(e, response)
     else:
         return response
+
+
+def response_with_csv_download(rows, filename_prefix, fieldnames=None):
+    now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    response = Response(
+        content_type='text/csv',
+        headers={
+            'Content-disposition': f'attachment; filename="{filename_prefix}_{now}.csv"',
+        },
+    )
+    csv_writer = csv.DictWriter(ResponseStream(response), fieldnames=fieldnames)
+    csv_writer.writeheader()
+    csv_writer.writerows(rows)
+    return response
 
 
 def sanitize_headers(headers):

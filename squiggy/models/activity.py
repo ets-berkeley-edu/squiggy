@@ -25,6 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ENUM, JSON
+from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
@@ -149,6 +150,28 @@ class Activity(Base):
     @classmethod
     def find_by_object_id(cls, object_type, object_id):
         return cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).all()
+
+    @classmethod
+    def get_activities_as_csv(cls, course_id, configuration):
+        configuration_by_type = {c['type']: c for c in configuration}
+        rows = []
+        total_scores = {}
+        headers = ('user_id', 'user_name', 'action', 'date', 'score', 'running_total')
+        results = cls.query.filter_by(course_id=course_id).order_by(cls.created_at).options(joinedload(cls.user)).all()
+
+        for activity in results:
+            if configuration_by_type.get(activity.activity_type, {}).get('enabled', None):
+                score = configuration_by_type[activity.activity_type]['points']
+                total_scores[activity.user_id] = total_scores.get(activity.user_id, 0) + score
+                rows.append({
+                    'user_id': activity.user_id,
+                    'user_name': activity.user.canvas_full_name,
+                    'action': activity.activity_type,
+                    'date': activity.created_at,
+                    'score': score,
+                    'running_total': total_scores[activity.user_id],
+                })
+        return headers, rows
 
     def to_api_json(self):
         return {

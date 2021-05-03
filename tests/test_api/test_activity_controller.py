@@ -128,3 +128,39 @@ class TestUpdateActivityConfiguration:
             else:
                 assert config['points'] == default_config['points']
                 assert config['enabled'] == default_config['enabled']
+
+
+class TestActivityCsvDownload:
+
+    def _api_download_csv(self, client, expected_status_code=200):
+        response = client.get('/api/activities/csv')
+        assert response.status_code == expected_status_code
+        return response.data
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_download_csv(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        student = User.find_by_canvas_user_id(8765432)
+        fake_auth.login(student.id)
+        self._api_download_csv(client, expected_status_code=401)
+
+    def test_authorized_csv(self, client, fake_auth):
+        """Default configuration values with db-based overrides are returned to authorized user."""
+        teacher = User.find_by_canvas_user_id(9876543)
+        fake_auth.login(teacher.id)
+        response = self._api_download_csv(client)
+        rows = response.decode('utf-8').split('\n')
+        assert rows[0].strip() == 'user_id,user_name,action,date,score,running_total'
+        parsed_rows = [r.strip().split(',') for r in rows]
+        assert len(parsed_rows) > 0
+        assert parsed_rows[1][0] == '1'
+        assert parsed_rows[1][1] == 'Oliver Heyer'
+        assert parsed_rows[1][2] == 'asset_add'
+        assert parsed_rows[1][3] is not None
+        assert parsed_rows[1][4] == '5'
+        assert parsed_rows[1][5] == '5'
+        for i in range(2, 5):
+            assert int(parsed_rows[i][5]) == int(parsed_rows[i][4]) + int(parsed_rows[i - 1][5])
