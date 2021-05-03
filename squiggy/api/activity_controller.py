@@ -27,8 +27,8 @@ from flask import current_app as app, request
 from flask_login import current_user
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.errors import BadRequestError
-from squiggy.lib.http import tolerant_jsonify
-from squiggy.models.activity import activities_type
+from squiggy.lib.http import response_with_csv_download, tolerant_jsonify
+from squiggy.models.activity import activities_type, Activity
 from squiggy.models.activity_type import ActivityType
 
 
@@ -56,3 +56,13 @@ def update_activity_configuration():
         updates=params,
     )
     return tolerant_jsonify({'updated': True})
+
+
+@app.route('/api/activities/csv', methods=['GET'])
+@teacher_required
+def get_activity_csv():
+    course_id = current_user.course.id
+    configuration = ActivityType.get_activity_type_configuration(course_id=course_id)
+    fieldnames, rows = Activity.get_activities_as_csv(course_id=course_id, configuration=configuration)
+    filename_prefix = f'engagement_index_activities_{current_user.course.canvas_course_id}'
+    return response_with_csv_download(rows, filename_prefix, fieldnames)
