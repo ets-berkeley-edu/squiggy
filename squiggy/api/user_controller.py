@@ -23,8 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
+from flask import current_app as app, request
 from flask_login import current_user, login_required
+from squiggy.lib.errors import BadRequestError, ForbiddenRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.user import User
 
@@ -38,3 +39,26 @@ def my_profile():
 @login_required
 def get_users():
     return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id)])
+
+
+@app.route('/api/users/leaderboard')
+@login_required
+def get_leaderboard():
+    if (current_user.is_admin or current_user.is_teaching):
+        users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=False)
+        return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
+    elif current_user.user.share_points:
+        users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=True)
+    else:
+        raise ForbiddenRequestError('Leaderboard disallowed for users not sharing points.')
+    return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
+
+
+@app.route('/api/users/me/share', methods=['POST'])
+@login_required
+def update_share_points():
+    params = request.get_json()
+    if 'share' not in params:
+        raise BadRequestError('No share status provided.')
+    current_user.user.update_share_points(params['share'])
+    return tolerant_jsonify(current_user.to_api_json())

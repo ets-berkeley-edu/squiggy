@@ -27,6 +27,7 @@ from datetime import datetime
 
 from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
+from sqlalchemy.sql import desc
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, to_int
 from squiggy.models.asset_user import asset_user_table
@@ -145,6 +146,13 @@ class User(Base):
         return cls.query.filter_by(course_id=course_id).order_by(cls.canvas_full_name).all()
 
     @classmethod
+    def get_leaderboard(cls, course_id, sharing_only=True):
+        query = cls.query.filter_by(course_id=course_id)
+        if sharing_only:
+            query = query.filter_by(share_points=True)
+        return query.order_by(desc(cls.points), cls.id).all()
+
+    @classmethod
     def find_by_canvas_user_id(cls, canvas_user_id):
         return cls.query.filter_by(canvas_user_id=canvas_user_id).first()
 
@@ -159,8 +167,13 @@ class User(Base):
     def find_by_ids(cls, user_ids):
         return cls.query.filter(cls.id.in_(user_ids)).all()
 
-    def to_api_json(self):
-        return {
+    def update_share_points(self, share):
+        self.share_points = True if share else False
+        db.session.add(self)
+        std_commit()
+
+    def to_api_json(self, include_points=False):
+        json = {
             'id': self.id,
             'canvasApiDomain': self.course.canvas_api_domain,
             'canvasCourseId': self.course.canvas_course_id,
@@ -171,8 +184,10 @@ class User(Base):
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
             'lastActivity': isoformat(self.last_activity),
-            'points': self.points,
             'sharePoints': self.share_points,
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
+        if include_points:
+            json['points'] = self.points
+        return json
