@@ -23,20 +23,33 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
+
+
 unauthorized_user_id = '666'
+
+
+def _api_my_profile(client, expected_status_code=200):
+    response = client.get('/api/profile/my')
+    assert response.status_code == expected_status_code
+    return response.json
+
+
+def _api_update_share_points(client, data, expected_status_code=200):
+    response = client.post(
+        '/api/users/me/share',
+        data=json.dumps(data),
+        content_type='application/json',
+    )
+    assert response.status_code == expected_status_code
+    return response.json
 
 
 class TestMyProfile:
 
-    @staticmethod
-    def _api_my_profile(client, expected_status_code=200):
-        response = client.get('/api/profile/my')
-        assert response.status_code == expected_status_code
-        return response.json
-
     def test_admin_profile(self, client, fake_auth, authorized_user_id):
         fake_auth.login(authorized_user_id)
-        api_json = self._api_my_profile(client)
+        api_json = _api_my_profile(client)
         assert api_json['id'] == authorized_user_id
         course = api_json.get('course')
         assert course
@@ -70,4 +83,80 @@ class TestGetUsers:
         assert len(api_json) > 1
         assert 'id' in api_json[0]
         assert 'canvasFullName' in api_json[0]
+        assert 'points' not in api_json[0]
         assert api_json[0]['canvasFullName'] < api_json[1]['canvasFullName']
+
+
+class TestGetLeaderboard:
+    """User API."""
+
+    @classmethod
+    def _api_get_leaderboard(cls, client, expected_status_code=200):
+        response = client.get('/api/users/leaderboard')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_get_leaderboard(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_get_leaderboard(client, expected_status_code=401)
+
+    def test_teacher(self, client, fake_auth, authorized_user_id):
+        """Returns all users to teacher, including those not sharing points."""
+        fake_auth.login(authorized_user_id)
+        api_json = self._api_get_leaderboard(client)
+        assert len(api_json) > 1
+        assert 'id' in api_json[0]
+        assert 'canvasFullName' in api_json[0]
+        assert 'points' in api_json[0]
+        assert api_json[0]['points'] > api_json[1]['points']
+        assert next(feed for feed in api_json if feed['sharePoints'] is False)
+
+    def test_sharing_student(self, client, fake_auth, student_id):
+        """Returns only sharing students to student user."""
+        fake_auth.login(student_id)
+        _api_update_share_points(client, {'share': True})
+        api_json = self._api_get_leaderboard(client)
+        assert 'points' in api_json[0]
+        assert next((feed for feed in api_json if feed['sharePoints'] is False), None) is None
+
+    def test_non_sharing_student(self, client, fake_auth, student_id):
+        """Denies non-sharing student user."""
+        fake_auth.login(student_id)
+        _api_update_share_points(client, {'share': False})
+        self._api_get_leaderboard(client, expected_status_code=403)
+
+
+class TestUpdateSharePoints:
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        _api_update_share_points(client, {'share': True}, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        _api_update_share_points(client, {'share': True}, expected_status_code=401)
+
+    def test_bad_data(self, client, fake_auth, authorized_user_id):
+        """Rejects bad data."""
+        fake_auth.login(authorized_user_id)
+        _api_update_share_points(client, {'regrettable': 'junk'}, expected_status_code=400)
+
+    def test_toggles_share_points(self, client, fake_auth, authorized_user_id):
+        """Turns sharing on and off."""
+        fake_auth.login(authorized_user_id)
+        profile = _api_my_profile(client)
+        assert profile['sharePoints'] is False
+        response = _api_update_share_points(client, {'share': True})
+        assert response['sharePoints'] is True
+        profile = _api_my_profile(client)
+        assert profile['sharePoints'] is True
+        response = _api_update_share_points(client, {'share': False})
+        assert response['sharePoints'] is False
+        profile = _api_my_profile(client)
+        assert profile['sharePoints'] is False

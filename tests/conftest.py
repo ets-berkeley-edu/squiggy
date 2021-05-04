@@ -137,6 +137,11 @@ def authorized_user_session(authorized_user_id):
 
 
 @pytest.fixture(scope='function')
+def student_id():
+    return User.query.filter_by(canvas_course_role='Student').first().id
+
+
+@pytest.fixture(scope='function')
 def fake_auth(app, db, client):
     """Shortcut to start an authenticated session."""
     return FakeAuth(app, client)
