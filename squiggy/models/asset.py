@@ -196,6 +196,7 @@ class Asset(Base):
         if asset:
             asset.deleted_at = utc_now()
             std_commit()
+            Activity.delete_by_object_id(object_type='asset', object_id=asset.id, course_id=asset.course_id, user_ids=[u.id for u in asset.users])
 
     @classmethod
     def update(
@@ -338,18 +339,21 @@ class Asset(Base):
         return True
 
     def remove_like(self, user):
+        user_id = user.get_id()
         db.session.query(Activity).filter_by(
             object_id=self.id,
             object_type='asset',
             activity_type='asset_like',
-            user_id=user.get_id(),
+            user_id=user_id,
         ).delete()
         db.session.query(Activity).filter_by(
             object_id=self.id,
             object_type='asset',
             activity_type='get_asset_like',
-            actor_id=user.get_id(),
+            actor_id=user_id,
         ).delete()
+        std_commit()
+        Activity.recalculate_points(course_id=self.course_id, user_ids=[user_id] + [u.id for u in self.users])
         self.likes = Activity.query.filter_by(object_id=self.id, object_type='asset', activity_type='asset_like').count()
         db.session.add(self)
         std_commit()

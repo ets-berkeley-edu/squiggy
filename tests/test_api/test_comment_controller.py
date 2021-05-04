@@ -84,6 +84,9 @@ class TestCreateComments:
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['commentCount'] == initial_comment_count + 1
 
+        asset_owner_points = User.find_by_id(mock_asset.users[0].id).points
+        commenter_points = User.find_by_id(authorized_user_id).points
+
         # Reply
         self._api_create_comment(
             asset_id=mock_asset.id,
@@ -104,6 +107,13 @@ class TestCreateComments:
         assert activities[0].asset_id == mock_asset.id
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['commentCount'] == initial_comment_count + 2
+
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 1
+        assert User.find_by_id(authorized_user_id).points == commenter_points + 2
+
+        client.delete(f"/api/comment/{comment['id']}/delete")
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points
+        assert User.find_by_id(authorized_user_id).points == commenter_points
 
 
 class TestGetComments:
@@ -208,8 +218,8 @@ class TestDeleteComment:
         fake_auth.login(mock_asset.users[0].id)
         self._verify_delete_comment(mock_asset, client)
 
-    def test_delete_asset_by_teacher(self, client, fake_auth, mock_asset):
-        """Authorized user can delete asset."""
+    def test_delete_comment_by_teacher(self, client, fake_auth, mock_asset):
+        """Instructor can delete comment."""
         course = Course.find_by_id(mock_asset.course_id)
         instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)

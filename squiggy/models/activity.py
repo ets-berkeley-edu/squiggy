@@ -28,7 +28,9 @@ from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
+from squiggy.models.activity_type import activities_type, ActivityType
 from squiggy.models.base import Base
+from squiggy.models.user import User
 
 
 activities_object_type = ENUM(
@@ -37,24 +39,6 @@ activities_object_type = ENUM(
     'canvas_submission',
     'comment',
     name='enum_activities_object_type',
-    create_type=False,
-)
-
-
-activities_type = ENUM(
-    'asset_add',
-    'asset_comment',
-    'asset_like',
-    'asset_view',
-    'assignment_submit',
-    'discussion_entry',
-    'discussion_topic',
-    'get_asset_comment',
-    'get_asset_comment_reply',
-    'get_asset_like',
-    'get_asset_view',
-    'get_discussion_entry_reply',
-    name='enum_activities_type',
     create_type=False,
 )
 
@@ -135,7 +119,7 @@ class Activity(Base):
             activity_metadata=activity_metadata,
         )
         db.session.add(activity)
-        std_commit()
+        cls.recalculate_points(course_id=course_id, user_ids=[user_id])
         return activity
 
     @classmethod
@@ -144,15 +128,17 @@ class Activity(Base):
             return cls.create(**kwargs)
 
     @classmethod
-    def delete_by_object_id(cls, object_type, object_id):
+    def delete_by_object_id(cls, object_type, object_id, course_id, user_ids):
         cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).delete()
+        cls.recalculate_points(course_id=course_id, user_ids=user_ids)
 
     @classmethod
     def find_by_object_id(cls, object_type, object_id):
         return cls.query.filter(and_(cls.object_type == object_type, cls.object_id == object_id)).all()
 
     @classmethod
-    def get_activities_as_csv(cls, course_id, configuration):
+    def get_activities_as_csv(cls, course_id):
+        configuration = ActivityType.get_activity_type_configuration(course_id=course_id)
         configuration_by_type = {c['type']: c for c in configuration}
         rows = []
         total_scores = {}
@@ -172,6 +158,40 @@ class Activity(Base):
                     'running_total': total_scores[activity.user_id],
                 })
         return headers, rows
+
+    @classmethod
+    def recalculate_points(cls, course_id=None, user_ids=None):
+        if not course_id and not user_ids:
+            return
+        user_query = User.query
+        if course_id:
+            user_query = user_query.filter_by(course_id=course_id)
+        if user_ids:
+            user_query = user_query.filter(User.id.in_(user_ids))
+        users = user_query.all()
+        if not users:
+            return
+        if not course_id:
+            course_id = users[0].course_id
+
+        configuration = ActivityType.get_activity_type_configuration(course_id=course_id)
+        configuration_by_type = {c['type']: c for c in configuration}
+        total_scores = {}
+
+        activity_query = cls.query.filter_by(course_id=course_id)
+        if user_ids:
+            activity_query = activity_query.filter(cls.user_id.in_(user_ids))
+        for activity in activity_query.all():
+            if configuration_by_type.get(activity.activity_type, {}).get('enabled', None):
+                score = configuration_by_type[activity.activity_type]['points']
+                total_scores[activity.user_id] = total_scores.get(activity.user_id, 0) + score
+        for user in users:
+            if user.id in total_scores:
+                user.points = total_scores[user.id]
+            else:
+                user.points = 0
+            db.session.add(user)
+        std_commit()
 
     def to_api_json(self):
         return {

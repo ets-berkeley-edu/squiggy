@@ -105,11 +105,14 @@ class TestUpdateActivityConfiguration:
     def test_well_formed_data(self, client, fake_auth):
         teacher = User.find_by_canvas_user_id(9876543)
         fake_auth.login(teacher.id)
+
+        old_points = User.find_by_id(1).points
+
         api_update_configuration(
             client,
             updates=[
-                {'type': 'asset_add', 'enabled': False, 'points': 3},
-                {'type': 'get_asset_comment', 'enabled': True, 'points': 12},
+                {'type': 'asset_add', 'enabled': True, 'points': 3},
+                {'type': 'get_asset_comment', 'enabled': False, 'points': 12},
             ],
         )
         new_config = api_get_configuration(client)
@@ -118,16 +121,28 @@ class TestUpdateActivityConfiguration:
             default_config = next(c for c in DEFAULT_ACTIVITY_TYPE_CONFIGURATION if c['type'] == config['type'])
             if config['type'] == 'asset_add':
                 assert config['points'] == 3
-                assert config['enabled'] is False
+                assert config['enabled'] is True
             elif config['type'] == 'asset_comment':
                 assert config['points'] == 2
                 assert config['enabled'] is True
             elif config['type'] == 'get_asset_comment':
                 assert config['points'] == 12
-                assert config['enabled'] is True
+                assert config['enabled'] is False
             else:
                 assert config['points'] == default_config['points']
                 assert config['enabled'] == default_config['enabled']
+
+        assert User.find_by_id(1).points == old_points - 6
+
+        # Reset to default.
+        api_update_configuration(
+            client,
+            updates=[
+                {'type': 'asset_add', 'enabled': True, 'points': 5},
+                {'type': 'get_asset_comment', 'enabled': True, 'points': 1},
+            ],
+        )
+        assert User.find_by_id(1).points == old_points
 
 
 class TestActivityCsvDownload:

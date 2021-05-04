@@ -128,7 +128,7 @@ def db_session(db):
 
 @pytest.fixture(scope='function')
 def authorized_user_id():
-    return User.query.first().id
+    return 1
 
 
 @pytest.fixture(scope='function')
