@@ -67,7 +67,12 @@ class Comment(Base):
         if comment:
             asset = comment.asset
             db.session.delete(comment)
-            Activity.delete_by_object_id(object_type='comment', object_id=comment_id)
+            Activity.delete_by_object_id(
+                object_type='comment',
+                object_id=comment_id,
+                course_id=comment.asset.course_id,
+                user_ids=[comment.user_id] + [u.id for u in comment.asset.users],
+            )
             std_commit(allow_test_environment=True)
             if asset:
                 asset.refresh_comments_count()

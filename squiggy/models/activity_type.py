@@ -23,10 +23,28 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from sqlalchemy.dialects.postgresql import ENUM
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
-from squiggy.models.activity import activities_type
 from squiggy.models.base import Base
+
+
+activities_type = ENUM(
+    'asset_add',
+    'asset_comment',
+    'asset_like',
+    'asset_view',
+    'assignment_submit',
+    'discussion_entry',
+    'discussion_topic',
+    'get_asset_comment',
+    'get_asset_comment_reply',
+    'get_asset_like',
+    'get_asset_view',
+    'get_discussion_entry_reply',
+    name='enum_activities_type',
+    create_type=False,
+)
 
 
 class ActivityType(Base):

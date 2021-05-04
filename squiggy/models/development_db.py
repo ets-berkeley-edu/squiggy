@@ -250,6 +250,7 @@ def _create_activity_types(courses):
             enabled=test_activity_type['enabled'],
             points=test_activity_type['points'],
         )
+    Activity.recalculate_points(course_id=course.id)
     std_commit(allow_test_environment=True)
 
 

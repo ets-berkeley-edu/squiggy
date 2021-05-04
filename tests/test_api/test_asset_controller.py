@@ -260,6 +260,7 @@ class TestCreateAsset:
     def test_create_link_asset_with_category(self, client, fake_auth, mock_category, authorized_user_id):
         """Returns a well-formed response."""
         fake_auth.login(authorized_user_id)
+        user_points = User.find_by_id(authorized_user_id).points
         api_json = self._api_create_link_asset(client, category=mock_category)
         assert 'id' in api_json
         assert api_json['title'] == 'What goes on in your mind?'
@@ -267,11 +268,13 @@ class TestCreateAsset:
         assert len(categories) == 1
         assert categories[0]['id'] == mock_category.id
         assert categories[0]['title'] == mock_category.title
+        assert User.find_by_id(authorized_user_id).points == user_points + 5
 
     @mock_s3
     def test_create_file_asset(self, client, app, fake_auth, authorized_user_id):
         """Authorized user can create an asset."""
         fake_auth.login(authorized_user_id)
+        user_points = User.find_by_id(authorized_user_id).points
         with mock_s3_bucket(app):
             api_json = self._api_create_file_asset(client)
             assert 'id' in api_json
@@ -279,6 +282,7 @@ class TestCreateAsset:
             assert api_json['mime'] == 'text/plain'
             categories = api_json['categories']
             assert len(categories) == 0
+        assert User.find_by_id(authorized_user_id).points == user_points + 5
 
 
 class TestUpdateAsset:
@@ -420,6 +424,8 @@ class TestLikeAsset:
         different_user = next(user for user in course_users if user not in mock_asset.users)
         fake_auth.login(different_user.id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        asset_owner_points = User.find_by_id(mock_asset.users[0].id).points
+        asset_liker_points = User.find_by_id(different_user.id).points
         assert asset['likes'] == 0
         assert asset['liked'] is False
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
@@ -428,37 +434,58 @@ class TestLikeAsset:
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['likes'] == 1
         assert asset['liked'] is True
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 1
+        assert User.find_by_id(different_user.id).points == asset_liker_points + 1
+        self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
 
     def test_likes_same_user_does_not_increment(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
         different_user = next(user for user in course_users if user not in mock_asset.users)
+        asset_owner_points = User.find_by_id(mock_asset.users[0].id).points
+        asset_liker_points = User.find_by_id(different_user.id).points
         fake_auth.login(different_user.id)
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 1
+        assert User.find_by_id(different_user.id).points == asset_liker_points + 1
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 1
+        assert User.find_by_id(different_user.id).points == asset_liker_points + 1
+        self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
 
     def test_likes_multiple_users_increment_remove_likes_decrement(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
         user_iterator = (user for user in course_users if user not in mock_asset.users)
         different_user_1 = next(user_iterator)
         different_user_2 = next(user_iterator)
+        asset_owner_points = User.find_by_id(mock_asset.users[0].id).points
+        asset_liker_1_points = User.find_by_id(different_user_1.id).points
+        asset_liker_2_points = User.find_by_id(different_user_2.id).points
         fake_auth.login(different_user_1.id)
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
         assert response.json['liked'] is True
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 1
+        assert User.find_by_id(different_user_1.id).points == asset_liker_1_points + 1
         fake_auth.login(different_user_2.id)
         response = self._api_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 2
         assert response.json['liked'] is True
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 2
+        assert User.find_by_id(different_user_2.id).points == asset_liker_2_points + 1
         fake_auth.login(different_user_1.id)
         response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 1
         assert response.json['liked'] is False
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points + 1
+        assert User.find_by_id(different_user_1.id).points == asset_liker_1_points
         fake_auth.login(different_user_2.id)
         response = self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
         assert response.json['likes'] == 0
         assert response.json['liked'] is False
+        assert User.find_by_id(mock_asset.users[0].id).points == asset_owner_points
+        assert User.find_by_id(different_user_2.id).points == asset_liker_2_points
 
     def test_errant_remove_like_does_not_decrement(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
