@@ -3,6 +3,7 @@ import _ from 'lodash'
 import App from './App.vue'
 import axios from 'axios'
 import linkify from 'vue-linkify'
+import HighchartsVue from 'highcharts-vue'
 import moment from 'moment-timezone'
 import router from './router'
 import store from './store'
@@ -22,6 +23,12 @@ Vue.prototype.$loading = (noSpinner?: boolean) => store.dispatch('context/loadin
 Vue.prototype.$putFocusNextTick = utils.putFocusNextTick
 Vue.prototype.$ready = (label, focusTarget?) => store.dispatch('context/loadingComplete', {label, focusTarget})
 
+const Highcharts = require('highcharts/highcharts')
+const HighchartsMore = require('highcharts/highcharts-more')
+HighchartsMore(Highcharts)
+window.Highcharts = Highcharts
+
+Vue.use(HighchartsVue)
 Vue.use(VueAnnouncer)
 Vue.use(VueMoment, {moment})
 Vue.use(VueKinesis)
