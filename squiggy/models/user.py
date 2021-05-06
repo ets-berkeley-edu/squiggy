@@ -29,7 +29,7 @@ from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from sqlalchemy.sql import desc
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat, to_int
+from squiggy.lib.util import is_admin, is_teaching, isoformat, to_int
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.course import Course
@@ -183,6 +183,8 @@ class User(Base):
             'canvasFullName': self.canvas_full_name,
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
+            'isAdmin': is_admin(self),
+            'isTeaching': is_teaching(self),
             'lastActivity': isoformat(self.last_activity),
             'sharePoints': self.share_points,
             'createdAt': isoformat(self.created_at),

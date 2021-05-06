@@ -11,7 +11,7 @@
       id="engagement-userinfo"
       class="engagement-userinfo-container"
     >
-      <div v-if="showLeaderboard" class="engagement-userinfo-badge">
+      <div v-if="showLeaderboard && rank" class="engagement-userinfo-badge">
         <div class="engagement-userinfo-badge-title">My Rank</div>
         <div id="engagement-userinfo-points" class="engagement-userinfo-badge-data">{{ rank }}</div>
       </div>
@@ -26,7 +26,7 @@
     </div>
 
     <div v-if="showLeaderboard" class="engagement-container">
-      <Leaderboard />
+      <Leaderboard :rows="leaderboard" />
     </div>
 
     <div class="engagement-container">
@@ -55,7 +55,8 @@ export default {
   components: {Leaderboard},
   data() {
     return {
-      rank: 666,
+      leaderboard: null,
+      rank: null,
       sharePoints: this.setInitialSharePoints(),
       showLeaderboard: false
     }
@@ -64,10 +65,20 @@ export default {
     this.refreshLeaderboard()
   },
   methods: {
+    rankLeaderboard() {
+      for (const [index, row] of this.leaderboard.entries()) {
+        row.rank = index + 1
+        if (row.id === this.$currentUser.id) {
+          this.rank = row.rank
+        }
+      }
+    },
     refreshLeaderboard() {
       if (this.$currentUser.isAdmin || this.$currentUser.isTeaching || this.$currentUser.sharePoints) {
         this.$loading()
-        getLeaderboard().then(() => {
+        getLeaderboard().then((data) => {
+          this.leaderboard = data
+          this.rankLeaderboard()
           this.showLeaderboard = true
           this.$ready('Engagement Index')
         })
