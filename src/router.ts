@@ -9,6 +9,7 @@ import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
 import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
+import PointsConfiguration from '@/components/engage/PointsConfiguration.vue'
 import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
 import store from '@/store'
@@ -91,6 +92,13 @@ const router = new Router({
           component: Engage,
           meta: {
             title: 'Engagement Index'
+          }
+        },
+        {
+          path: '/engage/points',
+          component: PointsConfiguration,
+          meta: {
+            title: 'Points Configuration'
           }
         }
       ]

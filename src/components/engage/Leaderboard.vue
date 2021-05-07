@@ -9,9 +9,22 @@
     >
       <template #top>
         <div class="d-flex justify-space-between">
-          <v-btn>
-            Points configuration
-          </v-btn>
+          <div class="d-flex">
+            <v-btn
+              id="points-configuration-btn"
+              class="mr-2"
+              @click="go('/engage/points')"
+              @keypress.enter="go('/engage/points')"
+            >
+              Points configuration
+            </v-btn>
+            <v-btn
+              id="download-csv-btn"
+              :href="`${$config.apiBaseUrl}/api/activities/csv`"
+            >
+              Download CSV
+            </v-btn>
+          </div>
           <v-text-field
             v-model="search"
             label="Search"
@@ -65,8 +78,11 @@
 </template>
 
 <script>
+import Utils from '@/mixins/Utils'
+
 export default {
   name: 'Leaderboard',
+  mixins: [Utils],
   data: () => ({
     headers: [
       {text: 'Rank', 'value': 'rank'},
