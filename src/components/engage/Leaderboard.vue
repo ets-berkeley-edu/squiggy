@@ -19,6 +19,7 @@
               Points configuration
             </v-btn>
             <v-btn
+              v-if="$currentUser.isAdmin || $currentUser.isTeaching"
               id="download-csv-btn"
               :href="`${$config.apiBaseUrl}/api/activities/csv`"
             >

@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.errors import BadRequestError
 from squiggy.lib.http import response_with_csv_download, tolerant_jsonify
@@ -33,7 +33,7 @@ from squiggy.models.activity_type import activities_type, ActivityType
 
 
 @app.route('/api/activities/configuration', methods=['GET'])
-@teacher_required
+@login_required
 def get_activity_configuration():
     configuration = ActivityType.get_activity_type_configuration(course_id=current_user.course.id)
     return tolerant_jsonify(configuration)
