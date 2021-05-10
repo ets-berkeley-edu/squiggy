@@ -114,7 +114,7 @@ class TestGetLeaderboard:
         assert 'canvasFullName' in api_json[0]
         assert 'points' in api_json[0]
         assert api_json[0]['points'] > api_json[1]['points']
-        assert next(feed for feed in api_json if feed['sharePoints'] is False)
+        assert next(feed for feed in api_json if not feed['sharePoints'])
 
     def test_sharing_student(self, client, fake_auth, student_id):
         """Returns only sharing students to student user."""
@@ -122,7 +122,7 @@ class TestGetLeaderboard:
         _api_update_share_points(client, {'share': True})
         api_json = self._api_get_leaderboard(client)
         assert 'points' in api_json[0]
-        assert next((feed for feed in api_json if feed['sharePoints'] is False), None) is None
+        assert next((feed for feed in api_json if not feed['sharePoints']), None) is None
 
     def test_non_sharing_student(self, client, fake_auth, student_id):
         """Denies non-sharing student user."""
@@ -151,7 +151,7 @@ class TestUpdateSharePoints:
         """Turns sharing on and off."""
         fake_auth.login(authorized_user_id)
         profile = _api_my_profile(client)
-        assert profile['sharePoints'] is False
+        assert profile['sharePoints'] is None
         response = _api_update_share_points(client, {'share': True})
         assert response['sharePoints'] is True
         profile = _api_my_profile(client)
