@@ -59,7 +59,7 @@ class User(Base):
     canvas_user_id = db.Column(db.Integer, nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
-    share_points = db.Column(db.Boolean, default=False)
+    share_points = db.Column(db.Boolean, default=None)
     last_activity = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     assets = db.relationship(
@@ -81,7 +81,7 @@ class User(Base):
         canvas_email=None,
         canvas_image=None,
         points=0,
-        share_points=False,
+        share_points=None,
     ):
         self.canvas_course_role = canvas_course_role
         self.canvas_course_sections = canvas_course_sections
