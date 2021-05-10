@@ -51,16 +51,10 @@ class TestGetActivityConfiguration:
         """Denies anonymous user."""
         api_get_configuration(client, expected_status_code=401)
 
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        student = User.find_by_canvas_user_id(8765432)
-        fake_auth.login(student.id)
-        api_get_configuration(client, expected_status_code=401)
-
-    def test_authorized(self, client, fake_auth):
-        """Default configuration values with db-based overrides are returned to authorized user."""
-        teacher = User.find_by_canvas_user_id(9876543)
-        fake_auth.login(teacher.id)
+    def _assert_valid_configuration(self, client, fake_auth, canvas_id):
+        """Return default configuration values with db-based overrides to authorized user."""
+        user = User.find_by_canvas_user_id(canvas_id)
+        fake_auth.login(user.id)
         response = api_get_configuration(client)
         assert len(response) == len(DEFAULT_ACTIVITY_TYPE_CONFIGURATION)
         for config in response:
@@ -74,6 +68,14 @@ class TestGetActivityConfiguration:
             else:
                 assert config['points'] == default_config['points']
                 assert config['enabled'] == default_config['enabled']
+
+    def test_student(self, client, fake_auth):
+        """Allows student."""
+        self._assert_valid_configuration(client, fake_auth, canvas_id=8765432)
+
+    def test_teacher(self, client, fake_auth):
+        """Allows student."""
+        self._assert_valid_configuration(client, fake_auth, canvas_id=9876543)
 
 
 class TestUpdateActivityConfiguration:
