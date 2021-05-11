@@ -3,6 +3,7 @@ import AddLinkAsset from '@/components/assets/AddLinkAsset.vue'
 import Asset from '@/components/assets/Asset.vue'
 import Assets from '@/components/assets/Assets.vue'
 import AssetUpload from '@/components/assets/AssetUpload.vue'
+import auth from './auth'
 import BaseView from '@/components/BaseView.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
 import Engage from '@/components/engage/Engage.vue'
@@ -69,6 +70,7 @@ const router = new Router({
         {
           path: '/assets/manage',
           component: ManageAssets,
+          beforeEnter: auth.requiresInstructor,
           meta: {
             title: 'Manage Assets'
           }
