@@ -2,7 +2,7 @@
   <div class="align-content-center d-flex justify-space-between pt-2 w-100">
     <h2 id="asset.title">{{ asset.title }}</h2>
     <div class="d-flex align-content-end">
-      <div class="mr-2">
+      <div v-if="canEditAsset" class="mr-2">
         <v-btn
           id="edit-asset-details-btn"
           class="text-no-wrap"
@@ -19,7 +19,7 @@
           Download
         </v-btn>
       </div>
-      <div>
+      <div v-if="canEditAsset">
         <v-dialog v-model="dialogConfirmDelete" width="500">
           <template #activator="{}">
             <v-btn
@@ -83,6 +83,7 @@ export default {
     }
   },
   data: () => ({
+    canEditAsset: false,
     dialogConfirmDelete: undefined,
     downloadUrl: undefined
   }),
@@ -90,6 +91,7 @@ export default {
     if (this.asset.assetType === 'file') {
       this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
     }
+    this.canEditAsset = this.$currentUser.isAdmin || this.$currentUser.isTeaching || this.$_.find(this.asset.users, {'id': this.$currentUser.id})
   },
   methods: {
     cancelDelete() {
