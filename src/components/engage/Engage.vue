@@ -13,7 +13,7 @@
     >
       <div v-if="showLeaderboard && rank" class="engagement-userinfo-badge">
         <div class="engagement-userinfo-badge-title">My Rank</div>
-        <div id="engagement-userinfo-points" class="engagement-userinfo-badge-data">{{ rank }}</div>
+        <div id="engagement-userinfo-rank" class="engagement-userinfo-badge-data">{{ rank }}</div>
       </div>
       <div class="engagement-userinfo-badge">
         <div class="engagement-userinfo-badge-title">My Points</div>
