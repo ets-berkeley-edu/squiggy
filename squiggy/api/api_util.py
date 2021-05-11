@@ -28,6 +28,7 @@ from functools import wraps
 from flask import current_app as app, request
 from flask_login import current_user
 from squiggy.lib.util import is_teaching
+from squiggy.logger import logger
 
 
 def teacher_required(func):
@@ -37,7 +38,7 @@ def teacher_required(func):
         if is_authorized:
             return func(*args, **kw)
         else:
-            app.logger.warning(f'Unauthorized request to {request.path}')
+            logger.warning(f'Unauthorized request to {request.path}')
             return app.login_manager.unauthorized()
     return _teacher_required
 

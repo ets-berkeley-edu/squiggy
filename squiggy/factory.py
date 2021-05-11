@@ -29,7 +29,7 @@ from flask import Flask
 from squiggy import db
 from squiggy.configs import load_configs
 from squiggy.lib.canvas_poller import launch_pollers
-from squiggy.logger import initialize_logger
+from squiggy.logger import initialize_app_logger
 from squiggy.routes import register_routes
 
 
@@ -37,7 +37,7 @@ def create_app():
     """Initialize app with configs."""
     app = Flask(__name__.split('.')[0])
     load_configs(app)
-    initialize_logger(app)
+    initialize_app_logger(app)
     db.init_app(app)
 
     with app.app_context():

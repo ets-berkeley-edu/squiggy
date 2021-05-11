@@ -33,6 +33,7 @@ from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX
 from squiggy.lib.util import to_int
+from squiggy.logger import logger
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -44,8 +45,6 @@ def dev_auth_login():
     if app.config['DEVELOPER_AUTH_ENABLED']:
         user_id = to_int(params.get('userId'))
         password = params.get('password')
-        logger = app.logger
-
         if password != app.config['DEVELOPER_AUTH_PASSWORD']:
             logger.error('Dev auth: Wrong password')
             return tolerant_jsonify({'message': 'Invalid credentials'}, 401)
@@ -93,7 +92,7 @@ def _canvas_external_tool_url(s, headers):
 
 
 def _lti_launch(tool_id):
-    app.logger.info(f'Begin LTI launch for tool {tool_id}')
+    logger.info(f'Begin LTI launch for tool {tool_id}')
     user, redirect_path = _lti_launch_authentication(tool_id=tool_id)
     return _login_user(user_id=user and user.id, redirect_path=redirect_path, tool_id=tool_id)
 
@@ -133,10 +132,10 @@ def _lti_launch_authentication(tool_id):
             lti_params[key] = validated_value
             return lti_params[key]
         else:
-            app.logger.warning(f'Invalid \'{key}\' parameter in LTI launch: {value}')
+            logger.warning(f'Invalid \'{key}\' parameter in LTI launch: {value}')
 
     if all(_fetch(key) for key in validation.keys()):
-        app.logger.info(f'LTI launch params passed basic validation: {lti_params}')
+        logger.info(f'LTI launch params passed basic validation: {lti_params}')
         canvas_api_domain = lti_params['custom_canvas_api_domain']
         canvas = Canvas.find_by_domain(canvas_api_domain)
 
@@ -155,7 +154,7 @@ def _lti_launch_authentication(tool_id):
         if valid_request or app.config['TESTING']:
             # TODO: We do not want app.config['TESTING'] in this conditional. It is here because our tests are failing
             #       on HMAC-signature verification. Let's fix after we get a successful LTI launch.
-            app.logger.info(f'FlaskToolProvider validated {canvas_api_domain} LTI launch request.')
+            logger.info(f'FlaskToolProvider validated {canvas_api_domain} LTI launch request.')
         else:
             raise BadRequestError(f'LTI oauth failed in {canvas_api_domain} request')
 
@@ -171,7 +170,7 @@ def _lti_launch_authentication(tool_id):
                 course_id=course.id,
                 engagement_index_url=external_tool_url if is_engagement_index else course.engagement_index_url,
             )
-            app.logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
+            logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
         else:
             course = Course.create(
                 asset_library_url=external_tool_url if is_asset_library else None,
@@ -180,12 +179,12 @@ def _lti_launch_authentication(tool_id):
                 engagement_index_url=external_tool_url if is_engagement_index else None,
                 name=args.get('context_title'),
             )
-            app.logger.info(f'Created course via LTI launch: {course.to_api_json()}')
+            logger.info(f'Created course via LTI launch: {course.to_api_json()}')
 
         canvas_user_id = lti_params['custom_canvas_user_id']
         user = User.find_by_course_id(canvas_user_id=canvas_user_id, course_id=course.id)
         if user:
-            app.logger.info(f'Found user during LTI launch: canvas_user_id={canvas_user_id}, course_id={course.id}')
+            logger.info(f'Found user during LTI launch: canvas_user_id={canvas_user_id}, course_id={course.id}')
         else:
             user = User.create(
                 course_id=course.id,
@@ -197,16 +196,16 @@ def _lti_launch_authentication(tool_id):
                 canvas_email=args.get('lis_person_contact_email_primary'),
                 canvas_course_sections=None,  # TODO: Set by poller?
             )
-            app.logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
+            logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
 
         path = '/assets' if is_asset_library else '/engage'
         params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
-        app.logger.info(f'LTI launch redirect: {path}?{params}')
+        logger.info(f'LTI launch redirect: {path}?{params}')
         return user, f'{path}?{params}'
 
 
 def _login_user(user_id, redirect_path=None, tool_id=None):
-    app.logger.info(f'_login_user: user_id={user_id}, redirect_path={redirect_path}, tool_id={tool_id}')
+    logger.info(f'_login_user: user_id={user_id}, redirect_path={redirect_path}, tool_id={tool_id}')
     authenticated = login_user(LoginSession(user_id), remember=True) and current_user.is_authenticated
     if authenticated:
         if redirect_path:
@@ -226,7 +225,7 @@ def _login_user(user_id, redirect_path=None, tool_id=None):
             samesite='None',
             secure=True,
         )
-        app.logger.info(f'_login_user cookie: key={key} value={str(current_user.user_id)}')
+        logger.info(f'_login_user cookie: key={key} value={str(current_user.user_id)}')
 
         response.set_cookie(
             key=f'{canvas_api_domain}_supports_custom_messaging',

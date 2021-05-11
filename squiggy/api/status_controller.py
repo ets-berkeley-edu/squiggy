@@ -28,6 +28,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
 from squiggy.externals.canvas import ping_canvas
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.logger import logger
 
 
 @app.route('/api/ping')
@@ -45,7 +46,7 @@ def _db_status():
         db.session.execute('SELECT 1')
         return True
     except SQLAlchemyError:
-        app.logger.exception('Database connection error')
+        logger.exception('Database connection error')
         return False
 
 
@@ -53,6 +54,6 @@ def _ping_canvas():
     try:
         return ping_canvas() if app.config['CANVAS_ACCESS_TOKEN'] else None
     except CanvasException as e:
-        app.logger.error('Canvas error during /api/ping')
-        app.logger.exception(e)
+        logger.error('Canvas error during /api/ping')
+        logger.exception(e)
         return False

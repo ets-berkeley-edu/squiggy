@@ -29,6 +29,7 @@ from flask import current_app as app, request
 from squiggy.lib.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.previews import verify_preview_service_authorization
+from squiggy.logger import logger
 from squiggy.models.asset import Asset
 
 
@@ -45,8 +46,8 @@ def previews_callback():
         if params.get('metadata'):
             metadata = json.loads(params['metadata'])
     except Exception as e:
-        app.logger.error('Failed to parse JSON preview metadata.')
-        app.logger.exception(e)
+        logger.error('Failed to parse JSON preview metadata.')
+        logger.exception(e)
         raise BadRequestError('Could not parse JSON metadata.')
 
     asset = Asset.find_by_id(params['id'])

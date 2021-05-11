@@ -26,16 +26,18 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import logging
 from logging.handlers import RotatingFileHandler
+from threading import current_thread
 
 
-def initialize_logger(app):
+def initialize_app_logger(app):
     level = app.config['LOGGING_LEVEL']
     location = app.config['LOGGING_LOCATION']
     log_propagation_level = app.config['LOGGING_PROPAGATION_LEVEL']
 
-    # Configure the root logger and library loggers as desired.
+    # Configure app and library loggers.
     loggers = [
-        logging.getLogger(),
+        app.logger,
+        logging.getLogger('werkzeug'),
     ]
 
     # Capture runtime warnings so that we'll see them.
@@ -54,10 +56,44 @@ def initialize_logger(app):
         handler.setFormatter(formatter)
 
     for logger in loggers:
+        logger.handlers = []
         for handler in handlers:
             logger.addHandler(handler)
-            logger.setLevel(level)
+        logger.setLevel(level)
 
     logging.getLogger('boto3').setLevel(log_propagation_level)
     logging.getLogger('botocore').setLevel(log_propagation_level)
     logging.getLogger('s3transfer').setLevel(log_propagation_level)
+
+
+def initialize_background_logger(name, location):
+    from flask import current_app as app
+    level = app.config['LOGGING_LEVEL']
+    file_handler = RotatingFileHandler(location, mode='a', maxBytes=1024 * 1024 * 100, backupCount=20)
+    handlers = [file_handler]
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    for handler in handlers:
+        handler.setLevel(level)
+        formatter = logging.Formatter(app.config['LOGGING_FORMAT'])
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    return logger
+
+
+class LogDelegator:
+
+    def __getattr__(self, k):
+        thread_name = current_thread().name
+        if thread_name.startswith('poller-'):
+            delegate_logger = logging.getLogger(thread_name)
+        else:
+            from flask import current_app as app
+            delegate_logger = app.logger
+        return getattr(delegate_logger, k)
+
+
+logger = LogDelegator()

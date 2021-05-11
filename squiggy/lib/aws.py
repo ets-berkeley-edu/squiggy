@@ -30,6 +30,7 @@ from urllib.parse import parse_qs, urlparse
 import boto3
 from flask import current_app as app
 import smart_open
+from squiggy.logger import logger
 
 
 S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+\.s3.*\.amazonaws\.com')
@@ -65,8 +66,8 @@ def put_binary_data_to_s3(bucket, key, binary_data, content_type):
         s3.put_object(Body=binary_data, Bucket=bucket, Key=key, ContentType=content_type)
         return True
     except Exception as e:
-        app.logger.error(f'S3 put operation failed (bucket={bucket}, key={key})')
-        app.logger.exception(e)
+        logger.error(f'S3 put operation failed (bucket={bucket}, key={key})')
+        logger.exception(e)
         return None
 
 
@@ -74,8 +75,8 @@ def stream_object(s3_url):
     try:
         return smart_open.open(s3_url, 'rb', transport_params={'session': _get_session()})
     except Exception as e:
-        app.logger.error(f'S3 stream operation failed (s3_url={s3_url})')
-        app.logger.exception(e)
+        logger.error(f'S3 stream operation failed (s3_url={s3_url})')
+        logger.exception(e)
         return None
 
 

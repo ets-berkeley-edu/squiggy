@@ -27,9 +27,10 @@ import csv
 from datetime import datetime
 import urllib
 
-from flask import current_app as app, Response
+from flask import Response
 import requests
 import simplejson as json
+from squiggy.logger import logger
 from werkzeug.wrappers import ResponseStream
 
 
@@ -61,14 +62,14 @@ def request(url, headers={}, method='get', **kwargs):
     """
     if method not in ['get', 'post', 'put', 'delete']:
         raise ValueError(f'Unrecognized HTTP method "{method}"')
-    app.logger.debug({'message': 'HTTP request', 'url': url, 'method': method, 'headers': sanitize_headers(headers)})
+    logger.debug({'message': 'HTTP request', 'url': url, 'method': method, 'headers': sanitize_headers(headers)})
     response = None
     try:
         http_method = getattr(requests, method)
         response = http_method(url, headers=headers, **kwargs)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        app.logger.error(e)
+        logger.error(e)
         return ResponseExceptionWrapper(e, response)
     else:
         return response
