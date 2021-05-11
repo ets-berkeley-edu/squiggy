@@ -48,6 +48,7 @@
         </div>
         <div>
           <v-btn
+            v-if="$currentUser.isAdmin || $currentUser.isTeaching"
             id="manage-assets-btn"
             elevation="2"
             :disabled="isBusy"
