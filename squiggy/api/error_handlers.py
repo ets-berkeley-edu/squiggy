@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 import squiggy.lib.errors
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.logger import logger
 
 
 @app.errorhandler(squiggy.lib.errors.BadRequestError)
@@ -55,5 +56,5 @@ def handle_internal_server_error(error):
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(error):
-    app.logger.exception(error)
+    logger.exception(error)
     return tolerant_jsonify({'message': 'An unexpected server error occurred.'}), 500

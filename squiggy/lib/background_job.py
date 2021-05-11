@@ -25,9 +25,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 
 import os
-from threading import Thread
+from threading import current_thread, Thread
 
 from flask import current_app as app
+from squiggy.logger import logger
 
 
 """Parent class for background jobs."""
@@ -35,7 +36,8 @@ from flask import current_app as app
 
 class BackgroundJob(object):
 
-    def __init__(self, **kwargs):
+    def __init__(self, thread_name=None, **kwargs):
+        self.thread_name = thread_name
         self.job_args = kwargs
 
     def run(self, **kwargs):
@@ -43,13 +45,13 @@ class BackgroundJob(object):
 
     def run_async(self, **async_opts):
         if os.environ.get('SQUIGGY_ENV') in ['test', 'testext']:
-            app.logger.info('Test run in progress; will not muddy the waters by actually kicking off a background thread.')
+            logger.info('Test run in progress; will not muddy the waters by actually kicking off a background thread.')
             return True
-        app.logger.info('About to start background thread.')
+        logger.info(f'About to start background thread {self.thread_name}.')
         app_arg = app._get_current_object()
         self.job_args.update(async_opts)
         kwargs = self.job_args
-        thread = Thread(target=self.run_in_app_context, args=[app_arg], kwargs=kwargs, daemon=True)
+        thread = Thread(target=self.run_in_app_context, name=self.thread_name, args=[app_arg], kwargs=kwargs, daemon=True)
         thread.start()
         return True
 
@@ -59,12 +61,13 @@ class BackgroundJob(object):
 
     def run_wrapped(self, **kwargs):
         try:
+            logger.info(f'Started background thread {current_thread().name}.')
             result = self.run(**kwargs)
         except BackgroundJobError as e:
-            app.logger.error(e)
+            logger.error(e)
             result = None
         except Exception as e:
-            app.logger.exception(e)
+            logger.exception(e)
             result = None
         return result
 
