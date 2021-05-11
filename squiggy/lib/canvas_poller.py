@@ -435,8 +435,8 @@ class CanvasPoller(BackgroundJob):
                     continue
                 # Don't create a discussion_topic for an assigned discussion as these are set up by instructors.
                 if not getattr(topic, 'assignment', None):
-                    if not discussion_activity_index.get(topic.author['id'], {}).get('discussion_topic', {}).get(topic.id):
-                        user = users_by_canvas_id.get(topic.author['id'], None)
+                    if not discussion_activity_index.get(topic.author.get('id', None), {}).get('discussion_topic', {}).get(topic.id):
+                        user = users_by_canvas_id.get(topic.author.get('id', None), None)
                         if user:
                             Activity.create(
                                 activity_type='discussion_topic',
@@ -457,7 +457,7 @@ class CanvasPoller(BackgroundJob):
 
     def create_discussion_entry_activities(self, entry, topic, course, users_by_canvas_id, discussion_activity_index):
         # Users creating an entry on their own topic get no activity credit.
-        if entry.user_id != topic.author['id']:
+        if entry.user_id != topic.author.get('id', None):
             if not discussion_activity_index.get(entry.user_id, {}).get('discussion_entry', {}).get(f'{topic.id}_{entry.id}'):
                 user = users_by_canvas_id.get(entry.user_id, None)
                 if user:
