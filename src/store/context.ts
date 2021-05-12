@@ -115,7 +115,7 @@ const mutations = {
     if (isInIframe && Vue.prototype.$supportsCustomMessaging) {
       $_postIFrameMessage(() => ({
         subject: 'setParentHash',
-        hash
+        hash: hash
       }))
     } else if (!isInIframe) {
       window.location.hash = hash
