@@ -93,6 +93,7 @@ axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
     })
   }
   const isInIframe = !!window.parent.frames.length
+  Vue.prototype.$isInIframe = isInIframe
   if (isInIframe) {
     store.dispatch('context/postIFrameMessage', {
       generator: () => ({
