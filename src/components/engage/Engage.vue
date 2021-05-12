@@ -31,6 +31,17 @@
       <Leaderboard :rows="leaderboard" />
     </div>
 
+    <div v-if="!showLeaderboard && $currentUser.sharePoints === false">
+      <v-btn
+        id="points-configuration-btn"
+        class="mr-2"
+        @click="go('/engage/points')"
+        @keypress.enter="go('/engage/points')"
+      >
+        Points configuration
+      </v-btn>
+    </div>
+
     <div class="engagement-container">
       <h3>Share my score</h3>
       <v-form class="engagement-share-form" @submit="saveSharePoints">
