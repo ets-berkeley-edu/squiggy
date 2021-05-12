@@ -4,6 +4,19 @@
       <h2>Points Configuration</h2>
     </div>
 
+    <div>
+      <v-btn
+        id="back-to-engagement-index-btn"
+        class="bg-transparent"
+        elevation="0"
+        @click="go('/engage')"
+        @keypress.enter="go('/engage')"
+      >
+        <font-awesome-icon class="mr-2" icon="less-than" size="sm" />
+        Back to Engagement Index
+      </v-btn>
+    </div>
+
     <form
       class="points-container"
       name="activityTypeConfigurationForm"
@@ -118,10 +131,12 @@
 </template>
 
 <script>
+import Utils from '@/mixins/Utils'
 import {getPointsConfiguration, updatePointsConfiguration} from '@/api/activities'
 
 export default {
   name: 'PointsConfiguration',
+  mixins: [Utils],
   data: () => ({
     activities: [],
     editMode: false,
