@@ -1,19 +1,23 @@
 <template>
-  <v-main id="content" class="ma-3">
-    <Spinner v-if="isLoading && !noSpinnerWhenLoading" />
-    <router-view />
-  </v-main>
+  <div id="base">
+    <v-main id="content" class="ma-3">
+      <router-view />
+    </v-main>
+    <FooterIFrame v-if="isInIframe" />
+    <FooterStandalone v-if="!isInIframe && $currentUser.isAuthenticated" />
+  </div>
 </template>
 
 <script>
 import Context from '@/mixins/Context'
+import FooterIFrame from '@/components/util/FooterIFrame'
+import FooterStandalone from '@/components/util/FooterStandalone'
 import Iframe from '@/mixins/Iframe'
-import Spinner from '@/components/util/Spinner'
 import Util from '@/mixins/Utils'
 
 export default {
   name: 'BaseView',
-  components: {Spinner},
+  components: {FooterIFrame, FooterStandalone},
   mixins: [Context, Iframe, Util],
   data: () => ({
     navItems: undefined,
