@@ -53,6 +53,7 @@ const router = new Router({
         },
         {
           beforeEnter: (to: any, from: any, next: any) => {
+            store.dispatch('context/loadingStart')
             store.dispatch('context/getBookmarkHash').then(params => {
               if (params.assetId) {
                 next(`/asset/${params.assetId}`)

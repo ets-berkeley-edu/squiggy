@@ -40,22 +40,12 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
     if (callback) {
       const eventType = 'message'
       const processor = event => {
-        console.log('Message event listener called')
         if (event && event.data) {
-          try {
-            console.log('Event data received')
-            console.log(event.data)
-            callback(JSON.parse(event.data))
-            window.removeEventListener(eventType, processor)
-          } catch(error) {
-            console.log('Error parsing event data')
-            console.log(error)
-            return false
-          }
+          window.removeEventListener(eventType, processor)
+          callback(JSON.parse(event.data))
         }
       }
       window.addEventListener(eventType, processor)
-      console.log('Message event listener added')
     }
     // Send the message to the parent container as a string-ified object
     window.parent.postMessage(JSON.stringify(generator()), '*')
