@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from datetime import datetime
 
 from dateutil.tz import tzutc
+from flask import current_app as app
 import pytz
 
 
@@ -49,6 +50,10 @@ def is_teaching(user):
 
 def isoformat(value):
     return value and value.astimezone(tzutc()).isoformat()
+
+
+def local_now():
+    return utc_now().astimezone(pytz.timezone(app.config['TIMEZONE']))
 
 
 def to_bool_or_none(arg):

@@ -23,6 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from flask import current_app as app
+import pytz
 from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.orm import joinedload
@@ -153,7 +155,7 @@ class Activity(Base):
                     'user_id': activity.user_id,
                     'user_name': activity.user.canvas_full_name,
                     'action': activity.activity_type,
-                    'date': activity.created_at,
+                    'date': activity.created_at.astimezone(pytz.timezone(app.config['TIMEZONE'])),
                     'score': score,
                     'running_total': total_scores[activity.user_id],
                 })

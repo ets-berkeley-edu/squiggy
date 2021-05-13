@@ -24,14 +24,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import base64
-from datetime import datetime
 import hashlib
 import hmac
 import re
 
 from flask import current_app as app
 from squiggy.lib import http
-from squiggy.lib.util import to_int
+from squiggy.lib.util import to_int, utc_now
 from squiggy.logger import logger
 
 
@@ -58,7 +57,7 @@ def generate_previews(asset_id, asset_url):
 
 def generate_preview_service_signature(nonce=None):
     if not nonce:
-        nonce = str(int(datetime.now().timestamp() * 1000))
+        nonce = str(int(utc_now().timestamp() * 1000))
     digester = hmac.new(_byte_string(app.config['PREVIEWS_API_KEY']), _byte_string(nonce), hashlib.sha1)
     return f"Bearer {nonce}:{base64.b64encode(digester.digest()).decode('utf-8')}"
 
@@ -74,7 +73,7 @@ def verify_preview_service_authorization(auth_header):
         return False
 
     nonce = to_int(header_fields[0]) or 0
-    now = int(datetime.now().timestamp() * 1000)
+    now = int(utc_now().timestamp() * 1000)
     if abs(now - nonce) > (600 * 1000):
         logger.error(f'Invalid authorization nonce provided to preview service callback: {nonce}.')
         return False
