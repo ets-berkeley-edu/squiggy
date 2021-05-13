@@ -31,7 +31,7 @@
       <Leaderboard :rows="leaderboard" />
     </div>
 
-    <div v-if="!showLeaderboard && $currentUser.sharePoints === false">
+    <div v-if="!showLeaderboard && $currentUser.sharePoints === false" class="engagement-container">
       <v-btn
         id="points-configuration-btn"
         class="mr-2"
@@ -61,10 +61,12 @@
 
 <script>
 import Leaderboard from '@/components/engage/Leaderboard'
+import Utils from '@/mixins/Utils'
 import {getLeaderboard, updateSharePoints} from '@/api/users'
 
 export default {
   name: 'Engage',
+  mixins: [Utils],
   components: {Leaderboard},
   data() {
     return {
