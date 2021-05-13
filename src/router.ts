@@ -53,8 +53,8 @@ const router = new Router({
         },
         {
           beforeEnter: (to: any, from: any, next: any) => {
-            // Skip hash redirect if we're returning from an already-hashed asset page.
-            if (from.fullPath.match(/\/asset\/\d+#suitec_assetId/)) {
+            // Skip hash redirect if we're returning from an asset page.
+            if (from.fullPath.match(/\/asset\/\d+/)) {
               next()
             } else {
               store.dispatch('context/loadingStart')
