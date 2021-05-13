@@ -233,11 +233,11 @@ export default {
       })
     }
     this.getBookmarkHash().then(bookmarkHash => {
-      if (bookmarkHash.length) {
+      if (bookmarkHash && Object.keys(bookmarkHash).length) {
         this.setAssetType(bookmarkHash.assetType)
         this.setCategoryId(bookmarkHash.categoryId)
         this.setOrderBy(bookmarkHash.orderBy)
-        this.setUserId(bookmarkHash.userId)
+        this.setUserId(parseInt(bookmarkHash.userId, 10))
         this.search().then(loadUsers)
       } else {
         loadUsers()
