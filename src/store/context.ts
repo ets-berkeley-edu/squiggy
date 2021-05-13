@@ -3,21 +3,25 @@ import Vue from 'vue'
 
 const $_extractBookmarkHash = context => {
   const bookmarkHash = {}
-  const url = new URL(context)
-  if (url.hash) {
-    const keyPrefix = 'suitec_'
-    const params = url.hash.replace('#', '')
-    new URLSearchParams(params).forEach((value, key) => {
-      const trimmedKey = key.startsWith(keyPrefix) ? key.replace(keyPrefix, '') : null
-      if (trimmedKey) {
-        bookmarkHash[trimmedKey] = value
-      }
-    })
+  try {
+    const url = new URL(context.location)
+    if (url.hash) {
+      const keyPrefix = 'suitec_'
+      const params = url.hash.replace('#', '')
+      new URLSearchParams(params).forEach((value, key) => {
+        const trimmedKey = key.startsWith(keyPrefix) ? key.replace(keyPrefix, '') : null
+        if (trimmedKey) {
+          bookmarkHash[trimmedKey] = value
+        }
+      })
+    }
+  } catch {
+    // Bookmark hash remains empty in the case of parsing errors.
   }
   return bookmarkHash
 }
 
-const $_getStandaloneBookmarkHash = () => $_extractBookmarkHash(window.location)
+const $_getStandaloneBookmarkHash = () => $_extractBookmarkHash(window)
 
 const $_getIFrameBookmarkHash = () => {
   return new Promise(resolve => {
