@@ -1,6 +1,6 @@
 <template>
   <div id="asset-library">
-    <AssetsHeader />
+    <AssetsHeader ref="header" />
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
@@ -33,6 +33,7 @@ export default {
   components: {AssetCard, AssetsHeader, CreateAssetCard, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils],
   data: () => ({
+    anchor: null,
     isComplete: false
   }),
   computed: {
@@ -42,23 +43,32 @@ export default {
   },
   created() {
     this.$loading(true)
-    const anchor = this.$route.query.anchor
-    const isReturning = anchor && this.$_.size(this.assets)
-    const ready = () => {
-      this.$ready('Asset Library')
-      if (anchor) {
-        this.scrollTo(`#${anchor}`)
-        this.$putFocusNextTick(anchor)
-      }
-      const srAlert = `${isReturning ? 'Returning to Asset Library. ' : ''}${this.totalAssetCount} assets total.`
-      this.$announcer.polite(srAlert)
-    }
-    if (isReturning) {
-      ready()
+  },
+  mounted() {
+    this.anchor = this.$route.query.anchor
+    this.isReturning = this.anchor && this.$_.size(this.assets)
+    if (this.isReturning) {
+      this.handleResults()
     } else {
-      this.search().then(data => {
-        this.isComplete = !data.results.length
-        ready()
+      this.resetSearch()
+      this.isComplete = false
+      this.getBookmarkHash().then(bookmarkHash => {
+        if (bookmarkHash && Object.keys(bookmarkHash).length) {
+          this.setAssetType(bookmarkHash.assetType)
+          this.setCategoryId(bookmarkHash.categoryId)
+          this.setOrderBy(bookmarkHash.orderBy)
+          this.setUserId(parseInt(bookmarkHash.userId, 10))
+          this.search().then(this.handleResults)
+        } else if (this.$route.query.userId) {
+          this.setUserId(parseInt(this.$route.query.userId, 10))
+          this.$router.replace({query: {userId: null}})
+          this.search().then(data => {
+            this.updateSearchBookmark()
+            this.handleResults(data)
+          })
+        } else {
+          this.search().then(this.handleResults)
+        }
       })
     }
   },
@@ -76,7 +86,22 @@ export default {
         this.resizeIFrame()
       })
     },
-    getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true}))
+    getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
+    handleResults(data) {
+      if (this.$refs.header) {
+        this.$refs.header.initialize()
+      }
+      this.$ready('Asset Library')
+      if (data) {
+        this.isComplete = !data.results.length
+      }
+      if (this.anchor) {
+        this.scrollTo(`#${this.anchor}`)
+        this.$putFocusNextTick(this.anchor)
+      }
+      const srAlert = `${this.isReturning ? 'Returning to Asset Library. ' : ''}${this.totalAssetCount} assets total.`
+      this.$announcer.polite(srAlert)
+    }
   }
 }
 </script>

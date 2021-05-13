@@ -1,8 +1,11 @@
 <script>
+import Context from '@/mixins/Context'
 import {mapActions, mapGetters} from 'vuex'
+
 
 export default {
   name: 'AssetsSearch',
+  mixins: [Context],
   computed: {
     ...mapGetters('assets', [
       'assets',
@@ -18,8 +21,18 @@ export default {
     ])
   },
   methods: {
+    updateSearchBookmark() {
+      this.rewriteBookmarkHash({
+        assetType: this.assetType,
+        categoryId: this.categoryId,
+        keywords: this.keywords,
+        orderBy: this.orderBy,
+        userId: this.userId
+      })
+    },
     ...mapActions('assets', [
       'nextPage',
+      'resetSearch',
       'search',
       'setAssetType',
       'setCategoryId',

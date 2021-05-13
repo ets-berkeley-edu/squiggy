@@ -52,12 +52,7 @@
         <div class="leaderboard-name-outer">
           <img class="leaderboard-avatar" :src="item.canvasImage">
           <div class="leaderboard-name">
-            <font-awesome-icon
-              v-if="item.isAdmin || item.isTeaching"
-              icon="graduation-cap"
-              class="leaderboard-cap"
-            />
-            {{ item.canvasFullName }}
+            <UserLink :user="item" />
           </div>
         </div>
       </template>
@@ -79,10 +74,12 @@
 </template>
 
 <script>
+import UserLink from '@/components/util/UserLink'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Leaderboard',
+  components: {UserLink},
   mixins: [Utils],
   data: () => ({
     headers: [
