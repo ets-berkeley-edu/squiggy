@@ -23,7 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from datetime import datetime
 from time import sleep
 from urllib.request import urlopen
 
@@ -32,6 +31,7 @@ from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
 from squiggy.externals.canvas import get_canvas
 from squiggy.lib.background_job import BackgroundJob
+from squiggy.lib.util import utc_now
 from squiggy.logger import initialize_background_logger, logger
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
@@ -73,7 +73,7 @@ class CanvasPoller(BackgroundJob):
                 logger.info(f'No active courses found, poller exiting: {canvas_api_domain}')
                 break
             logger.info(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
-            course.last_polled = datetime.now()
+            course.last_polled = utc_now()
             db.session.add(course)
             std_commit()
 
@@ -297,7 +297,7 @@ class CanvasPoller(BackgroundJob):
             previous_submissions = submission_user.assets.filter_by(canvas_assignment_id=assignment.id, deleted_at=None).all()
             if previous_submissions:
                 for s in previous_submissions:
-                    s.deleted_at = datetime.now()
+                    s.deleted_at = utc_now()
                     db.session.add(s)
                 logger.debug(
                     f'Deleted {len(previous_submissions)} assets for older submissions: '

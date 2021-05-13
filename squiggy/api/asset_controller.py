@@ -23,7 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from datetime import datetime
 import json
 import re
 
@@ -33,6 +32,7 @@ from squiggy.api.api_util import can_update_asset, can_view_asset
 from squiggy.lib.aws import stream_object
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.util import local_now
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.user import User
@@ -46,7 +46,7 @@ def download(asset_id):
     if asset and s3_url and can_view_asset(asset=asset, user=current_user):
         stream = stream_object(s3_url)
         if stream:
-            now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
             name = re.sub(r'[^a-zA-Z0-9]', '_', asset.title)
             extension = s3_url.rsplit('.', 1)[-1]
             return Response(

@@ -24,12 +24,12 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import csv
-from datetime import datetime
 import urllib
 
 from flask import Response
 import requests
 import simplejson as json
+from squiggy.lib.util import local_now
 from squiggy.logger import logger
 from werkzeug.wrappers import ResponseStream
 
@@ -76,7 +76,7 @@ def request(url, headers={}, method='get', **kwargs):
 
 
 def response_with_csv_download(rows, filename_prefix, fieldnames=None):
-    now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
     response = Response(
         content_type='text/csv',
         headers={

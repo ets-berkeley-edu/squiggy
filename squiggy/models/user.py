@@ -23,13 +23,11 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from datetime import datetime
-
 from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from sqlalchemy.sql import desc
 from squiggy import db, std_commit
-from squiggy.lib.util import is_admin, is_teaching, isoformat, to_int
+from squiggy.lib.util import is_admin, is_teaching, isoformat, to_int, utc_now
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.course import Course
@@ -60,7 +58,7 @@ class User(Base):
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
     share_points = db.Column(db.Boolean, default=None)
-    last_activity = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    last_activity = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     assets = db.relationship(
         'Asset',

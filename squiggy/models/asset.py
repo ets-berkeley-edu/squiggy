@@ -23,7 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from datetime import datetime
 from itertools import groupby
 import os
 import re
@@ -302,7 +301,7 @@ class Asset(Base):
         reverse_course = str(course_id)[::-1].rjust(7, '0')
         (basename, extension) = os.path.splitext(filename)
         # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
-        key = f"{reverse_course}/assets/{datetime.now().strftime('%Y-%m-%d_%H%M%S')}-{basename[0:170]}{extension}"
+        key = f"{reverse_course}/assets/{utc_now().strftime('%Y-%m-%d_%H%M%S')}-{basename[0:170]}{extension}"
         content_type = magic.from_buffer(byte_stream, mime=True)
         if put_binary_data_to_s3(bucket, key, byte_stream, content_type):
             return {
