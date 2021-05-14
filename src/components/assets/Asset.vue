@@ -11,10 +11,6 @@
           <AssetOverview :asset="asset" />
         </v-card-text>
       </v-card>
-      <!--
-      TODO: Will Activity-Timeline suffer the fate of the Impact Studio? I.e., will it go away?
-      <AssetActivityTimeline :asset="asset" />
-      -->
       <div class="mt-3 px-2">
         <AssetComments :asset-id="asset.id" :update-comment-count="updateCommentCount" />
       </div>
