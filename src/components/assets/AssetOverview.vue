@@ -12,7 +12,8 @@
                 <Avatar :user="user" />
               </div>
               <div>
-                <span :id="`by-user-${user.id}`">{{ user.canvasFullName }}</span> on {{ asset.createdAt | moment('LL') }}
+                <UserLink :user="user" />
+                on {{ asset.createdAt | moment('LL') }}
               </div>
             </div>
           </v-col>
@@ -80,6 +81,7 @@
               :id="`link-to-assets-of-category-${item.id}`"
               :aria-label="`View assets, filtered by category ${item.name}`"
               :to="`/assets?categoryId=${item.id}`"
+              class="hover-link"
             >
               {{ item.name }}
             </router-link>
@@ -97,12 +99,13 @@
 <script>
 import Avatar from '@/components/user/Avatar'
 import OxfordJoin from '@/components/util/OxfordJoin'
+import UserLink from '@/components/util/UserLink'
 import Utils from '@/mixins/Utils'
 import {likeAsset, removeLikeAsset} from '@/api/assets'
 
 export default {
   name: 'AssetOverview',
-  components: {Avatar, OxfordJoin},
+  components: {Avatar, OxfordJoin, UserLink},
   mixins: [Utils],
   props: {
     asset: {

@@ -90,6 +90,7 @@ const actions = {
     commit('setOffset', state.offset + state.limit)
     return $_search(commit, state, true)
   },
+  resetSearch: ({commit}) => commit('setOffset', 0),
   search: ({commit, state}) => $_search(commit, state),
   setAssetType: ({commit}, assetType) => commit('setAssetType', assetType),
   setCategoryId: ({commit}, categoryId) => commit('setCategoryId', categoryId),

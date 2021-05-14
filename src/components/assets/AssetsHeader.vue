@@ -221,8 +221,31 @@ export default {
       this.clearAlert()
     }
   },
-  created() {
-    const loadUsers = () => {
+  methods: {
+    clearAlert() {
+      this.alert = null
+      this.alertType = null
+    },
+    fetch() {
+      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId) {
+        this.resetSearch()
+        this.isBusy = true
+        this.$announcer.polite('Searching')
+        this.search().then(data => {
+          this.updateSearchBookmark()
+          this.isBusy = false
+          if (data.total) {
+            this.alertType = 'info'
+            this.alert = `${data.total} matching assets found.`
+            setTimeout(this.clearAlert, 3000)
+          } else {
+            this.alertType = 'warning'
+            this.alert = 'No matching assets found'
+          }
+        })
+      }
+    },
+    initialize() {
       getUsers().then(data => {
         this.users = data
         getCategories().then(data => {
@@ -231,23 +254,6 @@ export default {
           this.isBusy = false
         })
       })
-    }
-    this.getBookmarkHash().then(bookmarkHash => {
-      if (bookmarkHash && Object.keys(bookmarkHash).length) {
-        this.setAssetType(bookmarkHash.assetType)
-        this.setCategoryId(bookmarkHash.categoryId)
-        this.setOrderBy(bookmarkHash.orderBy)
-        this.setUserId(parseInt(bookmarkHash.userId, 10))
-        this.search().then(loadUsers)
-      } else {
-        loadUsers()
-      }
-    })
-  },
-  methods: {
-    clearAlert() {
-      this.alert = null
-      this.alertType = null
     },
     toggle() {
       let orderBy = 'recent'
@@ -262,30 +268,6 @@ export default {
       this.$announcer.polite(`Advanced search form is ${this.expanded ? 'open' : 'closed'}.`)
       this.$putFocusNextTick(this.expanded ? 'keywords-input' : 'basic-search-input')
     },
-    fetch() {
-      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId) {
-        this.isBusy = true
-        this.$announcer.polite('Searching')
-        this.search().then(data => {
-          this.rewriteBookmarkHash({
-            assetType: this.assetType,
-            categoryId: this.categoryId,
-            keywords: this.keywords,
-            orderBy: this.orderBy,
-            userId: this.userId
-          })
-          this.isBusy = false
-          if (data.total) {
-            this.alertType = 'info'
-            this.alert = `${data.total} matching assets found.`
-            setTimeout(this.clearAlert, 3000)
-          } else {
-            this.alertType = 'warning'
-            this.alert = 'No matching assets found'
-          }
-        })
-      }
-    }
   }
 }
 </script>
