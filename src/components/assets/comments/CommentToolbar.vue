@@ -1,7 +1,8 @@
 <template>
   <div class="align-center d-flex justify-space-between w-100">
     <div :id="`comment-${comment.id}-user-name`">
-      {{ comment.user.canvasFullName }} on {{ comment.createdAt | moment('LL') }}
+      <UserLink :user="comment.user" />
+      on {{ comment.createdAt | moment('LL') }}
     </div>
     <div class="d-flex">
       <div v-if="!comment.parentId">
@@ -41,11 +42,12 @@
 
 <script>
 import DeleteCommentDialog from '@/components/assets/comments/DeleteCommentDialog'
+import UserLink from '@/components/util/UserLink'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'CommentToolbar',
-  components: {DeleteCommentDialog},
+  components: {DeleteCommentDialog, UserLink},
   mixins: [Utils],
   props: {
     comment: {
