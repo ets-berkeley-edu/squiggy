@@ -52,7 +52,7 @@
         <div class="leaderboard-name-outer">
           <img class="leaderboard-avatar" :src="item.canvasImage">
           <div class="leaderboard-name">
-            <UserLink :user="item" />
+            <UserLink :user="item" cross-tool-link="true" />
           </div>
         </div>
       </template>
