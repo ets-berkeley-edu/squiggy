@@ -38,7 +38,17 @@ export default {
   }),
   computed: {
     infiniteScroll() {
-      return this.isLoading ? this.getSkeletons(20) : (this.isComplete ? this.assets : this.assets.concat(this.getSkeletons(10)))
+      if (this.isLoading) {
+        return this.getSkeletons(20)
+      } else if (this.isComplete) {
+        return this.assets
+      } else {
+        let skeletonCount = 10
+        if (this.totalAssetCount && (this.totalAssetCount - this.assets.length) < skeletonCount) {
+          skeletonCount = this.totalAssetCount - this.assets.length
+        }
+        return this.assets.concat(this.getSkeletons(skeletonCount))
+      }
     }
   },
   created() {
