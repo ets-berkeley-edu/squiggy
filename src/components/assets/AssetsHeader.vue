@@ -86,9 +86,9 @@
           </v-row>
           <v-row no-gutters>
             <v-col class="pr-4 pt-2 text-right" cols="1">Filter by</v-col>
-            <v-col>
+            <v-col class="w-75">
               <v-row no-gutters>
-                <v-col class="pr-2">
+                <v-col class="pr-2 w-50">
                   <AccessibleSelect
                     :dense="true"
                     :disabled="isBusy"
@@ -101,7 +101,7 @@
                     @input="setCategoryId"
                   />
                 </v-col>
-                <v-col>
+                <v-col class="w-50">
                   <AccessibleSelect
                     :dense="true"
                     :disabled="isBusy"
@@ -142,6 +142,7 @@
                 :disabled="isBusy"
                 id-prefix="adv-search-order-by"
                 :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
+                :unclearable="true"
                 :value="orderBy"
                 @input="setOrderBy"
               />

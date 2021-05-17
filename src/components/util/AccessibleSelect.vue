@@ -2,7 +2,7 @@
   <v-select
     :id="`${idPrefix}-select`"
     v-model="modelProxy"
-    :clearable="true"
+    :clearable="!unclearable"
     :dense="dense"
     :disabled="disabled"
     :eager="true"
@@ -57,6 +57,10 @@ export default {
       default: undefined,
       required: false,
       type: String
+    },
+    unclearable: {
+      required: false,
+      type: Boolean
     },
     value: {
       default: undefined,
