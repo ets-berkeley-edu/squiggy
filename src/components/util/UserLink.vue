@@ -1,6 +1,6 @@
 <template>
   <span>
-    <router-link v-if="!$isInIframe" :to="`/assets?userId=${user.id}`" class="hover-link">
+    <router-link v-if="!$isInIframe || !crossToolLink" :to="`/assets?userId=${user.id}`" class="hover-link">
       <font-awesome-icon
         v-if="user.isAdmin || user.isTeaching"
         icon="graduation-cap"
@@ -9,7 +9,7 @@
       {{ user.canvasFullName }}
     </router-link>
     <a
-      v-if="$isInIframe"
+      v-if="$isInIframe && crossToolLink"
       :href="`${$currentUser.course.assetLibraryUrl}#suitec_userId=${user.id}`"
       target="_parent"
       class="hover-link"
@@ -28,6 +28,10 @@
 export default {
   name: 'UserLink',
   props: {
+    crossToolLink: {
+      required: false,
+      type: Boolean
+    },
     user: {
       required: true,
       type: Object
