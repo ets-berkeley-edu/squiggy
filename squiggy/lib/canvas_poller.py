@@ -70,18 +70,18 @@ class CanvasPoller(BackgroundJob):
                 .with_for_update() \
                 .first()
             if not course:
-                logger.info(f'No active courses found, poller exiting: {canvas_api_domain}')
-                break
-            logger.info(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
-            course.last_polled = utc_now()
-            db.session.add(course)
-            std_commit()
+                logger.info(f'No active courses found: {canvas_api_domain}')
+            else:
+                logger.info(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
+                course.last_polled = utc_now()
+                db.session.add(course)
+                std_commit()
 
-            try:
-                self.poll_course(course)
-            except Exception as e:
-                logger.error(f'Failed to poll course {_format_course(course)}')
-                logger.exception(e)
+                try:
+                    self.poll_course(course)
+                except Exception as e:
+                    logger.error(f'Failed to poll course {_format_course(course)}')
+                    logger.exception(e)
             sleep(5)
 
     def poll_course(self, db_course):
