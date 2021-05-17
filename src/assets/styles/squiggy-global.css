@@ -33,3 +33,27 @@
 .w-100 {
   width: 100% !important;
 }
+
+/* Vuetify overrides */
+
+.v-select__selections div {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.v-select__selections input {
+  height: 0;
+  padding: 0 !important;
+}
+
+.v-select__slot .v-label {
+  top: auto !important;
+}
+
+.v-input__append-inner {
+  margin: 10px 0 !important;
+}
+
+.v-text-field__slot .v-label {
+  top: auto !important;
+}
