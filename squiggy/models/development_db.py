@@ -118,9 +118,16 @@ _test_users = [
         'canvas_email': 'factory_girl@berkeley.edu',
     },
     {
+        'canvas_user_id': '321099',
+        'canvas_course_role': 'Administrator',
+        'canvas_enrollment_state': 'inactive',
+        'canvas_full_name': 'Jane Holzer',
+        'canvas_email': 'baby_jane@berkeley.edu',
+    },
+    {
         'canvas_user_id': '8765432',
         'canvas_course_role': 'Student',
-        'canvas_enrollment_state': 'active',
+        'canvas_enrollment_state': 'invited',
         'canvas_full_name': 'Anne-sophie is Da Best',
         'canvas_email': 'anne-sophie@berkeley.edu',
     },

@@ -141,11 +141,15 @@ class User(Base):
 
     @classmethod
     def get_users_by_course_id(cls, course_id):
-        return cls.query.filter_by(course_id=course_id).order_by(cls.canvas_full_name).all()
+        return cls.query.filter(
+            and_(cls.course_id == course_id, cls.canvas_enrollment_state.in_(['active', 'invited'])),
+        ).order_by(cls.canvas_full_name).all()
 
     @classmethod
     def get_leaderboard(cls, course_id, sharing_only=True):
-        query = cls.query.filter_by(course_id=course_id)
+        query = cls.query.filter(
+            and_(cls.course_id == course_id, cls.canvas_enrollment_state.in_(['active', 'invited'])),
+        )
         if sharing_only:
             query = query.filter_by(share_points=True)
         return query.order_by(desc(cls.points), cls.id).all()
@@ -178,6 +182,7 @@ class User(Base):
             'canvasCourseRole': self.canvas_course_role,
             'canvasCourseSections': self.canvas_course_sections,
             'canvasEmail': self.canvas_email,
+            'canvasEnrollmentState': self.canvas_enrollment_state,
             'canvasFullName': self.canvas_full_name,
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,

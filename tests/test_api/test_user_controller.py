@@ -86,6 +86,12 @@ class TestGetUsers:
         assert 'points' not in api_json[0]
         assert api_json[0]['canvasFullName'] < api_json[1]['canvasFullName']
 
+    def test_only_active_users(self, client, fake_auth, authorized_user_id):
+        fake_auth.login(authorized_user_id)
+        api_json = self._api_get_users(client)
+        for user in api_json:
+            assert user['canvasEnrollmentState'] == 'active' or user['canvasEnrollmentState'] == 'invited'
+
 
 class TestGetLeaderboard:
     """User API."""
