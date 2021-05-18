@@ -97,6 +97,7 @@
 </template>
 
 <script>
+import AssetsSearch from '@/mixins/AssetsSearch'
 import Avatar from '@/components/user/Avatar'
 import OxfordJoin from '@/components/util/OxfordJoin'
 import UserLink from '@/components/util/UserLink'
@@ -106,7 +107,7 @@ import {likeAsset, removeLikeAsset} from '@/api/assets'
 export default {
   name: 'AssetOverview',
   components: {Avatar, OxfordJoin, UserLink},
-  mixins: [Utils],
+  mixins: [AssetsSearch, Utils],
   props: {
     asset: {
       required: true,
@@ -131,12 +132,14 @@ export default {
         removeLikeAsset(this.asset.id).then(data => {
           this.likeCount = data.likes
           this.liked = data.liked
+          this.updateAssetStore(data)
           this.$announcer.polite(`You removed your like from '${data.title}'`)
         })
       } else {
         likeAsset(this.asset.id).then(data => {
           this.likeCount = data.likes
           this.liked = data.liked
+          this.updateAssetStore(data)
           this.$announcer.polite(`You liked '${data.title}'`)
         })
       }

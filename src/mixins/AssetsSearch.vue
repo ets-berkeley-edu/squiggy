@@ -38,7 +38,8 @@ export default {
       'setCategoryId',
       'setKeywords',
       'setOrderBy',
-      'setUserId'
+      'setUserId',
+      'updateAssetStore'
     ])
   }
 }

@@ -82,7 +82,16 @@ const mutations = {
     state.userId = userId
     state.isDirty = true
   },
-  setTotalAssetCount: (state: any, count: number) => state.totalAssetCount = count
+  setTotalAssetCount: (state: any, count: number) => state.totalAssetCount = count,
+  updateAssetStore: (state: any, updatedAsset: any) => {
+    if (state.assets) {
+      _.each(state.assets, asset => {
+        if (asset.id === updatedAsset.id) {
+          Object.assign(asset, updatedAsset)
+        }
+      })
+    }
+  },
 }
 
 const actions = {
@@ -96,7 +105,8 @@ const actions = {
   setCategoryId: ({commit}, categoryId) => commit('setCategoryId', categoryId),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
-  setUserId: ({commit}, userId) => commit('setUserId', userId)
+  setUserId: ({commit}, userId) => commit('setUserId', userId),
+  updateAssetStore: ({commit}, updatedAsset) => commit('updateAssetStore', updatedAsset)
 }
 
 export default {
