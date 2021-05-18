@@ -408,6 +408,7 @@ class Asset(Base):
     def to_api_json(self, user_id=None):
         image_url = get_s3_signed_url(self.image_url)
         pdf_url = get_s3_signed_url(self.pdf_url)
+        thumbnail_url = get_s3_signed_url(self.thumbnail_url)
 
         liked = False
         if user_id:
@@ -439,6 +440,7 @@ class Asset(Base):
             'previewMetadata': self.preview_metadata,
             'previewStatus': self.preview_status,
             'source': self.source,
+            'thumbnailUrl': thumbnail_url,
             'title': self.title,
             'url': self.url,
             'users': [u.to_api_json() for u in self.users],

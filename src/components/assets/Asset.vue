@@ -23,6 +23,7 @@ import AssetComments from '@/components/assets/comments/AssetComments'
 import AssetOverview from '@/components/assets/AssetOverview'
 import AssetPageHeader from '@/components/assets/AssetPageHeader'
 import AssetPreview from '@/components/assets/AssetPreview'
+import AssetsSearch from '@/mixins/AssetsSearch'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
@@ -37,7 +38,7 @@ export default {
     AssetPreview,
     BackToAssetLibrary
   },
-  mixins: [Context, Utils],
+  mixins: [AssetsSearch, Context, Utils],
   data: () => ({
     asset: undefined,
     refreshPreviewTimeout: undefined
@@ -57,6 +58,7 @@ export default {
     fetchAsset() {
       return getAsset(this.$route.params.id).then(data => {
         this.asset = data
+        this.updateAssetStore(this.asset)
         if (data && data.previewStatus === 'pending') {
           this.scheduleRefreshPreview()
         }
@@ -68,6 +70,7 @@ export default {
     },
     updateCommentCount(count) {
       this.asset.commentCount = count
+      this.updateAssetStore({id: this.asset.id, commentCount: this.asset.commentCount})
     }
   }
 }
