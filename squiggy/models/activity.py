@@ -25,11 +25,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app
 import pytz
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat
+from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.activity_type import activities_type, ActivityType
 from squiggy.models.base import Base
 from squiggy.models.user import User
@@ -121,6 +121,10 @@ class Activity(Base):
             activity_metadata=activity_metadata,
         )
         db.session.add(activity)
+        user = User.find_by_id(user_id)
+        if user:
+            user.last_activity = utc_now()
+            db.session.add(user)
         cls.recalculate_points(course_id=course_id, user_ids=[user_id])
         return activity
 
@@ -160,6 +164,12 @@ class Activity(Base):
                     'running_total': total_scores[activity.user_id],
                 })
         return headers, rows
+
+    @classmethod
+    def get_last_activity_for_course(cls, course_id):
+        # Rather than querying activities directly, perform a more lightweight query against the last_activity attribute
+        # for course users.
+        return db.session.query(func.max(User.last_activity)).filter_by(course_id=course_id).scalar()
 
     @classmethod
     def recalculate_points(cls, course_id=None, user_ids=None):

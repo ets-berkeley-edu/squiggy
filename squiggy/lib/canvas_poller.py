@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from time import sleep
 from urllib.request import urlopen
 
+from flask import current_app as app
 from sqlalchemy import nullsfirst
 from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
@@ -91,6 +92,7 @@ class CanvasPoller(BackgroundJob):
         users_by_canvas_id = self.poll_users(db_course, api_course)
         self.poll_assignments(db_course, api_course, users_by_canvas_id)
         self.poll_discussions(db_course, api_course, users_by_canvas_id)
+        self.poll_last_activity(db_course)
 
     def poll_tab_configuration(self, db_course, api_course):
         tabs = api_course.get_tabs()
@@ -503,6 +505,16 @@ class CanvasPoller(BackgroundJob):
                     reciprocal_id=reply_entry_activity.id,
                     activity_metadata={'entryId': entry.id},
                 )
+
+    def poll_last_activity(self, db_course):
+        last_activity = Activity.get_last_activity_for_course(course_id=db_course.id)
+        if last_activity and (utc_now() - last_activity).days >= app.config['CANVAS_POLLER_DEACTIVATION_THRESHOLD']:
+            logger.info(
+                f"Last course activity {last_activity} older than {app.config['CANVAS_POLLER_DEACTIVATION_THRESHOLD']} days, deactivating: "
+                f'{_format_course(db_course)}')
+            db_course.active = False
+            db.session.add(db_course)
+            std_commit()
 
     def index_activities(self, query):
         activities = query.all()
