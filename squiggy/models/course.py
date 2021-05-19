@@ -146,6 +146,11 @@ class Course(Base):
             'updatedAt': _isoformat(self.updated_at),
         }
 
+    def activate(self):
+        self.active = True
+        db.session.add(self)
+        std_commit()
+
 
 def _isoformat(value):
     return value and value.astimezone(tzutc()).isoformat()
