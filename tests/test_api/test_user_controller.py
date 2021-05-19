@@ -123,12 +123,12 @@ class TestGetLeaderboard:
         assert next(feed for feed in api_json if not feed['sharePoints'])
 
     def test_sharing_student(self, client, fake_auth, student_id):
-        """Returns only sharing students to student user."""
+        """Returns sharing students to student user."""
         fake_auth.login(student_id)
         _api_update_share_points(client, {'share': True})
         api_json = self._api_get_leaderboard(client)
-        assert 'points' in api_json[0]
-        assert next((feed for feed in api_json if not feed['sharePoints']), None) is None
+        for feed in api_json:
+            assert 'points' in feed
 
     def test_non_sharing_student(self, client, fake_auth, student_id):
         """Denies non-sharing student user."""

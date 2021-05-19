@@ -67,7 +67,7 @@ class LoginSession:
 
     def to_api_json(self):
         return {
-            **(self.user.to_api_json(include_points=True) if self.user else {}),
+            **(self.user.to_api_json(include_points=True, include_sharing=True) if self.user else {}),
             **{
                 'course': self.course and self.course.to_api_json(),
                 'isAdmin': self.is_admin,
