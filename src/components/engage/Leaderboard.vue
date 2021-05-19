@@ -81,20 +81,31 @@ export default {
   name: 'Leaderboard',
   components: {UserLink},
   mixins: [Utils],
-  data: () => ({
-    headers: [
-      {text: 'Rank', 'value': 'rank'},
-      {text: 'Name', 'value': 'canvasFullName'},
-      {text: 'Share', 'value': 'sharePoints', 'sortable': false},
-      {text: 'Points', 'value': 'points'},
-      {text: 'Last Activity', 'value': 'lastActivity'}
-    ],
-    search: ''
-  }),
+  data() {
+    return {
+      headers: this.getHeaders(),
+      search: ''
+    }
+  },
   props: {
     rows: {
       required: true,
       type: Array
+    }
+  },
+  methods: {
+    getHeaders() {
+      const headers = [
+        {text: 'Rank', 'value': 'rank'},
+        {text: 'Name', 'value': 'canvasFullName'},
+        {text: 'Share', 'value': 'sharePoints', 'sortable': false},
+        {text: 'Points', 'value': 'points'},
+        {text: 'Last Activity', 'value': 'lastActivity'}
+      ]
+      if (!this.$currentUser.isAdmin && !this.$currentUser.isTeaching) {
+        headers.splice(2, 1)
+      }
+      return headers
     }
   }
 }

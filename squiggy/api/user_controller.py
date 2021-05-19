@@ -46,12 +46,12 @@ def get_users():
 def get_leaderboard():
     if (current_user.is_admin or current_user.is_teaching):
         users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=False)
-        return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
+        return tolerant_jsonify([u.to_api_json(include_points=True, include_sharing=True) for u in users])
     elif current_user.user.share_points:
         users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=True)
+        return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
     else:
         raise ForbiddenRequestError('Leaderboard disallowed for users not sharing points.')
-    return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
 
 
 @app.route('/api/users/me/share', methods=['POST'])

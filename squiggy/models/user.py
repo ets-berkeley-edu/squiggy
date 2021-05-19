@@ -174,7 +174,7 @@ class User(Base):
         db.session.add(self)
         std_commit()
 
-    def to_api_json(self, include_points=False):
+    def to_api_json(self, include_points=False, include_sharing=False):
         json = {
             'id': self.id,
             'canvasApiDomain': self.course.canvas_api_domain,
@@ -189,10 +189,11 @@ class User(Base):
             'isAdmin': is_admin(self),
             'isTeaching': is_teaching(self),
             'lastActivity': isoformat(self.last_activity),
-            'sharePoints': self.share_points,
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
         if include_points:
             json['points'] = self.points
+        if include_sharing:
+            json['sharePoints'] = self.share_points
         return json
