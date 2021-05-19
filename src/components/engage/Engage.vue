@@ -3,6 +3,7 @@
     <div class="mb-2 mt-2">
       <h2>Engagement Index</h2>
     </div>
+    <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
     <div v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && ($currentUser.sharePoints === null)" id="engagement-splash" class="float-none">
       The engagement index is a scoreboard that lists the names and scores of all the students taking this course. If you do not wish to share your engagement score, uncheck the box below and click 'Continue'.
     </div>
@@ -61,13 +62,14 @@
 
 <script>
 import Leaderboard from '@/components/engage/Leaderboard'
+import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
 import {getLeaderboard, updateSharePoints} from '@/api/users'
 
 export default {
   name: 'Engage',
   mixins: [Utils],
-  components: {Leaderboard},
+  components: {Leaderboard, SyncDisabled},
   data() {
     return {
       boxplotOptions: null,

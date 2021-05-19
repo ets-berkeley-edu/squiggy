@@ -1,5 +1,6 @@
 <template>
   <div id="asset-library">
+    <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
     <AssetsHeader ref="header" />
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
@@ -26,11 +27,12 @@ import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import CreateAssetCard from '@/components/assets/CreateAssetCard'
 import InfiniteLoading from 'vue-infinite-loading'
+import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Assets',
-  components: {AssetCard, AssetsHeader, CreateAssetCard, InfiniteLoading},
+  components: {AssetCard, AssetsHeader, CreateAssetCard, InfiniteLoading, SyncDisabled},
   mixins: [AssetsSearch, Context, Utils],
   data: () => ({
     anchor: null,
