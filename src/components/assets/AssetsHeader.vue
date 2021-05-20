@@ -236,9 +236,7 @@ export default {
           this.updateSearchBookmark()
           this.isBusy = false
           if (data.total) {
-            this.alertType = 'info'
-            this.alert = `${data.total} matching assets found.`
-            setTimeout(this.clearAlert, 3000)
+            this.$announcer.polite(`${data.total} matching ${data.total === 1 ? 'asset' : 'assets'} found`)
           } else {
             this.alertType = 'warning'
             this.alert = 'No matching assets found'
