@@ -98,7 +98,7 @@ export default {
       const headers = [
         {text: 'Rank', 'value': 'rank'},
         {text: 'Name', 'value': 'canvasFullName'},
-        {text: 'Share', 'value': 'sharePoints', 'sortable': false},
+        {text: 'Share', 'value': 'sharePoints'},
         {text: 'Points', 'value': 'points'},
         {text: 'Last Activity', 'value': 'lastActivity'}
       ]
