@@ -22,8 +22,8 @@
         <v-btn
           id="add-category-btn"
           class="mt-1"
-          @click="addCategory"
-          @keypress.enter="addCategory"
+          @click.prevent="addCategory"
+          @keypress.enter.prevent="addCategory"
         >
           Add
         </v-btn>
