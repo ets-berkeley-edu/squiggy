@@ -450,7 +450,7 @@ class CanvasPoller(BackgroundJob):
                 if not getattr(topic, 'discussion_subentry_count', 0):
                     continue
                 entries = list(topic.get_topic_entries())
-                logger.info(f'Retrieved {len(entries)} discussion topics from Canvas: discussion {topic.id}, {_format_course(db_course)}')
+                logger.info(f'Retrieved {len(entries)} discussion entries from Canvas: topic {topic.id}, {_format_course(db_course)}')
                 for entry in entries:
                     self.create_discussion_entry_activities(entry, topic, db_course, users_by_canvas_id, discussion_activity_index)
             except Exception as e:
@@ -484,7 +484,7 @@ class CanvasPoller(BackgroundJob):
             reply_user = users_by_canvas_id.get(reply.get('user_id', None), None)
             if not parent_user or not reply_user:
                 continue
-            reply_entry_activity = discussion_activity_index.get(reply_user_id, {}).get('discussion_entry', {}).get(f'{topic.id}_{entry.id}')
+            reply_entry_activity = discussion_activity_index.get(reply_user_id, {}).get('discussion_entry', {}).get(f"{topic.id}_{reply['id']}")
             if not reply_entry_activity:
                 reply_entry_activity = Activity.create(
                     activity_type='discussion_entry',
@@ -492,9 +492,9 @@ class CanvasPoller(BackgroundJob):
                     user_id=reply_user.id,
                     object_type='canvas_discussion',
                     object_id=topic.id,
-                    activity_metadata={'entryId': entry.id},
+                    activity_metadata={'entryId': reply['id']},
                 )
-            if not discussion_activity_index.get(parent_user_id, {}).get('get_discussion_entry_reply', {}).get(f'{topic.id}_{entry.id}'):
+            if not discussion_activity_index.get(parent_user_id, {}).get('get_discussion_entry_reply', {}).get(f"{topic.id}_{reply['id']}"):
                 Activity.create(
                     activity_type='get_discussion_entry_reply',
                     course_id=course.id,
@@ -503,7 +503,7 @@ class CanvasPoller(BackgroundJob):
                     object_id=topic.id,
                     actor_id=reply_user.id,
                     reciprocal_id=reply_entry_activity.id,
-                    activity_metadata={'entryId': entry.id},
+                    activity_metadata={'entryId': reply['id']},
                 )
 
     def poll_last_activity(self, db_course):
