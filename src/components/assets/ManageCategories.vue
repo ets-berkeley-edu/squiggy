@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h3>Custom Categories</h3>
-    <div class="mt-2">
+    <h3 class="mb-3">Custom Categories</h3>
+    <div class="mb-3">
       Categories can be used to tag items and are a great way of classifying items within the Asset Library.
       The Asset Library can also be filtered by category.
     </div>
@@ -16,22 +16,27 @@
           label="Add new category"
           solo
           type="text"
-        />
-      </div>
-      <div>
-        <v-btn
-          id="add-category-btn"
-          class="mt-1"
-          @click.prevent="addCategory"
-          @keypress.enter.prevent="addCategory"
         >
-          Add
-        </v-btn>
+          <template slot="append">
+            <v-btn
+              id="add-category-btn"
+              class="mt-1 ml-4"
+              :disabled="!model"
+              @click.prevent="addCategory"
+              @keypress.enter.prevent="addCategory"
+            >
+              Add
+            </v-btn>
+          </template>
+        </v-text-field>
       </div>
     </div>
+    <v-alert  v-if="!categories.length" type="info" text>
+      There are no custom categories.
+    </v-alert>
     <v-card v-if="categories.length" rounded tile>
       <v-list>
-        <v-list-item-group>
+        <v-list-item-group class="custom-categories-list">
           <template v-for="(category, index) in categories">
             <v-list-item :key="category.id" :ripple="!isEditing(category)">
               <template #default="{}">
@@ -186,7 +191,10 @@ export default {
   methods: {
     addCategory() {
       if (this.model) {
-        createCategory(this.model).then(this.refresh)
+        createCategory(this.model).then(() => {
+          this.model = undefined
+          this.refresh()
+        })
       }
     },
     cancelDelete() {
@@ -235,3 +243,9 @@ export default {
   }
 }
 </script>
+
+<style>
+.custom-categories-list .v-list-item:nth-of-type(even) {
+  background-color: rgba(0, 0, 0, .03) !important;
+}
+</style>
