@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app, request
-from flask_cors import cross_origin
 from flask_login import current_user, login_required
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.errors import BadRequestError
@@ -61,7 +60,6 @@ def create_category():
 
 @app.route('/api/category/<category_id>/delete', methods=['DELETE'])
 @teacher_required
-@cross_origin(allow_headers=['Content-Type'])
 def delete(category_id):
     Category.delete(category_id)
     return tolerant_jsonify({'message': f'Category {category_id} deleted'}), 200
