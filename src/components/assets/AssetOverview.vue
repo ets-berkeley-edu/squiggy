@@ -79,14 +79,13 @@
           <OxfordJoin v-slot="{item}" :items="asset.categories">
             <router-link
               :id="`link-to-assets-of-category-${item.id}`"
-              :aria-label="`View assets, filtered by category ${item.name}`"
+              :aria-label="`View assets, filtered by category ${item.title}`"
               :to="`/assets?categoryId=${item.id}`"
               class="hover-link"
             >
-              {{ item.name }}
+              {{ item.title }}
             </router-link>
           </OxfordJoin>
-          {{ asset.categories.length ? oxfordJoin($_.map(asset.categories, 'title')) : '' }}
         </div>
         <div v-if="!asset.categories.length">
           &mdash;
