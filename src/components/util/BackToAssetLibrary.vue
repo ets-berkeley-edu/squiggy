@@ -3,7 +3,7 @@
     <router-link v-slot="{navigate}" :to="linkBack()" custom>
       <v-btn
         id="asset-library-btn"
-        class="bg-transparent"
+        class="bg-transparent pl-0"
         :disabled="disabled"
         elevation="0"
         @click="navigate"
