@@ -72,8 +72,19 @@ export default {
           this.setUserId(parseInt(bookmarkHash.userId, 10))
           this.search().then(this.handleResults)
         } else if (this.$route.query.userId) {
+          this.setAssetType(undefined)
+          this.setCategoryId(undefined)
           this.setUserId(parseInt(this.$route.query.userId, 10))
-          this.$router.replace({query: {userId: null}})
+          this.$router.replace({query: {userId: undefined}})
+          this.search().then(data => {
+            this.updateSearchBookmark()
+            this.handleResults(data)
+          })
+        } else if (this.$route.query.categoryId) {
+          this.setAssetType(undefined)
+          this.setCategoryId(parseInt(this.$route.query.categoryId, 10))
+          this.setUserId(undefined)
+          this.$router.replace({query: {categoryId: undefined}})
           this.search().then(data => {
             this.updateSearchBookmark()
             this.handleResults(data)
