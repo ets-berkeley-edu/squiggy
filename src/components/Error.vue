@@ -37,13 +37,12 @@
 
 <script>
 import Context from '@/mixins/Context'
-import Iframe from '@/mixins/Iframe'
 import PageTitle from '@/components/util/PageTitle'
 
 export default {
   name: 'Error',
   components: {PageTitle},
-  mixins: [Context, Iframe],
+  mixins: [Context],
   data: () => ({
     message: undefined
   }),

@@ -40,6 +40,7 @@ export default {
   }),
   computed: {
     infiniteScroll() {
+      this.$nextTick(() => this.resizeIFrame)
       if (this.isLoading) {
         return this.getSkeletons(20)
       } else if (this.isComplete) {
@@ -106,7 +107,6 @@ export default {
           this.isComplete = true
           this.$announcer.polite(`All ${this.totalAssetCount} assets have loaded.`)
         }
-        this.resizeIFrame()
       })
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
