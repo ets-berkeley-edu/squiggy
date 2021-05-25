@@ -37,13 +37,12 @@
 
 <script>
 import Context from '@/mixins/Context'
-import Iframe from '@/mixins/Iframe'
 import PageTitle from '@/components/util/PageTitle'
 
 export default {
   name: 'NotFound',
   components: {PageTitle},
-  mixins: [Context, Iframe],
+  mixins: [Context],
   mounted() {
     this.$ready('Page not found')
   }

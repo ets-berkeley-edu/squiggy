@@ -12,13 +12,12 @@
 import Context from '@/mixins/Context'
 import FooterIFrame from '@/components/util/FooterIFrame'
 import FooterStandalone from '@/components/util/FooterStandalone'
-import Iframe from '@/mixins/Iframe'
 import Util from '@/mixins/Utils'
 
 export default {
   name: 'BaseView',
   components: {FooterIFrame, FooterStandalone},
-  mixins: [Context, Iframe, Util],
+  mixins: [Context, Util],
   data: () => ({
     navItems: undefined,
   }),

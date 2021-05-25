@@ -62,6 +62,7 @@ export default {
         if (data && data.previewStatus === 'pending') {
           this.scheduleRefreshPreview()
         }
+        this.$nextTick(() => this.resizeIFrame)
       })
     },
     scheduleRefreshPreview() {
