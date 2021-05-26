@@ -22,7 +22,7 @@
       name="activityTypeConfigurationForm"
       @submit="saveActivityTypeConfiguration"
     >
-      <table id="enabled-activities-table" class="points-table">
+      <table id="enabled-activities-table" class="points-table" tabindex="-1">
         <thead>
           <tr>
             <th class="activity-title">Activity</th>
@@ -174,6 +174,7 @@ export default {
         this.activities = this.originalActivities
       }
       this.$announcer.polite(mode ? 'Editing points configuration' : 'Canceled points configuration edit')
+      this.$putFocusNextTick('enabled-activities-table')
     }
   },
   created() {
