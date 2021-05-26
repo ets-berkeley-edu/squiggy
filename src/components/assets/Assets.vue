@@ -40,7 +40,7 @@ export default {
   }),
   computed: {
     infiniteScroll() {
-      this.$nextTick(() => this.resizeIFrame)
+      this.$nextTick(this.resizeIFrame)
       if (this.isLoading) {
         return this.getSkeletons(20)
       } else if (this.isComplete) {
