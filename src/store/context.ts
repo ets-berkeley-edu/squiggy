@@ -1,10 +1,10 @@
 import _ from 'lodash'
 import Vue from 'vue'
 
-const $_extractBookmarkHash = context => {
+const $_extractBookmarkHash = parentMessage => {
   const bookmarkHash = {}
   try {
-    const url = new URL(context.location)
+    const url = new URL(parentMessage.location)
     if (url.hash) {
       const keyPrefix = 'suitec_'
       const params = url.hash.replace('#', '')
@@ -28,7 +28,7 @@ const $_getIFrameBookmarkHash = () => {
     // See getParentUrlData() in legacy SuiteC
     $_postIFrameMessage(
       () => ({subject: 'getParent'}),
-      context => resolve($_extractBookmarkHash(context))
+      parentMessage => resolve($_extractBookmarkHash(parentMessage))
     )
   })
 }
@@ -36,7 +36,7 @@ const $_getIFrameBookmarkHash = () => {
 // eslint-disable-next-line
 const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any) => {
   const postMessage = () => {
-    // Parent will respond to the this embedded call with a message and scroll information.
+    // Parent will respond to the this embedded call with a message.
     if (callback) {
       const eventType = 'message'
       const processor = event => {
@@ -79,7 +79,7 @@ const mutations = {
       }))
     }
   },
-  loadingComplete: (state: any, pageTitle: string, focusTarget?: string) => {
+  loadingComplete: (state: any, {pageTitle, focusTarget}) => {
     document.title = `${pageTitle || 'UC Berkeley'} | SuiteC`
     state.isLoading = false
     if (pageTitle) {
@@ -107,7 +107,7 @@ const mutations = {
     state.isLoading = true
     state.noSpinnerWhenLoading = noSpinnerWhenLoading
   },
-  postIFrameMessage: (state: any, generator, callback?) => $_postIFrameMessage(generator, callback),
+  postIFrameMessage: (state: any, {generator, callback}) => $_postIFrameMessage(generator, callback),
   rewriteBookmarkHash: (state: any, params: any) => {
     const isInIframe = Vue.prototype.$isInIframe
     const filtered = _.pickBy(params, value => !_.isNil(value))
@@ -135,9 +135,9 @@ const actions = {
       }
     })
   },
-  loadingComplete: ({commit}, {label, focusTarget}) => commit('loadingComplete', label, focusTarget),
+  loadingComplete: ({commit}, {label, focusTarget}) => commit('loadingComplete', {label, focusTarget}),
   loadingStart: ({commit}, noSpinner?: boolean) => commit('loadingStart', noSpinner),
-  postIFrameMessage: ({commit}, {generator, callback}) => commit('postIFrameMessage', generator, callback),
+  postIFrameMessage: ({commit}, {generator, callback}) => commit('postIFrameMessage', {generator, callback}),
   rewriteBookmarkHash: ({commit}, params) => commit('rewriteBookmarkHash', params)
 }
 

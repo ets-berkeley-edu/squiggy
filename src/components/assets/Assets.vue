@@ -5,17 +5,11 @@
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
-        v-for="(asset, index) in infiniteScroll"
+        v-for="(asset, index) in assetGrid"
         :key="index"
         :asset="asset"
         class="asset-card ma-3"
       />
-      <InfiniteLoading v-if="!isLoading || true" @infinite="fetch">
-        <template #error>Sorry, an error occurred. Please refresh the page.</template>
-        <template #no-more><span id="no-more-assets-to-fetch" /></template>
-        <template #no-results><span id="zero-assets" /></template>
-        <template #spinner><span class="sr-only">Loading...</span></template>
-      </InfiniteLoading>
     </v-card>
   </div>
 </template>
@@ -26,20 +20,20 @@ import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import CreateAssetCard from '@/components/assets/CreateAssetCard'
-import InfiniteLoading from 'vue-infinite-loading'
+import InfiniteLoading from '@/mixins/InfiniteLoading'
 import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Assets',
-  components: {AssetCard, AssetsHeader, CreateAssetCard, InfiniteLoading, SyncDisabled},
-  mixins: [AssetsSearch, Context, Utils],
+  components: {AssetCard, AssetsHeader, CreateAssetCard, SyncDisabled},
+  mixins: [AssetsSearch, Context, InfiniteLoading, Utils],
   data: () => ({
     anchor: null,
     isComplete: false
   }),
   computed: {
-    infiniteScroll() {
+    assetGrid() {
       this.$nextTick(this.resizeIFrame)
       if (this.isLoading) {
         return this.getSkeletons(20)
@@ -65,6 +59,7 @@ export default {
     } else {
       this.resetSearch()
       this.isComplete = false
+      this.stopInfiniteLoading()
       this.getBookmarkHash().then(bookmarkHash => {
         if (bookmarkHash && Object.keys(bookmarkHash).length) {
           this.setAssetType(bookmarkHash.assetType)
@@ -97,13 +92,11 @@ export default {
     }
   },
   methods: {
-    fetch($state) {
-      this.nextPage().then(data => {
+    fetch() {
+      return this.nextPage().then(data => {
         if (data.results.length) {
-          $state.loaded()
           this.$announcer.polite(`${this.assets.length} of ${this.totalAssetCount} assets loaded.`)
         } else {
-          $state.complete()
           this.isComplete = true
           this.$announcer.polite(`All ${this.totalAssetCount} assets have loaded.`)
         }
@@ -117,6 +110,9 @@ export default {
       this.$ready('Asset Library')
       if (data) {
         this.isComplete = !data.results.length
+        if (!this.isComplete) {
+          this.startInfiniteLoading(this.fetch, {threshold: 800})
+        }
       }
       if (this.anchor) {
         this.scrollTo(`#${this.anchor}`)
