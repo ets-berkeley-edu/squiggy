@@ -25,6 +25,18 @@ export default {
     getPossessive(comment) {
       return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
     },
+    getScrollInformation() {
+      return new Promise(resolve => {
+        if (this.isInIframe && Vue.prototype.$supportsCustomMessaging) {
+          this.postIFrameMessage({
+            generator: () => ({subject: 'getScrollInformation'}),
+            callback: resolve
+          })
+        } else {
+          resolve()
+        }
+      })
+    },
     go(path, query={}) {
       this.$router.push({path, query})
     },
