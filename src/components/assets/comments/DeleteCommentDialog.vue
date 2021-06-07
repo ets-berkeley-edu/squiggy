@@ -25,7 +25,7 @@
                 id="confirm-delete-btn"
                 color="primary"
                 @click="deleteConfirmed"
-                @keypress.enter="deleteConfirmed"
+                @keypress.enter.prevent="deleteConfirmed"
               >
                 Confirm
               </v-btn>
@@ -34,7 +34,7 @@
               <v-btn
                 id="cancel-delete-btn"
                 @click="cancelDelete"
-                @keypress.enter="cancelDelete"
+                @keypress.enter.prevent="cancelDelete"
               >
                 Cancel
               </v-btn>
