@@ -30,6 +30,11 @@
             <font-awesome-icon icon="home" />
           </v-btn>
         </div>
+        <div v-if="isInIframe" class="pt-4">
+          <v-btn id="go-back-btn" icon @click="$router.go(-2)">
+            Back
+          </v-btn>
+        </div>
       </v-card-text>
     </v-card>
   </div>
