@@ -33,7 +33,6 @@ class Canvas(Base):
 
     canvas_api_domain = db.Column(db.String(255), nullable=False, primary_key=True)
     api_key = db.Column(db.String(255), nullable=False)
-    logo = db.Column(db.String(255))
     lti_key = db.Column(db.String(255), nullable=False)
     lti_secret = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
@@ -47,7 +46,6 @@ class Canvas(Base):
             lti_key,
             lti_secret,
             name,
-            logo=None,
             supports_custom_messaging=False,
             use_https=True,
     ):
@@ -56,7 +54,6 @@ class Canvas(Base):
         self.lti_key = lti_key
         self.lti_secret = lti_secret
         self.name = name
-        self.logo = logo
         self.supports_custom_messaging = supports_custom_messaging
         self.use_https = use_https
 
@@ -67,7 +64,6 @@ class Canvas(Base):
                     lti_key={self.lti_key},
                     lti_secret={self.lti_secret},
                     name={self.name},
-                    logo={self.logo},
                     supports_custom_messaging={self.supports_custom_messaging},
                     use_https={self.use_https},
                     created_at={self.created_at},
@@ -88,7 +84,6 @@ class Canvas(Base):
             'canvasApiDomain': self.canvas_api_domain,
             'ltiKey': self.lti_key,
             'ltiSecret': self.lti_secret,
-            'logo': self.logo,
             'name': self.name,
             'supportsCustomMessaging': self.supports_custom_messaging,
             'useHttps': self.use_https,

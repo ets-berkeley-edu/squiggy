@@ -214,7 +214,6 @@ ALTER TABLE ONLY assets
 CREATE TABLE canvas (
     canvas_api_domain character varying(255) NOT NULL,
     api_key character varying(255) NOT NULL,
-    logo character varying(255),
     lti_key character varying(255) NOT NULL,
     lti_secret character varying(255) NOT NULL,
     name character varying(255),
