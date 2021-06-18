@@ -24,7 +24,7 @@
           :disable="disableActions"
         />
       </div>
-      <div v-if="$currentUser.isAdmin || (comment.userId === $currentUser.id)">
+      <div v-if="$currentUser.isAdmin || $currentUser.isTeaching || (comment.userId === $currentUser.id)">
         <v-btn
           :id="`edit-comment-${comment.id}-btn`"
           :disabled="disableActions"

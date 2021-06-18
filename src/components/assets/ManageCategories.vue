@@ -31,7 +31,7 @@
         </v-text-field>
       </div>
     </div>
-    <v-alert  v-if="!categories.length" type="info" text>
+    <v-alert v-if="!categories.length" type="info" text>
       There are no custom categories.
     </v-alert>
     <v-card v-if="categories.length" rounded tile>
