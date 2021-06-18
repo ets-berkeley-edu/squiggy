@@ -17,7 +17,7 @@
           <font-awesome-icon icon="reply" />
         </v-btn>
       </div>
-      <div v-if="$currentUser.isAdmin || $currentUser.isTeaching || (comment.userId === $currentUser.id)">
+      <div v-if="($currentUser.isAdmin || $currentUser.isTeaching || (comment.userId === $currentUser.id)) && !comment.replies.length">
         <DeleteCommentDialog
           :after-delete="refresh"
           :comment="comment"
