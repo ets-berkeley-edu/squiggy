@@ -161,26 +161,26 @@ class TestUpdateComment:
         """Denies anonymous user."""
         self._api_update_comment(client, body='Anonymous hack!', comment_id=1, expected_status_code=401)
 
-    def test_teachers_cannot_update(self, client, fake_auth):
-        """Denies teacher."""
-        instructor = next(user for user in User.query.all() if is_teaching(user))
+    def test_teachers_can_update(self, client, fake_auth, mock_asset):
+        """Allows edits by teacher."""
+        comment = Comment.query.first()
+        instructor = next(user for user in comment.user.course.users if is_teaching(user))
         fake_auth.login(instructor.id)
         self._api_update_comment(
             client,
-            body='Unauthorized instructor hack!',
-            comment_id=1,
-            expected_status_code=404,
+            body='Justified instructor intervention!',
+            comment_id=comment.id,
         )
 
-    def test_admins_cannot_update(self, client, fake_auth):
-        """Denies admin."""
-        admin_user = next(user for user in User.query.all() if is_admin(user))
+    def test_admins_can_update(self, client, fake_auth, mock_asset):
+        """Allows edits by admin."""
+        comment = Comment.query.first()
+        admin_user = next(user for user in comment.user.course.users if is_admin(user))
         fake_auth.login(admin_user.id)
         self._api_update_comment(
             client,
-            body='Unauthorized admin hack!',
-            comment_id=1,
-            expected_status_code=404,
+            body='Justified admin intervention!',
+            comment_id=comment.id,
         )
 
     def test_update_comment_by_owner(self, client, fake_auth, mock_asset):

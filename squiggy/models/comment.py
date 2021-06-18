@@ -35,11 +35,12 @@ class Comment(Base):
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
-    user_id = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     body = db.Column(db.Text, nullable=False)
     parent_id = db.Column(db.Integer)
 
     asset = db.relationship('Asset', back_populates='comments')
+    user = db.relationship('User')
 
     def __init__(
             self,

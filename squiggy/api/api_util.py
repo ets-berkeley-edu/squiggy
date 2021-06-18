@@ -60,7 +60,7 @@ def can_delete_comment(comment, user):
 
 def can_update_comment(comment, user):
     user_id = _get_user_id(user)
-    return user_id and comment.user_id == user_id
+    return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
 
 
 def _get_user_id(user):
