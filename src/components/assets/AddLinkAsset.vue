@@ -42,7 +42,7 @@
             />
           </v-col>
         </v-row>
-        <v-row v-if="categories.length">
+        <v-row v-if="categories && categories.length">
           <v-col class="pt-7 text-right" cols="2">
             Category
           </v-col>
