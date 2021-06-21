@@ -359,7 +359,7 @@ class Asset(Base):
         return True
 
     def increment_views(self, user):
-        view_activity = Activity.create_unless_exists(
+        view_activity = Activity.create(
             activity_type='asset_view',
             course_id=self.course_id,
             user_id=user.id,
@@ -369,7 +369,7 @@ class Asset(Base):
         )
         if view_activity:
             for asset_owner in self.users:
-                Activity.create_unless_exists(
+                Activity.create(
                     activity_type='get_asset_view',
                     course_id=self.course_id,
                     user_id=asset_owner.id,

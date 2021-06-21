@@ -30,6 +30,7 @@ from random import randrange
 from moto import mock_s3
 from squiggy import std_commit
 from squiggy.lib.util import is_teaching
+from squiggy.models.activity import Activity
 from squiggy.models.course import Course
 from squiggy.models.user import User
 from tests.util import mock_s3_bucket
@@ -80,14 +81,14 @@ class TestGetAsset:
         fake_auth.login(instructors[1].id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['views'] == 2
-        # Repeat views do not increment,
+        # Repeat views increment,
         fake_auth.login(instructors[0].id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
-        assert asset['views'] == 2
+        assert asset['views'] == 3
         # Views by asset owners do not increment.
         fake_auth.login(mock_asset.users[0].id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
-        assert asset['views'] == 2
+        assert asset['views'] == 3
 
 
 class TestDownloadAsset:
@@ -459,6 +460,8 @@ class TestLikeAsset:
         user_iterator = (user for user in course_users if user not in mock_asset.users)
         different_user_1 = next(user_iterator)
         different_user_2 = next(user_iterator)
+        # Clean up any point values out of sync from earlier tests.
+        Activity.recalculate_points(course_id=mock_asset.course_id, user_ids=[mock_asset.users[0].id, different_user_1.id, different_user_2.id])
         asset_owner_points = User.find_by_id(mock_asset.users[0].id).points
         asset_liker_1_points = User.find_by_id(different_user_1.id).points
         asset_liker_2_points = User.find_by_id(different_user_2.id).points
