@@ -19,7 +19,7 @@
           </v-col>
           <v-col>
             <v-row align="center" justify="end">
-              <div class="mr-3">
+              <div v-if="canLikeAsset" class="mr-3">
                 <v-btn
                   id="like-asset-btn"
                   icon
@@ -30,15 +30,23 @@
                 >
                   <font-awesome-icon icon="thumbs-up" />
                   <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
+                  <span class="sr-only">likes</span>
                 </v-btn>
+              </div>
+              <div v-if="!canLikeAsset" class="mr-3">
+                <font-awesome-icon icon="thumbs-up" />
+                <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
+                <span class="sr-only">likes</span>
               </div>
               <div class="mr-5">
                 <font-awesome-icon icon="eye" />
                 <span id="asset-view-count" class="ml-1">{{ asset.views }}</span>
+                <span class="sr-only">views</span>
               </div>
               <div class="mr-3">
                 <font-awesome-icon icon="comment" />
                 <span id="asset-comment-count" class="ml-1">{{ asset.commentCount }}</span>
+                <span class="sr-only">comments</span>
               </div>
             </v-row>
           </v-col>
@@ -120,6 +128,7 @@ export default {
     sourceUrl: undefined
   }),
   created() {
+    this.canLikeAsset = !(this.$_.find(this.asset.users, {id: this.$currentUser.id}))
     this.imageUrl = this.asset.imageUrl || require('@/assets/img-not-found.png')
     this.likeCount = this.asset.likes
     this.liked = this.asset.liked
