@@ -27,7 +27,7 @@ from functools import wraps
 
 from flask import current_app as app, request
 from flask_login import current_user
-from squiggy.lib.util import is_teaching
+from squiggy.lib.util import is_admin, is_teaching
 from squiggy.logger import logger
 
 
@@ -46,7 +46,7 @@ def teacher_required(func):
 def can_update_asset(user, asset):
     user_id = _get_user_id(user)
     user_ids = [user.id for user in asset.users]
-    return user.course.id == asset.course_id and (is_teaching(user) or user_id in user_ids)
+    return user.course.id == asset.course_id and (is_teaching(user) or is_admin(user) or user_id in user_ids)
 
 
 def can_view_asset(asset, user):
