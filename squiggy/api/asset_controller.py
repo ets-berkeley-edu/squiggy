@@ -144,7 +144,7 @@ def delete_asset(asset_id):
     if not asset:
         raise ResourceNotFoundError('Asset not found.')
     if not can_update_asset(asset=asset, user=current_user):
-        raise BadRequestError('To delete this asset you must own it or be a teacher in the course.')
+        raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
     Asset.delete(asset_id=asset_id)
     return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
 
