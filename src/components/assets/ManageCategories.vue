@@ -245,6 +245,11 @@ export default {
 </script>
 
 <style>
+.v-dialog__content--active {
+  height: auto !important;
+  margin-top: 100px;
+}
+
 .custom-categories-list .v-list-item:nth-of-type(even) {
   background-color: rgba(0, 0, 0, .03) !important;
 }
