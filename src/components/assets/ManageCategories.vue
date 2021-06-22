@@ -6,14 +6,16 @@
       The Asset Library can also be filtered by category.
     </div>
     <div class="align-start d-flex pt-2">
-      <div class="pr-1 w-100">
+      <v-form v-model="categoryNameValid" class="pr-1 w-100">
         <v-text-field
           id="add-category-input"
-          v-model="model"
+          v-model="categoryName"
           clearable
           dense
           filled
           label="Add new category"
+          counter="255"
+          :rules="categoryRules"
           solo
           type="text"
         >
@@ -21,7 +23,7 @@
             <v-btn
               id="add-category-btn"
               class="mt-1 ml-4"
-              :disabled="!model"
+              :disabled="!categoryName || !categoryNameValid"
               @click.prevent="addCategory"
               @keypress.enter.prevent="addCategory"
             >
@@ -29,7 +31,7 @@
             </v-btn>
           </template>
         </v-text-field>
-      </div>
+      </v-form>
     </div>
     <v-alert v-if="!categories.length" type="info" text>
       There are no custom categories.
@@ -182,17 +184,21 @@ export default {
     }
   },
   data: () => ({
+    categoryName: '',
+    categoryNameValid: false,
+    categoryRules: [
+      v => (!v || v.length <= 255) || 'Category name must be 255 characters or less',
+    ],
     isDialogOpen: undefined,
     isUpdating: false,
-    model: undefined,
     selectedDelete: undefined,
     selectedEdit: undefined
   }),
   methods: {
     addCategory() {
-      if (this.model) {
-        createCategory(this.model).then(() => {
-          this.model = undefined
+      if (this.categoryName) {
+        createCategory(this.categoryName).then(() => {
+          this.categoryName = ''
           this.refresh()
         })
       }
