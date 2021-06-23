@@ -14,16 +14,16 @@
           dense
           filled
           label="Add new category"
-          counter="255"
           :rules="categoryRules"
           solo
           type="text"
+          @keypress.enter.prevent
         >
           <template slot="append">
             <v-btn
               id="add-category-btn"
               class="mt-1 ml-4"
-              :disabled="!categoryName || !categoryNameValid"
+              :disabled="!categoryNameValid"
               @click.prevent="addCategory"
               @keypress.enter.prevent="addCategory"
             >
@@ -89,7 +89,6 @@
                       :id="`edit-category-${selectedEdit.id}-input`"
                       v-model="selectedEdit.title"
                       clearable
-                      :counter-value="v => v.trim().length"
                       maxlength="255"
                       placeholder="Title"
                       solo
@@ -110,7 +109,7 @@
                         <v-btn
                           :id="`edit-category-${selectedEdit.id}-save`"
                           color="primary"
-                          :disabled="isUpdating"
+                          :disabled="!$_.trim(selectedEdit.title) || isUpdating"
                           small
                           @click="update"
                           @keypress.enter="update"
@@ -187,7 +186,8 @@ export default {
     categoryName: '',
     categoryNameValid: false,
     categoryRules: [
-      v => (!v || v.length <= 255) || 'Category name must be 255 characters or less',
+      v => !!this.$_.trim(v) || 'Please enter a category name',
+      v => v.length <= 255 || 'Category name must be 255 characters or less',
     ],
     isDialogOpen: undefined,
     isUpdating: false,
