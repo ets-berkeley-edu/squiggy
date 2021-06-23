@@ -88,10 +88,8 @@ class Category(Base):
 
     @classmethod
     def delete(cls, category_id):
-        category = cls.query.filter_by(id=category_id).first()
-        if category:
-            db.session.delete(category)
-            std_commit()
+        db.session.query(cls).filter_by(id=category_id).delete()
+        std_commit()
 
     @classmethod
     def find_by_id(cls, category_id):
