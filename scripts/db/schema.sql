@@ -65,8 +65,7 @@ CREATE TYPE enum_activities_type AS ENUM (
 
 CREATE TYPE enum_assets_type AS ENUM (
     'file',
-    'link',
-    'thought'
+    'link'
 );
 
 --

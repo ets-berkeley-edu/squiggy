@@ -50,7 +50,6 @@ assets_sort_by_options = {
 assets_type = ENUM(
     'file',
     'link',
-    'thought',
     name='enum_assets_type',
     create_type=False,
 )
