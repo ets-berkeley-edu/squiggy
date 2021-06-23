@@ -61,7 +61,7 @@
           <v-spacer />
           <div class="d-flex flex-row-reverse">
             <v-btn
-              id="confirm-delete-btn"
+              id="confirm-save-asset-btn"
               class="mr-2"
               color="primary"
               :disabled="!assetValid"
@@ -71,7 +71,7 @@
               Save
             </v-btn>
             <v-btn
-              id="cancel-delete-btn"
+              id="cancel-save-asset-btn"
               class="mr-2"
               @click="cancel"
               @keypress.enter="cancel"
