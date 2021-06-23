@@ -42,7 +42,7 @@
       <div class="file-upload-box-icon"><font-awesome-icon icon="spinner" spin /></div>
       <div class="file-upload-box-text">Uploading...</div>
     </div>
-    <v-form v-if="!uploading && file" @submit="upload">
+    <v-form v-if="!uploading && file" v-model="fileAssetValid" @submit="upload">
       <v-container class="mt-2" fluid>
         <v-row>
           <v-col class="pt-7 text-right" cols="2">
@@ -53,7 +53,7 @@
               id="asset-title-input"
               v-model="title"
               label="Enter a title"
-              maxlength="255"
+              :rules="titleRules"
               outlined
               @keydown.enter="submit"
             />
@@ -95,7 +95,7 @@
                 <v-btn
                   id="upload-file-btn"
                   color="primary"
-                  :disabled="disable"
+                  :disabled="!file || !fileAssetValid"
                   elevation="1"
                   @click="upload"
                 >
@@ -132,14 +132,14 @@ export default {
     categoryId: undefined,
     description: undefined,
     file: undefined,
-    title: undefined,
+    fileAssetValid: false,
+    title: '',
+    titleRules: [
+      v => !!this.$_.trim(v) || 'Please enter a title',
+      v => v.length <= 255 || 'Title must be 255 characters or less',
+    ],
     uploading: false
   }),
-  computed: {
-    disable() {
-      return !(this.file && this.$_.trim(this.title))
-    }
-  },
   created() {
     this.$loading()
     getCategories().then(data => {

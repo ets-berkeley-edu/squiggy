@@ -22,37 +22,39 @@
             <AssetImage :asset="asset" />
           </v-list-item-avatar>
           <v-list-item-content>
-            <div>
-              <v-text-field
-                id="asset-title-input"
-                v-model="title"
-                label="Title"
-                maxlength="255"
-                outlined
-                @keydown.enter="submit"
-              />
-            </div>
-            <div>
-              <AccessibleSelect
-                :dense="true"
-                id-prefix="asset-category"
-                :items="categories"
-                item-text="title"
-                item-value="id"
-                label="Category"
-                :value="categoryId"
-                @input="c => (categoryId = c)"
-              />
-            </div>
-            <div>
-              <v-textarea
-                id="asset-description-textarea"
-                v-model="description"
-                auto-grow
-                outlined
-                placeholder="Description"
-              />
-            </div>
+            <v-form v-model="assetValid">
+              <div>
+                <v-text-field
+                  id="asset-title-input"
+                  v-model="title"
+                  label="Title"
+                  outlined
+                  :rules="titleRules"
+                  @keydown.enter.prevent
+                />
+              </div>
+              <div>
+                <AccessibleSelect
+                  :dense="true"
+                  id-prefix="asset-category"
+                  :items="categories"
+                  item-text="title"
+                  item-value="id"
+                  label="Category"
+                  :value="categoryId"
+                  @input="c => (categoryId = c)"
+                />
+              </div>
+              <div>
+                <v-textarea
+                  id="asset-description-textarea"
+                  v-model="description"
+                  auto-grow
+                  outlined
+                  placeholder="Description"
+                />
+              </div>
+            </v-form>
           </v-list-item-content>
         </v-list-item>
         <v-card-actions>
@@ -62,7 +64,7 @@
               id="confirm-delete-btn"
               class="mr-2"
               color="primary"
-              :disabled="!$_.trim(title)"
+              :disabled="!assetValid"
               @click="submit"
               @keypress.enter="submit"
             >
@@ -97,11 +99,15 @@ export default {
   mixins: [Context, Utils],
   data: () => ({
     asset: undefined,
+    assetValid: false,
     categories: undefined,
     categoryId: undefined,
     description: undefined,
-    title: undefined,
-    valid: true,
+    title: '',
+    titleRules: [
+      v => !!this.$_.trim(v) || 'Please enter a title',
+      v => v.length <= 255 || 'Title must be 255 characters or less',
+    ]
   }),
   created() {
     this.$loading()
