@@ -208,7 +208,7 @@ class Asset(Base):
         asset = Asset.find_by_id(asset_id)
         asset.title = title
         asset.description = description
-        asset.categories = categories
+        asset.categories = categories or []
         db.session.add(asset)
         std_commit()
         return asset
