@@ -153,7 +153,7 @@ class CanvasPoller(BackgroundJob):
             else:
                 if enrollment['enrollment_state'] in ['active', 'completed', 'inactive', 'invited', 'rejected']:
                     enrollment_state = enrollment['enrollment_state']
-                if enrollment['role'] in ['Adv Designer', 'DesignerEnrollment', 'TaEnrollment', 'TeacherEnrollment']:
+                if enrollment['role'] in ['Adv Designer', 'DesignerEnrollment', 'Lead TA', 'Reader', 'TaEnrollment', 'TeacherEnrollment']:
                     course_role = 'urn:lti:role:ims/lis/Instructor'
 
             user_attributes = {
