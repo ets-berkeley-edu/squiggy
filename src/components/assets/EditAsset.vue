@@ -97,18 +97,20 @@ export default {
   name: 'EditAsset',
   components: {AccessibleSelect, AssetImage},
   mixins: [Context, Utils],
-  data: () => ({
-    asset: undefined,
-    assetValid: false,
-    categories: undefined,
-    categoryId: undefined,
-    description: undefined,
-    title: '',
-    titleRules: [
-      v => !!this.$_.trim(v) || 'Please enter a title',
-      v => v.length <= 255 || 'Title must be 255 characters or less',
-    ]
-  }),
+  data() {
+    return {
+      asset: undefined,
+      assetValid: false,
+      categories: undefined,
+      categoryId: undefined,
+      description: undefined,
+      title: '',
+      titleRules: [
+        v => !!this.$_.trim(v) || 'Please enter a title',
+        v => v.length <= 255 || 'Title must be 255 characters or less',
+      ]
+    }
+  },
   created() {
     this.$loading()
     getAsset(this.$route.params.id).then(data => {
