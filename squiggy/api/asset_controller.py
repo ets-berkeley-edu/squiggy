@@ -32,7 +32,7 @@ from squiggy.api.api_util import can_update_asset, can_view_asset
 from squiggy.lib.aws import stream_object
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import local_now
+from squiggy.lib.util import is_admin, is_teaching, local_now
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.user import User
@@ -145,6 +145,8 @@ def delete_asset(asset_id):
         raise ResourceNotFoundError('Asset not found.')
     if not can_update_asset(asset=asset, user=current_user):
         raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
+    if (not is_admin(current_user) and not is_teaching(current_user)) and (asset.comment_count or asset.likes):
+        raise BadRequestError('You cannot delete an asset with comments or likes.')
     Asset.delete(asset_id=asset_id)
     return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
 
