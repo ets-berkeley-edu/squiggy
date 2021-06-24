@@ -19,7 +19,7 @@
           Download
         </v-btn>
       </div>
-      <div v-if="canEditAsset">
+      <div v-if="canDeleteAsset">
         <v-dialog v-model="dialogConfirmDelete" width="500">
           <template #activator="{}">
             <v-btn
@@ -91,7 +91,10 @@ export default {
     if (this.asset.assetType === 'file') {
       this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
     }
-    this.canEditAsset = this.$currentUser.isAdmin || this.$currentUser.isTeaching || this.$_.find(this.asset.users, {'id': this.$currentUser.id})
+    const isTeacherOrAdmin = this.$currentUser.isAdmin || this.$currentUser.isTeaching
+    const isAssetOwner = this.$_.find(this.asset.users, {'id': this.$currentUser.id})
+    this.canEditAsset = isTeacherOrAdmin || isAssetOwner
+    this.canDeleteAsset = isTeacherOrAdmin || (isAssetOwner && !this.asset.likes && !this.asset.commentCount)
   },
   methods: {
     cancelDelete() {

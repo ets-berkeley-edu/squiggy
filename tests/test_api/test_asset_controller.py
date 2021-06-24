@@ -355,10 +355,17 @@ class TestDeleteAsset:
         fake_auth.login(unauthorized_user_id)
         self._api_delete_asset(asset_id=1, client=client, expected_status_code=401)
 
-    def test_delete_asset_by_owner(self, client, fake_auth, mock_asset, mock_category):
-        """Authorized user can delete asset."""
+    def test_delete_asset_by_owner_without_engagement(self, client, fake_auth, mock_asset, mock_category):
+        """Asset deletion by owner is allowed if the asset has no comments or likes."""
+        mock_asset.likes = 0
+        mock_asset.comment_count = 0
         fake_auth.login(mock_asset.users[0].id)
         self._verify_delete_asset(mock_asset.id, client)
+
+    def test_delete_asset_by_owner_with_engagement(self, client, fake_auth, mock_asset, mock_category):
+        """Asset deletion by owner is forbidden once the asset has comments or likes."""
+        fake_auth.login(mock_asset.users[0].id)
+        self._api_delete_asset(mock_asset.id, client, expected_status_code=400)
 
     def test_delete_asset_by_teacher(self, client, fake_auth, mock_asset, mock_category):
         """Authorized user can delete asset."""
