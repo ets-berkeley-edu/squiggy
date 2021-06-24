@@ -126,20 +126,22 @@ export default {
   name: 'AssetUpload',
   components: {AccessibleSelect, Alert, BackToAssetLibrary},
   mixins: [Context, Utils],
-  data: () => ({
-    alert: undefined,
-    categories: undefined,
-    categoryId: undefined,
-    description: undefined,
-    file: undefined,
-    fileAssetValid: false,
-    title: '',
-    titleRules: [
-      v => !!this.$_.trim(v) || 'Please enter a title',
-      v => v.length <= 255 || 'Title must be 255 characters or less',
-    ],
-    uploading: false
-  }),
+  data() {
+    return {
+      alert: undefined,
+      categories: undefined,
+      categoryId: undefined,
+      description: undefined,
+      file: undefined,
+      fileAssetValid: false,
+      title: '',
+      titleRules: [
+        v => !!this.$_.trim(v) || 'Please enter a title',
+        v => v.length <= 255 || 'Title must be 255 characters or less',
+      ],
+      uploading: false
+    }
+  },
   created() {
     this.$loading()
     getCategories().then(data => {

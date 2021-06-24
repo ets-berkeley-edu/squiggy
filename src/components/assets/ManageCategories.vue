@@ -182,18 +182,20 @@ export default {
       type: Function
     }
   },
-  data: () => ({
-    categoryName: '',
-    categoryNameValid: false,
-    categoryRules: [
-      v => !!this.$_.trim(v) || 'Please enter a category name',
-      v => v.length <= 255 || 'Category name must be 255 characters or less',
-    ],
-    isDialogOpen: undefined,
-    isUpdating: false,
-    selectedDelete: undefined,
-    selectedEdit: undefined
-  }),
+  data() {
+    return {
+      categoryName: '',
+      categoryNameValid: false,
+      categoryRules: [
+        v => !!this.$_.trim(v) || 'Please enter a category name',
+        v => v.length <= 255 || 'Category name must be 255 characters or less',
+      ],
+      isDialogOpen: undefined,
+      isUpdating: false,
+      selectedDelete: undefined,
+      selectedEdit: undefined
+    }
+  },
   methods: {
     addCategory() {
       if (this.categoryName) {
