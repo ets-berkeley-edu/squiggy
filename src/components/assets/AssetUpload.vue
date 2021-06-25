@@ -137,7 +137,7 @@ export default {
       title: '',
       titleRules: [
         v => !!this.$_.trim(v) || 'Please enter a title',
-        v => v.length <= 255 || 'Title must be 255 characters or less',
+        v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
       ],
       uploading: false
     }

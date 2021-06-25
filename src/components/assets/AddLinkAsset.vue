@@ -116,12 +116,12 @@ export default {
     title: '',
     titleRules: [
       v => !!v || 'Please enter a title',
-      v => v.length <= 255 || 'Title must be 255 characters or less',
+      v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
     ],
     url: '',
     urlRules: [
       v => !!v || 'Please enter a URL',
-      v => v.length <= 255 || 'URL must be 255 characters or less',
+      v => (!v || v.length <= 255) || 'URL must be 255 characters or less',
     ]
   }),
   computed: {
