@@ -63,7 +63,7 @@
                         :disabled="!!(selectedEdit || selectedDelete)"
                         icon
                         @click="edit(category)"
-                        @keypress.enter="edit(category)"
+                        @keypress.enter.prevent="edit(category)"
                       >
                         <font-awesome-icon class="mr-2" icon="pencil-alt" />
                         <span class="sr-only">Edit category {{ category.title }}</span>
@@ -76,7 +76,7 @@
                         :disabled="!!(selectedEdit || selectedDelete)"
                         icon
                         @click="confirmDelete(category)"
-                        @keypress.enter="confirmDelete(category)"
+                        @keypress.enter.prevent="confirmDelete(category)"
                       >
                         <font-awesome-icon class="mr-2" icon="trash" />
                         <span class="sr-only">Delete category {{ $_.get(selectedDelete, 'title') }}</span>
@@ -100,7 +100,7 @@
                           :disabled="isUpdating"
                           small
                           @click="cancelEdit"
-                          @keypress.enter="cancelEdit"
+                          @keypress.enter.prevent="cancelEdit"
                         >
                           Cancel
                         </v-btn>
@@ -112,7 +112,7 @@
                           :disabled="!$_.trim(selectedEdit.title) || isUpdating"
                           small
                           @click="update"
-                          @keypress.enter="update"
+                          @keypress.enter.prevent="update"
                         >
                           Save
                         </v-btn>
@@ -144,7 +144,7 @@
                 id="confirm-delete-btn"
                 color="primary"
                 @click="deleteConfirmed"
-                @keypress.enter="deleteConfirmed"
+                @keypress.enter.prevent="deleteConfirmed"
               >
                 Confirm
               </v-btn>
@@ -153,7 +153,7 @@
               <v-btn
                 id="cancel-delete-btn"
                 @click="cancelDelete"
-                @keypress.enter="cancelDelete"
+                @keypress.enter.prevent="cancelDelete"
               >
                 Cancel
               </v-btn>
@@ -188,7 +188,7 @@ export default {
       categoryNameValid: false,
       categoryRules: [
         v => !!this.$_.trim(v) || 'Please enter a category name',
-        v => v.length <= 255 || 'Category name must be 255 characters or less',
+        v => (!v || v.length <= 255) || 'Category name must be 255 characters or less',
       ],
       isDialogOpen: undefined,
       isUpdating: false,
