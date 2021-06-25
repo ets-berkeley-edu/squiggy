@@ -194,7 +194,6 @@ class Asset(Base):
         if asset:
             asset.deleted_at = utc_now()
             std_commit()
-            Activity.delete_by_object_id(object_type='asset', object_id=asset.id, course_id=asset.course_id, user_ids=[u.id for u in asset.users])
 
     @classmethod
     def update(
