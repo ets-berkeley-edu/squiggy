@@ -36,7 +36,7 @@ class TestAsset:
     """Asset model."""
 
     def test_assets_for_course(self, authorized_user_session):
-        asset_feed = Asset.get_assets(authorized_user_session, sort='recent', offset=0, limit=20, filters={})
+        asset_feed = Asset.get_assets(authorized_user_session, order_by='recent', offset=0, limit=20, filters={})
         # Feed shape
         assert asset_feed['offset'] == 0
         assert asset_feed['total'] == 2

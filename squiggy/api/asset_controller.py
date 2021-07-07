@@ -74,7 +74,7 @@ def get_asset(asset_id):
 @login_required
 def get_assets():
     params = request.get_json()
-    sort = _get(params, 'sort', None)
+    order_by = _get(params, 'orderBy', 'recent')
     offset = params.get('offset')
     limit = params.get('limit')
     filters = {
@@ -84,11 +84,10 @@ def get_assets():
         'has_likes': _get(params, 'hasLikes', None),
         'has_views': _get(params, 'hasViews', None),
         'keywords': _get(params, 'keywords', None),
-        'order_by': _get(params, 'orderBy', 'recent'),
         'owner_id': _get(params, 'userId', None),
         'section_id': _get(params, 'sectionId', None),
     }
-    results = Asset.get_assets(session=current_user, sort=sort, offset=offset, limit=limit, filters=filters)
+    results = Asset.get_assets(session=current_user, order_by=order_by, offset=offset, limit=limit, filters=filters)
     return tolerant_jsonify(results)
 
 
