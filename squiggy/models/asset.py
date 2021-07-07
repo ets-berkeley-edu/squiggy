@@ -212,7 +212,7 @@ class Asset(Base):
         return asset
 
     @classmethod
-    def get_assets(cls, session, sort, offset, limit, filters):
+    def get_assets(cls, session, order_by, offset, limit, filters):
         params = {
             'course_id': session.course.id,
             'user_id': session.user.id,
@@ -236,7 +236,7 @@ class Asset(Base):
                 AND act.type = 'asset_like'"""
 
         where_clause = _build_where_clause(filters, params)
-        order_clause = _build_order_clause(sort)
+        order_clause = _build_order_clause(order_by)
 
         assets_query = text(f"""SELECT DISTINCT ON (a.id, a.likes, a.views, a.comment_count) a.*, act.type AS activity_type
             {from_clause} {where_clause} {order_clause}
@@ -450,14 +450,14 @@ class Asset(Base):
         }
 
 
-def _build_order_clause(sort):
-    if (sort == 'recent'):
+def _build_order_clause(order_by):
+    if (order_by == 'recent'):
         return ' ORDER BY a.id DESC'
-    elif (sort == 'likes'):
+    elif (order_by == 'likes'):
         return ' ORDER BY a.likes DESC, a.id DESC'
-    elif (sort == 'views'):
+    elif (order_by == 'views'):
         return ' ORDER BY a.views DESC, a.id DESC'
-    elif (sort == 'comments'):
+    elif (order_by == 'comments'):
         return ' ORDER BY a.comment_count DESC, a.id DESC'
     else:
         return ' ORDER BY a.id DESC'
