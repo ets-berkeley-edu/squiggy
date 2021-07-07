@@ -31,7 +31,7 @@
               <v-btn
                 id="search-btn"
                 class="mb-2"
-                :disabled="isLoading || isBusy || (!$_.trim(keywords) && !expanded)"
+                :disabled="isLoading || isBusy"
                 icon
                 @click="fetch"
                 @keypress.enter="fetch"
