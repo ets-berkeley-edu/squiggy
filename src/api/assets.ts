@@ -41,9 +41,6 @@ export function getAsset(assetId) {
 export function getAssets(
   assetType,
   categoryId,
-  hasComments,
-  hasLikes,
-  hasViews,
   keywords,
   limit,
   offset,
@@ -56,9 +53,6 @@ export function getAssets(
     {
       assetType,
       categoryId,
-      hasComments,
-      hasLikes,
-      hasViews,
       keywords,
       limit,
       offset,

@@ -80,9 +80,9 @@ def get_assets():
     filters = {
         'asset_type': _get(params, 'assetType', None),
         'category_id': _get(params, 'categoryId', None),
-        'has_comments': _get(params, 'hasComments', None),
-        'has_likes': _get(params, 'hasLikes', None),
-        'has_views': _get(params, 'hasViews', None),
+        'has_comments': (order_by == 'comments'),
+        'has_likes': (order_by == 'likes'),
+        'has_views': (order_by == 'views'),
         'keywords': _get(params, 'keywords', None),
         'owner_id': _get(params, 'userId', None),
         'section_id': _get(params, 'sectionId', None),

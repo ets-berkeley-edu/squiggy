@@ -8,9 +8,6 @@ function $_search(commit, state, addToExisting?: boolean) {
     getAssets(
       state.assetType,
       state.categoryId,
-      state.hasComments,
-      state.hasLikes,
-      state.hasViews,
       state.keywords,
       state.limit,
       state.offset,
@@ -31,9 +28,6 @@ const state = {
   assets: undefined,
   assetType: undefined,
   categoryId: undefined,
-  hasComments: undefined,
-  hasLikes: undefined,
-  hasViews: undefined,
   isDirty: false,
   keywords: undefined,
   limit: 20,
@@ -58,7 +52,7 @@ const getters = {
 }
 
 const mutations = {
-  addAssets: (state: any, assets: any[]) => state.assets.push(...assets.reverse()),
+  addAssets: (state: any, assets: any[]) => state.assets.push(...assets),
   setAssets: (state: any, assets: any[]) => state.assets = assets,
   setAssetType: (state: any, assetType: string) => {
     state.assetType = assetType
