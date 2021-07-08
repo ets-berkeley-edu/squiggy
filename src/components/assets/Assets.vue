@@ -110,9 +110,11 @@ export default {
       this.$ready('Asset Library')
       if (data) {
         this.isComplete = !data.results.length
-        if (!this.isComplete) {
-          this.startInfiniteLoading(this.fetch, {threshold: 800})
-        }
+      } else {
+        this.isComplete = (this.assets.length === this.totalAssetCount)
+      }
+      if (!this.isComplete) {
+        this.startInfiniteLoading(this.fetch, {threshold: 800})
       }
       if (this.anchor) {
         this.scrollTo(`#${this.anchor}`)
