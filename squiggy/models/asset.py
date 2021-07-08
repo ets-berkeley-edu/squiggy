@@ -486,13 +486,13 @@ def _build_where_clause(filters, params):
     if filters.get('section_id'):
         where_clause += ' AND (array_position(u.canvas_course_sections, :section_id) > 0)'
 
-    if filters.get('has_comments') is not None:
-        where_clause += (' AND a.comment_count > 0' if filters['has_comments'] else ' AND a.comment_count = 0')
+    if filters.get('has_comments'):
+        where_clause += ' AND a.comment_count > 0'
 
-    if filters.get('has_likes') is not None:
-        where_clause += (' AND a.likes > 0' if filters['has_likes'] else ' AND a.likes = 0')
+    if filters.get('has_likes'):
+        where_clause += ' AND a.likes > 0'
 
-    if filters.get('has_views') is not None:
-        where_clause += (' AND a.views > 0' if filters['has_views'] else ' AND a.views = 0')
+    if filters.get('has_views'):
+        where_clause += ' AND a.views > 0'
 
     return where_clause
