@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import datetime
 
 from flask import jsonify, make_response, redirect, request, session
-from flask_login import login_user, LoginManager
+from flask_login import login_user, LoginManager, logout_user
 from squiggy.lib.util import to_int
 
 
@@ -100,19 +100,6 @@ def register_routes(app):
             else:
                 app.logger.debug(log_message)
 
-        # TODO: Remove the below
-        from flask_login import current_user
-        canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
-        canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
-        if canvas_api_domain and canvas_course_id:
-            response.set_cookie(
-                key=f'{canvas_api_domain}|{canvas_course_id}',
-                value=str(current_user.user_id),
-                samesite='None',
-                secure=True,
-            )
-        # TODO: Remove the above
-
         return response
 
 
@@ -121,11 +108,21 @@ def _user_loader(user_id=None):
     from flask import current_app as app
 
     user = LoginSession(user_id)
-    if not user.is_authenticated:
-        canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
-        canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
-        app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
+    canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
+    canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
 
+    # Check for conflicts between existing login session and course headers.
+    if user.is_authenticated and canvas_api_domain and canvas_course_id:
+        app.logger.info(f'Checking authenticated user against headers: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
+        course = user.course
+        if canvas_api_domain != course.canvas_api_domain or str(canvas_course_id) != str(course.canvas_course_id):
+            app.logger.info(
+                f'Session data (canvas_api_domain={course.canvas_api_domain}, canvas_course_id={canvas_course_id})'
+                f'conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}, logging out user')
+            logout_user(user)
+
+    if not user.is_authenticated:
+        app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
         if canvas_api_domain and canvas_course_id:
             cookie_value = request.cookies.get(f'{canvas_api_domain}|{canvas_course_id}')
             user_id = cookie_value and to_int(cookie_value)
