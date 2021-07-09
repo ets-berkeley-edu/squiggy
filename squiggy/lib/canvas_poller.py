@@ -396,7 +396,7 @@ class CanvasPoller(BackgroundJob):
                     std_commit()
                 else:
                     s3_attrs = Asset.upload_to_s3(
-                        filename=attachment['filename'],
+                        filename=attachment['display_name'],
                         byte_stream=urlopen(attachment['url']).read(),
                         course_id=course.id,
                     )
@@ -407,7 +407,7 @@ class CanvasPoller(BackgroundJob):
                         course_id=course.id,
                         download_url=s3_attrs.get('download_url', None),
                         mime=s3_attrs.get('content_type', None),
-                        title=attachment['filename'],
+                        title=attachment['display_name'],
                         users=[user],
                         create_activity=False,
                     )
