@@ -65,6 +65,9 @@ class LoginSession:
     def user_id(self):
         return self.user and self.user.id
 
+    def logout(self):
+        self.user = None
+
     def to_api_json(self):
         return {
             **(self.user.to_api_json(include_points=True, include_sharing=True) if self.user else {}),
