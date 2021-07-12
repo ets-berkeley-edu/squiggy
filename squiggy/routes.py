@@ -117,9 +117,9 @@ def _user_loader(user_id=None):
         course = user.course
         if canvas_api_domain != course.canvas_api_domain or str(canvas_course_id) != str(course.canvas_course_id):
             app.logger.info(
-                f'Session data (canvas_api_domain={course.canvas_api_domain}, canvas_course_id={canvas_course_id})'
+                f'Session data (canvas_api_domain={course.canvas_api_domain}, canvas_course_id={course.canvas_course_id}) '
                 f'conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}, logging out user')
-            logout_user(user)
+            logout_user()
 
     if not user.is_authenticated:
         app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
