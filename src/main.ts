@@ -67,8 +67,12 @@ Vue.config.errorHandler = function(error, vm, info) {
 }
 
 const params = new URLSearchParams(window.location.search)
-axios.defaults.headers['Squiggy-Canvas-Api-Domain'] = params.get('canvasApiDomain')
-axios.defaults.headers['Squiggy-Canvas-Course-Id'] = params.get('canvasCourseId')
+if (params.get('canvasApiDomain')) {
+  axios.defaults.headers['Squiggy-Canvas-Api-Domain'] = params.get('canvasApiDomain')
+}
+if (params.get('canvasCourseId')) {
+  axios.defaults.headers['Squiggy-Canvas-Course-Id'] = params.get('canvasCourseId')
+}
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
