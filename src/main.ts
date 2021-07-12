@@ -70,10 +70,6 @@ const params = new URLSearchParams(window.location.search)
 axios.defaults.headers['Squiggy-Canvas-Api-Domain'] = params.get('canvasApiDomain')
 axios.defaults.headers['Squiggy-Canvas-Course-Id'] = params.get('canvasCourseId')
 
-// TODO: Remove console logging when all is working well.
-console.log('canvasApiDomain = ' + params.get('canvasApiDomain'))
-console.log('canvasCourseId = ' + params.get('canvasCourseId'))
-
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
   Vue.prototype.$supportsCustomMessaging = _.get(Vue.prototype.$currentUser, 'course.canvas.supportsCustomMessaging')
