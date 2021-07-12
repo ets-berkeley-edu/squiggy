@@ -113,7 +113,6 @@ def _user_loader(user_id=None):
 
     # Check for conflicts between existing login session and course headers.
     if user.is_authenticated and canvas_api_domain and canvas_course_id:
-        app.logger.info(f'Checking authenticated user against headers: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
         course = user.course
         if canvas_api_domain != course.canvas_api_domain or str(canvas_course_id) != str(course.canvas_course_id):
             app.logger.info(
