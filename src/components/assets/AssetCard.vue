@@ -37,14 +37,17 @@
                 <div class="pr-3">
                   <font-awesome-icon icon="thumbs-up" :class="{'asset-icon-liked': asset.liked}" />
                   {{ asset.likes }}
+                  <span class="sr-only">{{ asset.likes === 1 ? 'like' : 'likes' }}</span>
                 </div>
                 <div class="pr-3">
                   <font-awesome-icon icon="eye" />
                   {{ asset.views }}
+                  <span class="sr-only">{{ asset.views === 1 ? 'view' : 'views' }}</span>
                 </div>
                 <div>
                   <font-awesome-icon icon="comment" />
                   {{ asset.commentCount }}
+                  <span class="sr-only">{{ asset.commentCount === 1 ? 'comment' : 'comments' }}</span>
                 </div>
               </div>
             </div>

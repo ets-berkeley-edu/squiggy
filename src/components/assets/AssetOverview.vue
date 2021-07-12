@@ -30,23 +30,23 @@
                 >
                   <font-awesome-icon icon="thumbs-up" />
                   <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
-                  <span class="sr-only">likes</span>
+                  <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
                 </v-btn>
               </div>
               <div v-if="!canLikeAsset" class="mr-3">
                 <font-awesome-icon icon="thumbs-up" />
                 <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
-                <span class="sr-only">likes</span>
+                <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
               </div>
               <div class="mr-5">
                 <font-awesome-icon icon="eye" />
                 <span id="asset-view-count" class="ml-1">{{ asset.views }}</span>
-                <span class="sr-only">views</span>
+                <span class="sr-only">{{ asset.views === 1 ? 'view' : 'views' }}</span>
               </div>
               <div class="mr-3">
                 <font-awesome-icon icon="comment" />
                 <span id="asset-comment-count" class="ml-1">{{ asset.commentCount }}</span>
-                <span class="sr-only">comments</span>
+                <span class="sr-only">{{ asset.commentCount === 1 ? 'comment' : 'comments' }}</span>
               </div>
             </v-row>
           </v-col>
