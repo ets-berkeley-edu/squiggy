@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import datetime
 
 from flask import jsonify, make_response, redirect, request, session
-from flask_login import login_user, LoginManager, logout_user
+from flask_login import login_user, LoginManager
 from squiggy.lib.util import to_int
 
 
@@ -119,7 +119,7 @@ def _user_loader(user_id=None):
             app.logger.info(
                 f'Session data (canvas_api_domain={course.canvas_api_domain}, canvas_course_id={course.canvas_course_id}) '
                 f'conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}, logging out user')
-            logout_user()
+            user.logout()
 
     if not user.is_authenticated:
         app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
