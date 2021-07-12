@@ -71,7 +71,10 @@
       <v-col v-if="sourceUrl">
         <a :href="sourceUrl" target="_blank">{{ sourceUrl }}</a>
       </v-col>
-      <v-col v-if="!sourceUrl">&mdash;</v-col>
+      <v-col v-if="!sourceUrl">
+        &mdash;
+        <span class="sr-only">none</span>
+      </v-col>
     </v-row>
     <v-row justify="start">
       <v-col
@@ -97,6 +100,7 @@
         </div>
         <div v-if="!asset.categories.length">
           &mdash;
+          <span class="sr-only">none</span>
         </div>
       </v-col>
     </v-row>
