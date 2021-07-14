@@ -88,7 +88,7 @@ SESSION_COOKIE_SECURE = True
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
 # Override in local configs.
-SQLALCHEMY_DATABASE_URI = 'postgres://squiggy:squiggy@localhost:5432/squiggy'
+SQLALCHEMY_DATABASE_URI = 'postgresql://squiggy:squiggy@localhost:5432/squiggy'
 
 # Disable an expensive bit of the ORM.
 SQLALCHEMY_TRACK_MODIFICATIONS = False
