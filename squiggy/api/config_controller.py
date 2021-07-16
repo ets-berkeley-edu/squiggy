@@ -26,12 +26,14 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import json
 
 from flask import current_app as app
+from flask_login import login_required
 from squiggy import __version__ as version
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import assets_sort_by_options, assets_type
 
 
 @app.route('/api/config')
+@login_required
 def app_config():
     return tolerant_jsonify({
         'assetTypes': assets_type.enums,

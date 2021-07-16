@@ -47,6 +47,11 @@ def _api_update_share_points(client, data, expected_status_code=200):
 
 class TestMyProfile:
 
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        _api_my_profile(client, expected_status_code=401)
+
     def test_admin_profile(self, client, fake_auth, authorized_user_id):
         fake_auth.login(authorized_user_id)
         api_json = _api_my_profile(client)
