@@ -63,6 +63,7 @@ Start the back end:
 `python application.py`
 
 Start the front end:
+`npm run serve-vue`
 
 ## Run tests, lint the code
 
