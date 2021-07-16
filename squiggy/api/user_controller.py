@@ -31,6 +31,7 @@ from squiggy.models.user import User
 
 
 @app.route('/api/profile/my')
+@login_required
 def my_profile():
     return tolerant_jsonify(current_user.to_api_json())
 

@@ -28,7 +28,13 @@ class TestConfigController:
     """Config API."""
 
     def test_anonymous(self, client):
-        """Returns a well-formed response to anonymous user."""
+        """Denies anonymous user."""
+        response = client.get('/api/config')
+        assert response.status_code == 401
+
+    def test_logged_in(self, client, fake_auth, authorized_user_id):
+        """Returns a well-formed response to logged-in user."""
+        fake_auth.login(authorized_user_id)
         response = client.get('/api/config')
         assert response.status_code == 200
         assert 'squiggyEnv' in response.json

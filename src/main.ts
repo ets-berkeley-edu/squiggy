@@ -38,21 +38,29 @@ Vue.directive('linkified', linkify)
 // Axios
 axios.defaults.withCredentials = true
 axios.interceptors.response.use(
-    response => response.headers['content-type'] === 'application/json' ? response.data : response,
-    error => {
-      const errorStatus = _.get(error, 'response.status')
-      if (_.includes([401, 403], errorStatus)) {
+  response => response.headers['content-type'] === 'application/json' ? response.data : response,
+  error => {
+    const errorStatus = _.get(error, 'response.status')
+    const requestUrl = _.get(error, 'config.url', '')
+    if (_.includes([401, 403], errorStatus)) {
+      if (requestUrl.endsWith('/api/profile/my') || requestUrl.endsWith('/api/config')) {
+        Vue.prototype.$currentUser = {}
+        utils.axiosErrorHandler(error)
+        return Promise.resolve(error)
+      } else {
         // Refresh user in case his/her session expired.
         return axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
           Vue.prototype.$currentUser = data
           utils.axiosErrorHandler(error)
           return Promise.reject(error)
         })
-      } else {
-        utils.axiosErrorHandler(error)
-        return Promise.reject(error)
       }
-    })
+    } else {
+      utils.axiosErrorHandler(error)
+      return Promise.reject(error)
+    }
+  }
+)
 
 // Vue config
 Vue.config.productionTip = isDebugMode
