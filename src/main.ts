@@ -82,6 +82,9 @@ if (params.get('canvasCourseId')) {
   axios.defaults.headers['Squiggy-Canvas-Course-Id'] = params.get('canvasCourseId')
 }
 
+const isInIframe = !!window.parent.frames.length
+Vue.prototype.$isInIframe = isInIframe
+
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
   Vue.prototype.$supportsCustomMessaging = _.get(Vue.prototype.$currentUser, 'course.canvas.supportsCustomMessaging')
@@ -100,8 +103,6 @@ axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
       }).$mount('#app')
     })
   }
-  const isInIframe = !!window.parent.frames.length
-  Vue.prototype.$isInIframe = isInIframe
   if (isInIframe) {
     store.dispatch('context/postIFrameMessage', {
       generator: () => ({
