@@ -5,7 +5,7 @@ import Vue from 'vue'
 export default {
   axiosErrorHandler: error => {
     const errorStatus = _.get(error, 'response.status')
-    if (Vue.prototype.$currentUser.isAuthenticated) {
+    if (_.get(Vue.prototype, '$currentUser.isAuthenticated')) {
       if (errorStatus === 404) {
         router.push({path: '/404'})
       } else if (errorStatus >= 400) {
@@ -17,12 +17,16 @@ export default {
         })
       }
     } else if (!router.currentRoute.meta.isLoginPage) {
-      router.push({
-        path: '/',
-        query: {
-          m: 'Your session has expired'
-        }
-      })
+      if (Vue.prototype.$isInIframe) {
+        router.push({path: '/launchfailure'})
+      } else {
+        router.push({
+          path: '/',
+          query: {
+            m: 'Your session has expired'
+          }
+        })
+      }
     }
   },
   putFocusNextTick: (id, cssSelector) => {

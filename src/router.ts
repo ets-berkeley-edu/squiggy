@@ -8,6 +8,7 @@ import BaseView from '@/components/BaseView.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
 import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
+import LaunchFailure from '@/components/LaunchFailure.vue'
 import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
 import PointsConfiguration from '@/components/engage/PointsConfiguration.vue'
@@ -127,6 +128,13 @@ const router = new Router({
           component: Error,
           meta: {
             title: 'Error'
+          }
+        },
+        {
+          path: '/launchfailure',
+          component: LaunchFailure,
+          meta: {
+            title: 'Launch Failure'
           }
         },
         {
