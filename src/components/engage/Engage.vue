@@ -22,7 +22,12 @@
       </div>
       <div v-if="showLeaderboard && boxplotOptions" class="engagement-userinfo-badge engagement-userinfo-boxplot-container">
         <div class="engagement-userinfo-badge-title">How do I compare</div>
-        <div id="engagement-userinfo-boxplot" class="engagement-userinfo-boxplot">
+        <div
+          id="engagement-userinfo-boxplot"
+          class="engagement-userinfo-boxplot"
+          aria-label="A boxplot graph showing how my score compares with other people's scores"
+          role="img"
+        >
           <highcharts :options="boxplotOptions" />
         </div>
       </div>
