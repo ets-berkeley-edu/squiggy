@@ -43,9 +43,11 @@ export default {
       type: Object
     }
   },
-  data: () => ({
-    screenreaderText: `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
-  })
+  data() {
+    return {
+      screenreaderText: `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
+    }
+  }
 }
 </script>
 
