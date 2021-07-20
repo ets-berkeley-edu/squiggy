@@ -69,7 +69,10 @@
         Source:
       </v-col>
       <v-col v-if="sourceUrl">
-        <a :href="sourceUrl" target="_blank">{{ sourceUrl }}</a>
+        <a :href="sourceUrl" target="_blank">
+          <span class="sr-only">Open in new window:</span>
+          {{ sourceUrl }}
+        </a>
       </v-col>
       <v-col v-if="!sourceUrl">
         &mdash;
