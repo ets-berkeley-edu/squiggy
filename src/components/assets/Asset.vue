@@ -56,14 +56,17 @@ export default {
   },
   methods: {
     fetchAsset() {
-      return getAsset(this.$route.params.id).then(data => {
-        this.asset = data
-        this.updateAssetStore(this.asset)
-        if (data && data.previewStatus === 'pending') {
-          this.scheduleRefreshPreview()
-        }
-        this.$nextTick(this.resizeIFrame)
-      })
+      const assetId = this.$route.params.id
+      if (assetId) {
+        return getAsset(assetId).then(data => {
+          this.asset = data
+          this.updateAssetStore(this.asset)
+          if (data && data.previewStatus === 'pending') {
+            this.scheduleRefreshPreview()
+          }
+          this.$nextTick(this.resizeIFrame)
+        })
+      }
     },
     scheduleRefreshPreview() {
       clearTimeout(this.refreshPreviewTimeout)
