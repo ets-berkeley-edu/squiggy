@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h2 class="sr-only">Asset Library</h2>
     <v-expand-transition>
       <div v-if="!expanded" class="align-start d-flex justify-space-between">
         <div class="w-50">

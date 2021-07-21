@@ -79,10 +79,12 @@ const mutations = {
       }))
     }
   },
-  loadingComplete: (state: any, {pageTitle, focusTarget}) => {
+  loadingComplete: (state: any, {pageTitle, focusTarget, announcement}) => {
     document.title = `${pageTitle || 'UC Berkeley'} | SuiteC`
     state.isLoading = false
-    if (pageTitle) {
+    if (announcement) {
+      Vue.prototype.$announcer.assertive(announcement)
+    } else if (pageTitle) {
       Vue.prototype.$announcer.assertive(`${pageTitle} page is ready`)
     }
     if (focusTarget) {
@@ -135,7 +137,7 @@ const actions = {
       }
     })
   },
-  loadingComplete: ({commit}, {label, focusTarget}) => commit('loadingComplete', {label, focusTarget}),
+  loadingComplete: ({commit}, {label, focusTarget, announce}) => commit('loadingComplete', {label, focusTarget, announce}),
   loadingStart: ({commit}, noSpinner?: boolean) => commit('loadingStart', noSpinner),
   postIFrameMessage: ({commit}, {generator, callback}) => commit('postIFrameMessage', {generator, callback}),
   rewriteBookmarkHash: ({commit}, params) => commit('rewriteBookmarkHash', params)
