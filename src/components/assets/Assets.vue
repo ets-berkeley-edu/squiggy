@@ -66,24 +66,29 @@ export default {
           this.setCategoryId(bookmarkHash.categoryId)
           this.setOrderBy(bookmarkHash.orderBy)
           this.setUserId(parseInt(bookmarkHash.userId, 10))
-          this.search().then(this.handleResults)
+          this.$announcer.polite('Searching for matching assets')
+          this.search().then(data => {
+            this.handleResults(data, true)
+          })
         } else if (this.$route.query.userId) {
           this.setAssetType(undefined)
           this.setCategoryId(undefined)
           this.setUserId(parseInt(this.$route.query.userId, 10))
           this.$router.replace({query: {userId: undefined}})
+          this.$announcer.polite('Searching for assets by user')
           this.search().then(data => {
             this.updateSearchBookmark()
-            this.handleResults(data)
+            this.handleResults(data, true)
           })
         } else if (this.$route.query.categoryId) {
           this.setAssetType(undefined)
           this.setCategoryId(parseInt(this.$route.query.categoryId, 10))
           this.setUserId(undefined)
           this.$router.replace({query: {categoryId: undefined}})
+          this.$announcer.polite('Searching for assets by category')
           this.search().then(data => {
             this.updateSearchBookmark()
-            this.handleResults(data)
+            this.handleResults(data, true)
           })
         } else {
           this.search().then(this.handleResults)
@@ -103,16 +108,27 @@ export default {
       })
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
-    handleResults(data) {
+    handleResults(data, isSearching) {
       if (this.$refs.header) {
         this.$refs.header.initialize()
       }
-      this.$ready('Asset Library')
+
+      let assetTotal = this.totalAssetCount
       if (data) {
         this.isComplete = !data.results.length
+        assetTotal = data.total
       } else {
         this.isComplete = (this.assets.length === this.totalAssetCount)
       }
+
+      let announcement = null
+      if (this.isReturning) {
+        announcement = 'Returning to Asset Library'
+      } else if (isSearching) {
+        announcement = `${assetTotal} matching ${assetTotal === 1 ? 'asset' : 'assets'} found`
+      }
+      this.$ready('Asset Library', null, announcement)
+
       if (!this.isComplete) {
         this.startInfiniteLoading(this.fetch, {threshold: 800})
       }
@@ -120,8 +136,6 @@ export default {
         this.scrollTo(`#${this.anchor}`)
         this.$putFocusNextTick(this.anchor)
       }
-      const srAlert = `${this.isReturning ? 'Returning to Asset Library. ' : ''}${this.totalAssetCount} assets total.`
-      this.$announcer.polite(srAlert)
     }
   }
 }
