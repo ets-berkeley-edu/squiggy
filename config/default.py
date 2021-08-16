@@ -53,6 +53,8 @@ CSRF_SESSION_KEY = 'secret'
 DEVELOPER_AUTH_ENABLED = False
 DEVELOPER_AUTH_PASSWORD = 'shotz_brewery'
 
+EMAIL_ADDRESS_SUPPORT = 'bcourseshelp@berkeley.edu'
+
 # Directory to search for mock fixtures, if running in "test" or "demo" mode.
 FIXTURES_PATH = None
 
