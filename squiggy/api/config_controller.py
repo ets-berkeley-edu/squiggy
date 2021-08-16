@@ -38,7 +38,7 @@ def app_config():
     return tolerant_jsonify({
         'assetTypes': assets_type.enums,
         'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
-        'emailAddressSupport': 'support@foo.edu',  # TODO: get email address
+        'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
         'canvasApiUrl': app.config['CANVAS_API_URL'],
         'canvasBaseUrl': app.config['CANVAS_BASE_URL'],
         'orderByOptions': assets_sort_by_options,
