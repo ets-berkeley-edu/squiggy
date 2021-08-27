@@ -57,19 +57,19 @@ class BackgroundJob(object):
 
     def run_in_app_context(self, app_arg, **kwargs):
         with app_arg.app_context():
-            self.run_wrapped(**kwargs)
+            self.run_infinite(**kwargs)
 
-    def run_wrapped(self, **kwargs):
-        try:
-            logger.info(f'Started background thread {current_thread().name}.')
-            result = self.run(**kwargs)
-        except BackgroundJobError as e:
-            logger.error(e)
-            result = None
-        except Exception as e:
-            logger.exception(e)
-            result = None
-        return result
+    def run_infinite(self, **kwargs):
+        while True:
+            try:
+                logger.info(f'Started background thread {current_thread().name}.')
+                self.run(**kwargs)
+            except BackgroundJobError as e:
+                logger.error('Error in background thread, will restart:')
+                logger.error(e)
+            except Exception as e:
+                logger.error('Exception in background thread, will restart:')
+                logger.exception(e)
 
 
 class BackgroundJobError(Exception):
