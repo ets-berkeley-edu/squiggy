@@ -28,6 +28,8 @@ import os
 from threading import current_thread, Thread
 
 from flask import current_app as app
+from sqlalchemy.exc import SQLAlchemyError
+from squiggy import db
 from squiggy.logger import logger
 
 
@@ -67,6 +69,11 @@ class BackgroundJob(object):
             except BackgroundJobError as e:
                 logger.error('Error in background thread, will restart:')
                 logger.error(e)
+            except SQLAlchemyError as e:
+                logger.error('SQLAlchemyError in background thread, will roll back and restart:')
+                logger.exception(e)
+                db.session.rollback()
+                db.session.close()
             except Exception as e:
                 logger.error('Exception in background thread, will restart:')
                 logger.exception(e)
