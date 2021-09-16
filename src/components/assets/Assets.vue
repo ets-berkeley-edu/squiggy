@@ -42,7 +42,7 @@ export default {
       } else {
         let skeletonCount = 10
         if (this.totalAssetCount && (this.totalAssetCount - this.assets.length) < skeletonCount) {
-          skeletonCount = this.totalAssetCount - this.assets.length
+          skeletonCount = Math.max(0, this.totalAssetCount - this.assets.length)
         }
         return this.assets.concat(this.getSkeletons(skeletonCount))
       }
