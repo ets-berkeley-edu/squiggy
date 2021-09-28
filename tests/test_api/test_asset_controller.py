@@ -28,6 +28,7 @@ import os
 from random import randrange
 
 from moto import mock_s3
+import responses
 from squiggy import std_commit
 from squiggy.lib.util import is_teaching
 from squiggy.models.activity import Activity
@@ -264,6 +265,41 @@ class TestCreateAsset:
         assert categories[0]['id'] == mock_category.id
         assert categories[0]['title'] == mock_category.title
         assert User.find_by_id(authorized_user_id).points == user_points + 5
+
+    @responses.activate
+    def test_create_happy_jamboard(self, client, fake_auth, authorized_user_id):
+        """Links to available Google Jamboards pass validation."""
+        happy_jamboard_url = 'https://jamboard.google.com/5678'
+        responses.add(
+            responses.GET,
+            happy_jamboard_url,
+            body='<HTML><HEAD>Jam On!</HEAD></HTML>',
+            status=200,
+        )
+        fake_auth.login(authorized_user_id)
+        api_json = self._api_create_link_asset(client, url=happy_jamboard_url)
+        assert 'id' in api_json
+
+    @responses.activate
+    def test_create_sad_jamboard(self, client, fake_auth, authorized_user_id):
+        """Links to restricted-access Google Jamboards fail validation."""
+        sad_jamboard_url = 'https://jamboard.google.com/666'
+        google_login_url = f'https://accounts.google.com/ServiceLogin?service=jamboardcore&continue={sad_jamboard_url}'
+        responses.add(
+            responses.GET,
+            sad_jamboard_url,
+            status=302,
+            headers={'Location': google_login_url},
+        )
+        responses.add(
+            responses.GET,
+            google_login_url,
+            status=200,
+            body='<HTML><HEAD>Please identify 14 motorcycles to prove you are not a robot.</HEAD></HTML>',
+        )
+        fake_auth.login(authorized_user_id)
+        api_json = self._api_create_link_asset(client, url=sad_jamboard_url, expected_status_code=400)
+        assert api_json['message'] == 'In order to add a Google Jamboard to the Asset Library, sharing must be set to "Anyone with the link."'
 
     @mock_s3
     def test_create_file_asset(self, client, app, fake_auth, authorized_user_id):

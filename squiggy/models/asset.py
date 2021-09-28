@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from itertools import groupby
 import os
 import re
+from urllib.parse import urlparse
 
 from flask import current_app as app
 import magic
@@ -34,6 +35,7 @@ from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, put_binary_data_to_s3
 from squiggy.lib.errors import InternalServerError
+from squiggy.lib.http import request
 from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import camelize, isoformat, utc_now
 from squiggy.models.activity import Activity
@@ -448,6 +450,17 @@ class Asset(Base):
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def validate_asset_url(url):
+    error_message = None
+    # For the moment, validation is restricted to Google Jamboard URLs.
+    if urlparse(url).netloc == 'jamboard.google.com':
+        response = request(url)
+        # Google signals restricted access not with a 403 but with a redirect to a login page.
+        if response and urlparse(response.url).netloc == 'accounts.google.com' and urlparse(response.url).path == '/ServiceLogin':
+            error_message = 'In order to add a Google Jamboard to the Asset Library, sharing must be set to "Anyone with the link."'
+    return error_message
 
 
 def _build_order_clause(order_by):
