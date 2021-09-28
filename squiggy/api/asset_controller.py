@@ -33,7 +33,7 @@ from squiggy.lib.aws import stream_object
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_admin, is_teaching, local_now
-from squiggy.models.asset import Asset
+from squiggy.models.asset import Asset, validate_asset_url
 from squiggy.models.category import Category
 from squiggy.models.user import User
 
@@ -105,8 +105,12 @@ def create_asset():
     if not asset_type or not title:
         raise BadRequestError('Asset creation requires title and type.')
 
-    if asset_type == 'link' and not url:
-        raise BadRequestError('Link asset creation requires url.')
+    if asset_type == 'link':
+        if not url:
+            raise BadRequestError('Link asset creation requires url.')
+        url_error = validate_asset_url(url)
+        if url_error:
+            raise BadRequestError(url_error)
 
     if not current_user.course:
         raise BadRequestError('Course data not found')
