@@ -13,6 +13,25 @@
           Edit Details
         </v-btn>
       </div>
+      <div v-if="canEditAsset && asset.assetType === 'link'" class="mr-2">
+        <v-tooltip bottom>
+          <template #activator="{on, attrs}">
+            <v-btn
+              id="refresh-asset-preview-btn"
+              class="text-no-wrap"
+              :disabled="asset.previewStatus === 'pending'"
+              v-bind="attrs"
+              v-on="on"
+              @click="refreshPreview"
+              @keypress.enter="refreshPreview"
+            >
+              <font-awesome-icon class="mr-2" icon="redo" />
+              <span class="sr-only">Preview image last generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
+            </v-btn>
+          </template>
+          <span>Preview image generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
+        </v-tooltip>
+      </div>
       <div v-if="downloadUrl" class="mr-2">
         <v-btn id="download-asset-btn" :href="downloadUrl">
           <font-awesome-icon class="mr-2" icon="download" />
@@ -80,16 +99,24 @@ export default {
     asset: {
       required: true,
       type: Object
+    },
+    refreshPreview: {
+      required: true,
+      type: Function
     }
   },
   data: () => ({
     canEditAsset: false,
     dialogConfirmDelete: undefined,
-    downloadUrl: undefined
+    downloadUrl: undefined,
+    previewGeneratedAt: undefined
   }),
   created() {
     if (this.asset.assetType === 'file') {
       this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
+    }
+    if (this.asset.assetType === 'link') {
+      this.previewGeneratedAt = this.$_.get(this.asset, 'previewMetadata.updatedAt') || this.asset.createdAt
     }
     const isTeacherOrAdmin = this.$currentUser.isAdmin || this.$currentUser.isTeaching
     const isAssetOwner = this.$_.find(this.asset.users, {'id': this.$currentUser.id})

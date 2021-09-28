@@ -2,7 +2,7 @@
   <div v-if="!isLoading">
     <BackToAssetLibrary :anchor="`asset-${asset.id}`" :disabled="isLoading" />
     <div>
-      <AssetPageHeader :asset="asset" />
+      <AssetPageHeader :asset="asset" :refresh-preview="refreshPreview" />
       <v-card class="mt-3 pa-2" outlined>
         <v-card-text>
           <div class="asset-image-container">
@@ -27,7 +27,7 @@ import AssetsSearch from '@/mixins/AssetsSearch'
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {getAsset} from '@/api/assets'
+import {getAsset, refreshAssetPreview} from '@/api/assets'
 
 export default {
   name: 'Asset',
@@ -67,6 +67,12 @@ export default {
           this.$nextTick(this.resizeIFrame)
         })
       }
+    },
+    refreshPreview() {
+      refreshAssetPreview(this.asset.id).then(() => {
+        this.asset.previewStatus = 'pending'
+        this.scheduleRefreshPreview()
+      })
     },
     scheduleRefreshPreview() {
       clearTimeout(this.refreshPreviewTimeout)

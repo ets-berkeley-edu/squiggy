@@ -162,6 +162,18 @@ def like_asset(asset_id):
     return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
 
 
+@app.route('/api/asset/<asset_id>/refresh_preview', methods=['POST'])
+@login_required
+def refresh_preview(asset_id):
+    asset = Asset.find_by_id(asset_id) if asset_id else None
+    if not asset or asset.asset_type != 'link':
+        raise BadRequestError('Preview refresh requires a valid link asset.')
+    if not can_update_asset(asset=asset, user=current_user):
+        raise BadRequestError('To refresh an asset preview you must own it or be a teacher in the course.')
+    asset.refresh_link_preview()
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
+
+
 @app.route('/api/asset/<asset_id>/remove_like', methods=['POST'])
 @login_required
 def remove_like_asset(asset_id):
