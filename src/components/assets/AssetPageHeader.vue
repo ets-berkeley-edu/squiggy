@@ -29,7 +29,7 @@
               <span class="sr-only">Preview image last generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
             </v-btn>
           </template>
-          <span>Preview image generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
+          <span>Preview image last generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
         </v-tooltip>
       </div>
       <div v-if="downloadUrl" class="mr-2">
@@ -108,15 +108,19 @@ export default {
   data: () => ({
     canEditAsset: false,
     dialogConfirmDelete: undefined,
-    downloadUrl: undefined,
-    previewGeneratedAt: undefined
+    downloadUrl: undefined
   }),
+  computed: {
+    previewGeneratedAt: function () {
+      if (this.asset.assetType !== 'link') {
+        return null
+      }
+      return this.$_.get(this.asset, 'previewMetadata.updatedAt') || this.asset.createdAt
+    }
+  },
   created() {
     if (this.asset.assetType === 'file') {
       this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
-    }
-    if (this.asset.assetType === 'link') {
-      this.previewGeneratedAt = this.$_.get(this.asset, 'previewMetadata.updatedAt') || this.asset.createdAt
     }
     const isTeacherOrAdmin = this.$currentUser.isAdmin || this.$currentUser.isTeaching
     const isAssetOwner = this.$_.find(this.asset.users, {'id': this.$currentUser.id})
