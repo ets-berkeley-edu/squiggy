@@ -390,6 +390,12 @@ class Asset(Base):
         std_commit()
         return self.comment_count
 
+    def refresh_link_preview(self):
+        if self.asset_type != 'link':
+            return
+        self.update_preview(preview_status='pending')
+        generate_previews(self.id, self.url)
+
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
             self.preview_status = kwargs['preview_status']

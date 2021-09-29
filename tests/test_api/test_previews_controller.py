@@ -85,4 +85,6 @@ class TestPreviews:
         assert mock_asset.preview_status == 'done'
         assert mock_asset.image_url == 'https://imgur.com/gallery/6LXFXr2'
         assert mock_asset.thumbnail_url == 'https://imgur.com/gallery/QZmb5KU'
-        assert mock_asset.preview_metadata == {'imageWidth': 200, 'imageHeight': 100}
+        assert mock_asset.preview_metadata['imageWidth'] == 200
+        assert mock_asset.preview_metadata['imageHeight'] == 100
+        assert mock_asset.preview_metadata['updatedAt'] is not None

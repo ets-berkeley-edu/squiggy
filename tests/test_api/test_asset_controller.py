@@ -368,6 +368,46 @@ class TestUpdateAsset:
         assert api_json['title'] == mock_asset.title
 
 
+class TestRefreshAssetPreview:
+    """Refresh asset preview API."""
+
+    @staticmethod
+    def _api_refresh_asset_preview(asset_id, client, expected_status_code=200):
+        response = client.post(f'/api/asset/{asset_id}/refresh_preview')
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_refresh_asset_preview(mock_asset.id, client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_asset):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_refresh_asset_preview(mock_asset.id, client, expected_status_code=401)
+
+    def test_refresh_asset_by_owner(self, client, db_session, fake_auth, mock_asset):
+        """Authorized user can refresh asset preview."""
+        mock_asset.preview_status = 'done'
+        fake_auth.login(mock_asset.users[0].id)
+        asset_feed = _api_get_asset(mock_asset.id, client)
+        assert asset_feed['previewStatus'] == 'done'
+        self._api_refresh_asset_preview(mock_asset.id, client)
+        asset_feed = _api_get_asset(mock_asset.id, client)
+        assert asset_feed['previewStatus'] == 'pending'
+
+    def test_refresh_asset_by_instructor(self, client, db_session, fake_auth, mock_asset):
+        """Instructor can refresh asset preview."""
+        mock_asset.preview_status = 'done'
+        course = Course.find_by_id(mock_asset.course_id)
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
+        fake_auth.login(instructors[0].id)
+        asset_feed = _api_get_asset(mock_asset.id, client)
+        assert asset_feed['previewStatus'] == 'done'
+        self._api_refresh_asset_preview(mock_asset.id, client)
+        asset_feed = _api_get_asset(mock_asset.id, client)
+        assert asset_feed['previewStatus'] == 'pending'
+
+
 class TestDeleteAsset:
     """Delete asset API."""
 
