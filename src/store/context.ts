@@ -3,6 +3,9 @@ import Vue from 'vue'
 
 const $_extractBookmarkHash = parentMessage => {
   const bookmarkHash = {}
+  if (!parentMessage) {
+    return bookmarkHash
+  }
   try {
     const url = new URL(parentMessage.location)
     if (url.hash) {
@@ -47,6 +50,7 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
             callback(parsed)
           } catch {
             console.log('Error parsing message from parent window:', event.data)
+            callback(null)
           }
         }
       }
