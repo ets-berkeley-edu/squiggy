@@ -3,6 +3,9 @@ import Vue from 'vue'
 
 const $_extractBookmarkHash = parentMessage => {
   const bookmarkHash = {}
+  if (!parentMessage) {
+    return bookmarkHash
+  }
   try {
     const url = new URL(parentMessage.location)
     if (url.hash) {
@@ -47,6 +50,7 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
             callback(parsed)
           } catch {
             console.log('Error parsing message from parent window:', event.data)
+            callback(null)
           }
         }
       }
@@ -135,9 +139,14 @@ const actions = {
   getBookmarkHash: () => {
     return new Promise(resolve => {
       const isInIframe = Vue.prototype.$isInIframe
-      if (isInIframe && Vue.prototype.$supportsCustomMessaging) {
-        return $_getIFrameBookmarkHash().then(resolve)
-      } else if (!isInIframe) {
+      if (isInIframe) {
+        if (Vue.prototype.$supportsCustomMessaging) {
+          return $_getIFrameBookmarkHash().then(resolve)
+        } else {
+          // Without custom messaging, we can't reliably return a bookmark hash from within an iframe.
+          return resolve({})
+        }
+      } else {
         return resolve($_getStandaloneBookmarkHash())
       }
     })
