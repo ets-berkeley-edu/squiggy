@@ -80,10 +80,7 @@ class Canvas(Base):
 
     def to_api_json(self):
         return {
-            'apiKey': self.api_key,
             'canvasApiDomain': self.canvas_api_domain,
-            'ltiKey': self.lti_key,
-            'ltiSecret': self.lti_secret,
             'name': self.name,
             'supportsCustomMessaging': self.supports_custom_messaging,
             'useHttps': self.use_https,

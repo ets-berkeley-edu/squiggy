@@ -23,7 +23,7 @@ export default {
   methods: {
     checkInfiniteScrollLoad() {
       if (!this.isComplete) {
-        if (this.isInIframe) {
+        if (this.isInIframe && this.$supportsCustomMessaging) {
           this.getScrollInformation().then((scrollInformation) => {
             if (scrollInformation && scrollInformation.scrollToBottom) {
               this.handleInfiniteScrollLoad(scrollInformation.scrollToBottom)
