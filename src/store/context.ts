@@ -44,13 +44,12 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
       const eventType = 'message'
       const processor = event => {
         if (event && event.data) {
-          window.removeEventListener(eventType, processor)
           try {
             const parsed = JSON.parse(event.data)
+            window.removeEventListener(eventType, processor)
             callback(parsed)
           } catch {
             console.log('Error parsing message from parent window:', event.data)
-            callback(null)
           }
         }
       }
