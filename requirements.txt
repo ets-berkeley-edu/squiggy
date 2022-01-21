@@ -1,24 +1,24 @@
-boto3==1.17.24
-canvasapi==2.1.0
+boto3==1.20.24
+canvasapi==2.2.0
 Flask-Login==0.5.0
 Flask-SQLAlchemy==2.5.1
-Flask==1.1.2
+Flask==2.0.2
 lti==0.9.5
-oauthlib==3.1.0
-psycopg2-binary==2.8.6
-python-dateutil==2.8.1
-python-magic==0.4.22
-pytz==2021.1
-simplejson==3.17.2
+oauthlib==3.1.1
+psycopg2-binary==2.9.3
+python-dateutil==2.8.2
+python-magic==0.4.24
+pytz==2021.3
+simplejson==3.17.6
 smart-open==4.2.0
-SQLAlchemy==1.4.20
-Werkzeug==1.0.1
+SQLAlchemy==1.4.31
+Werkzeug==2.0.2
 https://github.com/python-cas/python-cas/archive/master.zip
 
 # For testing
 
-moto==2.0.2
-pytest==6.2.4
+moto==2.2.19
+pytest==6.2.5
 pytest-flask==1.2.0
-responses==0.13.3
-tox==3.24.0
+responses==0.17.0
+tox==3.24.5

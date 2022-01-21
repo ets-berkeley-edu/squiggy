@@ -16,7 +16,7 @@ export default {
           }
         })
       }
-    } else if (!router.currentRoute.meta.isLoginPage) {
+    } else if (!_.get(router.currentRoute.meta, 'isLoginPage')) {
       if (Vue.prototype.$isInIframe) {
         router.push({path: '/launchfailure'})
       } else {
