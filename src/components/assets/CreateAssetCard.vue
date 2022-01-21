@@ -8,7 +8,7 @@
               id="go-upload-asset-btn"
               block
               class="w-100"
-              height="250"
+              height="225"
               @click="go('/asset/upload')"
             >
               <div class="d-flex flex-column">
@@ -26,7 +26,7 @@
               id="go-add-link-asset-btn"
               block
               class="w-100"
-              height="250"
+              height="225"
               @click="go('/asset/create')"
             >
               <div class="d-flex flex-column">
@@ -38,6 +38,17 @@
                 </div>
               </div>
             </v-btn>
+          </v-col>
+        </v-row>
+        <v-row no-gutters>
+          <v-col class="pt-2">
+            <router-link
+              aria-label="screenreaderText"
+              class="hover-link"
+              to="/bookmarklet/start"
+            >
+              Add assets from anywhere
+            </router-link>
           </v-col>
         </v-row>
       </v-container>
@@ -64,5 +75,11 @@ export default {
 }
 .column-right {
   padding: 0 4px 0 7px;
+}
+.hover-link {
+  text-decoration: none;
+}
+.hover-link:hover {
+  text-decoration: underline;
 }
 </style>
