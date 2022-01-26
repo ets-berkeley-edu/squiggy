@@ -37,7 +37,7 @@ module.exports = {
     'vue/html-end-tags': 2,
     'vue/html-indent': 2,
     'vue/html-quotes': 2,
-    'vue/html-self-closing': 2,
+    'vue/html-self-closing': 0,
     'vue/key-spacing': 2,
     'vue/match-component-file-name': 2,
     'vue/max-attributes-per-line': ['error', {

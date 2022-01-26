@@ -39,9 +39,6 @@ export default {
   name: 'LaunchFailure',
   components: {PageTitle},
   mixins: [Context],
-  data: () => ({
-    isSafari: window.navigator.userAgent.indexOf('Safari') !== -1 && window.navigator.userAgent.indexOf('Chrome') === -1
-  }),
   mounted() {
     this.$ready('Launch Failure')
   }
