@@ -1,3 +1,7 @@
+#dark a {
+  color: #378dc5;
+}
+
 #dark td,
 #dark th {
   border-bottom-color: #378dc5;
