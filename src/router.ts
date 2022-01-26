@@ -5,6 +5,7 @@ import Assets from '@/components/assets/Assets.vue'
 import AssetUpload from '@/components/assets/AssetUpload.vue'
 import auth from './auth'
 import BaseView from '@/components/BaseView.vue'
+import BookmarkletStart from '@/components/bookmarklet/BookmarkletStart.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
 import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
@@ -94,6 +95,13 @@ const router = new Router({
           component: EditAsset,
           meta: {
             title: 'Asset'
+          }
+        },
+        {
+          path: '/bookmarklet/start',
+          component: BookmarkletStart,
+          meta: {
+            title: 'Bookmarklet'
           }
         },
         {

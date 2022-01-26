@@ -1,0 +1,120 @@
+<template>
+  <div>
+    <BackToAssetLibrary anchor="asset-library" :disabled="isLoading" />
+    <div class="align-center d-flex">
+      <div class="pr-3">
+        <font-awesome-icon icon="bookmark" size="lg" />
+      </div>
+      <div>
+        <h2>Easily add assets from anywhere on the web</h2>
+      </div>
+    </div>
+    <div v-if="!isLoading" class="pt-2 w-100">
+      <!--
+      TODO: clean up this copy and paste from legacy SuiteC (addbookmarklet.html).
+
+      <div class="text-center">
+        <div id="assetlibrary-addbookmarklet-container" class="text-left">
+          <div class="row">
+            <div id="assetlibrary-addbookmarklet-title" class="col-xs-12">
+              <i class="fa fa-bookmark"></i>
+              <h2>
+                <span data-ng-if="step === 1">Easily add assets from any webpage</span>
+                <span data-ng-if="step === 2 || step === 3">How to enable the bookmark</span>
+                <span data-ng-if="step === 4">How to use the bookmark</span>
+              </h2>
+            </div>
+          </div>
+          <div id="assetlibrary-addbookmarklet-content">
+            <div>
+              <div data-ng-if="step === 1">
+                <img src="/assets/img/bookmarklet-1.png" />
+              </div>
+              <div data-ng-if="step === 2">
+                <img data-ng-src="/assets/img/bookmarklet-2-firefox.png" data-ng-if="browser === 'firefox'" />
+                <img data-ng-src="/assets/img/bookmarklet-2-chrome.png" data-ng-if="browser === 'chrome'" />
+                <img data-ng-src="/assets/img/bookmarklet-2-safari.png" data-ng-if="browser === 'safari'" />
+                <img data-ng-src="/assets/img/bookmarklet-2-ie.png" data-ng-if="browser === 'ie'" />
+              </div>
+              <div data-ng-if="step === 3">
+                <img data-ng-src="/assets/img/bookmarklet-3-firefox.png" data-ng-if="browser === 'firefox'" />
+                <img data-ng-src="/assets/img/bookmarklet-3-chrome.png" data-ng-if="browser === 'chrome'" />
+                <img data-ng-src="/assets/img/bookmarklet-3-safari.png" data-ng-if="browser === 'safari'" />
+                <img data-ng-src="/assets/img/bookmarklet-3-ie.png" data-ng-if="browser === 'ie'" />
+              </div>
+              <div data-ng-if="step === 4">
+                <img data-ng-src="/assets/img/bookmarklet-4-firefox.png" data-ng-if="browser === 'firefox'" />
+                <img data-ng-src="/assets/img/bookmarklet-4-chrome.png" data-ng-if="browser === 'chrome'" />
+                <img data-ng-src="/assets/img/bookmarklet-4-safari.png" data-ng-if="browser === 'safari'" />
+                <img data-ng-src="/assets/img/bookmarklet-4-ie.png" data-ng-if="browser === 'ie'" />
+              </div>
+            </div>
+            <div id="assetlibrary-addbookmarklet-text" class="text-center">
+              <div data-ng-if="step === 1">
+                Add assets directly to the Asset Library from any webpage without logging in.
+              </div>
+              <div data-ng-if="step === 2">
+                First, enable your browser's <span data-ng-bind="toolbar"></span>.
+              </div>
+              <div data-ng-if="step === 3">
+                Drag <a class="btn btn-default assetlibrary-addbookmarklet-bookmarklet" data-ng-click="preventBookmarklet($event)" data-ng-mousedown="trackBookmarkInstallation()" data-ng-href="javascript:
+                    (function() {
+                      var api_domain = '{{me.course.canvas_api_domain}}';
+                      var base_url = '{{baseUrl}}';
+                      var bookmarklet_token = '{{me.bookmarklet_token}}';
+                      var course_id = '{{me.course.canvas_course_id}}';
+                      var tool_url = '{{toolUrl}}';
+                      var user_id = '{{me.id}}';
+                      window.collabosphere = window.collabosphere || {
+                        'initialized': false,
+                        'api_domain': api_domain,
+                        'base_url': base_url,
+                        'bookmarklet_token': bookmarklet_token,
+                        'course_id': course_id,
+                        'tool_url': tool_url,
+                        'user_id': user_id
+                      };
+                      if (window.collabosphere.initialized) {
+                        var iframe = document.getElementById('collabosphere-iframe');
+                        if (iframe) {
+                          iframe.contentWindow.postMessage('collabosphere.load', '*');
+                        }
+                      } else {
+                        window.collabosphere.initialized = true;
+                        var bookmarklet = document.createElement('script');
+                        bookmarklet.src = base_url + '/assets/js/bookmarklet-init.js';
+                        document.body.appendChild(bookmarklet);
+                      }
+                    })();"><i class="fa fa-bookmark"></i> Asset Library</a> to the browser's <span data-ng-bind="toolbar"></span>.
+              </div>
+              <div data-ng-if="step === 4">
+                When browsing the web, click the Asset Library bookmark when you find something interesting about this course.
+              </div>
+              <button class="btn btn-primary" data-ng-click="nextStep()" data-ng-if="step !== 4">
+                <span data-ng-if="step === 1">Get started</span>
+                <span data-ng-if="step !== 1">Next</span>
+                <i class="fa fa-arrow-circle-o-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    -->
+    </div>
+  </div>
+</template>
+
+<script>
+import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
+import Context from '@/mixins/Context'
+
+export default {
+  name: 'BookmarkletStart',
+  components: {BackToAssetLibrary},
+  mixins: [Context],
+  created() {
+    this.$ready('Add assets more easily with the Bookmarklet.')
+  }
+}
+</script>

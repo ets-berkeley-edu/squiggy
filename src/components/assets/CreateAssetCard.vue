@@ -43,11 +43,11 @@
         <v-row no-gutters>
           <v-col class="pt-2">
             <router-link
-              aria-label="screenreaderText"
+              id="link-to-bookmarklet-start"
               class="hover-link"
               to="/bookmarklet/start"
             >
-              Add assets from anywhere
+              Add assets more easily <font-awesome-icon class="ml-1" icon="bookmark" />
             </router-link>
           </v-col>
         </v-row>
