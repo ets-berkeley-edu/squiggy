@@ -15,38 +15,12 @@
         :alt="`Screenshot showing ${pageTitle}`"
         :src="screenshot"
       />
-      <div>
-        <!--
-        Drag <a class="btn btn-default assetlibrary-addbookmarklet-bookmarklet" data-ng-click="preventBookmarklet($event)" data-ng-mousedown="trackBookmarkInstallation()" data-ng-href="javascript:
-            (function() {
-              var api_domain = '{{ null // me.course.canvas_api_domain }}';
-              var base_url = '{{ null // baseUrl }}';
-              var bookmarklet_token = '{{ null //  me.bookmarklet_token }}';
-              var course_id = '{{ null //  me.course.canvas_course_id }}';
-              var tool_url = '{{ null // toolUrl }}';
-              var user_id = '{{ null // me.id }}';
-              window.collabosphere = window.collabosphere || {
-                'initialized': false,
-                'api_domain': api_domain,
-                'base_url': base_url,
-                'bookmarklet_token': bookmarklet_token,
-                'course_id': course_id,
-                'tool_url': tool_url,
-                'user_id': user_id
-              };
-              if (window.collabosphere.initialized) {
-                var iframe = document.getElementById('collabosphere-iframe');
-                if (iframe) {
-                  iframe.contentWindow.postMessage('collabosphere.load', '*');
-                }
-              } else {
-                window.collabosphere.initialized = true;
-                var bookmarklet = document.createElement('script');
-                bookmarklet.src = base_url + '/assets/js/bookmarklet-init.js';
-                document.body.appendChild(bookmarklet);
-              }
-            })();"><i class="fa fa-bookmark"></i> Asset Library</a> to the browser's <span data-ng-bind="toolbar"></span>.
-          -->
+      <div class="pl-3 py-2">
+        Drag
+        <a class="bookmarklet mx-2" :href="bookmarklet" @click.prevent>
+          <font-awesome-icon class="mr-1" icon="bookmark" /> Asset Library
+        </a>
+        to the browser's {{ toolbarName }}.
       </div>
       <div class="float-right">
         <v-btn
@@ -75,11 +49,45 @@ export default {
   mixins: [Context, Utils],
   data: () => ({
     pageTitle: 'How to enable the bookmark',
-    screenshot: undefined
+    screenshot: undefined,
+    toolbarName: undefined
   }),
   created() {
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-3-${this.currentBrowser}.png`)
+    this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')
     this.$ready(this.pageTitle)
+  },
+  methods: {
+    bookmarklet() {
+      window.squiggy = window.squiggy || {
+        initialized: false, // TODO: Is 'initialized' needed?
+        canvasApiDomain: this.$currentUser.canvasApiDomain,
+        apiBaseUrl: this.$config.apiBaseUrl,
+        bookmarkletToken: this.$currentUser.bookmarkletToken,
+        canvasCourseId: this.$currentUser.canvasCourseId,
+        toolUrl: undefined, // TODO: Is tool_url needed?
+        userId: this.$currentUser.id
+      }
+      if (window.squiggy.initialized) {
+        if (this.isInIframe) {
+          this.postIFrameMessage('squiggy.load', '*')
+        }
+      } else {
+        window.squiggy.initialized = true
+        const bookmarklet = document.createElement('script')
+        bookmarklet.src = `${this.$config.apiBaseUrl}/assets/bookmarklet/bookmarklet.js`
+        document.body.appendChild(bookmarklet)
+      }
+    }
   }
 }
 </script>
+
+<style scoped>
+.bookmarklet {
+  border: 2px solid #0295DE;
+  color: #333;
+  padding: 10px 15px;
+  text-decoration: none;
+}
+</style>
