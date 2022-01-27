@@ -328,6 +328,7 @@ CREATE INDEX courses_last_polled_idx ON courses USING btree (last_polled);
 
 CREATE TABLE users (
     id integer NOT NULL,
+    bookmarklet_token character varying(32) NOT NULL,
     canvas_user_id integer NOT NULL,
     canvas_course_role character varying(255) NOT NULL,
     canvas_enrollment_state enum_users_canvas_enrollment_state NOT NULL,

@@ -23,6 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import random
+
 from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from sqlalchemy.sql import desc
@@ -48,6 +50,7 @@ class User(Base):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
+    bookmarklet_token = db.Column(db.String(32), nullable=False)
     canvas_course_role = db.Column(db.String(255), nullable=False)
     canvas_course_sections = db.Column(ARRAY(db.String(255)))
     canvas_email = db.Column(db.String(255))
@@ -81,6 +84,7 @@ class User(Base):
         points=0,
         share_points=None,
     ):
+        self.bookmarklet_token = '%032x' % random.getrandbits(128)
         self.canvas_course_role = canvas_course_role
         self.canvas_course_sections = canvas_course_sections
         self.canvas_email = canvas_email
@@ -94,6 +98,7 @@ class User(Base):
 
     def __repr__(self):
         return f"""<User
+                    bookmarklet_token={self.bookmarklet_token}
                     canvas_course_role={self.canvas_course_role},
                     canvas_course_sections={self.canvas_course_sections},
                     canvas_email={self.canvas_email},
@@ -177,6 +182,7 @@ class User(Base):
     def to_api_json(self, include_points=False, include_sharing=False):
         json = {
             'id': self.id,
+            'bookmarkletToken': self.bookmarklet_token,
             'canvasApiDomain': self.course.canvas_api_domain,
             'canvasCourseId': self.course.canvas_course_id,
             'canvasCourseRole': self.canvas_course_role,
