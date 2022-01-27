@@ -16,7 +16,7 @@
         :src="screenshot"
       />
       <div>
-        First, enable your browser's <b>TODO: data-ng-bind="toolbar"</b>.
+        First, enable your browser's {{ toolbarName }}.
       </div>
       <div class="float-right">
         <v-btn
@@ -45,10 +45,12 @@ export default {
   mixins: [Context, Utils],
   data: () => ({
     pageTitle: 'How to enable the bookmark',
-    screenshot: undefined
+    screenshot: undefined,
+    toolbarName: undefined
   }),
   created() {
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-2-${this.currentBrowser}.png`)
+    this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')
     this.$ready(this.pageTitle)
   }
 }
