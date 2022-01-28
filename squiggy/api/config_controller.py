@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
-from flask import current_app as app
+from flask import current_app as app, request
 from flask_login import login_required
 from squiggy import __version__ as version
 from squiggy.lib.http import tolerant_jsonify
@@ -37,6 +37,7 @@ from squiggy.models.asset import assets_sort_by_options, assets_type
 def app_config():
     return tolerant_jsonify({
         'assetTypes': assets_type.enums,
+        'baseUrl': app.config['VUE_LOCALHOST_BASE_URL'] or request.url_root,
         'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
         'canvasApiUrl': app.config['CANVAS_API_URL'],

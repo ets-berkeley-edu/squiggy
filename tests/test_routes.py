@@ -31,7 +31,7 @@ class TestRoutes:
     def test_bookmarklet_init(self, app, client):
         """Verify that bookmarklet source files are properly formatted."""
         for phase in ('init', 'render'):
-            response = client.get(f'/bookmarklet/{phase}')
+            response = client.get(f'/bookmarklet_{phase}.js')
             assert response.status_code == 200
             assert f"apiBaseUrl = {app.config['HOST']}:{app.config['PORT']}" in str(response.data)
 
