@@ -17,7 +17,11 @@
       />
       <div class="pl-3 py-2">
         Drag
-        <a class="bookmarklet mx-2" :href="bookmarklet" @click.prevent>
+        <a
+          class="bookmarklet mx-2"
+          :href="bookmarklet"
+          @click.prevent="$_.noop"
+        >
           <font-awesome-icon class="mr-1" icon="bookmark" /> Asset Library
         </a>
         to the browser's {{ toolbarName }}.
@@ -48,37 +52,26 @@ export default {
   components: {BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
+    bookmarklet: undefined,
     pageTitle: 'How to enable the bookmark',
     screenshot: undefined,
     toolbarName: undefined
   }),
   created() {
+    this.bookmarklet = `javascript:(
+      () => {
+        w = window.open('${this.$config.baseUrl}/bookmarklet/popup', 'SuiteC', 'scrollbars=yes,width=550,height=600');
+        setTimeout(() => {
+          const script = w.document.createElement('script');
+          script.charset = 'UTF-8';
+          script.src = '${this.$config.apiBaseUrl}/bookmarklet_init.js';
+          w.document.body.appendChild(script)
+        }, 2000)
+      })();
+    `
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-3-${this.currentBrowser}.png`)
     this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')
     this.$ready(this.pageTitle)
-  },
-  methods: {
-    bookmarklet() {
-      window.squiggy = window.squiggy || {
-        initialized: false, // TODO: Is 'initialized' needed?
-        canvasApiDomain: this.$currentUser.canvasApiDomain,
-        apiBaseUrl: this.$config.apiBaseUrl,
-        bookmarkletToken: this.$currentUser.bookmarkletToken,
-        canvasCourseId: this.$currentUser.canvasCourseId,
-        toolUrl: undefined, // TODO: Is tool_url needed?
-        userId: this.$currentUser.id
-      }
-      if (window.squiggy.initialized) {
-        if (this.isInIframe) {
-          this.postIFrameMessage('squiggy.load', '*')
-        }
-      } else {
-        window.squiggy.initialized = true
-        const bookmarklet = document.createElement('script')
-        bookmarklet.src = `${this.$config.apiBaseUrl}/assets/bookmarklet/bookmarklet.js`
-        document.body.appendChild(bookmarklet)
-      }
-    }
   }
 }
 </script>

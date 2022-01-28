@@ -5,6 +5,7 @@ import Assets from '@/components/assets/Assets.vue'
 import AssetUpload from '@/components/assets/AssetUpload.vue'
 import auth from './auth'
 import BaseView from '@/components/BaseView.vue'
+import BookmarkletPopup from '@/components/bookmarklet/BookmarkletPopup.vue'
 import BookmarkletStep1 from '@/components/bookmarklet/BookmarkletStep1.vue'
 import BookmarkletStep2 from '@/components/bookmarklet/BookmarkletStep2.vue'
 import BookmarkletStep3 from '@/components/bookmarklet/BookmarkletStep3.vue'
@@ -98,6 +99,13 @@ const router = new Router({
           component: EditAsset,
           meta: {
             title: 'Asset'
+          }
+        },
+        {
+          path: '/bookmarklet/popup',
+          component: BookmarkletPopup,
+          meta: {
+            title: 'Bookmarklet'
           }
         },
         {

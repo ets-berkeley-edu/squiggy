@@ -65,7 +65,7 @@ def register_routes(app):
         raise squiggy.lib.errors.ResourceNotFoundError('The requested resource could not be found.')
 
     # Bookmarklet js file.
-    @app.route('/bookmarklet/<phase>')
+    @app.route('/bookmarklet_<phase>.js')
     def bookmarklet(phase):
         key = f'bookmarklet_{phase}'
         if key in static_files:
