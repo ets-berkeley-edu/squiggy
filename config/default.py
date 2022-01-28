@@ -53,16 +53,14 @@ CSRF_SESSION_KEY = 'secret'
 DEVELOPER_AUTH_ENABLED = False
 DEVELOPER_AUTH_PASSWORD = 'shotz_brewery'
 
+DIST_STATIC_DIR = 'dist/static'
+
 EMAIL_ADDRESS_SUPPORT = 'bcourseshelp@berkeley.edu'
 
 # Directory to search for mock fixtures, if running in "test" or "demo" mode.
 FIXTURES_PATH = None
 
 INACTIVE_SESSION_LIFETIME = 20
-
-# These "INDEX_HTML" and "STATIC_PATH" defaults are good in squiggy-[dev|qa|prod]. See development.py for local configs.
-INDEX_HTML = 'dist/static/index.html'
-STATIC_PATH = '/static'
 
 # Logging
 LOGGING_FORMAT = '[%(asctime)s] - %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
@@ -94,6 +92,8 @@ SQLALCHEMY_DATABASE_URI = 'postgresql://squiggy:squiggy@localhost:5432/squiggy'
 
 # Disable an expensive bit of the ORM.
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+STATIC_PATH = '/static'
 
 # A common configuration; one request thread, one background worker thread.
 THREADS_PER_PAGE = 2

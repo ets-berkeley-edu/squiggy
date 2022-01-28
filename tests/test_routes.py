@@ -23,15 +23,22 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-# Development environment.
-DEBUG = True
+from tests.util import override_config
 
-CANVAS_POLLER = False
 
-DEVELOPER_AUTH_ENABLED = True
+class TestRoutes:
 
-DIST_STATIC_DIR = 'public'
+    def test_bookmarklet_init(self, app, client):
+        """Verify that bookmarklet source files are properly formatted."""
+        for phase in ('init', 'render'):
+            response = client.get(f'/bookmarklet/{phase}')
+            assert response.status_code == 200
+            assert f"apiBaseUrl = {app.config['HOST']}:{app.config['PORT']}" in str(response.data)
 
-STATIC_PATH = ''
-
-VUE_LOCALHOST_BASE_URL = 'http://localhost:8080'
+    def test_front_end_route_redirect(self, app, client):
+        """Server-side redirect to Vue."""
+        with override_config(app, 'VUE_LOCALHOST_BASE_URL', 'http://localhost:8080'):
+            route_path = '/assets'
+            response = client.get(route_path)
+            assert response.status_code == 302
+            assert response.location == f"{app.config['VUE_LOCALHOST_BASE_URL']}{route_path}"

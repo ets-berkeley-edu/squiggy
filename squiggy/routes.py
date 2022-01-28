@@ -52,7 +52,7 @@ def register_routes(app):
     # Register error handlers.
     import squiggy.api.error_handlers
 
-    index_html = open(app.config['INDEX_HTML']).read()
+    static_files = _load_static_files(app)
 
     @app.login_manager.unauthorized_handler
     def unauthorized_handler():
@@ -64,10 +64,20 @@ def register_routes(app):
         app.logger.error('The requested resource could not be found.')
         raise squiggy.lib.errors.ResourceNotFoundError('The requested resource could not be found.')
 
+    # Bookmarklet js file.
+    @app.route('/bookmarklet/<phase>')
+    def bookmarklet(phase):
+        key = f'bookmarklet_{phase}'
+        if key in static_files:
+            return make_response(static_files[key])
+        else:
+            raise squiggy.lib.errors.ResourceNotFoundError('The requested resource could not be found.')
+
     # Non-API routes are handled by the front end.
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def front_end_route(**kwargs):
+        index_html = static_files['index_html']
         vue_base_url = app.config['VUE_LOCALHOST_BASE_URL']
         return redirect(vue_base_url + request.full_path) if vue_base_url else make_response(index_html)
 
@@ -101,6 +111,23 @@ def register_routes(app):
                 app.logger.debug(log_message)
 
         return response
+
+
+def _load_static_files(app):
+    def _interpolate(bookmarklet_js):
+        for key, value in replacements.items():
+            bookmarklet_js = bookmarklet_js.replace('{' + key + '}', value)
+        return bookmarklet_js
+
+    replacements = {
+        'apiBaseUrl': f"{app.config['HOST']}:{app.config['PORT']}",
+    }
+    dist_static_dir = app.config['DIST_STATIC_DIR']
+    return {
+        'index_html': open(f'{dist_static_dir}/index.html').read(),
+        'bookmarklet_init': _interpolate(open(f'{dist_static_dir}/bookmarklet-init.js').read()),
+        'bookmarklet_render': _interpolate(open(f'{dist_static_dir}/bookmarklet-render.js').read()),
+    }
 
 
 def _user_loader(user_id=None):
