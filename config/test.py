@@ -33,7 +33,7 @@ AWS_APP_ROLE_ARN = 'arn:aws:iam::123456789012:role/test-role'
 
 CANVAS_POLLER = False
 
-INDEX_HTML = 'tests/static/test-index.html'
+DIST_STATIC_DIR = 'tests/static'
 
 LOGGING_LOCATION = 'STDOUT'
 

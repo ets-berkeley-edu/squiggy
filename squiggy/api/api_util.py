@@ -27,8 +27,24 @@ from functools import wraps
 
 from flask import current_app as app, request
 from flask_login import current_user
-from squiggy.lib.util import is_admin, is_teaching
+from squiggy.lib.util import is_admin, is_teaching, to_int
 from squiggy.logger import logger
+from squiggy.models.user import User
+
+
+def bookmarklet_token_required(func):
+    @wraps(func)
+    def _bookmarklet_token_required(*args, **kw):
+        user_id = request.headers.get('Squiggy-User-Id')
+        bookmarklet_token = request.headers.get('Squiggy-User-Bookmarklet-Token')
+        user_id = user_id and to_int(user_id)
+        user = user_id and User.find_by_id(user_id)
+        if user and user.bookmarklet_token == bookmarklet_token:
+            return func(*args, **kw)
+        else:
+            logger.warning(f'Unauthorized request to {request.path}')
+            return app.login_manager.unauthorized()
+    return _bookmarklet_token_required
 
 
 def teacher_required(func):
