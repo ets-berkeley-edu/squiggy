@@ -14,7 +14,8 @@
       <v-card
         v-if="!asset.isLoading"
         :id="`asset-${asset.id}`"
-        class="h-100"
+        hover
+        class="card-class"
         @keypress.enter="go(`/asset/${asset.id}`)"
         @click="go(`/asset/${asset.id}`)"
       >
@@ -106,5 +107,14 @@ export default {
   left: 0;
   position: absolute;
   right: 0;
+}
+.card-class {
+  height: 100%;
+}
+.card-class:active, .card-class:focus {
+  background-color: #378dc5;
+}
+.card-class:hover {
+  background-color: #67bdf5;
 }
 </style>
