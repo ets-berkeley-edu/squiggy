@@ -45,8 +45,8 @@
     <v-form v-if="!uploading && file" v-model="fileAssetValid" @submit="upload">
       <v-container class="mt-2" fluid>
         <v-row>
-          <v-col class="pt-7 text-right" cols="2">
-            Title
+          <v-col class="pt-5 text-right" cols="2">
+            <label for="asset-title-input">Title</label>
           </v-col>
           <v-col cols="6">
             <v-text-field
@@ -60,8 +60,8 @@
           </v-col>
         </v-row>
         <v-row v-if="categories.length">
-          <v-col class="pt-7 text-right" cols="2">
-            Category
+          <v-col class="pt-5 text-right" cols="2">
+            <label for="asset-category">Category</label>
           </v-col>
           <v-col cols="6">
             <AccessibleSelect
@@ -76,16 +76,21 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col class="pt-7 text-right" cols="2">
-            Description
+          <v-col class="pt-5 text-right" cols="2">
+            <label for="asset-description-textarea">Description</label>
           </v-col>
           <v-col cols="6">
-            <v-textarea
-              id="asset-description-textarea"
-              v-model="description"
-              outlined
-              placeholder="Add some more context to your file. You can use plain text or #keywords"
-            />
+            <div class="d-flex flex-column flex-column-reverse">
+              <div class="caption">Add some more context to your file. You can use plain text or #keywords</div>
+              <div>
+                <v-textarea
+                  id="asset-description-textarea"
+                  v-model="description"
+                  hide-details
+                  outlined
+                />
+              </div>
+            </div>
           </v-col>
         </v-row>
         <v-row>
