@@ -53,8 +53,9 @@
               id="asset-title-input"
               v-model="title"
               label="Enter a title"
-              :rules="titleRules"
               outlined
+              required
+              :rules="titleRules"
               @keydown.enter="submit"
             />
           </v-col>

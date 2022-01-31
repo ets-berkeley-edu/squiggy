@@ -18,9 +18,9 @@
               id="asset-url-input"
               v-model="url"
               label="Paste or type a URL here"
-              :rules="urlRules"
-              required
               outlined
+              required
+              :rules="urlRules"
               @blur="ensureUrlPrefix"
               @keydown.enter="submit"
             />
@@ -35,9 +35,9 @@
               id="asset-title-input"
               v-model="title"
               label="Enter a title"
-              :rules="titleRules"
-              required
               outlined
+              required
+              :rules="titleRules"
               @keydown.enter="submit"
             />
           </v-col>
