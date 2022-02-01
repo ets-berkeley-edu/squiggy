@@ -11,8 +11,8 @@
       outlined
       :placeholder="parent ? 'Reply to comment' : 'Add a comment'"
     />
-    <div class="align-start d-flex flex-row-reverse text-right">
-      <div>
+    <div class="align-start d-flex text-right">
+      <div class="pr-1">
         <v-btn
           :id="parent ? 'save-reply-btn' : (comment ? 'save-comment-btn' : 'create-comment-btn')"
           color="primary"

@@ -96,8 +96,8 @@
         </v-row>
         <v-row>
           <v-col class="text-right" cols="8">
-            <div class="d-flex flex-row-reverse">
-              <div>
+            <div class="d-flex">
+              <div class="pr-2">
                 <v-btn
                   id="upload-file-btn"
                   color="primary"
@@ -108,7 +108,7 @@
                   Upload file
                 </v-btn>
               </div>
-              <div class="pr-2">
+              <div>
                 <v-btn id="upload-file-cancel-btn" elevation="1" @click="go('/assets')">Cancel</v-btn>
               </div>
             </div>

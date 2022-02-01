@@ -151,8 +151,8 @@
           </v-row>
           <v-row no-gutters>
             <v-col class="text-right" cols="12">
-              <div class="d-flex flex-row-reverse">
-                <div>
+              <div class="d-flex">
+                <div class="pr-2">
                   <v-btn
                     id="adv-search-btn"
                     class="text-capitalize"
@@ -165,7 +165,7 @@
                     Search
                   </v-btn>
                 </div>
-                <div class="pr-2">
+                <div>
                   <v-btn
                     id="cancel-adv-search-btn"
                     class="text-capitalize"
