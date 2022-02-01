@@ -93,19 +93,8 @@
                       placeholder="Title"
                       solo
                     />
-                    <div class="d-flex flex-row-reverse pb-2">
-                      <div>
-                        <v-btn
-                          :id="`edit-category-${selectedEdit.id}-cancel`"
-                          :disabled="isUpdating"
-                          small
-                          @click="cancelEdit"
-                          @keypress.enter.prevent="cancelEdit"
-                        >
-                          Cancel
-                        </v-btn>
-                      </div>
-                      <div class="pr-2">
+                    <div class="d-flex pb-2">
+                      <div class="pr-1">
                         <v-btn
                           :id="`edit-category-${selectedEdit.id}-save`"
                           color="primary"
@@ -115,6 +104,17 @@
                           @keypress.enter.prevent="update"
                         >
                           Save
+                        </v-btn>
+                      </div>
+                      <div>
+                        <v-btn
+                          :id="`edit-category-${selectedEdit.id}-cancel`"
+                          :disabled="isUpdating"
+                          small
+                          @click="cancelEdit"
+                          @keypress.enter.prevent="cancelEdit"
+                        >
+                          Cancel
                         </v-btn>
                       </div>
                     </div>
@@ -138,8 +138,8 @@
         <v-divider />
         <v-card-actions>
           <v-spacer />
-          <div class="d-flex flex-row-reverse pa-2">
-            <div>
+          <div class="d-flex pa-2">
+            <div class="mr-2">
               <v-btn
                 id="confirm-delete-btn"
                 color="primary"
@@ -149,7 +149,7 @@
                 Confirm
               </v-btn>
             </div>
-            <div class="mr-2">
+            <div>
               <v-btn
                 id="cancel-delete-btn"
                 @click="cancelDelete"

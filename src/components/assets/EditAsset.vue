@@ -59,7 +59,7 @@
         </v-list-item>
         <v-card-actions>
           <v-spacer />
-          <div class="d-flex flex-row-reverse">
+          <div class="d-flex">
             <v-btn
               id="confirm-save-asset-btn"
               class="mr-2"

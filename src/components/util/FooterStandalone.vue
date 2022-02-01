@@ -29,7 +29,7 @@
               </v-btn>
             </div>
             <div>
-              <v-btn id="go-engagement-index-btn" icon @click="go('/engagement')">
+              <v-btn id="go-engagement-index-btn" icon @click="go('/engage')">
                 <span class="sr-only">Go to Engagement Index</span>
                 <font-awesome-icon icon="list-ol" />
               </v-btn>

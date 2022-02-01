@@ -96,34 +96,40 @@
           </table>
         </div>
 
-        <div class="points-actions d-flex flex-row-reverse">
-          <v-btn
-            v-if="editMode"
-            id="save-btn"
-            type="submit"
-            color="primary"
-          >
-            Save
-          </v-btn>
-          <v-btn
-            v-if="!editMode"
-            id="edit-btn"
-            type="button"
-            color="primary"
-            @click.prevent="setEditMode(true)"
-            @keypress.enter.prevent="setEditMode(true)"
-          >
-            Edit
-          </v-btn>
-          <v-btn
-            v-if="editMode"
-            id="cancel-edit-btn"
-            class="mr-2"
-            @click.prevent="setEditMode(false)"
-            @keypress.enter.prevent="setEditMode(false)"
-          >
-            Cancel
-          </v-btn>
+        <div class="points-actions d-flex">
+          <div class="pr-1">
+            <v-btn
+              v-if="editMode"
+              id="save-btn"
+              color="primary"
+              type="submit"
+            >
+              Save
+            </v-btn>
+          </div>
+          <div class="pr-1">
+            <v-btn
+              v-if="!editMode"
+              id="edit-btn"
+              class="mr-2"
+              color="primary"
+              type="button"
+              @click.prevent="setEditMode(true)"
+              @keypress.enter.prevent="setEditMode(true)"
+            >
+              Edit
+            </v-btn>
+          </div>
+          <div>
+            <v-btn
+              v-if="editMode"
+              id="cancel-edit-btn"
+              @click.prevent="setEditMode(false)"
+              @keypress.enter.prevent="setEditMode(false)"
+            >
+              Cancel
+            </v-btn>
+          </div>
         </div>
       </div>
     </form>

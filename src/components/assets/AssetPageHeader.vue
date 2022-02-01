@@ -59,8 +59,8 @@
             <v-divider />
             <v-card-actions>
               <v-spacer />
-              <div class="d-flex flex-row-reverse pa-2">
-                <div>
+              <div class="d-flex pa-2">
+                <div class="mr-2">
                   <v-btn
                     id="confirm-delete-btn"
                     color="primary"
@@ -70,7 +70,7 @@
                     Confirm
                   </v-btn>
                 </div>
-                <div class="mr-2">
+                <div>
                   <v-btn
                     id="cancel-delete-btn"
                     @click="cancelDelete"
