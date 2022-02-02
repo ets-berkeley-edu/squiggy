@@ -21,7 +21,8 @@
             <v-btn
               v-if="$currentUser.isAdmin || $currentUser.isTeaching"
               id="download-csv-btn"
-              :href="`${$config.apiBaseUrl}/api/activities/csv`"
+              @click="downloadCSV"
+              @keypress.enter.prevent="downloadCSV"
             >
               Download CSV
             </v-btn>
@@ -94,6 +95,9 @@ export default {
     }
   },
   methods: {
+    downloadCSV() {
+      window.location.href = `${this.$config.apiBaseUrl}/api/activities/csv`
+    },
     getHeaders() {
       const headers = [
         {text: 'Rank', 'value': 'rank'},
