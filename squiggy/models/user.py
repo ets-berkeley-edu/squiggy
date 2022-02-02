@@ -25,6 +25,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import random
 
+from cryptography.fernet import Fernet
+from flask import current_app as app
 from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from sqlalchemy.sql import desc
@@ -180,9 +182,10 @@ class User(Base):
         std_commit()
 
     def to_api_json(self, include_points=False, include_sharing=False):
+        encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
         json = {
             'id': self.id,
-            'bookmarkletToken': self.bookmarklet_token,
+            'bookmarkletAuth': Fernet(encryption_key).encrypt(f'{self.id}_{self.bookmarklet_token}'.encode()),
             'canvasApiDomain': self.course.canvas_api_domain,
             'canvasCourseId': self.course.canvas_course_id,
             'canvasCourseRole': self.canvas_course_role,

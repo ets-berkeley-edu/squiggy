@@ -25,10 +25,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import re
 
-from flask import current_app as app, redirect, request
-from flask_login import current_user, login_required, login_user, logout_user
+from flask import current_app as app, request
+from flask_login import current_user, login_required, logout_user
 from lti.contrib.flask import FlaskToolProvider
-from squiggy.lib.errors import BadRequestError, ResourceNotFoundError, UnauthorizedRequestError
+from squiggy.api.api_util import start_login_session
+from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX
@@ -49,7 +50,7 @@ def dev_auth_login():
         if password != app.config['DEVELOPER_AUTH_PASSWORD']:
             logger.error('Dev auth: Wrong password')
             return tolerant_jsonify({'message': 'Invalid credentials'}, 401)
-        return _login_user(user_id)
+        return start_login_session(LoginSession(user_id))
     else:
         raise ResourceNotFoundError('Unknown path')
 
@@ -95,7 +96,7 @@ def _canvas_external_tool_url(s, headers):
 def _lti_launch(tool_id):
     logger.info(f'Begin LTI launch for tool {tool_id}')
     user, redirect_path = _lti_launch_authentication(tool_id=tool_id)
-    return _login_user(user_id=user and user.id, redirect_path=redirect_path, tool_id=tool_id)
+    return start_login_session(LoginSession(user and user.id), redirect_path=redirect_path, tool_id=tool_id)
 
 
 def _lti_launch_authentication(tool_id):
@@ -216,42 +217,6 @@ def _check_course_activity(course):
         return True
     else:
         return False
-
-
-def _login_user(user_id, redirect_path=None, tool_id=None):
-    logger.info(f'_login_user: user_id={user_id}, redirect_path={redirect_path}, tool_id={tool_id}')
-    authenticated = login_user(LoginSession(user_id), remember=True) and current_user.is_authenticated
-    if authenticated:
-        if redirect_path:
-            response = redirect(location=f"{app.config['VUE_LOCALHOST_BASE_URL'] or ''}{redirect_path}")
-        else:
-            response = tolerant_jsonify(current_user.to_api_json())
-
-        canvas_api_domain = current_user.course.canvas_api_domain
-        canvas = Canvas.find_by_domain(canvas_api_domain)
-        canvas_course_id = current_user.course.canvas_course_id
-        # Yummy cookies!
-        key = f'{canvas_api_domain}|{canvas_course_id}'
-        value = str(current_user.user_id)
-        response.set_cookie(
-            key=key,
-            value=value,
-            samesite='None',
-            secure=True,
-        )
-        logger.info(f'_login_user cookie: key={key} value={str(current_user.user_id)}')
-
-        response.set_cookie(
-            key=f'{canvas_api_domain}_supports_custom_messaging',
-            value=str(canvas.supports_custom_messaging),
-            samesite='None',
-            secure=True,
-        )
-        return response
-    elif tool_id:
-        raise UnauthorizedRequestError(f'Unauthorized user during {tool_id} LTI launch (user_id = {user_id})')
-    else:
-        return tolerant_jsonify({'message': f'User {user_id} failed to authenticate.'}, 403)
 
 
 def _str_strip(s):

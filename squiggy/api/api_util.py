@@ -25,26 +25,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from functools import wraps
 
-from flask import current_app as app, request
-from flask_login import current_user
-from squiggy.lib.util import is_admin, is_teaching, to_int
+from flask import current_app as app, redirect, request
+from flask_login import current_user, login_user
+from squiggy.lib.errors import UnauthorizedRequestError
+from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.util import is_admin, is_teaching
 from squiggy.logger import logger
-from squiggy.models.user import User
-
-
-def bookmarklet_token_required(func):
-    @wraps(func)
-    def _bookmarklet_token_required(*args, **kw):
-        user_id = request.headers.get('Squiggy-User-Id')
-        bookmarklet_token = request.headers.get('Squiggy-User-Bookmarklet-Token')
-        user_id = user_id and to_int(user_id)
-        user = user_id and User.find_by_id(user_id)
-        if user and user.bookmarklet_token == bookmarklet_token:
-            return func(*args, **kw)
-        else:
-            logger.warning(f'Unauthorized request to {request.path}')
-            return app.login_manager.unauthorized()
-    return _bookmarklet_token_required
+from squiggy.models.canvas import Canvas
 
 
 def teacher_required(func):
@@ -77,6 +64,38 @@ def can_delete_comment(comment, user):
 def can_update_comment(comment, user):
     user_id = _get_user_id(user)
     return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
+
+
+def start_login_session(login_session, redirect_path=None, tool_id=None):
+    authenticated = login_user(login_session, remember=True) and current_user.is_authenticated
+    if authenticated:
+        if redirect_path:
+            response = redirect(location=f"{app.config['VUE_LOCALHOST_BASE_URL'] or ''}{redirect_path}")
+        else:
+            response = tolerant_jsonify(current_user.to_api_json())
+        canvas_api_domain = current_user.course.canvas_api_domain
+        canvas = Canvas.find_by_domain(canvas_api_domain)
+        canvas_course_id = current_user.course.canvas_course_id
+        # Yummy cookies!
+        key = f'{canvas_api_domain}|{canvas_course_id}'
+        value = str(current_user.user_id)
+        response.set_cookie(
+            key=key,
+            value=value,
+            samesite='None',
+            secure=True,
+        )
+        response.set_cookie(
+            key=f'{canvas_api_domain}_supports_custom_messaging',
+            value=str(canvas.supports_custom_messaging),
+            samesite='None',
+            secure=True,
+        )
+        return response
+    elif tool_id:
+        raise UnauthorizedRequestError(f'Unauthorized user during {tool_id} LTI launch (user_id = {login_session.user_id})')
+    else:
+        return tolerant_jsonify({'message': f'User {login_session.user_id} failed to authenticate.'}, 403)
 
 
 def _get_user_id(user):

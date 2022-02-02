@@ -31,6 +31,8 @@ ALERT_WITHDRAWAL_ENABLED = False
 
 AWS_APP_ROLE_ARN = 'arn:aws:iam::123456789012:role/test-role'
 
+BOOKMARKLET_ENCRYPTION_KEY = b'ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg='
+
 CANVAS_POLLER = False
 
 DIST_STATIC_DIR = 'tests/static'

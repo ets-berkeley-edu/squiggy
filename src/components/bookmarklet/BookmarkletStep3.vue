@@ -22,7 +22,7 @@
           :href="bookmarklet"
           @click.prevent="$_.noop"
         >
-          <font-awesome-icon class="mr-1" icon="bookmark" /> Asset Library
+          <font-awesome-icon class="mr-1" icon="bookmark" /> SuiteC Bookmarklet
         </a>
         to the browser's {{ toolbarName }}.
       </div>
@@ -58,17 +58,27 @@ export default {
     toolbarName: undefined
   }),
   created() {
-    this.bookmarklet = `javascript:(
-      () => {
-        w = window.open('${this.$config.baseUrl}/bookmarklet/popup', 'SuiteC', 'scrollbars=yes,width=550,height=600');
-        setTimeout(() => {
-          const script = w.document.createElement('script');
-          script.charset = 'UTF-8';
-          script.src = '${this.$config.apiBaseUrl}/bookmarklet_init.js';
-          w.document.body.appendChild(script)
-        }, 2000)
-      })();
-    `
+    const url = `${this.$config.baseUrl}/bookmarklet/popup?_b=${this.$currentUser.bookmarkletAuth}`
+    this.bookmarklet = `javascript:(() => {
+      const images = [];
+      const imageUrls = new Set();
+      for (let i = 0; i < document.images.length; i++) {
+        const img = document.images[i];
+        if (img.src && !imageUrls.has(img.src)) {
+          images.push({
+            src: img.src,
+            title: img.title || img.alt || decodeURIComponent(img.src.split('/').pop())
+          });
+          imageUrls.add(img.url);
+        }
+      }
+      const data = {
+        images,
+        title: document.title,
+        url: window.location.href
+      };
+      const foo = window.open('${url}', JSON.stringify(data), 'popup');
+    })()`
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-3-${this.currentBrowser}.png`)
     this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')
     this.$ready(this.pageTitle)
