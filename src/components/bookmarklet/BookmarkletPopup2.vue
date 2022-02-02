@@ -1,154 +1,109 @@
 <template>
-  <div v-if="!isLoading">
-    <div id="modal-header">
-      <h4 class="modal-title">
-        <span id="collabosphere-title-overview">What do you want to add?</span>
-        <span id="collabosphere-title-bookmark">Add the current page</span>
-        <span id="collabosphere-title-items">Select the items you'd like to add</span>
-        <span id="collabosphere-title-items-metadata">Add more information about the selected items</span>
-      </h4>
-    </div>
-    <div>
-      <div id="collabosphere-overview" class="hide collabosphere-pane">
-        <div class="clearfix collabosphere-overview-options-container">
-          <div class="radio">
-            <label>
-              <input
-                type="radio"
-                name="collabosphere-overview-options"
-                value="bookmark"
-                checked
-              />
-              Add this entire page
-            </label>
-          </div>
-          <div class="radio">
-            <label>
-              <input type="radio" name="collabosphere-overview-options" value="items">
-              Add items from this page
-            </label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          <button id="collabosphere-overview-next" type="button" class="btn btn-primary">Next</button>
-        </div>
-      </div>
-      <div id="collabosphere-bookmark" class="hide collabosphere-pane">
-        <form class="form-horizontal">
-          <div class="form-group">
-            <label for="collabosphere-bookmark-url" class="col-sm-3 control-label">URL</label>
-            <div class="col-sm-9">
-              <input id="collabosphere-bookmark-url" class="form-control" disabled="disabled">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="collabosphere-bookmark-title" class="col-sm-3 control-label">Title</label>
-            <div class="col-sm-9">
-              <input
-                id="collabosphere-bookmark-title"
-                class="form-control"
-                placeholder="Enter a title"
-                maxlength="255"
-              />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="collabosphere-bookmark-category" class="col-sm-3 control-label">Category</label>
-            <div class="col-sm-9">
-              <select id="collabosphere-bookmark-category" class="form-control" data-value=""><!-- --></select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="collabosphere-bookmark-description" class="col-sm-3 control-label">Description</label>
-            <div class="col-sm-9">
-              <textarea
-                id="collabosphere-bookmark-description"
-                class="form-control"
-                placeholder="Add some more context to this page. You can use plain text or #keywords"
-                rows="3"
-              />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default collabosphere-back">Back</button>
-            <button id="collabosphere-bookmark-add" type="button" class="btn btn-primary">Add page</button>
-          </div>
-        </form>
-      </div>
-      <div id="collabosphere-items" class="hide collabosphere-pane">
-        <ul id="collabosphere-items-list" class="list-inline clearfix collabosphere-items-list"><!-- --></ul>
-        <div class="alert alert-info collabosphere-items-empty">No items are available on this page</div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default collabosphere-back">Back</button>
-          <button id="collabosphere-items-next" class="btn btn-primary" type="button">Next</button>
-        </div>
-      </div>
-      <div id="collabosphere-items-metadata" class="hide collabosphere-pane">
-        <ul id="collabosphere-items-metadata-container" class="list-unstyled collabosphere-items-metadata-container"><!-- --></ul>
-        <div class="modal-footer">
-          <button id="collabosphere-items-metadata-back" type="button" class="btn btn-default">Back</button>
-          <button id="collabosphere-items-add" type="button" class="btn btn-primary">Add items</button>
-        </div>
-      </div>
-      <div id="collabosphere-done" class="hide collabosphere-pane"><!-- --></div>
-    </div>
-    <!--
-    <script id="collabosphere-categories-template" type="text/template">
-      <option value="" selected>Which assignment or topic is this related to</option>
-      <% _.each(categories, function(category) { %>
-        <option value="<%= category.id %>"><%= category.title %></option>
-      <% }); %>
-    </script>
-    <script id="collabosphere-item-template" type="text/template">
-      <li class="collabosphere-item-container">
-        <label>
-          <div class="collabosphere-item" style="background-image: url('<%= url %>')"></div>
+  <v-container v-if="!isLoading" fluid>
+    <v-row no-gutters>
+      <v-col>
+        <h4 class="modal-title">Add the current page</h4>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="2">
+        <label class="float-right" for="asset-url">URL</label>
+      </v-col>
+      <v-col cols="10">
+        <span id="asset-url">{{ asset.url }}</span>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="2">
+        <label class="float-right" for="asset-title-input">Title</label>
+      </v-col>
+      <v-col cols="10">
+        <v-text-field
+          id="asset-title-input"
+          v-model="asset.title"
+          maxlength="255"
+          outlined
+          required
+        />
+      </v-col>
+    </v-row>
+    <v-row v-if="categories.length">
+      <v-col cols="2">
+        <label class="float-right" for="asset-category-select">Category</label>
+      </v-col>
+      <v-col cols="10">
+        <AccessibleSelect
+          id-prefix="asset-category-select"
+          :items="categories"
+          item-text="title"
+          item-value="id"
+          label="Select..."
+          :value="asset.categoryId"
+          @input="c => (asset.categoryId = c)"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="2">
+        <label class="float-right" for="asset-description-textarea">Description</label>
+      </v-col>
+      <v-col cols="10">
+        <div class="d-flex flex-column flex-column-reverse">
+          <div class="caption">Add some more context to your link. You can use plain text or #keywords</div>
           <div>
-            <input type="checkbox" data-collabosphere-url="<%= url %>" />
+            <v-textarea
+              id="asset-description-textarea"
+              v-model="asset.description"
+              hide-details
+              outlined
+            />
           </div>
-        </label>
-      </li>
-    </script>
-    <script id="collabosphere-items-metadata-template" type="text/template">
-      <% _.each(selectedItems, function(item, index) { %>
-        <li class="clearfix">
-          <% if (index !== 0) { %>
-            <hr />
-          <% } %>
-          <div class="col-sm-4 col-md-3 text-center">
-            <div class="collabosphere-item" style="background-image: url('<%= item.url %>')"></div>
-          </div>
-          <div class="col-sm-8 col-md-9 collabosphere-items-metadata-column">
-            <div class="form-group">
-              <label for="collabosphere-item-title" class="control-label">Title</label>
-              <input id="collabosphere-item-title" class="form-control" placeholder="Enter a title" value="<%= item.title %>" maxlength="255">
-            </div>
-            <div class="form-group">
-              <label for="collabosphere-item-category" class="control-label">Category</label>
-              <select id="collabosphere-item-category" class="form-control collabosphere-item-category" data-value=""><!- -></select>
-            </div>
-            <div class="form-group">
-              <label for="collabosphere-item-description" class="control-label">Description</label>
-              <textarea You can use plain text or #keyworid="collabosphere-item-description" class="form-control" placeholder="Add some more context to this item. You can use plain text or #keywords" rows="3"></textarea>
-            </div>
-          </div>
-        </li>
-      <% }); %>
-    </script>
-    -->
-  </div>
+        </div>
+      </v-col>
+    </v-row>
+    <v-row justify="end" no-gutters>
+      <v-col class="pt-5">
+        <BookmarkletButtons :current-step="2" :on-click-done="onClickDone" :previous-step="1" />
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
+import AccessibleSelect from '@/components/util/AccessibleSelect'
 import Bookmarklet from '@/mixins/Bookmarklet'
+import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
+import {createLinkAsset} from '@/api/assets'
 
 export default {
   name: 'BookmarkletPopup',
   mixins: [Bookmarklet, Context, Utils],
+  components: {AccessibleSelect, BookmarkletButtons},
+  data: () => ({
+    asset: undefined
+  }),
   created() {
+    this.asset = {
+      categoryId: undefined,
+      description: this.pageMetadata.description,
+      title: this.pageMetadata.title,
+      url: this.pageMetadata.url
+    }
+  },
+  methods: {
+    onClickDone() {
+      createLinkAsset(
+        this.asset.categoryId,
+        this.asset.description,
+        this.asset.title,
+        this.asset.url
+      ).then(() => {
+        this.$announcer.polite('Link asset created.')
+        this.closePopup()
+      })
+    }
   }
 }
 </script>

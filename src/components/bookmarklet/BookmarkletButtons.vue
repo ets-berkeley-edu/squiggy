@@ -1,30 +1,39 @@
 <template>
   <div class="d-flex">
-    <div v-if="previousStep">
+    <div v-if="previousStep" class="pr-1">
       <v-btn
-        id="cancel-btn"
-        @click="closePopup"
-        @keypress.enter="closePopup"
+        id="go-previous-btn"
+        @click="go(`/bookmarklet/popup/${previousStep}`)"
+        @keypress.enter="go(`/bookmarklet/popup/${previousStep}`)"
       >
-        Cancel
+        Previous
       </v-btn>
     </div>
-    <div v-if="nextStep">
+    <div v-if="nextStep" class="pr-1">
       <v-btn
-        id="next-btn"
+        id="go-next-btn"
         @click="go(`/bookmarklet/popup/${nextStep}`)"
         @keypress.enter="go(`/bookmarklet/popup/${nextStep}`)"
       >
         Next
       </v-btn>
     </div>
-    <div v-if="!nextStep">
+    <div v-if="!nextStep" class="pr-1">
       <v-btn
         id="done-btn"
-        @click="done"
-        @keypress.enter="done"
+        @click="onClickDone"
+        @keypress.enter="onClickDone"
       >
-        Next
+        Done
+      </v-btn>
+    </div>
+    <div>
+      <v-btn
+        id="cancel-btn"
+        @click="onClickCancel"
+        @keypress.enter="onClickCancel"
+      >
+        Cancel
       </v-btn>
     </div>
   </div>
@@ -47,6 +56,13 @@ export default {
       required: false,
       type: Number
     },
+    onClickDone: {
+      default: () => {
+        this.closePopup()
+      },
+      required: false,
+      type: Function
+    },
     previousStep: {
       default: undefined,
       required: false,
@@ -54,7 +70,8 @@ export default {
     }
   },
   methods: {
-    done() {
+    onClickCancel() {
+      this.$announcer.polite('Canceled.')
       this.closePopup()
     }
   }
