@@ -1,5 +1,5 @@
 <template>
-  <div id="collabosphere-iframe">
+  <div v-if="!isLoading">
     <div id="modal-header">
       <h4 class="modal-title">
         <span id="collabosphere-title-overview">What do you want to add?</span>
@@ -8,7 +8,7 @@
         <span id="collabosphere-title-items-metadata">Add more information about the selected items</span>
       </h4>
     </div>
-    <div id="modal-body">
+    <div>
       <div id="collabosphere-overview" class="hide collabosphere-pane">
         <div class="clearfix collabosphere-overview-options-container">
           <div class="radio">
@@ -141,24 +141,14 @@
 </template>
 
 <script>
-import {getCasLogoutUrl} from '@/api/auth'
-import {getCategories} from '@/api/categories'
+import Bookmarklet from '@/mixins/Bookmarklet'
+import Context from '@/mixins/Context'
+import Utils from '@/mixins/Utils'
 
 export default {
   name: 'BookmarkletPopup',
-  data: () => ({
-    categories: undefined,
-    targetWindow: undefined
-  }),
+  mixins: [Bookmarklet, Context, Utils],
   created() {
-    this.targetWindow = JSON.parse(window.name)
-    getCategories().then(data => {
-      this.categories = data
-      this.$ready('Bookmarklet is ready!')
-    })
-  },
-  destroyed() {
-    getCasLogoutUrl().then(this.$_.noop)
   }
 }
 </script>

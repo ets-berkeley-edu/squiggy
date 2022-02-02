@@ -77,6 +77,15 @@ export default {
         }
       }
     },
+    setColorScheme() {
+      if (!this.isInIframe) {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)')
+        this.$vuetify.theme.dark = mq.matches
+        if (typeof mq.addEventListener === 'function') {
+          mq.addEventListener('change', e => this.$vuetify.theme.dark = e.matches)
+        }
+      }
+    },
     stripAnchorRef: path => _.split(path, '#', 1)[0],
     validate: (errors, rules, value, messageIfError=null) => {
       // Logic of 'rules' is governed by Vuetify framework: https://vuetifyjs.com/en/components/forms/#rules
