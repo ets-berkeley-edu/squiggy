@@ -4,8 +4,12 @@ import Asset from '@/components/assets/Asset.vue'
 import Assets from '@/components/assets/Assets.vue'
 import AssetUpload from '@/components/assets/AssetUpload.vue'
 import auth from './auth'
+import BasePopupView from '@/components/BasePopupView.vue'
 import BaseView from '@/components/BaseView.vue'
-import BookmarkletPopup from '@/components/bookmarklet/BookmarkletPopup.vue'
+import BookmarkletPopup1 from '@/components/bookmarklet/BookmarkletPopup1.vue'
+import BookmarkletPopup2 from '@/components/bookmarklet/BookmarkletPopup2.vue'
+import BookmarkletPopup3 from '@/components/bookmarklet/BookmarkletPopup3.vue'
+import BookmarkletPopup4 from '@/components/bookmarklet/BookmarkletPopup4.vue'
 import BookmarkletStep1 from '@/components/bookmarklet/BookmarkletStep1.vue'
 import BookmarkletStep2 from '@/components/bookmarklet/BookmarkletStep2.vue'
 import BookmarkletStep3 from '@/components/bookmarklet/BookmarkletStep3.vue'
@@ -102,13 +106,6 @@ const router = new Router({
           }
         },
         {
-          path: '/bookmarklet/popup',
-          component: BookmarkletPopup,
-          meta: {
-            title: 'Bookmarklet'
-          }
-        },
-        {
           path: '/bookmarklet/start',
           component: BookmarkletStep1,
           meta: {
@@ -148,6 +145,40 @@ const router = new Router({
           component: PointsConfiguration,
           meta: {
             title: 'Points Configuration'
+          }
+        }
+      ]
+    },
+    {
+      path: '/',
+      component: BasePopupView,
+      children: [
+        {
+          path: '/bookmarklet/popup/1',
+          component: BookmarkletPopup1,
+          meta: {
+            title: 'Bookmarklet'
+          }
+        },
+        {
+          path: '/bookmarklet/popup/2',
+          component: BookmarkletPopup2,
+          meta: {
+            title: 'Bookmarklet'
+          }
+        },
+        {
+          path: '/bookmarklet/popup/3',
+          component: BookmarkletPopup3,
+          meta: {
+            title: 'Bookmarklet'
+          }
+        },
+        {
+          path: '/bookmarklet/popup/4',
+          component: BookmarkletPopup4,
+          meta: {
+            title: 'Bookmarklet'
           }
         }
       ]

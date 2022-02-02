@@ -48,7 +48,7 @@ import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 
 export default {
-  name: 'BookmarkletStart',
+  name: 'BookmarkletStep3',
   components: {BackToAssetLibrary},
   mixins: [Context, Utils],
   data: () => ({
@@ -58,7 +58,7 @@ export default {
     toolbarName: undefined
   }),
   created() {
-    const url = `${this.$config.baseUrl}/bookmarklet/popup?_b=${this.$currentUser.bookmarkletAuth}`
+    const url = `${this.$config.baseUrl}/bookmarklet/popup/1?_b=${this.$currentUser.bookmarkletAuth}`
     this.bookmarklet = `javascript:(() => {
       const images = [];
       const imageUrls = new Set();
@@ -72,12 +72,15 @@ export default {
           imageUrls.add(img.url);
         }
       }
+      const description = document.querySelector('meta[name="description"]');
+      const headers = document.getElementsByTagName('h1');
       const data = {
+        description: (description && description.content) || (headers.length ? headers[0].innerHtml : null),
         images,
         title: document.title,
         url: window.location.href
       };
-      const foo = window.open('${url}', JSON.stringify(data), 'popup');
+      window.open('${url}', JSON.stringify(data), 'popup');
     })()`
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-3-${this.currentBrowser}.png`)
     this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')
