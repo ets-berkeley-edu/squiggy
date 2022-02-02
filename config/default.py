@@ -36,6 +36,8 @@ AWS_S3_REGION = 'us-west-2'
 # Base directory for the application (one level up from this config file).
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
+BOOKMARKLET_ENCRYPTION_KEY = b'32 url-safe base64-encoded bytes'
+
 CANVAS_ACCESS_TOKEN = None
 CANVAS_API_URL = 'https://foo.instructure.com'
 CANVAS_BASE_URL = 'https://ucberkeley.foo.instructure.com'

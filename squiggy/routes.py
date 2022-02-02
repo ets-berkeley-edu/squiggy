@@ -25,9 +25,12 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import datetime
 
+from cryptography.fernet import Fernet
 from flask import jsonify, make_response, redirect, request, session
-from flask_login import login_user, LoginManager
+from flask_login import LoginManager
+from squiggy.api.api_util import start_login_session
 from squiggy.lib.util import to_int
+from squiggy.models.user import User
 
 
 def register_routes(app):
@@ -64,15 +67,6 @@ def register_routes(app):
         app.logger.error('The requested resource could not be found.')
         raise squiggy.lib.errors.ResourceNotFoundError('The requested resource could not be found.')
 
-    # Bookmarklet js file.
-    @app.route('/bookmarklet_<phase>.js')
-    def bookmarklet(phase):
-        key = f'bookmarklet_{phase}'
-        if key in static_files:
-            return make_response(static_files[key])
-        else:
-            raise squiggy.lib.errors.ResourceNotFoundError('The requested resource could not be found.')
-
     # Non-API routes are handled by the front end.
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
@@ -91,7 +85,8 @@ def register_routes(app):
     def after_request(response):
         if app.config['SQUIGGY_ENV'] == 'development':
             # In development the response can be shared with requesting code from any local origin.
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Squiggy-Canvas-Api-Domain,Squiggy-Canvas-Course-Id'
+            allowed_headers = 'Content-Type,Squiggy-Bookmarklet-Auth,Squiggy-Canvas-Api-Domain,Squiggy-Canvas-Course-Id'
+            response.headers['Access-Control-Allow-Headers'] = allowed_headers
             response.headers['Access-Control-Allow-Origin'] = app.config['VUE_LOCALHOST_BASE_URL']
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
@@ -134,20 +129,21 @@ def _user_loader(user_id=None):
     from squiggy.lib.login_session import LoginSession
     from flask import current_app as app
 
-    user = LoginSession(user_id)
+    user_session = LoginSession(user_id)
+    bookmarklet_auth = request.headers.get('Squiggy-Bookmarklet-Auth')
     canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
     canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
 
     # Check for conflicts between existing login session and course headers.
-    if user.is_authenticated and canvas_api_domain and canvas_course_id:
-        course = user.course
+    if user_session.is_authenticated and canvas_api_domain and canvas_course_id:
+        course = user_session.course
         if canvas_api_domain != course.canvas_api_domain or str(canvas_course_id) != str(course.canvas_course_id):
             app.logger.info(
                 f'Session data (canvas_api_domain={course.canvas_api_domain}, canvas_course_id={course.canvas_course_id}) '
                 f'conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}, logging out user')
-            user.logout()
+            user_session.logout()
 
-    if not user.is_authenticated:
+    if not user_session.is_authenticated:
         app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
         if canvas_api_domain and canvas_course_id:
             cookie_value = request.cookies.get(f'{canvas_api_domain}|{canvas_course_id}')
@@ -157,7 +153,17 @@ def _user_loader(user_id=None):
                 course = candidate.course
                 if course.canvas_api_domain == canvas_api_domain and str(course.canvas_course_id) == str(canvas_course_id):
                     # User must be a member of the Canvas course site.
-                    user = candidate
-                    app.logger.info(f'User {user.user_id} loaded.')
-                    login_user(user)
-    return user
+                    user_session = candidate
+                    app.logger.info(f'User {user_id} loaded.')
+                    start_login_session(user_session)
+        elif bookmarklet_auth:
+            encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
+            args = Fernet(encryption_key).decrypt(bytes(bookmarklet_auth, 'utf-8')).decode().rsplit('_')
+            if len(args) == 2:
+                user_id = to_int(args[0])
+                bookmarklet_token = args[1]
+                user = user_id and User.find_by_id(user_id)
+                if user and user.bookmarklet_token == bookmarklet_token:
+                    user_session = LoginSession(user_id)
+                    start_login_session(user_session)
+    return user_session

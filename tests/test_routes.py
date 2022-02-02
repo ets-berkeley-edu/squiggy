@@ -23,22 +23,26 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from squiggy.models.user import User
 from tests.util import override_config
 
 
 class TestRoutes:
 
-    def test_bookmarklet_init(self, app, client):
+    def test_bookmarklet_auth(self, app, client):
         """Verify that bookmarklet source files are properly formatted."""
-        for phase in ('init', 'render'):
-            response = client.get(f'/bookmarklet_{phase}.js')
-            assert response.status_code == 200
-            assert f"apiBaseUrl = {app.config['HOST']}:{app.config['PORT']}" in str(response.data)
+        with override_config(app, 'VUE_LOCALHOST_BASE_URL', 'http://localhost:8080'):
+            student = User.find_by_canvas_user_id('8765432')
+            bookmarklet_auth = student.to_api_json()['bookmarkletAuth']
+            url_path = '/assets'
+            response = client.get(f'{url_path}?_b={bookmarklet_auth}')
+            assert response.status_code == 302
+            assert response.location.startswith(f"{app.config['VUE_LOCALHOST_BASE_URL']}{url_path}")
 
     def test_front_end_route_redirect(self, app, client):
         """Server-side redirect to Vue."""
         with override_config(app, 'VUE_LOCALHOST_BASE_URL', 'http://localhost:8080'):
-            route_path = '/assets'
-            response = client.get(route_path)
+            url_path = '/assets'
+            response = client.get(url_path)
             assert response.status_code == 302
-            assert response.location == f"{app.config['VUE_LOCALHOST_BASE_URL']}{route_path}"
+            assert response.location == f"{app.config['VUE_LOCALHOST_BASE_URL']}{url_path}"
