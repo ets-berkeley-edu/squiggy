@@ -6,6 +6,7 @@ export default {
   name: 'Bookmarklet',
   computed: {
     ...mapGetters('bookmarklet', [
+      'categories',
       'images',
       'pageMetadata'
     ])
