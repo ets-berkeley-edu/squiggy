@@ -22,7 +22,7 @@
           :href="bookmarklet"
           @click.prevent="$_.noop"
         >
-          <font-awesome-icon class="mr-1" icon="bookmark" /> SuiteC Bookmarklet
+          <font-awesome-icon class="mr-1" icon="bookmark" /> Asset Library
         </a>
         to the browser's {{ toolbarName }}.
       </div>
@@ -57,16 +57,20 @@ export default {
     toolbarName: undefined
   }),
   created() {
+    const minimum = 150
     const url = `${this.$config.baseUrl}/bookmarklet/popup/1?_b=${this.$currentUser.bookmarkletAuth}`
     this.bookmarklet = `javascript:(() => {
       const images = [];
       const imageUrls = new Set();
       for (let i = 0; i < document.images.length; i++) {
         const img = document.images[i];
-        if (img.src && !imageUrls.has(img.src)) {
+        const minWidth = 150;
+        if (img.src && !imageUrls.has(img.src) && img.naturalHeight > ${minimum} && img.naturalWidth > ${minimum}) {
           images.push({
             src: img.src,
-            title: img.title || img.alt || decodeURIComponent(img.src.split('/').pop())
+            height: img.naturalHeight,
+            title: img.title || img.alt,
+            width: img.naturalWidth
           });
           imageUrls.add(img.url);
         }
