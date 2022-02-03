@@ -83,7 +83,7 @@ export default {
         title: document.title,
         url: window.location.href
       };
-      window.open('${url}', JSON.stringify(data), 'popup');
+      window.open('${url}', JSON.stringify(data), 'popup=yes,width=1200,height=800');
     })()`
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-3-${this.currentBrowser}.png`)
     this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')

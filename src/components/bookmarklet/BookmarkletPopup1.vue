@@ -3,9 +3,17 @@
     <v-row no-gutters>
       <v-col>
         <h1>What do you want to add?</h1>
+        <div v-if="!targetPage.images.length" class="deep-orange--text font-weight-bold">
+          The current page has no image eligible for the Asset Library. You have one choice: Add the entire page
+          as a link asset. Click "Next" to proceed.
+        </div>
         <v-radio-group v-model="model">
-          <v-radio label="Add this entire page" value="linkAsset" />
-          <v-radio label="Add items from this page" value="imageAssets" />
+          <v-radio label="Add the entire page as a link asset" value="linkAsset" />
+          <v-radio
+            :disabled="!targetPage.images.length"
+            label="Add selected items from this page"
+            value="imageAssets"
+          />
         </v-radio-group>
       </v-col>
     </v-row>
@@ -39,9 +47,6 @@ export default {
   },
   created() {
     this.init().then(() => {
-      if (this.images.length === 0) {
-        this.go('/bookmarklet/popup/2')
-      }
       this.$ready('Bookmarklet is ready!')
     })
   }

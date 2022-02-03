@@ -26,7 +26,7 @@
             <v-btn
               id="go-next-btn"
               color="primary"
-              :disabled="isSaving"
+              :disabled="disableNext || isSaving"
               @click="go(`/bookmarklet/popup/${nextStep}`)"
               @keypress.enter="go(`/bookmarklet/popup/${nextStep}`)"
             >
@@ -73,6 +73,10 @@ export default {
   mixins: [Bookmarklet, Utils],
   components: {DarkModeToggle},
   props: {
+    disableNext: {
+      required: false,
+      type: Boolean
+    },
     disableSave: {
       required: false,
       type: Boolean

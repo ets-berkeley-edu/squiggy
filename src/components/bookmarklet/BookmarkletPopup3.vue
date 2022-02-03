@@ -1,13 +1,26 @@
 <template>
   <v-container v-if="!isLoading" fluid>
     <v-row no-gutters>
-      <v-col>
-        <h1>Select the item{{ images.length > 1 ? 's' : '' }} you'd like to add</h1>
+      <v-col class="header-section">
+        <h1>Select the item{{ targetPage.images.length > 1 ? 's' : '' }} you'd like to add</h1>
+        <div class="pb-3 text--secondary">
+          {{ pluralize('image', selected.length, {0: 'No', 1: 'One'}) }} selected
+          <span v-if="targetPage.images.length > 1">
+            (<v-btn
+              id="select-all-images-btn"
+              class="pb-1 px-0 text-lowercase"
+              text
+              @click="toggleSelectAll"
+            ><!--
+            -->{{ toggleLabel }}<!--
+            --></v-btn>)
+          </span>
+        </div>
       </v-col>
     </v-row>
     <v-row no-gutters>
       <v-col
-        v-for="(image, index) in images"
+        v-for="(image, index) in targetPage.images"
         :key="index"
         class="d-flex child-flex"
         cols="4"
@@ -19,7 +32,20 @@
           :src="image.src"
           :lazy-src="image.src"
         >
-          <div class="body-1 font-weight-bold image-title pa-3">{{ image.title }}</div>
+          <div class="bg-image-label pt-2 px-7">
+            <v-checkbox
+              :id="`image-checkbox-${index}`"
+              v-model="selected"
+              color="orange"
+              dark
+              :multiple="true"
+              :value="image"
+            >
+              <template #label>
+                <span class="image-label">Image {{ index + 1 }}<span v-if="image.title">: {{ image.title }}</span></span>
+              </template>
+            </v-checkbox>
+          </div>
           <template #placeholder>
             <v-row
               class="fill-height ma-0"
@@ -44,7 +70,7 @@
     </v-row>
     <v-row no-gutters>
       <v-col class="pt-5">
-        <BookmarkletButtons :next-step="4" :previous-step="1" />
+        <BookmarkletButtons :disable-next="!selected.length" :next-step="4" :previous-step="1" />
       </v-col>
     </v-row>
   </v-container>
@@ -98,25 +124,47 @@
 import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
+import Utils from '@/mixins/Utils'
 import {getCasLogoutUrl} from '@/api/auth'
 
 export default {
   name: 'BookmarkletPopup',
-  mixins: [Bookmarklet, Context],
+  mixins: [Bookmarklet, Context, Utils],
   components: {BookmarkletButtons},
+  computed: {
+    selected: {
+      get() {
+        return this.selectedImages
+      },
+      set(value) {
+        this.setSelectedImages(value)
+      }
+    },
+    toggleLabel() {
+      return this.selected.length < this.targetPage.images.length ? 'select all' : 'deselect all'
+    }
+  },
   created() {
-    this.init(JSON.parse(window.name)).then(() => {
-      this.$ready('Bookmarklet is ready!')
-    })
+    this.selected = []
   },
   destroyed() {
     getCasLogoutUrl().then(this.$_.noop)
+  },
+  methods: {
+    toggleSelectAll() {
+      this.selected = this.selected.length !== this.targetPage.images.length ? this.targetPage.images : []
+    }
   }
 }
 </script>
 
 <style scoped>
-.image-title {
-  background-color: rgba(0, 0, 0, 0.3);
+.bg-image-label {
+  background-color: rgba(96, 125, 139, 0.8);
+}
+.image-label {
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
 }
 </style>

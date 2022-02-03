@@ -7,14 +7,15 @@ export default {
   computed: {
     ...mapGetters('bookmarklet', [
       'categories',
-      'images',
-      'pageMetadata',
+      'selectedImages',
+      'targetPage',
       'workflow'
     ])
   },
   methods: {
     ...mapActions('bookmarklet', [
       'init',
+      'setSelectedImages',
       'setWorkflow'
     ]),
     closePopup() {

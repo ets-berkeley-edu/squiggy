@@ -94,9 +94,9 @@ export default {
   created() {
     this.asset = {
       categoryId: undefined,
-      description: this.pageMetadata.description,
-      title: this.pageMetadata.title,
-      url: this.pageMetadata.url
+      description: this.targetPage.metadata.description,
+      title: this.targetPage.metadata.title,
+      url: this.targetPage.metadata.url
     }
     this.$announcer.polite('Edit asset details and then save.')
   },
