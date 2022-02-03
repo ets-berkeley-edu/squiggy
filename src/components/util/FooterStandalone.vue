@@ -16,10 +16,7 @@
               </v-btn>
             </div>
             <div>
-              <v-btn id="toggle-dark-mode-btn" icon @click="$vuetify.theme.dark = !$vuetify.theme.dark">
-                <span class="sr-only">Turn dark mode {{ $vuetify.theme.dark ? 'off' : 'on' }}.</span>
-                <font-awesome-icon :class="{'yellow--text': $vuetify.theme.dark}" :icon="$vuetify.theme.dark ? 'sun' : 'moon'" />
-              </v-btn>
+              <DarkModeToggle />
             </div>
             <div class="px-2">|</div>
             <div>
@@ -61,12 +58,14 @@
 
 <script>
 import Context from '@/mixins/Context'
+import DarkModeToggle from '@/components/util/DarkModeToggle'
 import Utils from '@/mixins/Utils'
 import {getCasLogoutUrl} from '@/api/auth'
 
 export default {
   name: 'FooterStandalone',
   mixins: [Context, Utils],
+  components: {DarkModeToggle},
   methods: {
     logOut() {
       this.$announcer.polite('Logging out')

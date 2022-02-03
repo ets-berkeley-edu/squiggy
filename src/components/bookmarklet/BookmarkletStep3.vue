@@ -9,7 +9,7 @@
         <h2>{{ pageTitle }}</h2>
       </div>
     </div>
-    <div v-if="!isLoading" class="pt-2 w-100">
+    <div v-if="!isLoading" class="pt-2">
       <img
         :aria-label="`Screenshot showing ${pageTitle}`"
         :alt="`Screenshot showing ${pageTitle}`"
@@ -26,16 +26,15 @@
         </a>
         to the browser's {{ toolbarName }}.
       </div>
-      <div class="float-right">
+      <div class="pl-3 pt-5">
         <v-btn
           id="go-to-next-step-btn"
-          class="bg-transparent pl-0"
-          elevation="0"
+          color="primary"
           @click="go('/bookmarklet/step4')"
           @keypress.enter="go('/bookmarklet/step4')"
         >
           Next
-          <font-awesome-icon class="ml-2" icon="greater-than" size="lg" />
+          <font-awesome-icon class="ml-2" icon="arrow-right" />
         </v-btn>
       </div>
     </div>

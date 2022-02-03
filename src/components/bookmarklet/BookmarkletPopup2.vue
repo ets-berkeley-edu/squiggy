@@ -63,7 +63,13 @@
     </v-row>
     <v-row justify="end" no-gutters>
       <v-col class="pt-5">
-        <BookmarkletButtons :current-step="2" :on-click-done="onClickDone" :previous-step="1" />
+        <BookmarkletButtons
+          :current-step="2"
+          :disable-save="!$_.trim(asset.title).length"
+          :is-saving="isSaving"
+          :on-click-save="onClickSave"
+          :previous-step="1"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -82,7 +88,8 @@ export default {
   mixins: [Bookmarklet, Context, Utils],
   components: {AccessibleSelect, BookmarkletButtons},
   data: () => ({
-    asset: undefined
+    asset: undefined,
+    isSaving: false
   }),
   created() {
     this.asset = {
@@ -91,9 +98,11 @@ export default {
       title: this.pageMetadata.title,
       url: this.pageMetadata.url
     }
+    this.$announcer.polite('Edit asset details and then save.')
   },
   methods: {
-    onClickDone() {
+    onClickSave() {
+      this.isSaving = true
       createLinkAsset(
         this.asset.categoryId,
         this.asset.description,
@@ -102,6 +111,7 @@ export default {
       ).then(() => {
         this.$announcer.polite('Link asset created.')
         this.closePopup()
+        this.isSaving = false
       })
     }
   }
