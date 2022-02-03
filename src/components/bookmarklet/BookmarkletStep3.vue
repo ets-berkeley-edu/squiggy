@@ -57,6 +57,7 @@ export default {
     toolbarName: undefined
   }),
   created() {
+    const course = this.$currentUser.course
     const minimum = 150
     const url = `${this.$config.baseUrl}/bookmarklet/popup/1?_b=${this.$currentUser.bookmarkletAuth}`
     this.bookmarklet = `javascript:(() => {
@@ -78,6 +79,10 @@ export default {
       const description = document.querySelector('meta[name="description"]');
       const headers = document.getElementsByTagName('h1');
       const data = {
+        course: {
+          id: ${course && course.id},
+          name: '${course && course.name}'
+        },
         description: (description && description.content) || (headers.length ? headers[0].innerHtml : null),
         images,
         title: document.title,

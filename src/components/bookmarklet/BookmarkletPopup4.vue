@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="!isLoading" fluid>
+  <v-container v-if="isAuthorized && !isLoading" fluid>
     <v-row no-gutters>
       <v-col>
         <h1>Add more information about the selected {{ selectedImages.length > 1 ? 'items' : 'item' }}</h1>

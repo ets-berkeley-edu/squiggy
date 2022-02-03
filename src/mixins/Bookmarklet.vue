@@ -7,6 +7,8 @@ export default {
   computed: {
     ...mapGetters('bookmarklet', [
       'categories',
+      'course',
+      'isAuthorized',
       'selectedImages',
       'targetPage',
       'workflow'
