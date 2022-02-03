@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="!isLoading" fluid>
+  <v-container v-if="isAuthorized && !isLoading" fluid>
     <v-row no-gutters>
       <v-col>
         <h1>Select the item{{ targetPage.images.length > 1 ? 's' : '' }} you'd like to add</h1>

@@ -34,7 +34,7 @@
               <font-awesome-icon class="ml-3" icon="arrow-right" />
             </v-btn>
           </div>
-          <div v-if="!nextStep" class="pr-2">
+          <div v-if="isAuthorized && !nextStep" class="pr-2">
             <v-btn
               id="done-btn"
               color="primary"
@@ -54,7 +54,7 @@
               @click="onClickCancel"
               @keypress.enter="onClickCancel"
             >
-              Cancel
+              {{ isAuthorized ? 'Cancel' : 'Close' }}
             </v-btn>
           </div>
         </div>
