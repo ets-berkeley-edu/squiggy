@@ -8,12 +8,14 @@ export default {
     ...mapGetters('bookmarklet', [
       'categories',
       'images',
-      'pageMetadata'
+      'pageMetadata',
+      'workflow'
     ])
   },
   methods: {
     ...mapActions('bookmarklet', [
-      'init'
+      'init',
+      'setWorkflow'
     ]),
     closePopup() {
       this.$announcer.assertive('Canceled. Closing window.')

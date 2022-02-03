@@ -2,7 +2,7 @@
   <v-container v-if="!isLoading" fluid>
     <v-row no-gutters>
       <v-col>
-        <h4 class="modal-title">Add the current page</h4>
+        <h1>Add the current page</h1>
       </v-col>
     </v-row>
     <v-row>

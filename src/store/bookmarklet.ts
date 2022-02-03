@@ -2,6 +2,7 @@ import {getCategories} from '@/api/categories'
 
 const state = {
   categories: undefined,
+  workflow: 'linkAsset',
   images: undefined,
   pageMetadata: undefined
 }
@@ -9,13 +10,15 @@ const state = {
 const getters = {
   categories: (state: any): any => state.categories,
   images: (state: any): any => state.images,
-  pageMetadata: (state: any): any => state.pageMetadata
+  pageMetadata: (state: any): any => state.pageMetadata,
+  workflow: (state: any): string => state.workflow
 }
 
 const mutations = {
   setCategories: (state: any, categories: any) => state.categories = categories,
   setImages: (state: any, images: any) => state.images = images,
-  setPageMetadata: (state: any, pageMetadata: any) => state.pageMetadata = pageMetadata
+  setPageMetadata: (state: any, pageMetadata: any) => state.pageMetadata = pageMetadata,
+  setWorkflow: (state: any, workflow: string) => state.workflow = workflow
 }
 
 const actions = {
@@ -32,7 +35,8 @@ const actions = {
     })
     return getCategories(false).then(data => commit('setCategories', data))
   },
-  setMode: ({commit}, mode: string) => commit('setMode', mode)
+  setMode: ({commit}, mode: string) => commit('setMode', mode),
+  setWorkflow: ({commit}, workflow: string) => commit('setWorkflow', workflow)
 }
 
 export default {
