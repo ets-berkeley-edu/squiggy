@@ -33,7 +33,7 @@
         </v-tooltip>
       </div>
       <div v-if="downloadUrl" class="mr-2">
-        <v-btn id="download-asset-btn" :href="downloadUrl">
+        <v-btn id="download-asset-btn" @click="downloadAsset" @keypress.enter.prevent="downloadAsset">
           <font-awesome-icon class="mr-2" icon="download" />
           Download
         </v-btn>
@@ -145,6 +145,9 @@ export default {
         this.go('/assets', {m: `Asset '${this.asset.title}' deleted.`})
       })
     },
+    downloadAsset() {
+      window.location.href = this.downloadUrl
+    },
     edit() {
       this.$announcer.polite(`Edit asset ${this.asset.title}`)
       this.go(`/asset/${this.asset.id}/edit`)
@@ -152,7 +155,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>
