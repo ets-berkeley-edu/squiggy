@@ -9,9 +9,9 @@
         </v-radio-group>
       </v-col>
     </v-row>
-    <v-row justify="end" no-gutters>
-      <v-col>
-        <BookmarkletButtons :current-step="1" :next-step="nextStep" />
+    <v-row no-gutters>
+      <v-col class="pt-5">
+        <BookmarkletButtons :next-step="nextStep" />
       </v-col>
     </v-row>
   </v-container>

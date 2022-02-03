@@ -15,19 +15,18 @@
         alt="Screenshot showing SuiteC Asset Library"
         :src="screenshot"
       />
-      <div>
+      <div class="pl-3">
         Add assets directly to the Asset Library from any webpage without logging in.
       </div>
-      <div class="float-right">
+      <div class="pl-3 pt-5">
         <v-btn
           id="go-to-next-step-btn"
-          class="bg-transparent pl-0"
-          elevation="0"
+          color="primary"
           @click="go('/bookmarklet/step2')"
           @keypress.enter="go('/bookmarklet/step2')"
         >
           Get started
-          <font-awesome-icon class="ml-2" icon="greater-than" size="lg" />
+          <font-awesome-icon class="ml-2" icon="arrow-right" />
         </v-btn>
       </div>
     </div>
