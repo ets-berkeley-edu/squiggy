@@ -70,11 +70,6 @@ import {getCasLogoutUrl} from '@/api/auth'
 export default {
   name: 'BookmarkletPopup',
   mixins: [Bookmarklet, Context],
-  created() {
-    this.init(JSON.parse(window.name)).then(() => {
-      this.$ready('Bookmarklet is ready!')
-    })
-  },
   destroyed() {
     getCasLogoutUrl().then(this.$_.noop)
   }
