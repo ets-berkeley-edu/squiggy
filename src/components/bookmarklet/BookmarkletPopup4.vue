@@ -1,77 +1,137 @@
 <template>
-  <div v-if="!isLoading">
-    <div id="modal-header">
-      <h4 class="modal-title">
-        <span id="collabosphere-title-items-metadata">Add more information about the selected items</span>
-      </h4>
-    </div>
-    <div>
-      <div id="collabosphere-items-metadata" class="hide collabosphere-pane">
-        <ul id="collabosphere-items-metadata-container" class="list-unstyled collabosphere-items-metadata-container"><!-- --></ul>
-        <div class="modal-footer">
-          <button id="collabosphere-items-metadata-back" type="button" class="btn btn-default">Back</button>
-          <button id="collabosphere-items-add" type="button" class="btn btn-primary">Add items</button>
-        </div>
-      </div>
-      <div id="collabosphere-done" class="hide collabosphere-pane"><!-- --></div>
-    </div>
-  </div>
-  <!--
-  <script id="collabosphere-categories-template" type="text/template">
-    <option value="" selected>Which assignment or topic is this related to</option>
-    <% _.each(categories, function(category) { %>
-      <option value="<%= category.id %>"><%= category.title %></option>
-    <% }); %>
-  </script>
-  <script id="collabosphere-item-template" type="text/template">
-    <li class="collabosphere-item-container">
-      <label>
-        <div class="collabosphere-item" style="background-image: url('<%= url %>')"></div>
-        <div>
-          <input type="checkbox" data-collabosphere-url="<%= url %>" />
-        </div>
-      </label>
-    </li>
-  </script>
-  <script id="collabosphere-items-metadata-template" type="text/template">
-    <% _.each(selectedItems, function(item, index) { %>
-      <li class="clearfix">
-        <% if (index !== 0) { %>
-          <hr />
-        <% } %>
-        <div class="col-sm-4 col-md-3 text-center">
-          <div class="collabosphere-item" style="background-image: url('<%= item.url %>')"></div>
-        </div>
-        <div class="col-sm-8 col-md-9 collabosphere-items-metadata-column">
-          <div class="form-group">
-            <label for="collabosphere-item-title" class="control-label">Title</label>
-            <input id="collabosphere-item-title" class="form-control" placeholder="Enter a title" value="<%= item.title %>" maxlength="255">
+  <v-container v-if="!isLoading" fluid>
+    <v-row no-gutters>
+      <v-col>
+        <h1>Add more information about the selected {{ selectedImages.length > 1 ? 'items' : 'item' }}</h1>
+      </v-col>
+    </v-row>
+    <v-row no-gutters>
+      <v-col
+        v-for="(asset, index) in assets"
+        :key="index"
+        class="d-flex child-flex"
+        cols="4"
+      >
+        <div class="d-flex flex-column">
+          <div>
+            <v-img
+              :alt="asset.title"
+              aspect-ratio="1"
+              class="grey lighten-2"
+              :src="asset.src"
+              :lazy-src="asset.src"
+            >
+              <template #placeholder>
+                <v-row
+                  class="fill-height ma-0"
+                  align="center"
+                  justify="center"
+                >
+                  <v-progress-circular
+                    indeterminate
+                    color="grey lighten-5"
+                  ></v-progress-circular>
+                </v-row>
+              </template>
+            </v-img>
           </div>
-          <div class="form-group">
-            <label for="collabosphere-item-category" class="control-label">Category</label>
-            <select id="collabosphere-item-category" class="form-control collabosphere-item-category" data-value=""><!- -></select>
-          </div>
-          <div class="form-group">
-            <label for="collabosphere-item-description" class="control-label">Description</label>
-            <textarea You can use plain text or #keyworid="collabosphere-item-description" class="form-control" placeholder="Add some more context to this item. You can use plain text or #keywords" rows="3"></textarea>
+          <div class="px-2">
+            <div class="py-2">
+              <label class="text--secondary" :for="`asset-title-input-${index}`">Title</label>
+              <v-text-field
+                :id="`asset-title-input-${index}`"
+                v-model="asset.title"
+                dense
+                :hide-details="true"
+                maxlength="255"
+                outlined
+                required
+              />
+            </div>
+            <div v-if="categories.length" class="pb-2">
+              <label class="text--secondary" :for="`asset-category-select-${index}`">Category</label>
+              <AccessibleSelect
+                :dense="true"
+                :hide-details="true"
+                :id-prefix="`asset-category-select-${index}`"
+                :items="categories"
+                item-text="title"
+                item-value="id"
+                label="Select..."
+                :value="asset.categoryId"
+                @input="c => (asset.categoryId = c)"
+              />
+            </div>
+            <div class="pb-8">
+              <label class="text--secondary" :for="`asset-description-textarea-${index}`">Description</label>
+              <v-textarea
+                :id="`asset-description-textarea-${index}`"
+                v-model="asset.description"
+                dense
+                hide-details
+                outlined
+              />
+            </div>
           </div>
         </div>
-      </li>
-    <% }); %>
-  </script>
-  -->
+      </v-col>
+    </v-row>
+    <v-row no-gutters>
+      <v-col class="pt-5">
+        <BookmarkletButtons
+          :disable-save="disableSave"
+          :is-saving="isSaving"
+          :on-click-save="onClickSave"
+          :previous-step="3"
+        />
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
+import AccessibleSelect from '@/components/util/AccessibleSelect'
 import Bookmarklet from '@/mixins/Bookmarklet'
+import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
-import {getCasLogoutUrl} from '@/api/auth'
+import Utils from '@/mixins/Utils'
+import {createLinkAsset} from '@/api/assets'
 
 export default {
-  name: 'BookmarkletPopup',
-  mixins: [Bookmarklet, Context],
-  destroyed() {
-    getCasLogoutUrl().then(this.$_.noop)
+  name: 'BookmarkletPopup4',
+  mixins: [Bookmarklet, Context, Utils],
+  components: {AccessibleSelect, BookmarkletButtons},
+  computed: {
+    disableSave() {
+      return !!this.$_.find(this.assets, image => {
+        return !this.$_.trim(image.title).length
+      })
+    }
+  },
+  data: () => ({
+    assets: undefined,
+    isSaving: false
+  }),
+  created() {
+    this.assets = this.$_.cloneDeep(this.selectedImages)
+    this.$ready('Ready')
+  },
+  methods: {
+    onClickSave() {
+      this.isSaving = true
+      this.$_.each(this.assets, asset => {
+        createLinkAsset(
+          asset.categoryId,
+          asset.description,
+          asset.title,
+          asset.src
+        ).then(() => {
+          this.$announcer.polite(`${this.assets.length} asset(s) created.`)
+          this.closePopup()
+          this.isSaving = false
+        })
+      })
+    }
   }
 }
 </script>
