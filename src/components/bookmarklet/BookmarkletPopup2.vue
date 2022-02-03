@@ -64,7 +64,6 @@
     <v-row justify="end" no-gutters>
       <v-col class="pt-5">
         <BookmarkletButtons
-          :current-step="2"
           :disable-save="!$_.trim(asset.title).length"
           :is-saving="isSaving"
           :on-click-save="onClickSave"

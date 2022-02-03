@@ -3,7 +3,7 @@ import {getCategories} from '@/api/categories'
 const state = {
   categories: undefined,
   pageMetadata: undefined,
-  selectedImages: undefined,
+  selectedImages: [],
   targetPage: {
     images: undefined,
     metadata: undefined

@@ -1,7 +1,7 @@
 <template>
   <v-container v-if="!isLoading" fluid>
     <v-row no-gutters>
-      <v-col class="header-section">
+      <v-col>
         <h1>Select the item{{ targetPage.images.length > 1 ? 's' : '' }} you'd like to add</h1>
         <div class="pb-3 text--secondary">
           {{ pluralize('image', selected.length, {0: 'No', 1: 'One'}) }} selected
@@ -59,13 +59,6 @@
             </v-row>
           </template>
         </v-img>
-        <!--
-        <div>
-          <ul id="collabosphere-items-list" class="list-inline clearfix collabosphere-items-list"><!- -></ul>
-          <div class="alert alert-info collabosphere-items-empty">No items are available on this page</div>
-        </div>
-        <div id="collabosphere-done" class="hide collabosphere-pane"><!- -></div>
-        -->
       </v-col>
     </v-row>
     <v-row no-gutters>
@@ -74,50 +67,6 @@
       </v-col>
     </v-row>
   </v-container>
-  <!--
-  <script id="collabosphere-categories-template" type="text/template">
-    <option value="" selected>Which assignment or topic is this related to</option>
-    <% _.each(categories, function(category) { %>
-      <option value="<%= category.id %>"><%= category.title %></option>
-    <% }); %>
-  </script>
-  <script id="collabosphere-item-template" type="text/template">
-    <li class="collabosphere-item-container">
-      <label>
-        <div class="collabosphere-item" style="background-image: url('<%= url %>')"></div>
-        <div>
-          <input type="checkbox" data-collabosphere-url="<%= url %>" />
-        </div>
-      </label>
-    </li>
-  </script>
-  <script id="collabosphere-items-metadata-template" type="text/template">
-    <% _.each(selectedItems, function(item, index) { %>
-      <li class="clearfix">
-        <% if (index !== 0) { %>
-          <hr />
-        <% } %>
-        <div class="col-sm-4 col-md-3 text-center">
-          <div class="collabosphere-item" style="background-image: url('<%= item.url %>')"></div>
-        </div>
-        <div class="col-sm-8 col-md-9 collabosphere-items-metadata-column">
-          <div class="form-group">
-            <label for="collabosphere-item-title" class="control-label">Title</label>
-            <input id="collabosphere-item-title" class="form-control" placeholder="Enter a title" value="<%= item.title %>" maxlength="255">
-          </div>
-          <div class="form-group">
-            <label for="collabosphere-item-category" class="control-label">Category</label>
-            <select id="collabosphere-item-category" class="form-control collabosphere-item-category" data-value=""><!- -></select>
-          </div>
-          <div class="form-group">
-            <label for="collabosphere-item-description" class="control-label">Description</label>
-            <textarea You can use plain text or #keyworid="collabosphere-item-description" class="form-control" placeholder="Add some more context to this item. You can use plain text or #keywords" rows="3"></textarea>
-          </div>
-        </div>
-      </li>
-    <% }); %>
-  </script>
-  -->
 </template>
 
 <script>
@@ -125,10 +74,9 @@ import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {getCasLogoutUrl} from '@/api/auth'
 
 export default {
-  name: 'BookmarkletPopup',
+  name: 'BookmarkletPopup3',
   mixins: [Bookmarklet, Context, Utils],
   components: {BookmarkletButtons},
   computed: {
@@ -137,18 +85,12 @@ export default {
         return this.selectedImages
       },
       set(value) {
-        this.setSelectedImages(value)
+        this.setSelectedImages(this.$_.cloneDeep(value))
       }
     },
     toggleLabel() {
       return this.selected.length < this.targetPage.images.length ? 'select all' : 'deselect all'
     }
-  },
-  created() {
-    this.selected = []
-  },
-  destroyed() {
-    getCasLogoutUrl().then(this.$_.noop)
   },
   methods: {
     toggleSelectAll() {

@@ -6,6 +6,7 @@
     :dense="dense"
     :disabled="disabled"
     :eager="true"
+    :hide-details="hideDetails"
     :items="items"
     :item-text="itemText"
     :item-value="itemValue"
@@ -32,6 +33,10 @@ export default {
       type: Boolean
     },
     disabled: {
+      required: false,
+      type: Boolean
+    },
+    hideDetails: {
       required: false,
       type: Boolean
     },
