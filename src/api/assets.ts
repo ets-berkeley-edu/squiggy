@@ -10,6 +10,17 @@ export function updateAsset(assetId, categoryId, description, title) {
   })
 }
 
+export function bookmarkletCreateFileAsset(categoryId, description, title, url) {
+  return axios.post(`${utils.apiBaseUrl()}/api/asset/create`, {
+    bookmarklet: true,
+    categoryId,
+    description,
+    title,
+    type: 'file',
+    url
+  })
+}
+
 export function createLinkAsset(categoryId, description, title, url) {
   return axios.post(`${utils.apiBaseUrl()}/api/asset/create`, {
     categoryId,

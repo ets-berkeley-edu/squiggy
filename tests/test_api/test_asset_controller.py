@@ -213,20 +213,25 @@ class TestCreateAsset:
     def _api_create_file_asset(
             client,
             asset_type='file',
+            bookmarklet=False,
             category=None,
             description='Gone to choose, choose again',
             title='The Black Angel\'s Death Song',
+            url=None,
             expected_status_code=200,
     ):
         params = {
+            'bookmarklet': bookmarklet,
             'description': description,
             'title': title,
             'type': asset_type,
+            'url': url,
         }
         if category and category.id:
             params['categoryId'] = category.id
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-        params['file[0]'] = open(f'{base_dir}/fixtures/mock_file_upload/the_gift.txt', 'rb')
+        if not bookmarklet:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+            params['file[0]'] = open(f'{base_dir}/fixtures/mock_file_upload/the_gift.txt', 'rb')
         response = client.post(
             '/api/asset/create',
             data=params,
@@ -313,6 +318,22 @@ class TestCreateAsset:
             assert api_json['mime'] == 'text/plain'
             categories = api_json['categories']
             assert len(categories) == 0
+        assert User.find_by_id(authorized_user_id).points == user_points + 5
+
+    @mock_s3
+    def test_bookmarklet_create_file_asset(self, client, app, fake_auth, authorized_user_id):
+        """Authorized user can create an asset with the Bookmarklet."""
+        fake_auth.login(authorized_user_id)
+        user_points = User.find_by_id(authorized_user_id).points
+        with mock_s3_bucket(app):
+            filename = 'lenny_and_squiggy.ico'
+            api_json = self._api_create_file_asset(
+                client,
+                bookmarklet=True,
+                url=f'https://en.wikipedia.org/static/favicon/{filename}',
+            )
+            assert 'id' in api_json
+            assert filename in api_json['downloadUrl']
         assert User.find_by_id(authorized_user_id).points == user_points + 5
 
 

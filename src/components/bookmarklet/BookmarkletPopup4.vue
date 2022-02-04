@@ -95,7 +95,7 @@ import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {createLinkAsset} from '@/api/assets'
+import {bookmarkletCreateFileAsset} from '@/api/assets'
 
 export default {
   name: 'BookmarkletPopup4',
@@ -120,7 +120,7 @@ export default {
     onClickSave() {
       this.isSaving = true
       this.$_.each(this.assets, asset => {
-        createLinkAsset(
+        bookmarkletCreateFileAsset(
           asset.categoryId,
           asset.description,
           asset.title,
