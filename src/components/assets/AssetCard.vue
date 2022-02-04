@@ -20,7 +20,12 @@
         @click="go(`/asset/${asset.id}`)"
       >
         <v-sheet elevation="1">
-          <v-img class="thumbnail" :src="thumbnailUrl" @error="setImageError">
+          <v-img
+            aspect-ratio="1"
+            class="thumbnail"
+            :src="thumbnailUrl"
+            @error="setImageError"
+          >
             <v-card-text class="asset-metadata">
               <div class="mb-3">
                 {{ asset.title }}
