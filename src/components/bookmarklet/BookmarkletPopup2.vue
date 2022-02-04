@@ -2,7 +2,7 @@
   <v-container v-if="isAuthorized && !isLoading" fluid>
     <v-row no-gutters>
       <v-col>
-        <h1>Add the current page</h1>
+        <PageTitle text="Add the current page" />
       </v-col>
     </v-row>
     <v-row>
@@ -33,7 +33,7 @@
       </v-col>
       <v-col cols="10">
         <AccessibleSelect
-          id-prefix="asset-category-select"
+          id-prefix="asset-category"
           :items="categories"
           item-text="title"
           item-value="id"
@@ -79,13 +79,14 @@ import AccessibleSelect from '@/components/util/AccessibleSelect'
 import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
+import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 import {createLinkAsset} from '@/api/assets'
 
 export default {
   name: 'BookmarkletPopup',
   mixins: [Bookmarklet, Context, Utils],
-  components: {AccessibleSelect, BookmarkletButtons},
+  components: {AccessibleSelect, BookmarkletButtons, PageTitle},
   data: () => ({
     asset: undefined,
     isSaving: false
@@ -97,10 +98,11 @@ export default {
       title: this.targetPage.metadata.title,
       url: this.targetPage.metadata.url
     }
-    this.$announcer.polite('Edit asset details and then save.')
+    this.$ready('Bookmarklet ready')
   },
   methods: {
     onClickSave() {
+      this.$announcer.polite('Creating asset...')
       this.isSaving = true
       createLinkAsset(
         this.asset.categoryId,

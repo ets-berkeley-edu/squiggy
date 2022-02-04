@@ -21,7 +21,7 @@ export default {
       'setWorkflow'
     ]),
     closePopup() {
-      this.$announcer.assertive('Canceled. Closing window.')
+      this.$announcer.assertive('Popup window is closing.')
       getCasLogoutUrl().then(() => window.close())
     }
   }

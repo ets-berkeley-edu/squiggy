@@ -6,7 +6,7 @@
         <font-awesome-icon icon="bookmark" size="lg" />
       </div>
       <div>
-        <h2>{{ pageTitle }}</h2>
+        <PageTitle :text="pageTitle" />
       </div>
     </div>
     <div v-if="!isLoading" class="pt-2 w-100">
@@ -36,11 +36,12 @@
 <script>
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
+import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'BookmarkletStep2',
-  components: {BackToAssetLibrary},
+  components: {BackToAssetLibrary, PageTitle},
   mixins: [Context, Utils],
   data: () => ({
     pageTitle: 'How to enable the bookmark',
@@ -50,7 +51,7 @@ export default {
   created() {
     this.screenshot = require(`@/assets/bookmarklet/bookmarklet-2-${this.currentBrowser}.png`)
     this.toolbarName = this.$_.get({'chrome': 'Bookmarks Bar', 'safari': 'Favorites Bar', 'ie': 'Favorites bar'}, this.currentBrowser, 'bookmarks toolbar')
-    this.$ready(this.pageTitle)
+    this.$ready('Bookmarklet instructions, part 2')
   }
 }
 </script>

@@ -21,7 +21,7 @@ const isDebugMode = _.trim(process.env.VUE_APP_DEBUG).toLowerCase() === 'true'
 Vue.prototype.$_ = _
 Vue.prototype.$loading = (noSpinner?: boolean) => store.dispatch('context/loadingStart', noSpinner)
 Vue.prototype.$putFocusNextTick = utils.putFocusNextTick
-Vue.prototype.$ready = (label, focusTarget?, announcement?) => store.dispatch('context/loadingComplete', {label, focusTarget, announcement})
+Vue.prototype.$ready = (pageTitle, focusTarget?, announcement?) => store.dispatch('context/loadingComplete', {pageTitle, focusTarget, announcement})
 
 const Highcharts = require('highcharts/highcharts')
 const HighchartsMore = require('highcharts/highcharts-more')

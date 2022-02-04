@@ -6,7 +6,7 @@
         <font-awesome-icon icon="bookmark" size="lg" />
       </div>
       <div>
-        <h2>Easily add assets from anywhere on the web</h2>
+        <PageTitle text="Easily add assets from anywhere on the web" />
       </div>
     </div>
     <div v-if="!isLoading" class="pt-2">
@@ -36,18 +36,19 @@
 <script>
 import BackToAssetLibrary from '@/components/util/BackToAssetLibrary'
 import Context from '@/mixins/Context'
+import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'BookmarkletStep1',
-  components: {BackToAssetLibrary},
+  components: {BackToAssetLibrary, PageTitle},
   mixins: [Context, Utils],
   data: () => ({
     screenshot: undefined
   }),
   created() {
     this.screenshot = require('@/assets/bookmarklet/bookmarklet-1.png')
-    this.$ready('Add assets more easily with the Bookmarklet.')
+    this.$ready('Bookmarklet instructions, part 1')
   }
 }
 </script>
