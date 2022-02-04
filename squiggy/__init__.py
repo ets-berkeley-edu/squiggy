@@ -23,6 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from decorator import decorator
 from flask import current_app as app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
@@ -54,3 +55,17 @@ def std_commit(allow_test_environment=False):
     finally:
         if not successful_commit:
             db.session.close()
+
+
+def mock_file_when_pytest(path_to_file):
+    @decorator
+    def _mock_file_when_pytest(func, *args, **kw):
+        if app.config['SQUIGGY_ENV'] == 'test':
+            return open(f'{_get_fixtures_path()}/{path_to_file}', 'r')
+        else:
+            return func(*args, **kw)
+    return _mock_file_when_pytest
+
+
+def _get_fixtures_path():
+    return app.config.get('FIXTURES_PATH') or (app.config['BASE_DIR'] + '/fixtures')

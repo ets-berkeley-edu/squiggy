@@ -31,8 +31,8 @@ from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_asset, can_view_asset
 from squiggy.lib.aws import stream_object
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
-from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import is_admin, is_teaching, local_now
+from squiggy.lib.http import retrieve_to_file, tolerant_jsonify
+from squiggy.lib.util import is_admin, is_teaching, local_now, to_bool_or_none
 from squiggy.models.asset import Asset, validate_asset_url
 from squiggy.models.category import Category
 from squiggy.models.user import User
@@ -96,6 +96,7 @@ def get_assets():
 def create_asset():
     params = request.get_json() or request.form
     asset_type = params.get('type')
+    from_bookmarklet = to_bool_or_none(params.get('bookmarklet', False))
     category_id = params.get('categoryId')
     description = params.get('description')
     source = params.get('source')
@@ -117,7 +118,14 @@ def create_asset():
 
     s3_attrs = {}
     if asset_type == 'file':
-        file_upload = _get_upload_from_http_post()
+        if from_bookmarklet:
+            file = retrieve_to_file(url)
+            file_upload = {
+                'name': url.rsplit('/', 1)[-1],
+                'byte_stream': file.read(),
+            }
+        else:
+            file_upload = _get_upload_from_http_post()
         s3_attrs = Asset.upload_to_s3(
             filename=file_upload['name'],
             byte_stream=file_upload['byte_stream'],
