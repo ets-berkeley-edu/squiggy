@@ -2,7 +2,9 @@
   <v-container v-if="isAuthorized && !isLoading" fluid>
     <v-row no-gutters>
       <v-col>
-        <h1>Select the item{{ targetPage.images.length > 1 ? 's' : '' }} you'd like to add</h1>
+        <div>
+          <PageTitle :text="`Select the item${targetPage.images.length > 1 ? 's' : ''} you'd like to add`" />
+        </div>
         <div class="pb-3 text--secondary">
           {{ pluralize('image', selected.length, {0: 'No', 1: 'One'}) }} selected
           <span v-if="targetPage.images.length > 1">
@@ -26,6 +28,7 @@
         cols="4"
       >
         <v-img
+          :id="`image-${index}`"
           :alt="image.title"
           aspect-ratio="1"
           class="grey lighten-2"
@@ -55,7 +58,7 @@
               <v-progress-circular
                 indeterminate
                 color="grey lighten-5"
-              ></v-progress-circular>
+              />
             </v-row>
           </template>
         </v-img>
@@ -73,12 +76,13 @@
 import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
+import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'BookmarkletPopup3',
   mixins: [Bookmarklet, Context, Utils],
-  components: {BookmarkletButtons},
+  components: {BookmarkletButtons, PageTitle},
   computed: {
     selected: {
       get() {
@@ -91,6 +95,9 @@ export default {
     toggleLabel() {
       return this.selected.length < this.targetPage.images.length ? 'select all' : 'deselect all'
     }
+  },
+  created() {
+    this.$ready('Bookmarklet ready')
   },
   methods: {
     toggleSelectAll() {

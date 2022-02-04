@@ -15,11 +15,11 @@
             <v-btn
               id="go-previous-btn"
               :disabled="isSaving"
-              @click="go(`/bookmarklet/popup/${previousStep}`)"
-              @keypress.enter="go(`/bookmarklet/popup/${previousStep}`)"
+              @click="goToPrevious"
+              @keypress.enter="goToPrevious"
             >
               <font-awesome-icon class="mr-3" icon="arrow-left" />
-              Previous
+              Previous<span class="sr-only"> step</span>
             </v-btn>
           </div>
           <div v-if="nextStep" class="pr-2">
@@ -27,10 +27,10 @@
               id="go-next-btn"
               color="primary"
               :disabled="disableNext || isSaving"
-              @click="go(`/bookmarklet/popup/${nextStep}`)"
-              @keypress.enter="go(`/bookmarklet/popup/${nextStep}`)"
+              @click="goToNext"
+              @keypress.enter="goToNext"
             >
-              Next
+              Next<span class="sr-only"> step</span>
               <font-awesome-icon class="ml-3" icon="arrow-right" />
             </v-btn>
           </div>
@@ -43,12 +43,12 @@
               @keypress.enter="onClickSave"
             >
               <font-awesome-icon class="mr-2" icon="check" />
-              Save
+              Save<span class="sr-only"> asset(s) to SuiteC</span>
             </v-btn>
           </div>
           <div>
             <v-btn
-              id="cancel-btn"
+              :id="isAuthorized ? 'cancel-btn' : 'close-btn'"
               :disabled="isSaving"
               text
               @click="onClickCancel"
@@ -104,6 +104,14 @@ export default {
     }
   },
   methods: {
+    goToNext() {
+      this.$announcer.polite('Going to next step')
+      this.go(`/bookmarklet/popup/${this.nextStep}`)
+    },
+    goToPrevious() {
+      this.$announcer.polite('Going to previous step')
+      this.go(`/bookmarklet/popup/${this.previousStep}`)
+    },
     onClickCancel() {
       this.$announcer.polite('Canceled.')
       this.closePopup()

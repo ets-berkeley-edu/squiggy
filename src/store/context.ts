@@ -150,7 +150,7 @@ const actions = {
       }
     })
   },
-  loadingComplete: ({commit}, {label, focusTarget, announce}) => commit('loadingComplete', {label, focusTarget, announce}),
+  loadingComplete: ({commit}, {pageTitle, focusTarget, announce}) => commit('loadingComplete', {pageTitle, focusTarget, announce}),
   loadingStart: ({commit}, noSpinner?: boolean) => commit('loadingStart', noSpinner),
   postIFrameMessage: ({commit}, {generator, callback}) => commit('postIFrameMessage', {generator, callback}),
   rewriteBookmarkHash: ({commit}, params) => commit('rewriteBookmarkHash', params)

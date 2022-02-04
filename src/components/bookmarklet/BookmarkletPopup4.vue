@@ -2,7 +2,7 @@
   <v-container v-if="isAuthorized && !isLoading" fluid>
     <v-row no-gutters>
       <v-col>
-        <h1>Add more information about the selected {{ selectedImages.length > 1 ? 'items' : 'item' }}</h1>
+        <PageTitle :text="`Add more information about the selected ${selectedImages.length > 1 ? 'items' : 'item'}`" />
       </v-col>
     </v-row>
     <v-row no-gutters>
@@ -15,6 +15,7 @@
         <div class="d-flex flex-column">
           <div>
             <v-img
+              :id="`image-${index}`"
               :alt="asset.title"
               aspect-ratio="1"
               class="grey lighten-2"
@@ -30,7 +31,7 @@
                   <v-progress-circular
                     indeterminate
                     color="grey lighten-5"
-                  ></v-progress-circular>
+                  />
                 </v-row>
               </template>
             </v-img>
@@ -49,7 +50,7 @@
               />
             </div>
             <div v-if="categories.length" class="pb-2">
-              <label class="text--secondary" :for="`asset-category-select-${index}`">Category</label>
+              <label class="text--secondary" :for="`asset-category-select-${index}-select`">Category</label>
               <AccessibleSelect
                 :dense="true"
                 :hide-details="true"
@@ -94,13 +95,14 @@ import AccessibleSelect from '@/components/util/AccessibleSelect'
 import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
+import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 import {bookmarkletCreateFileAsset} from '@/api/assets'
 
 export default {
   name: 'BookmarkletPopup4',
   mixins: [Bookmarklet, Context, Utils],
-  components: {AccessibleSelect, BookmarkletButtons},
+  components: {AccessibleSelect, BookmarkletButtons, PageTitle},
   computed: {
     disableSave() {
       return !!this.$_.find(this.assets, image => {
@@ -114,10 +116,13 @@ export default {
   }),
   created() {
     this.assets = this.$_.cloneDeep(this.selectedImages)
-    this.$ready('Ready')
+    this.$ready('Bookmarklet ready')
+    this.$announcer.polite(`The page has ${this.assets.length} assets`)
   },
   methods: {
     onClickSave() {
+      const snippet = `${this.assets.length} ${this.assets.length === 1 ? 'asset' : 'assets'}`
+      this.$announcer.polite(`Creating ${snippet}...`)
       this.isSaving = true
       this.$_.each(this.assets, asset => {
         bookmarkletCreateFileAsset(
@@ -126,7 +131,7 @@ export default {
           asset.title,
           asset.src
         ).then(() => {
-          this.$announcer.polite(`${this.assets.length} asset(s) created.`)
+          this.$announcer.polite(`${snippet} created.`)
           this.closePopup()
           this.isSaving = false
         })
