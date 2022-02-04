@@ -59,7 +59,9 @@ export default {
   created() {
     const course = this.$currentUser.course
     const minimum = 150
-    const url = `${this.$config.baseUrl}/bookmarklet/popup/1?_b=${this.$currentUser.bookmarkletAuth}`
+    let baseUrl = this.$config.baseUrl
+    baseUrl = this.$_.endsWith(baseUrl, '/') ? baseUrl : `${baseUrl}/`
+    const url = `${baseUrl}bookmarklet/popup/1?_b=${this.$currentUser.bookmarkletAuth}`
     this.bookmarklet = `javascript:(() => {
       const images = [];
       const imageUrls = new Set();
