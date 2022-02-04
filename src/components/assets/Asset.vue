@@ -3,12 +3,15 @@
     <BackToAssetLibrary :anchor="`asset-${asset.id}`" :disabled="isLoading" />
     <div>
       <AssetPageHeader :asset="asset" :refresh-preview="refreshPreview" />
+      <a id="skip-to-asset-overview" class="sr-only" href="#asset-overview">
+        Skip to asset overview
+      </a>
       <v-card class="mt-3 pa-2" outlined>
         <v-card-text>
           <div class="asset-image-container">
             <AssetPreview :asset="asset" :contain="true" />
           </div>
-          <AssetOverview :asset="asset" />
+          <AssetOverview id="asset-overview" :asset="asset" />
         </v-card-text>
       </v-card>
       <div class="mt-3 px-2">
