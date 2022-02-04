@@ -124,17 +124,20 @@ export default {
       const snippet = `${this.assets.length} ${this.assets.length === 1 ? 'asset' : 'assets'}`
       this.$announcer.polite(`Creating ${snippet}...`)
       this.isSaving = true
+      const apiCalls = []
       this.$_.each(this.assets, asset => {
-        bookmarkletCreateFileAsset(
+        apiCalls.push(bookmarkletCreateFileAsset(
           asset.categoryId,
           asset.description,
           asset.title,
           asset.src
-        ).then(() => {
-          this.$announcer.polite(`${snippet} created.`)
-          this.closePopup()
-          this.isSaving = false
-        })
+        ))
+      })
+      Promise.all(apiCalls).then(assets => {
+        this.setAssetsCreated(assets)
+        this.$announcer.polite(`${snippet} created.`)
+        this.isSaving = false
+        this.go('/bookmarklet/popup/5')
       })
     }
   }

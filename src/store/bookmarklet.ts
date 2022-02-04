@@ -3,6 +3,7 @@ import Vue from 'vue'
 import {getCategories} from '@/api/categories'
 
 const state = {
+  assetsCreated: undefined,
   categories: undefined,
   course: undefined,
   isAuthorized: undefined,
@@ -16,6 +17,7 @@ const state = {
 }
 
 const getters = {
+  assetsCreated: (state: any): any[] => state.assetsCreated,
   categories: (state: any): any[] => state.categories,
   course: (state: any): any => state.course,
   isAuthorized: (state: any): boolean => state.isAuthorized,
@@ -25,6 +27,7 @@ const getters = {
 }
 
 const mutations = {
+  setAssetsCreated: (state: any, assetsCreated: any[]) => state.assetsCreated = assetsCreated,
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setCourse: (state: any, course: any) => state.course = course,
   setIsAuthorized: (state: any, isAuthorized: boolean) => state.isAuthorized = isAuthorized,
@@ -56,6 +59,7 @@ const actions = {
       return Promise.reject('Unauthorized')
     }
   },
+  setAssetsCreated: ({commit}, assetsCreated: any[]) => commit('setAssetsCreated', assetsCreated),
   setSelectedImages: ({commit}, selectedImages: any[]) => commit('setSelectedImages', selectedImages),
   setWorkflow: ({commit}, workflow: string) => commit('setWorkflow', workflow)
 }

@@ -34,7 +34,7 @@
               <font-awesome-icon class="ml-3" icon="arrow-right" />
             </v-btn>
           </div>
-          <div v-if="isAuthorized && !nextStep" class="pr-2">
+          <div v-if="isAuthorized && !nextStep && !$_.size(assetsCreated)" class="pr-2">
             <v-btn
               id="done-btn"
               color="primary"
@@ -48,13 +48,13 @@
           </div>
           <div>
             <v-btn
-              :id="isAuthorized ? 'cancel-btn' : 'close-btn'"
+              :id="`${cancelButtonLabel.toLowerCase()}-btn`"
               :disabled="isSaving"
               text
               @click="onClickCancel"
               @keypress.enter="onClickCancel"
             >
-              {{ isAuthorized ? 'Cancel' : 'Close' }}
+              {{ cancelButtonLabel }}
             </v-btn>
           </div>
         </div>
@@ -103,6 +103,12 @@ export default {
       type: Number
     }
   },
+  data: () => ({
+    cancelButtonLabel: undefined
+  }),
+  created() {
+    this.cancelButtonLabel = this.isAuthorized && (this.previousStep || this.nextStep) ? 'Cancel' : 'Close'
+  },
   methods: {
     goToNext() {
       this.$announcer.polite('Going to next step')
@@ -113,7 +119,7 @@ export default {
       this.go(`/bookmarklet/popup/${this.previousStep}`)
     },
     onClickCancel() {
-      this.$announcer.polite('Canceled.')
+      this.$announcer.polite(this.cancelButtonLabel === 'Close' ? 'Closed' : 'Canceled')
       this.closePopup()
     }
   }
