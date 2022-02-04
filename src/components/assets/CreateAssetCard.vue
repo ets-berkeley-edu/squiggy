@@ -3,7 +3,7 @@
     <v-sheet class="h-100">
       <v-container class="card-container fill-height text-center" fluid>
         <v-row no-gutters>
-          <v-col class="column-left" cols="18" sm="6">
+          <v-col class="column-left" cols="6" sm="6">
             <v-btn
               id="go-upload-asset-btn"
               block
@@ -21,7 +21,7 @@
               </div>
             </v-btn>
           </v-col>
-          <v-col class="column-right" cols="18" sm="6">
+          <v-col class="column-right" cols="6" sm="6">
             <v-btn
               id="go-add-link-asset-btn"
               block
