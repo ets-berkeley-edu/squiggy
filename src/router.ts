@@ -10,6 +10,7 @@ import BookmarkletPopup1 from '@/components/bookmarklet/BookmarkletPopup1.vue'
 import BookmarkletPopup2 from '@/components/bookmarklet/BookmarkletPopup2.vue'
 import BookmarkletPopup3 from '@/components/bookmarklet/BookmarkletPopup3.vue'
 import BookmarkletPopup4 from '@/components/bookmarklet/BookmarkletPopup4.vue'
+import BookmarkletPopup5 from '@/components/bookmarklet/BookmarkletPopup5.vue'
 import BookmarkletStep1 from '@/components/bookmarklet/BookmarkletStep1.vue'
 import BookmarkletStep2 from '@/components/bookmarklet/BookmarkletStep2.vue'
 import BookmarkletStep3 from '@/components/bookmarklet/BookmarkletStep3.vue'
@@ -177,6 +178,13 @@ const router = new Router({
         {
           path: '/bookmarklet/popup/4',
           component: BookmarkletPopup4,
+          meta: {
+            title: 'Bookmarklet'
+          }
+        },
+        {
+          path: '/bookmarklet/popup/5',
+          component: BookmarkletPopup5,
           meta: {
             title: 'Bookmarklet'
           }

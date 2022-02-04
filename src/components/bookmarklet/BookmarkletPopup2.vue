@@ -109,9 +109,10 @@ export default {
         this.asset.description,
         this.asset.title,
         this.asset.url
-      ).then(() => {
+      ).then(asset => {
+        this.setAssetsCreated([asset])
         this.$announcer.polite('Link asset created.')
-        this.closePopup()
+        this.go('/bookmarklet/popup/5')
         this.isSaving = false
       })
     }

@@ -6,6 +6,7 @@ export default {
   name: 'Bookmarklet',
   computed: {
     ...mapGetters('bookmarklet', [
+      'assetsCreated',
       'categories',
       'course',
       'isAuthorized',
@@ -17,6 +18,7 @@ export default {
   methods: {
     ...mapActions('bookmarklet', [
       'init',
+      'setAssetsCreated',
       'setSelectedImages',
       'setWorkflow'
     ]),
