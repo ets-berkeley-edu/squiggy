@@ -7,8 +7,8 @@
             <PageTitle text="What do you want to add?" />
           </div>
           <div v-if="!targetPage.images.length" class="deep-orange--text font-weight-bold">
-            The current page has no image eligible for the Asset Library. You have one choice: Add the entire page
-            as a link asset. Click "Next" to proceed.
+            The current page has no images of sufficient size for the Asset Library.
+            You have one choice: add the entire page as a link asset.
           </div>
           <v-radio-group v-model="model">
             <v-radio
