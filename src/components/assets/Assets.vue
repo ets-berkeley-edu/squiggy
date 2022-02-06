@@ -1,7 +1,7 @@
 <template>
   <div id="asset-library">
     <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
-    <AssetsHeader ref="header" />
+    <AssetsHeader ref="header" :put-focus-on-load="anchor ? null : 'basic-search-input'" />
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
@@ -109,17 +109,8 @@ export default {
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     handleResults(data, isSearching) {
-      if (this.$refs.header) {
-        this.$refs.header.initialize()
-      }
-
-      let assetTotal = this.totalAssetCount
-      if (data) {
-        this.isComplete = !data.results.length
-        assetTotal = data.total
-      } else {
-        this.isComplete = (this.assets.length === this.totalAssetCount)
-      }
+      const assetTotal = data ? data.total : this.totalAssetCount
+      this.isComplete = data ? !data.results.length : (this.assets.length === this.totalAssetCount)
 
       let announcement = null
       if (this.isReturning) {

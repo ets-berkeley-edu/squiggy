@@ -10,14 +10,17 @@ export default {
     ...mapGetters('assets', [
       'assets',
       'assetType',
+      'categories',
       'categoryId',
+      'expanded',
       'isDirty',
       'keywords',
       'limit',
       'orderBy',
       'orderByDefault',
       'totalAssetCount',
-      'userId'
+      'userId',
+      'users'
     ])
   },
   methods: {
@@ -31,11 +34,13 @@ export default {
       })
     },
     ...mapActions('assets', [
+      'init',
       'nextPage',
       'resetSearch',
       'search',
       'setAssetType',
       'setCategoryId',
+      'setExpanded',
       'setKeywords',
       'setOrderBy',
       'setUserId',
