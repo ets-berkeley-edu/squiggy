@@ -22,7 +22,7 @@
                 class="ml-2"
                 :disabled="isLoading || isBusy"
                 icon
-                @click="toggle"
+                @click="reset(!expanded)"
               >
                 <font-awesome-icon icon="caret-down" />
                 <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
@@ -91,6 +91,7 @@
               <v-row no-gutters>
                 <v-col class="pr-2 w-50">
                   <AccessibleSelect
+                    :key="keyForSelectReset"
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-categories"
@@ -104,6 +105,7 @@
                 </v-col>
                 <v-col class="w-50">
                   <AccessibleSelect
+                    :key="keyForSelectReset"
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-asset-types"
@@ -117,6 +119,7 @@
               <v-row no-gutters>
                 <v-col class="w-50">
                   <AccessibleSelect
+                    :key="keyForSelectReset"
                     class="w-50"
                     :dense="true"
                     :disabled="isBusy"
@@ -138,6 +141,7 @@
             </v-col>
             <v-col>
               <AccessibleSelect
+                :key="keyForSelectReset"
                 class="w-50"
                 :dense="true"
                 :disabled="isBusy"
@@ -172,9 +176,21 @@
                     :disabled="isBusy"
                     elevation="1"
                     medium
-                    @click="toggle"
+                    @click="reset(false)"
                   >
                     Cancel
+                  </v-btn>
+                </div>
+                <div v-if="assetType || categoryId || $_.trim(keywords) || userId || (orderBy !== orderByDefault)" class="pl-2">
+                  <v-btn
+                    id="reset-adv-search-btn"
+                    class="text-capitalize"
+                    :disabled="isBusy"
+                    medium
+                    text
+                    @click="reset(true, true)"
+                  >
+                    Reset
                   </v-btn>
                 </div>
               </div>
@@ -200,28 +216,42 @@ import Alert from '@/components/util/Alert'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {getCategories} from '@/api/categories'
-import {getUsers} from '@/api/users'
 
 export default {
   name: 'AssetsHeader',
   components: {AccessibleSelect, Alert},
   mixins: [AssetsSearch, Context, Utils],
+  props: {
+    putFocusOnLoad: {
+      default: undefined,
+      required: false,
+      type: String
+    }
+  },
   data: () => ({
     alert: undefined,
     alertType: undefined,
-    categories: undefined,
-    expanded: false,
     isBusy: true,
-    users: undefined
+    keyForSelectReset: new Date().getTime()
   }),
   watch: {
     expanded() {
-      this.$putFocusNextTick(this.expanded ? 'adv-search-keywords-input' : 'basic-search-input')
+      if (!this.isBusy) {
+        this.$putFocusNextTick(this.expanded ? 'adv-search-keywords-input' : 'basic-search-input')
+      }
     },
     isDirty() {
       this.clearAlert()
     }
+  },
+  created() {
+    this.init().then(() => {
+      this.setExpanded(!!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId))
+      if (this.putFocusOnLoad) {
+        this.$putFocusNextTick(this.putFocusOnLoad)
+      }
+      this.isBusy = false
+    })
   },
   methods: {
     clearAlert() {
@@ -245,27 +275,24 @@ export default {
         })
       }
     },
-    initialize() {
-      getUsers().then(data => {
-        this.users = data
-        getCategories().then(data => {
-          this.categories = data
-          this.expanded = !!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId)
-          this.isBusy = false
-        })
-      })
-    },
-    toggle() {
-      let orderBy = 'recent'
+    reset(expand, fetchAgain) {
       this.setAssetType(null)
       this.setCategoryId(null)
-      this.setOrderBy(orderBy)
+      this.setOrderBy(this.orderByDefault)
       this.setUserId(null)
-      this.rewriteBookmarkHash({orderBy})
+      this.rewriteBookmarkHash({orderBy: this.orderByDefault})
       this.alert = null
       this.alertType = null
-      this.expanded = !this.expanded
-      this.$announcer.polite(`Advanced search form is ${this.expanded ? 'open' : 'closed'}.`)
+      if (this.expanded !== expand) {
+        this.setExpanded(expand)
+        this.$announcer.polite(`Advanced search form is ${this.expanded ? 'open' : 'closed'}.`)
+      } else {
+        this.setKeywords(undefined)
+        this.keyForSelectReset = new Date().getTime()
+      }
+      if (fetchAgain) {
+        this.fetch()
+      }
       this.$putFocusNextTick(this.expanded ? 'keywords-input' : 'basic-search-input')
     },
   }

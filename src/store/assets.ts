@@ -1,5 +1,7 @@
 import _ from 'lodash'
 import {getAssets} from '@/api/assets'
+import {getCategories} from '@/api/categories'
+import {getUsers} from '@/api/users'
 
 const orderByDefault = 'recent'
 
@@ -27,7 +29,9 @@ function $_search(commit, state, addToExisting?: boolean) {
 const state = {
   assets: undefined,
   assetType: undefined,
+  categories: undefined,
   categoryId: undefined,
+  expanded: undefined,
   isDirty: false,
   keywords: undefined,
   limit: 20,
@@ -35,20 +39,24 @@ const state = {
   orderBy: orderByDefault,
   sectionId: undefined,
   totalAssetCount: undefined,
-  userId: undefined
+  userId: undefined,
+  users: undefined
 }
 
 const getters = {
   assets: (state: any): any[] => state.assets,
   assetType: (state: any): string => state.assetType,
+  categories: (state: any): any[] => state.categories,
   categoryId: (state: any): number => state.categoryId,
+  expanded: (state: any): boolean => state.expanded,
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
   orderBy: (state: any): string => state.orderBy,
   orderByDefault: (): string => orderByDefault,
   totalAssetCount: (state: any): number => state.totalAssetCount,
-  userId: (state: any): number => state.userId
+  userId: (state: any): number => state.userId,
+  users: (state: any): any[] => state.users
 }
 
 const mutations = {
@@ -58,11 +66,13 @@ const mutations = {
     state.assetType = assetType
     state.isDirty = true
   },
+  setCategories: (state: any, categories: any[]) => state.categories = categories,
   setCategoryId: (state: any, categoryId: number) => {
     state.categoryId = categoryId
     state.isDirty = true
   },
   setDirty: (state: any, dirty: boolean) => state.isDirty = dirty,
+  setExpanded: (state: any, expanded: boolean) => state.expanded = expanded,
   setKeywords: (state: any, keywords: string) => {
     state.keywords = keywords
     state.isDirty = true
@@ -77,6 +87,7 @@ const mutations = {
     state.isDirty = true
   },
   setTotalAssetCount: (state: any, count: number) => state.totalAssetCount = count,
+  setUsers: (state: any, users: any[]) => state.users = users,
   updateAssetStore: (state: any, updatedAsset: any) => {
     if (state.assets) {
       _.each(state.assets, asset => {
@@ -89,6 +100,17 @@ const mutations = {
 }
 
 const actions = {
+  init({commit}) {
+    return new Promise<void>(resolve => {
+      getUsers().then(data => {
+        commit('setUsers', data)
+        getCategories().then(data => {
+          commit('setCategories', data)
+          resolve()
+        })
+      })
+    })
+  },
   nextPage: ({commit, state}) => {
     commit('setOffset', state.offset + state.limit)
     return $_search(commit, state, true)
@@ -97,6 +119,7 @@ const actions = {
   search: ({commit, state}) => $_search(commit, state),
   setAssetType: ({commit}, assetType) => commit('setAssetType', assetType),
   setCategoryId: ({commit}, categoryId) => commit('setCategoryId', categoryId),
+  setExpanded: ({commit}, expanded) => commit('setExpanded', expanded),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
   setUserId: ({commit}, userId) => commit('setUserId', userId),
