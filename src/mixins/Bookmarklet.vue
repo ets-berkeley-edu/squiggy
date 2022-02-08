@@ -4,6 +4,9 @@ import {getCasLogoutUrl} from '@/api/auth'
 
 export default {
   name: 'Bookmarklet',
+  data: () => ({
+    scrollChunkSize: 20
+  }),
   computed: {
     ...mapGetters('bookmarklet', [
       'assetsCreated',

@@ -1,11 +1,11 @@
 <template>
-  <v-container v-if="isAuthorized" fluid>
-    <v-row no-gutters>
-      <v-col>
-        <div>
-          <PageTitle :text="`Select the item${targetPage.images.length > 1 ? 's' : ''} you'd like to add`" />
-        </div>
-        <div class="pb-3 text--secondary">
+  <div v-if="isAuthorized">
+    <v-app-bar fixed>
+      <v-app-bar-title>
+        <PageTitle :text="`Select the item${targetPage.images.length > 1 ? 's' : ''} you'd like to add`" />
+      </v-app-bar-title>
+      <template #extension>
+        <div class="text--secondary">
           {{ pluralize('image', selected.length, {0: 'No', 1: 'One'}) }} selected
           <span v-if="targetPage.images.length > 1">
             (<v-btn
@@ -19,70 +19,76 @@
             --></v-btn>)
           </span>
         </div>
-      </v-col>
-    </v-row>
-    <v-row no-gutters>
-      <v-col
-        v-for="(image, index) in showAll ? targetPage.images : targetPage.images.slice(0, 20)"
-        :key="index"
-        class="d-flex child-flex"
-        cols="4"
-      >
-        <v-img
-          :id="`image-${index}`"
-          :alt="image.title"
-          aspect-ratio="1"
-          class="grey lighten-2"
-          :src="image.src"
+      </template>
+    </v-app-bar>
+    <v-container v-if="isAuthorized" class="mt-16 pt-8" fluid>
+      <v-row no-gutters>
+        <v-col
+          v-for="(image, index) in images"
+          :key="index"
+          class="d-flex child-flex"
+          cols="4"
         >
-          <div class="bg-image-label pt-2 px-7">
-            <v-checkbox
-              :id="`image-checkbox-${index}`"
-              v-model="selected"
-              color="orange"
-              dark
-              :multiple="true"
-              :value="image"
-            >
-              <template #label>
-                <span class="image-label">Image {{ index + 1 }}<span v-if="image.title">: {{ image.title }}</span></span>
-              </template>
-            </v-checkbox>
-          </div>
-          <template #placeholder>
-            <v-row
-              class="fill-height ma-0"
-              align="center"
-              justify="center"
-            >
-              <v-progress-circular
-                indeterminate
-                color="grey lighten-5"
-              />
-            </v-row>
-          </template>
-        </v-img>
-      </v-col>
-    </v-row>
-    <v-row no-gutters>
-      <v-col class="pt-5">
-        <BookmarkletButtons :disable-next="!selected.length" :next-step="4" :previous-step="1" />
-      </v-col>
-    </v-row>
-  </v-container>
+          <v-img
+            :id="`image-${index}`"
+            :alt="image.title"
+            aspect-ratio="1"
+            class="grey lighten-2"
+            :src="image.src"
+          >
+            <div class="bg-image-label pt-2 px-7">
+              <v-checkbox
+                :id="`image-checkbox-${index}`"
+                v-model="selected"
+                color="orange"
+                dark
+                :multiple="true"
+                :value="image"
+              >
+                <template #label>
+                  <span class="image-label">Image {{ index + 1 }}<span v-if="image.title">: {{ image.title }}</span></span>
+                </template>
+              </v-checkbox>
+            </div>
+            <template #placeholder>
+              <v-row
+                class="fill-height ma-0"
+                align="center"
+                justify="center"
+              >
+                <v-progress-circular
+                  indeterminate
+                  color="grey lighten-5"
+                />
+              </v-row>
+            </template>
+          </v-img>
+        </v-col>
+      </v-row>
+      <v-row no-gutters>
+        <v-col class="pt-5">
+          <BookmarkletButtons :disable-next="!selected.length" :next-step="4" :previous-step="1" />
+        </v-col>
+      </v-row>
+    </v-container>
+    <InfiniteLoading spinner="spiral" @infinite="infiniteHandler">
+      <span slot="spinner" class="sr-only">Loading...</span>
+    </InfiniteLoading>
+  </div>
 </template>
 
 <script>
 import Bookmarklet from '@/mixins/Bookmarklet'
 import BookmarkletButtons from '@/components/bookmarklet/BookmarkletButtons'
 import Context from '@/mixins/Context'
+import InfiniteLoading from 'vue-infinite-loading'
 import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'BookmarkletPopup3',
   mixins: [Bookmarklet, Context, Utils],
-  components: {BookmarkletButtons, PageTitle},
+  components: {BookmarkletButtons, InfiniteLoading, PageTitle},
   computed: {
     selected: {
       get() {
@@ -97,15 +103,20 @@ export default {
     }
   },
   data: () => ({
-    showAll: false
+    images: []
   }),
   created() {
     this.$ready('Bookmarklet ready')
-    setTimeout(() => {
-      this.showAll = true
-    }, 50)
   },
   methods: {
+    infiniteHandler($state) {
+      if (this.images.length < this.targetPage.images.length) {
+        this.images = this.targetPage.images.slice(0, this.images.length + this.scrollChunkSize)
+        $state.loaded()
+      } else {
+        $state.complete()
+      }
+    },
     toggleSelectAll() {
       this.selected = this.selected.length !== this.targetPage.images.length ? this.targetPage.images : []
     }
