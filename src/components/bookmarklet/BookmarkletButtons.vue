@@ -5,8 +5,11 @@
         <div>
           <DarkModeToggle />
         </div>
-        <div class="font-size-12">
+        <div v-if="!$config.isVueAppDebugMode" class="font-size-12">
           &copy; {{ new Date().getFullYear() }} The Regents of the University of California
+        </div>
+        <div v-if="$config.isVueAppDebugMode" class="font-size-12">
+          {{ $_.get($announcer, 'data.content') }}
         </div>
       </div>
       <div class="py-2">

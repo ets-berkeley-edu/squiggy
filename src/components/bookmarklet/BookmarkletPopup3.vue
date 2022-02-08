@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="isAuthorized && !isLoading" fluid>
+  <v-container v-if="isAuthorized" fluid>
     <v-row no-gutters>
       <v-col>
         <div>
@@ -11,6 +11,7 @@
             (<v-btn
               id="select-all-images-btn"
               class="pb-1 px-0 text-lowercase"
+              :disabled="isLoading"
               text
               @click="toggleSelectAll"
             ><!--
@@ -22,7 +23,7 @@
     </v-row>
     <v-row no-gutters>
       <v-col
-        v-for="(image, index) in targetPage.images"
+        v-for="(image, index) in showAll ? targetPage.images : targetPage.images.slice(0, 20)"
         :key="index"
         class="d-flex child-flex"
         cols="4"
@@ -33,7 +34,6 @@
           aspect-ratio="1"
           class="grey lighten-2"
           :src="image.src"
-          :lazy-src="image.src"
         >
           <div class="bg-image-label pt-2 px-7">
             <v-checkbox
@@ -96,8 +96,14 @@ export default {
       return this.selected.length < this.targetPage.images.length ? 'select all' : 'deselect all'
     }
   },
+  data: () => ({
+    showAll: false
+  }),
   created() {
     this.$ready('Bookmarklet ready')
+    setTimeout(() => {
+      this.showAll = true
+    }, 50)
   },
   methods: {
     toggleSelectAll() {
