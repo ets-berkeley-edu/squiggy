@@ -26,6 +26,7 @@ import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
 import store from '@/store'
 import Vue from 'vue'
+import axios from 'axios'
 
 Vue.use(Router)
 
@@ -41,6 +42,13 @@ const router = new Router({
       component: BaseView,
       children: [
         {
+          beforeEnter: (to: any, from: any, next: any) => {
+            if (axios.defaults.headers['Squiggy-Bookmarklet-Auth']) {
+              next('/error')
+            } else {
+              next()
+            }
+          },
           path: '/squiggy',
           component: Squiggy,
           meta: {

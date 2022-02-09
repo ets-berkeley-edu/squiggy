@@ -185,7 +185,7 @@ class User(Base):
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
         json = {
             'id': self.id,
-            'bookmarkletAuth': Fernet(encryption_key).encrypt(f'{self.id}_{self.bookmarklet_token}'.encode()),
+            'bookmarkletAuth': Fernet(encryption_key).encrypt(f'{self.id}_{self.course_id}_{self.bookmarklet_token}'.encode()),
             'canvasApiDomain': self.course.canvas_api_domain,
             'canvasCourseId': self.course.canvas_course_id,
             'canvasCourseRole': self.canvas_course_role,
