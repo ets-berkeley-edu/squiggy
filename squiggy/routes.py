@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import datetime
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from flask import jsonify, make_response, redirect, request, session
 from flask_login import LoginManager
 from squiggy.api.api_util import start_login_session
@@ -116,8 +116,26 @@ def _user_loader(user_id=None):
     canvas_api_domain = request.headers.get('Squiggy-Canvas-Api-Domain')
     canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
 
-    # Check for conflicts between existing login session and course headers.
-    if user_session.is_authenticated and canvas_api_domain and canvas_course_id:
+    if bookmarklet_auth:
+        user_session.logout()
+        encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
+        try:
+            args = Fernet(encryption_key).decrypt(bytes(bookmarklet_auth, 'utf-8')).decode().rsplit('_')
+            if len(args) == 3:
+                user_id = to_int(args[0])
+                course_id = to_int(args[1])
+                bookmarklet_token = args[2]
+                user = user_id and User.find_by_id(user_id)
+                if user and user.canvas_enrollment_state in ['active', 'invited'] \
+                        and user.course_id == course_id \
+                        and user.bookmarklet_token == bookmarklet_token:
+                    user_session = LoginSession(user_id)
+                    start_login_session(user_session)
+        except InvalidToken as e:
+            app.logger.error('Failed to authenticate per Squiggy-Bookmarklet-Auth header')
+            app.logger.exception(e)
+    elif user_session.is_authenticated and canvas_api_domain and canvas_course_id:
+        # Check for conflicts between existing login session and course headers.
         course = user_session.course
         if canvas_api_domain != course.canvas_api_domain or str(canvas_course_id) != str(course.canvas_course_id):
             app.logger.info(
@@ -137,15 +155,5 @@ def _user_loader(user_id=None):
                     # User must be a member of the Canvas course site.
                     user_session = candidate
                     app.logger.info(f'User {user_id} loaded.')
-                    start_login_session(user_session)
-        elif bookmarklet_auth:
-            encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
-            args = Fernet(encryption_key).decrypt(bytes(bookmarklet_auth, 'utf-8')).decode().rsplit('_')
-            if len(args) == 2:
-                user_id = to_int(args[0])
-                bookmarklet_token = args[1]
-                user = user_id and User.find_by_id(user_id)
-                if user and user.bookmarklet_token == bookmarklet_token:
-                    user_session = LoginSession(user_id)
                     start_login_session(user_session)
     return user_session

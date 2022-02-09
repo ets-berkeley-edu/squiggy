@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from datetime import datetime
 import json
 
-from squiggy import std_commit
+from squiggy import db, std_commit
 from squiggy.lib.lti import TOOL_ID_ASSET_LIBRARY
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
@@ -237,8 +237,66 @@ class TestCookies:
         self._assert_cookie(client=client, user=user)
 
 
+class TestBookmarkletAuth:
+
+    @staticmethod
+    def _api_assets_with_bookmarklet_auth(
+            client,
+            bookmarklet_auth_header,
+            expected_status_code=200,
+    ):
+        response = client.post(
+            '/api/assets',
+            content_type='application/json',
+            data=json.dumps({}),
+            headers={'Squiggy-Bookmarklet-Auth': bookmarklet_auth_header},
+        )
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client):
+        """Invalid Squiggy-Bookmarklet-Auth header."""
+        self._api_assets_with_bookmarklet_auth(
+            client=client,
+            bookmarklet_auth_header='this surely cannot be a valid',
+            expected_status_code=401,
+        )
+
+    def test_authorized_to_unauthorized(self, client):
+        """Deny Squiggy-Bookmarklet-Auth when course_id does not match."""
+        canvas_course_id = 1502871
+        course = Course.find_by_canvas_course_id(
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=canvas_course_id,
+        )
+        user = User.create(
+            canvas_course_role='Student',
+            canvas_course_sections=[],
+            canvas_email='nico@berkeley.edu',
+            canvas_enrollment_state='active',
+            canvas_full_name='Nico ',
+            canvas_user_id='13579',
+            course_id=course.id,
+        )
+        std_commit(allow_test_environment=True)
+
+        # Expect authorized
+        bookmarklet_auth = user.to_api_json()['bookmarkletAuth']
+        self._api_assets_with_bookmarklet_auth(bookmarklet_auth_header=bookmarklet_auth, client=client)
+
+        # Student becomes inactive and we try to hack our way in with the old bookmarklet auth header.
+        user.canvas_enrollment_state = 'inactive'
+        db.session.add(user)
+        std_commit(allow_test_environment=True)
+
+        # Expect unauthorized
+        self._api_assets_with_bookmarklet_auth(
+            bookmarklet_auth_header=bookmarklet_auth,
+            client=client,
+            expected_status_code=401,
+        )
+
+
 class TestCookieAuth:
-    """Auth by custom cookie."""
 
     @staticmethod
     def _api_assets_with_cookie_auth(
