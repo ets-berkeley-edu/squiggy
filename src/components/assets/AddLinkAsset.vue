@@ -11,7 +11,15 @@
         </v-row>
         <v-row>
           <v-col class="pt-5 text-right" cols="2">
-            <label for="asset-url-input">URL</label>
+            <label for="asset-url-input">
+              URL
+              <font-awesome-icon
+                aria-label="Icon indicates required field"
+                class="deep-orange--text icon-denotes-required"
+                icon="asterisk"
+                size="xs"
+              />
+            </label>
           </v-col>
           <v-col cols="6">
             <v-text-field
@@ -28,7 +36,15 @@
         </v-row>
         <v-row>
           <v-col class="pt-5 text-right" cols="2">
-            <label for="asset-title-input">Title</label>
+            <label for="asset-title-input">
+              Title
+              <font-awesome-icon
+                aria-label="Icon indicates required field"
+                class="deep-orange--text icon-denotes-required"
+                icon="asterisk"
+                size="xs"
+              />
+            </label>
           </v-col>
           <v-col cols="6">
             <v-text-field

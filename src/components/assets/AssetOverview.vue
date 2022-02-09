@@ -59,7 +59,7 @@
         {{ asset.description }}
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-if="asset.assetType !== 'file'">
       <v-col
         class="font-weight-bold text-no-wrap"
         lg="1"

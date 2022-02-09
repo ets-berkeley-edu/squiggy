@@ -15,7 +15,15 @@
     </v-row>
     <v-row>
       <v-col cols="2">
-        <label class="float-right" for="asset-title-input">Title</label>
+        <label class="float-right" for="asset-title-input">
+          Title
+          <font-awesome-icon
+            aria-label="Icon indicates required field"
+            class="deep-orange--text icon-denotes-required"
+            icon="asterisk"
+            size="xs"
+          />
+        </label>
       </v-col>
       <v-col cols="10">
         <v-text-field
