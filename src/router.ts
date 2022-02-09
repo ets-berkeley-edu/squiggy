@@ -26,7 +26,6 @@ import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
 import store from '@/store'
 import Vue from 'vue'
-import axios from 'axios'
 
 Vue.use(Router)
 
@@ -42,13 +41,7 @@ const router = new Router({
       component: BaseView,
       children: [
         {
-          beforeEnter: (to: any, from: any, next: any) => {
-            if (axios.defaults.headers['Squiggy-Bookmarklet-Auth']) {
-              next('/error')
-            } else {
-              next()
-            }
-          },
+          beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/error') : next(),
           path: '/squiggy',
           component: Squiggy,
           meta: {
@@ -196,6 +189,20 @@ const router = new Router({
           meta: {
             title: 'Bookmarklet'
           }
+        },
+        {
+          path: '/bookmarklet/error',
+          component: Error,
+          meta: {
+            title: 'Bookmarklet Error'
+          }
+        },
+        {
+          path: '/bookmarklet/404',
+          component: NotFound,
+          meta: {
+            title: 'Page not found'
+          }
         }
       ]
     },
@@ -204,6 +211,7 @@ const router = new Router({
       component: BaseView,
       children: [
         {
+          beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/404') : next(),
           path: '/404',
           component: NotFound,
           meta: {
@@ -211,6 +219,7 @@ const router = new Router({
           }
         },
         {
+          beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/error') : next(),
           path: '/error',
           component: Error,
           meta: {
