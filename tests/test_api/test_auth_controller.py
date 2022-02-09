@@ -261,6 +261,22 @@ class TestBookmarkletAuth:
             expected_status_code=401,
         )
 
+    def test_authorized_admin(self, client):
+        """Admin only needs valid Squiggy-Bookmarklet-Auth header value."""
+        course = Course.find_by_canvas_course_id(canvas_api_domain='bcourses.berkeley.edu', canvas_course_id=1502871)
+        user = User.create(
+            canvas_course_role='Admin',
+            canvas_email='admin@berkeley.edu',
+            canvas_enrollment_state='inactive',
+            canvas_full_name='Jane Admin',
+            canvas_user_id='24680',
+            course_id=course.id,
+        )
+        std_commit(allow_test_environment=True)
+        # Expect authorized
+        bookmarklet_auth = user.to_api_json()['bookmarkletAuth']
+        self._api_assets_with_bookmarklet_auth(bookmarklet_auth_header=bookmarklet_auth, client=client)
+
     def test_authorized_to_unauthorized(self, client):
         """Deny Squiggy-Bookmarklet-Auth when course_id does not match."""
         canvas_course_id = 1502871

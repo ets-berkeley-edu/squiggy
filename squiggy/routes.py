@@ -29,7 +29,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from flask import jsonify, make_response, redirect, request, session
 from flask_login import LoginManager
 from squiggy.api.api_util import start_login_session
-from squiggy.lib.util import to_int
+from squiggy.lib.util import is_admin, to_int
 from squiggy.models.user import User
 
 
@@ -126,9 +126,8 @@ def _user_loader(user_id=None):
                 course_id = to_int(args[1])
                 bookmarklet_token = args[2]
                 user = user_id and User.find_by_id(user_id)
-                if user and user.canvas_enrollment_state in ['active', 'invited'] \
-                        and user.course_id == course_id \
-                        and user.bookmarklet_token == bookmarklet_token:
+
+                if _is_authorized_bookmarklet(bookmarklet_token=bookmarklet_token, course_id=course_id, user=user):
                     user_session = LoginSession(user_id)
                     start_login_session(user_session)
         except InvalidToken as e:
@@ -157,3 +156,10 @@ def _user_loader(user_id=None):
                     app.logger.info(f'User {user_id} loaded.')
                     start_login_session(user_session)
     return user_session
+
+
+def _is_authorized_bookmarklet(bookmarklet_token, course_id, user):
+    if not user or user.bookmarklet_token != bookmarklet_token:
+        return False
+    else:
+        return is_admin(user) or (user.course_id == course_id and user.canvas_enrollment_state in ['active', 'invited'])

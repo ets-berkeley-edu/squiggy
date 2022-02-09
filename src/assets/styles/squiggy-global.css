@@ -7,6 +7,10 @@
 .h-100 {
   height: 100% !important;
 }
+.icon-denotes-required {
+  margin-bottom: 2px;
+  margin-left: 2px;
+}
 .sr-only {
   position: absolute;
   left: -10000px;
