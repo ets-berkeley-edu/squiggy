@@ -330,10 +330,11 @@ class TestCreateAsset:
             api_json = self._api_create_file_asset(
                 client,
                 bookmarklet=True,
-                url=f'https://en.wikipedia.org/static/favicon/{filename}',
+                url=f'https://en.wikipedia.org/static/favicon/{filename}#anchor?ref=#?uestlove',
             )
             assert 'id' in api_json
-            assert filename in api_json['downloadUrl']
+            download_url = api_json['downloadUrl']
+            assert download_url and download_url.endswith(f'-{filename}')
         assert User.find_by_id(authorized_user_id).points == user_points + 5
 
 

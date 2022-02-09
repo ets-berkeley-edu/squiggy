@@ -120,8 +120,11 @@ def create_asset():
     if asset_type == 'file':
         if from_bookmarklet:
             file = retrieve_to_file(url)
+            name = url.rsplit('/', 1)[-1]
+            for char in ['?', '#']:
+                name = name.split(char)[0]
             file_upload = {
-                'name': url.rsplit('/', 1)[-1],
+                'name': name,
                 'byte_stream': file.read(),
             }
         else:
