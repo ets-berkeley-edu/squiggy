@@ -24,13 +24,13 @@
           Problem? Question?
           Email us at <a id="help-mailto" :href="`mailto:${$config.emailAddressSupport}`" target="_blank">{{ $config.emailAddressSupport }}</a>.
         </div>
-        <div v-if="!isInIframe" class="pt-4">
+        <div v-if="!isInIframe && !$isBookmarklet" class="pt-4">
           <v-btn id="return-home-btn" icon @click="$router.push('/', $_.noop)">
             <span class="sr-only">Go home</span>
             <font-awesome-icon icon="home" />
           </v-btn>
         </div>
-        <div v-if="isInIframe" class="pt-4">
+        <div v-if="isInIframe || $isBookmarklet" class="pt-4">
           <v-btn id="go-back-btn" icon @click="$router.go(-2)">
             Back
           </v-btn>
