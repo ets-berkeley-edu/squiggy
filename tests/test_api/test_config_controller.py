@@ -28,9 +28,8 @@ class TestConfigController:
     """Config API."""
 
     def test_anonymous(self, client):
-        """Denies anonymous user."""
-        response = client.get('/api/config')
-        assert response.status_code == 401
+        """Do not deny the anonymous user."""
+        assert client.get('/api/config').status_code == 200
 
     def test_logged_in(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response to logged-in user."""

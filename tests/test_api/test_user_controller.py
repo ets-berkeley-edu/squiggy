@@ -49,7 +49,11 @@ class TestMyProfile:
 
     def test_anonymous(self, client):
         """Denies anonymous user."""
-        _api_my_profile(client, expected_status_code=401)
+        api_json = _api_my_profile(client)
+        assert not api_json['isAuthenticated']
+        assert not api_json['isAdmin']
+        assert not api_json.get('id')
+        assert not api_json.get('course')
 
     def test_admin_profile(self, client, fake_auth, authorized_user_id):
         fake_auth.login(authorized_user_id)
