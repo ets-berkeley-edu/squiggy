@@ -40,6 +40,7 @@ activities_object_type = ENUM(
     'canvas_discussion',
     'canvas_submission',
     'comment',
+    'whiteboard',
     name='enum_activities_object_type',
     create_type=False,
 )

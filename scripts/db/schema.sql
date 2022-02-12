@@ -41,7 +41,8 @@ CREATE TYPE enum_activities_object_type AS ENUM (
     'asset',
     'canvas_discussion',
     'canvas_submission',
-    'comment'
+    'comment',
+    'whiteboard'
 );
 
 --
@@ -57,8 +58,13 @@ CREATE TYPE enum_activities_type AS ENUM (
     'get_asset_comment',
     'get_asset_comment_reply',
     'get_asset_like',
-    'get_asset_view',    
-    'get_discussion_entry_reply'
+    'get_asset_view',
+    'get_discussion_entry_reply',
+    'get_remix_whiteboard'
+    'get_whiteboard_add_asset',
+    'whiteboard_add_asset',
+    'whiteboard_export',
+    'whiteboard_remix'
 );
 
 --
