@@ -38,6 +38,7 @@ from squiggy.models.comment import Comment
 from squiggy.models.course import Course
 from squiggy.models.user import User
 import squiggy.factory  # noqa
+from squiggy.models.whiteboard import Whiteboard
 from tests.util import override_config  # noqa
 
 os.environ['SQUIGGY_ENV'] = 'test'  # noqa
@@ -200,7 +201,7 @@ def mock_asset(app, db_session):
     for test_comment in _get_mock_comments():
         comment = Comment.create(asset=asset, body=test_comment['body'], user_id=user.id)
         for reply in test_comment.get('replies', []):
-            reply = Comment.create(
+            Comment.create(
                 asset=asset,
                 body=reply['body'],
                 parent_id=comment.id,
@@ -208,6 +209,36 @@ def mock_asset(app, db_session):
             )
     std_commit(allow_test_environment=True)
     yield asset
+    db_session.delete(asset)
+    std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
+def mock_whiteboard(app, db_session):
+    course = Course.create(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=randrange(1000000),
+    )
+    course = Course.query.order_by(Course.name).all()[0]
+    canvas_user_id = str(randint(1000000, 9999999))
+    user = User.create(
+        canvas_course_role='Student',
+        canvas_course_sections=[],
+        canvas_email=f'{canvas_user_id}@berkeley.edu',
+        canvas_enrollment_state='active',
+        canvas_full_name=f'Student {canvas_user_id}',
+        canvas_user_id=canvas_user_id,
+        course_id=course.id,
+    )
+    asset = Whiteboard.create(
+        course_id=course.id,
+        title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',
+        users=[user],
+    )
+    std_commit(allow_test_environment=True)
+
+    yield asset
+
     db_session.delete(asset)
     std_commit(allow_test_environment=True)
 

@@ -35,7 +35,7 @@ from squiggy.lib.util import is_admin, is_teaching, isoformat, to_int, utc_now
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.course import Course
-
+from squiggy.models.whiteboard_user import whiteboard_user_table
 
 canvas_enrollment_state_type = ENUM(
     'active',
@@ -72,6 +72,11 @@ class User(Base):
         lazy='dynamic',
     )
     course = db.relationship(Course.__name__, back_populates='users')
+    whiteboards = db.relationship(
+        'Whiteboard',
+        back_populates='users',
+        secondary=whiteboard_user_table,
+    )
 
     def __init__(
         self,

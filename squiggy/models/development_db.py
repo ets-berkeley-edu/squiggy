@@ -33,9 +33,9 @@ from squiggy.models.canvas import Canvas
 from squiggy.models.category import Category
 from squiggy.models.course import Course
 from squiggy.models.user import User
+from squiggy.models.whiteboard import Whiteboard
 
-
-_test_activities = [
+_test_asset_activities = [
     {
         'type': 'asset_add',
         'object_type': 'asset',
@@ -55,6 +55,16 @@ _test_activity_types = [
     {
         'type': 'asset_comment',
         'points': 2,
+        'enabled': True,
+    },
+    {
+        'type': 'whiteboard_remix',
+        'points': 0,
+        'enabled': True,
+    },
+    {
+        'type': 'whiteboard_export',
+        'points': 10,
         'enabled': True,
     },
 ]
@@ -133,6 +143,26 @@ _test_users = [
     },
 ]
 
+_test_whiteboards = [
+    {
+        'title': 'Loaded',
+    },
+    {
+        'title': 'White Light/White Heat',
+    },
+]
+
+_test_whiteboard_activities = [
+    {
+        'type': 'whiteboard_add_asset',
+        'object_type': 'whiteboard',
+    },
+    {
+        'type': 'whiteboard_export',
+        'object_type': 'whiteboard',
+    },
+]
+
 
 def clear():
     with open(app.config['BASE_DIR'] + '/scripts/db/drop_schema.sql', 'r') as ddlfile:
@@ -145,7 +175,9 @@ def load():
     courses = _create_courses()
     users = _create_users(courses)
     assets = _create_assets(courses, users)
-    _create_activities(assets, users)
+    _create_asset_activities(assets, users)
+    whiteboards = _create_whiteboards(courses, users)
+    _create_whiteboard_activities(users[0], whiteboards[0])
     _create_activity_types(courses)
     return db
 
@@ -233,10 +265,10 @@ def _create_assets(courses, users):
     return assets
 
 
-def _create_activities(assets, users):
+def _create_asset_activities(assets, users):
     asset = assets[0]
     user = users[0]
-    for test_activity in _test_activities:
+    for test_activity in _test_asset_activities:
         Activity.create(
             activity_type=test_activity['type'],
             course_id=asset.course_id,
@@ -258,6 +290,34 @@ def _create_activity_types(courses):
             points=test_activity_type['points'],
         )
     Activity.recalculate_points(course_id=course.id)
+    std_commit(allow_test_environment=True)
+
+
+def _create_whiteboards(courses, users):
+    course_id = courses[0].id
+    whiteboards = []
+    for w in _test_whiteboards:
+        whiteboard = Whiteboard.create(
+            course_id=course_id,
+            title=w['title'],
+            users=[users[0]],
+        )
+        db.session.add(whiteboard)
+        whiteboards.append(whiteboard)
+    std_commit(allow_test_environment=True)
+    return whiteboards
+
+
+def _create_whiteboard_activities(user, whiteboard):
+    return
+    for test_activity in _test_whiteboard_activities:
+        Activity.create(
+            activity_type=test_activity['type'],
+            course_id=whiteboard.course_id,
+            user_id=user.id,
+            object_type=test_activity['object_type'],
+            object_id=whiteboard.id,
+        )
     std_commit(allow_test_environment=True)
 
 

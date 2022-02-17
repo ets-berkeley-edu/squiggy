@@ -42,8 +42,8 @@ activities_type = ENUM(
     'get_asset_like',
     'get_asset_view',
     'get_discussion_entry_reply',
-    'get_remix_whiteboard'
     'get_whiteboard_add_asset',
+    'get_whiteboard_remix'
     'whiteboard_add_asset',
     'whiteboard_export',
     'whiteboard_remix',
@@ -209,6 +209,36 @@ DEFAULT_ACTIVITY_TYPE_CONFIGURATION = [
         'type': 'get_discussion_entry_reply',
         'title': 'Receive a reply on an entry in Discussions',
         'points': 1,
+        'enabled': True,
+    },
+    {
+        'type': 'whiteboard_add_asset',
+        'title': 'Add an asset to a whiteboard',
+        'points': 0,
+        'enabled': True,
+    },
+    {
+        'type': 'whiteboard_export',
+        'title': 'Export a whiteboard to the Asset Library',
+        'points': 10,
+        'enabled': True,
+    },
+    {
+        'type': 'get_whiteboard_add_asset',
+        'title': 'Have one\'s asset added to a whiteboard',
+        'points': 0,
+        'enabled': True,
+    },
+    {
+        'type': 'get_whiteboard_remix',
+        'title': 'Have one\'s whiteboard remixed',
+        'points': 0,
+        'enabled': True,
+    },
+    {
+        'type': 'whiteboard_remix',
+        'title': 'Remix a whiteboard',
+        'points': 0,
         'enabled': True,
     },
 ]

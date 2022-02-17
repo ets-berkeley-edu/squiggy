@@ -48,6 +48,9 @@ ALTER TABLE IF EXISTS ONLY public.asset_categories DROP CONSTRAINT IF EXISTS ass
 ALTER TABLE IF EXISTS ONLY public.asset_users DROP CONSTRAINT IF EXISTS asset_users_asset_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.asset_users DROP CONSTRAINT IF EXISTS asset_users_user_id_fkey;
 
+ALTER TABLE IF EXISTS ONLY public.asset_whiteboard_elements DROP CONSTRAINT IF EXISTS asset_whiteboard_elements_asset_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asset_whiteboard_elements DROP CONSTRAINT IF EXISTS asset_whiteboard_elements_element_asset_id_fkey;
+
 ALTER TABLE IF EXISTS ONLY public.assets DROP CONSTRAINT IF EXISTS assets_course_id_fkey;
 
 ALTER TABLE IF EXISTS ONLY public.categories DROP CONSTRAINT IF EXISTS categories_course_id_fkey;
@@ -63,6 +66,17 @@ ALTER TABLE IF EXISTS ONLY public.canvas_poller_api_keys
 
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_course_id_fkey;
 
+ALTER TABLE IF EXISTS ONLY public.whiteboard_elements DROP CONSTRAINT IF EXISTS whiteboard_elements_asset_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.whiteboard_elements DROP CONSTRAINT IF EXISTS whiteboard_elements_whiteboard_id_fkey;
+
+ALTER TABLE IF EXISTS ONLY public.whiteboard_sessions DROP CONSTRAINT IF EXISTS whiteboard_sessions_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.whiteboard_sessions DROP CONSTRAINT IF EXISTS whiteboard_sessions_whiteboard_id_fkey;
+
+ALTER TABLE IF EXISTS ONLY public.whiteboard_users DROP CONSTRAINT IF EXISTS whiteboard_users_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.whiteboard_users DROP CONSTRAINT IF EXISTS whiteboard_users_whiteboard_id_fkey;
+
+ALTER TABLE IF EXISTS ONLY public.whiteboards DROP CONSTRAINT IF EXISTS whiteboards_course_id_fkey;
+
 --
 
 ALTER TABLE IF EXISTS ONLY public.activities DROP CONSTRAINT IF EXISTS activities_pkey;
@@ -74,6 +88,8 @@ ALTER TABLE IF EXISTS public.activity_types ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS ONLY public.asset_categories DROP CONSTRAINT IF EXISTS asset_categories_pkey;
 
 ALTER TABLE IF EXISTS ONLY public.asset_users DROP CONSTRAINT IF EXISTS asset_users_pkey;
+
+ALTER TABLE IF EXISTS ONLY public.asset_whiteboard_elements DROP CONSTRAINT IF EXISTS asset_whiteboard_elements_pkey;
 
 ALTER TABLE IF EXISTS ONLY public.assets DROP CONSTRAINT IF EXISTS assets_pkey;
 ALTER TABLE IF EXISTS public.assets ALTER COLUMN id DROP DEFAULT;
@@ -97,6 +113,15 @@ ALTER TABLE IF EXISTS public.courses ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
 ALTER TABLE IF EXISTS public.users ALTER COLUMN id DROP DEFAULT;
 
+ALTER TABLE IF EXISTS ONLY public.whiteboard_elements DROP CONSTRAINT IF EXISTS whiteboard_elements_pkey;
+
+ALTER TABLE IF EXISTS ONLY public.whiteboard_sessions DROP CONSTRAINT IF EXISTS whiteboard_sessions_pkey;
+
+ALTER TABLE IF EXISTS ONLY public.whiteboard_users DROP CONSTRAINT IF EXISTS whiteboard_users_pkey;
+
+ALTER TABLE IF EXISTS ONLY public.whiteboards DROP CONSTRAINT IF EXISTS whiteboards_pkey;
+ALTER TABLE IF EXISTS public.whiteboards ALTER COLUMN id DROP DEFAULT;
+
 --
 
 DROP INDEX IF EXISTS activities_actor_id_idx;
@@ -119,6 +144,7 @@ DROP SEQUENCE IF EXISTS public.activity_types_id_seq;
 DROP TABLE IF EXISTS public.activity_types;
 DROP TABLE IF EXISTS public.asset_categories;
 DROP TABLE IF EXISTS public.asset_users;
+DROP TABLE IF EXISTS public.asset_whiteboard_elements;
 DROP SEQUENCE IF EXISTS public.assets_id_seq;
 DROP TABLE IF EXISTS public.assets;
 DROP TABLE IF EXISTS public.canvas;
@@ -131,6 +157,11 @@ DROP SEQUENCE IF EXISTS public.courses_id_seq;
 DROP TABLE IF EXISTS public.courses;
 DROP SEQUENCE IF EXISTS public.users_id_seq;
 DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.whiteboard_elements;
+DROP TABLE IF EXISTS public.whiteboard_sessions;
+DROP TABLE IF EXISTS public.whiteboard_users;
+DROP SEQUENCE IF EXISTS public.whiteboards_id_seq;
+DROP TABLE IF EXISTS public.whiteboards;
 
 --
 
