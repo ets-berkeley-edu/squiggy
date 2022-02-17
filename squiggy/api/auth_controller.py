@@ -32,7 +32,7 @@ from squiggy.api.api_util import start_login_session
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
-from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX
+from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS
 from squiggy.lib.util import to_int, utc_now
 from squiggy.logger import logger
 from squiggy.models.activity import Activity
@@ -80,6 +80,11 @@ def lti_launch_asset_library():
 @app.route('/api/auth/lti_launch/engagement_index', methods=['POST'])
 def lti_launch_engagement_index():
     return _lti_launch(TOOL_ID_ENGAGEMENT_INDEX)
+
+
+@app.route('/api/auth/lti_launch/whiteboards', methods=['POST'])
+def lti_launch_whiteboards():
+    return _lti_launch(TOOL_ID_WHITEBOARDS)
 
 
 def _canvas_external_tool_url(s, headers):
