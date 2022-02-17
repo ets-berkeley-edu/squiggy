@@ -37,7 +37,7 @@ from squiggy.lib.aws import get_s3_signed_url, put_binary_data_to_s3
 from squiggy.lib.errors import InternalServerError
 from squiggy.lib.http import request
 from squiggy.lib.previews import generate_previews
-from squiggy.lib.util import camelize, isoformat, utc_now
+from squiggy.lib.util import db_row_to_dict, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset_category import asset_category_table
 from squiggy.models.base import Base
@@ -257,25 +257,12 @@ class Asset(Base):
             ON au.user_id = u.id AND au.asset_id = ANY(:asset_ids)
             ORDER BY au.asset_id""")
         users_result = db.session.execute(users_query, {'asset_ids': asset_ids})
-
-        def _row_to_json_obj(row):
-            d = dict(row)
-            json_obj = dict()
-            for key in d.keys():
-                if key.endswith('_at'):
-                    json_obj[camelize(key)] = isoformat(d[key])
-                elif isinstance(d[key], dict):
-                    json_obj[camelize(key)] = _row_to_json_obj(d[key])
-                else:
-                    json_obj[camelize(key)] = d[key]
-            return json_obj
-
         users_by_asset = dict()
         for asset_id, user_rows in groupby(users_result, lambda r: r['asset_id']):
-            users_by_asset[asset_id] = [_row_to_json_obj(r) for r in user_rows]
+            users_by_asset[asset_id] = [db_row_to_dict(r) for r in user_rows]
 
         def _row_to_json_asset(row):
-            json_asset = _row_to_json_obj(row)
+            json_asset = db_row_to_dict(row)
 
             # Has the current user liked the asset?
             json_asset['liked'] = (json_asset['activityType'] == 'asset_like')
