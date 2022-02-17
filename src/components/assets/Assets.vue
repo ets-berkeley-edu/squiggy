@@ -20,14 +20,14 @@ import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import CreateAssetCard from '@/components/assets/CreateAssetCard'
-import InfiniteLoading from '@/mixins/InfiniteLoading'
+import InfiniteScrolling from '@/mixins/InfiniteScrolling'
 import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Assets',
   components: {AssetCard, AssetsHeader, CreateAssetCard, SyncDisabled},
-  mixins: [AssetsSearch, Context, InfiniteLoading, Utils],
+  mixins: [AssetsSearch, Context, InfiniteScrolling, Utils],
   data: () => ({
     anchor: null,
     isComplete: false

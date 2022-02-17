@@ -108,8 +108,13 @@ class Whiteboard(Base):
             current_user,
             limit,
             offset,
+            order_by,
     ):
-        sql = """
+        order_by_clause = {
+            'recent': 'w.id DESC',
+        }.get(order_by)
+
+        sql = f"""
             SELECT * FROM whiteboards w
             LEFT JOIN whiteboard_users wu ON w.id = wu.whiteboard_id
             LEFT JOIN users u ON wu.user_id = u.id
@@ -121,7 +126,7 @@ class Whiteboard(Base):
             WHERE
                 w.deleted_at IS NULL
                 AND w.course_id = :course_id
-            ORDER BY w.id DESC
+            ORDER BY {order_by_clause}
             LIMIT :limit OFFSET :offset
         """
         params = {

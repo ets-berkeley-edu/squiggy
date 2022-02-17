@@ -26,6 +26,8 @@ import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
 import store from '@/store'
 import Vue from 'vue'
+import WhiteboardCreate from '@/components/whiteboards/WhiteboardCreate.vue'
+import Whiteboards from '@/components/whiteboards/Whiteboards.vue'
 
 Vue.use(Router)
 
@@ -147,6 +149,20 @@ const router = new Router({
           component: PointsConfiguration,
           meta: {
             title: 'Points Configuration'
+          }
+        },
+        {
+          path: '/whiteboard/create',
+          component: WhiteboardCreate,
+          meta: {
+            title: 'Create Whiteboard'
+          }
+        },
+        {
+          path: '/whiteboards',
+          component: Whiteboards,
+          meta: {
+            title: 'Whiteboards'
           }
         }
       ]
