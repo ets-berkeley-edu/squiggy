@@ -28,6 +28,7 @@ from squiggy.models.canvas import Canvas
 
 TOOL_ID_ASSET_LIBRARY = 'suitec:asset_library'
 TOOL_ID_ENGAGEMENT_INDEX = 'suitec:engagement_index'
+TOOL_ID_WHITEBOARDS = 'suitec:whiteboards'
 
 
 class LtiRequestValidator(RequestValidator):
@@ -85,5 +86,13 @@ def get_tool_metadata(host, tool_id):
             """,
             'launch_url': launch_url,
             'title': 'Engagement Index',
+        },
+        TOOL_ID_WHITEBOARDS: {
+            'description': """
+            The Whiteboards Tool allows for students to collaboratively work on whiteboards.
+            Whiteboards can be used to remix assets from the Asset Library, create mind-maps, provide feedback, etc.
+        """,
+            'launch_url': launch_url,
+            'title': 'Whiteboards',
         },
     }.get(tool_id, None)
