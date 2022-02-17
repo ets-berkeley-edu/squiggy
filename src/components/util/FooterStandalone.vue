@@ -31,6 +31,12 @@
                 <font-awesome-icon icon="list-ol" />
               </v-btn>
             </div>
+            <div>
+              <v-btn id="go-whiteboards-btn" icon @click="go('/whiteboards')">
+                <span class="sr-only">Go to Whiteboards</span>
+                <font-awesome-icon icon="pen-to-square" />
+              </v-btn>
+            </div>
           </div>
         </v-col>
         <v-col>

@@ -3,7 +3,7 @@ import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 
 export default {
-  name: 'InfiniteLoading',
+  name: 'InfiniteScrolling',
   mixins: [Context, Utils],
   data() {
     return {

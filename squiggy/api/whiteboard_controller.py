@@ -52,12 +52,14 @@ def get_whiteboard(whiteboard_id):
 @login_required
 def get_whiteboards():
     params = request.get_json()
-    offset = params.get('offset')
     limit = params.get('limit')
+    offset = params.get('offset')
+    order_by = params.get('orderBy') or 'recent'
     return tolerant_jsonify(Whiteboard.get_whiteboards(
         current_user=current_user,
         limit=limit,
         offset=offset,
+        order_by=order_by,
     ))
 
 
