@@ -51,12 +51,14 @@ def get_whiteboard(whiteboard_id):
 @app.route('/api/whiteboards', methods=['POST'])
 @login_required
 def get_whiteboards():
-    # TODO
-    # params = request.get_json()
-    # order_by = _get(params, 'orderBy', 'recent')
-    # offset = params.get('offset')
-    # limit = params.get('limit')
-    return tolerant_jsonify([w.to_api_json() for w in Whiteboard.get_whiteboards()])
+    params = request.get_json()
+    offset = params.get('offset')
+    limit = params.get('limit')
+    return tolerant_jsonify(Whiteboard.get_whiteboards(
+        current_user=current_user,
+        limit=limit,
+        offset=offset,
+    ))
 
 
 @app.route('/api/whiteboard/create', methods=['POST'])

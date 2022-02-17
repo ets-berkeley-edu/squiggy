@@ -39,6 +39,20 @@ def camelize(string):
     return ''.join(next(string_transform)(segment) for segment in string.split('_'))
 
 
+def db_row_to_dict(row):
+    d = dict(row)
+    json_obj = dict()
+    for key in d.keys():
+        value = d[key]
+        if key.endswith('_at') or isinstance(value, datetime):
+            json_obj[camelize(key)] = isoformat(value)
+        elif isinstance(value, dict):
+            json_obj[camelize(key)] = db_row_to_dict(value)
+        else:
+            json_obj[camelize(key)] = value
+    return json_obj
+
+
 def is_admin(user):
     return user.canvas_course_role and 'admin' in user.canvas_course_role.lower()
 

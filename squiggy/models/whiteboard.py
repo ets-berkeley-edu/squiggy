@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat, utc_now
+from squiggy.lib.util import db_row_to_dict, isoformat, utc_now
 from squiggy.models.base import Base
 from squiggy.models.whiteboard_user import whiteboard_user_table
 
@@ -103,8 +103,39 @@ class Whiteboard(Base):
             std_commit()
 
     @classmethod
-    def get_whiteboards(cls):
-        return cls.query.order_by(cls.title).all()
+    def get_whiteboards(
+            cls,
+            current_user,
+            limit,
+            offset,
+    ):
+        sql = """
+            SELECT * FROM whiteboards w
+            LEFT JOIN whiteboard_users wu ON w.id = wu.whiteboard_id
+            LEFT JOIN users u ON wu.user_id = u.id
+            LEFT JOIN activities act ON
+                act.object_type = 'whiteboard'
+                AND w.id = act.object_id
+                AND act.course_id = :course_id
+                AND act.user_id = :user_id
+            WHERE
+                w.deleted_at IS NULL
+                AND w.course_id = :course_id
+            ORDER BY w.id DESC
+            LIMIT :limit OFFSET :offset
+        """
+        params = {
+            'course_id': current_user.course.id,
+            'user_id': current_user.user_id,
+            'offset': offset,
+            'limit': limit,
+        }
+        results = [db_row_to_dict(row) for row in list(db.session.execute(sql, params))]
+        return {
+            'offset': offset,
+            'total': len(results),
+            'results': results,
+        }
 
     @classmethod
     def update(cls, whiteboard_id, title):
