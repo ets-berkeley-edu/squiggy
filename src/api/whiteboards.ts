@@ -1,8 +1,8 @@
 import axios from 'axios'
 import utils from '@/api/api-utils'
 
-export function createWhiteboard(title) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/create`, {title})
+export function createWhiteboard(title, userIds) {
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/create`, {title, userIds})
 }
 
 export function deleteWhiteboard(whiteboardId) {

@@ -56,7 +56,7 @@ def get_whiteboards():
     offset = params.get('offset')
     order_by = params.get('orderBy') or 'recent'
     return tolerant_jsonify(Whiteboard.get_whiteboards(
-        current_user=current_user,
+        course_id=current_user.course.id,
         limit=limit,
         offset=offset,
         order_by=order_by,
@@ -70,13 +70,14 @@ def create_whiteboard():
         raise BadRequestError('Course data not found')
     params = request.get_json() or request.form
     title = params.get('title')
-    if not title:
+    user_ids = params.get('userIds')
+    if not title or not user_ids:
         raise BadRequestError('Title is required.')
 
     whiteboard = Whiteboard.create(
         course_id=current_user.course.id,
         title=title,
-        users=[User.find_by_id(current_user.get_id())],
+        users=User.find_by_ids(user_ids),
     )
     return tolerant_jsonify(whiteboard.to_api_json())
 

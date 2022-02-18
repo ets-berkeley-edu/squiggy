@@ -14,11 +14,6 @@
           <font-awesome-icon class="mr-2" icon="plus" />
           <span class="sr-only">Create new </span>Whiteboard
         </v-btn>
-        <!--        <v-btn @click data-ng-href="/whiteboards/create">-->
-        <!--          <i class="fa fa-plus-circle"></i>-->
-        <!--          <span class="sr-only">Add </span>-->
-        <!--          <span>Whiteboard</span>-->
-        <!--        </v-btn>-->
       </div>
     </div>
     <v-alert
@@ -31,24 +26,23 @@
     >
       <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
     </v-alert>
+    <!--
     <div data-ng-if="me.is_admin && (!me.course.active || me.course.reactivated)" data-ng-include="'/app/shared/syncdisabled.html'"></div>
+    -->
     <div v-if="!$_.isNil(totalWhiteboardCount) && !totalWhiteboardCount">
-      <!-- SEARCH -->
       <WhiteboardSearch />
-      <!--
-      <whiteboards-search
-        data-is-advanced-search="isAdvancedSearch"
-        data-search-options-keywords="searchOptions.keywords"
-        data-search-options-user="searchOptions.user"
-        class="col-xs-{{ isAdvancedSearch ? 12 : 8 }} whiteboards-list-search-container"></whiteboards-search>
-      -->
     </div>
     <!--
+    <whiteboards-search
+      data-is-advanced-search="isAdvancedSearch"
+      data-search-options-keywords="searchOptions.keywords"
+      data-search-options-user="searchOptions.user"
+      class="col-xs-{{ isAdvancedSearch ? 12 : 8 }} whiteboards-list-search-container"
+    />
     <div role="alert" data-ng-if="popupBlocked">
       Your browser prevented us from opening the whiteboard. <strong><a target="_blank" data-ng-href="{{generateWhiteboardURL(deepLinkedWhiteboard)}}">Open the whiteboard.</a></strong>
     </div>
     -->
-
     <v-card class="d-flex flex-wrap" flat tile>
       <WhiteboardCard
         v-for="(whiteboard, index) in whiteboardGrid"
@@ -82,9 +76,7 @@
         </li>
       </ul>
     </div>
-    -->
 
-    <!--
     <div class="alert alert-info whiteboards-list-alert" data-ng-if="hasRequested && whiteboards.length === 0">
       <span data-ng-if="!isSearch">
         You don't have any whiteboards yet. <strong><a data-ng-href="/whiteboards/create">Create your first whiteboard</a></strong>
@@ -143,8 +135,6 @@ export default {
       this.stopInfiniteLoading()
       this.getBookmarkHash().then(bookmarkHash => {
         if (bookmarkHash && Object.keys(bookmarkHash).length) {
-          this.setWhiteboardType(bookmarkHash.whiteboardType)
-          this.setCategoryId(bookmarkHash.categoryId)
           this.setOrderBy(bookmarkHash.orderBy)
           this.setUserId(parseInt(bookmarkHash.userId, 10))
           this.$announcer.polite('Searching for matching whiteboards')
@@ -152,21 +142,9 @@ export default {
             this.handleResults(data, true)
           })
         } else if (this.$route.query.userId) {
-          this.setWhiteboardType(undefined)
-          this.setCategoryId(undefined)
           this.setUserId(parseInt(this.$route.query.userId, 10))
           this.$router.replace({query: {userId: undefined}})
           this.$announcer.polite('Searching for whiteboards by user')
-          this.search().then(data => {
-            this.updateSearchBookmark()
-            this.handleResults(data, true)
-          })
-        } else if (this.$route.query.categoryId) {
-          this.setWhiteboardType(undefined)
-          this.setCategoryId(parseInt(this.$route.query.categoryId, 10))
-          this.setUserId(undefined)
-          this.$router.replace({query: {categoryId: undefined}})
-          this.$announcer.polite('Searching for whiteboards by category')
           this.search().then(data => {
             this.updateSearchBookmark()
             this.handleResults(data, true)
@@ -179,8 +157,8 @@ export default {
   },
   methods: {
     fetch() {
-      return this.nextPage().then(data => {
-        if (data.results.length) {
+      return this.nextPage().then(() => {
+        if (this.totalWhiteboardCount) {
           this.$announcer.polite(`${this.whiteboards.length} of ${this.totalWhiteboardCount} whiteboards loaded.`)
         } else {
           this.isComplete = true
@@ -190,17 +168,14 @@ export default {
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     handleResults(data, isSearching) {
-      const whiteboardTotal = data ? data.total : this.totalWhiteboardCount
-      this.isComplete = data ? !data.results.length : (this.whiteboards.length === this.totalWhiteboardCount)
-
-      let announcement = null
       if (this.isReturning) {
-        announcement = 'Returning to Whiteboard Library'
-      } else if (isSearching) {
-        announcement = `${whiteboardTotal} matching ${whiteboardTotal === 1 ? 'whiteboard' : 'whiteboards'} found`
+        this.$ready('Whiteboards', null, 'Returning to Whiteboards')
+      } else {
+        const label = this.totalWhiteboardCount === 1 ? 'whiteboard' : 'whiteboards'
+        const announce = isSearching ? `${this.totalWhiteboardCount} matching ${label} found` : null
+        this.$ready('Whiteboards', null, announce)
       }
-      this.$ready('Whiteboard Library', null, announcement)
-
+      this.isComplete = this.whiteboards.length === this.totalWhiteboardCount
       if (!this.isComplete) {
         this.startInfiniteLoading(this.fetch, {threshold: 800})
       }

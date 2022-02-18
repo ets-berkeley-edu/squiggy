@@ -36,29 +36,6 @@
             </v-card-text>
           </v-img>
         </v-sheet>
-        <v-card-actions class="actions">
-          <div class="d-flex justify-end w-100">
-            <div>
-              <div class="align-center d-flex">
-                <!--  <div class="pr-3"> -->
-                <!--    <font-awesome-icon icon="thumbs-up" :class="{'whiteboard-icon-liked': whiteboard.liked}" /> -->
-                <!--    {{ whiteboard.likes }} -->
-                <!--    <span class="sr-only">{{ whiteboard.likes === 1 ? 'like' : 'likes' }}</span> -->
-                <!--  </div> -->
-                <div class="pr-3">
-                  <font-awesome-icon icon="eye" />
-                  {{ whiteboard.views }}
-                  <span class="sr-only">{{ whiteboard.views === 1 ? 'view' : 'views' }}</span>
-                </div>
-                <!--  <div> -->
-                <!--    <font-awesome-icon icon="comment" /> -->
-                <!--    {{ whiteboard.commentCount }} -->
-                <!--    <span class="sr-only">{{ whiteboard.commentCount === 1 ? 'comment' : 'comments' }}</span> -->
-                <!--  </div> -->
-              </div>
-            </div>
-          </div>
-        </v-card-actions>
       </v-card>
     </kinesis-element>
   </kinesis-container>
@@ -100,9 +77,6 @@ export default {
 <style scoped>
 .actions {
   padding: 6px 12px 4px 0;
-}
-.whiteboard-icon-liked {
-  color: #4172b4 !important;
 }
 .whiteboard-metadata {
   background-color: #333;
