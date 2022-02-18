@@ -1,7 +1,6 @@
 <template>
   <div>
     <BackToWhiteboards />
-
     <v-container v-if="!isLoading" fluid>
       <v-row no-gutters>
         <v-col>
@@ -9,7 +8,7 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="2">
+        <v-col class="pt-5" cols="2">
           <label class="float-right" for="whiteboard-title-input">
             Title
             <font-awesome-icon
@@ -31,20 +30,20 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="2">
+        <v-col class="pt-5" cols="2">
           <label class="float-right" for="whiteboard-description-textarea">Collaborators</label>
         </v-col>
         <v-col cols="10">
           <v-autocomplete
-            v-model="collaborators"
-            :disabled="isUpdating"
-            :items="people"
-            filled
+            id="selectedUsers-select"
+            v-model="selectedUsers"
             chips
             color="blue-grey lighten-2"
-            label="Select"
+            :disabled="isUpdating"
+            filled
             item-text="name"
-            item-value="name"
+            item-value="id"
+            :items="users"
             multiple
           >
             <template #selection="data">
@@ -67,7 +66,7 @@
               </template>
               <template v-else>
                 <v-list-item-avatar>
-                  <img :src="data.item.avatar">
+                  <img :aria-label="`Photo of ${data.item.name}`" :src="data.item.avatar">
                 </v-list-item-avatar>
                 <v-list-item-content>
                   <v-list-item-title v-html="data.item.name"></v-list-item-title>
@@ -153,6 +152,7 @@ import Context from '@/mixins/Context'
 import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 import {createWhiteboard} from '@/api/whiteboards'
+import {getUsers} from '@/api/users'
 
 export default {
   name: 'WhiteboardCreate',
@@ -160,27 +160,15 @@ export default {
   mixins: [Context, Utils],
   computed: {
     disableSave() {
-      return !this.$_.trim(this.title || '')
+      return !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUsers)
     }
   },
   data: () => ({
-    collaborators: ['Sandra Adams', 'Britta Holt'],
     isSaving: false,
     isUpdating: false,
-    people: [
-      {header: 'Group 1'},
-      {name: 'Sandra Adams', group: 'Group 1', avatar: 'https://cdn.vuetifyjs.com/images/lists/1.jpg'},
-      {name: 'Ali Connors', group: 'Group 1', avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'},
-      {name: 'Trevor Hansen', group: 'Group 1', avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'},
-      {name: 'Tucker Smith', group: 'Group 1', avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg'},
-      {divider: true},
-      {header: 'Group 2'},
-      {name: 'Britta Holt', group: 'Group 2', avatar: 'https://cdn.vuetifyjs.com/images/lists/4.jpg'},
-      {name: 'Jane Smith ', group: 'Group 2', avatar: 'https://cdn.vuetifyjs.com/images/lists/5.jpg'},
-      {name: 'John Smith', group: 'Group 2', avatar: 'https://cdn.vuetifyjs.com/images/lists/1.jpg'},
-      {name: 'Sandra Williams', group: 'Group 2', avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg'},
-    ],
+    selectedUsers: undefined,
     title: undefined,
+    users: undefined
   }),
   watch: {
     isUpdating(val) {
@@ -190,21 +178,53 @@ export default {
     }
   },
   created() {
-    this.$ready('Create Whiteboard')
+    this.selectedUsers = [this.$currentUser.id]
+    const usersBySection = {}
+    const usersOther = []
+    getUsers().then(data => {
+      const getUserJson = u => ({
+        avatar: u.canvasImage,
+        id: u.id,
+        name: u.canvasFullName
+      })
+      this.$_.each(data, user => {
+        const sections = user.canvasCourseSections
+        const userJson = getUserJson(user)
+        if (this.$_.size(sections)) {
+          this.$_.each(sections, section => {
+            if (!usersBySection[section]) {
+              usersBySection[section] = []
+            }
+            usersBySection[section] = userJson
+          })
+        } else {
+          usersOther.push(userJson)
+        }
+      })
+      this.users = []
+      this.$_.each(usersBySection, (userList, section) => {
+        this.users.push({header: section})
+        this.users.concat(userList)
+      })
+      this.users = this.users.concat(usersOther)
+      this.$ready('Create Whiteboard')
+    })
   },
   methods: {
     cancel() {
-      this.$announcer.polite(this.cancelButtonLabel === 'Close' ? 'Closed' : 'Canceled')
+      this.$announcer.polite('Canceled')
       this.go('/whiteboards')
     },
-    remove(collaborator) {
-      const index = this.collaborators.indexOf(collaborator.name)
-      if (index >= 0) this.collaborators.splice(index, 1)
+    remove(user) {
+      const index = this.selectedUsers.indexOf(user.id)
+      if (index >= 0) {
+        this.selectedUsers.splice(index, 1)
+      }
     },
     save() {
       this.isSaving = true
       this.$announcer.polite('Saving...')
-      createWhiteboard(this.title).then(() => {
+      createWhiteboard(this.title, this.selectedUsers).then(() => {
         this.$announcer.polite('Whiteboard created.')
         this.go('/whiteboards')
       })

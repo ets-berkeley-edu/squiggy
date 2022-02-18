@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from squiggy import db, std_commit
-from squiggy.lib.util import db_row_to_dict, isoformat, utc_now
+from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.base import Base
 from squiggy.models.whiteboard_user import whiteboard_user_table
 
@@ -105,7 +105,7 @@ class Whiteboard(Base):
     @classmethod
     def get_whiteboards(
             cls,
-            current_user,
+            course_id,
             limit,
             offset,
             order_by,
@@ -115,31 +115,55 @@ class Whiteboard(Base):
         }.get(order_by)
 
         sql = f"""
-            SELECT * FROM whiteboards w
+            SELECT
+                w.*, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name,
+                u.canvas_image, u.canvas_user_id, u.id AS user_id
+            FROM whiteboards w
             LEFT JOIN whiteboard_users wu ON w.id = wu.whiteboard_id
             LEFT JOIN users u ON wu.user_id = u.id
             LEFT JOIN activities act ON
                 act.object_type = 'whiteboard'
                 AND w.id = act.object_id
                 AND act.course_id = :course_id
-                AND act.user_id = :user_id
             WHERE
                 w.deleted_at IS NULL
                 AND w.course_id = :course_id
-            ORDER BY {order_by_clause}
+            ORDER BY {order_by_clause}, u.canvas_full_name
             LIMIT :limit OFFSET :offset
         """
         params = {
-            'course_id': current_user.course.id,
-            'user_id': current_user.user_id,
+            'course_id': course_id,
             'offset': offset,
             'limit': limit,
         }
-        results = [db_row_to_dict(row) for row in list(db.session.execute(sql, params))]
+        whiteboards_by_id = {}
+        for row in list(db.session.execute(sql, params)):
+            whiteboard_id = row['id']
+            whiteboard = whiteboards_by_id.get(whiteboard_id) or {
+                'id': whiteboard_id,
+                'course_id': row['course_id'],
+                'deleted_at': row['deleted_at'],
+                'image_url': row['image_url'],
+                'thumbnail_url': row['thumbnail_url'],
+                'title': row['title'],
+                'users': [],
+            }
+            user_id = row['user_id']
+            if user_id:
+                whiteboard['users'].append({
+                    'id': user_id,
+                    'canvasCourseRole': row['canvas_course_role'],
+                    'canvasCourseSections': row['canvas_course_sections'],
+                    'canvasEnrollmentState': row['canvas_enrollment_state'],
+                    'canvasFullName': row['canvas_full_name'],
+                    'canvasImage': row['canvas_image'],
+                    'canvasUserId': row['canvas_user_id'],
+                })
+            whiteboards_by_id[whiteboard_id] = whiteboard
         return {
             'offset': offset,
-            'total': len(results),
-            'results': results,
+            'results': list(whiteboards_by_id.values()),
+            'total': len(whiteboards_by_id),
         }
 
     @classmethod

@@ -98,9 +98,6 @@ const actions = {
     return new Promise<void>(resolve => {
       getUsers().then(data => {
         commit('setUsers', data)
-        // getCollaborators().then(data => {
-        //   commit('setCollaborators', data)
-        // })
         resolve()
       })
     })
