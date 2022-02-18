@@ -1,15 +1,24 @@
 <template>
   <div>
-    <div>
+    <div class="align-center d-flex justify-space-between py-3">
       <div>
         <h2>My whiteboards</h2>
       </div>
       <div>
-        <a data-ng-href="/whiteboards/create">
-          <i class="fa fa-plus-circle"></i>
-          <span class="sr-only">Add </span>
-          <span>Whiteboard</span>
-        </a>
+        <v-btn
+          id="done-btn"
+          color="primary"
+          @click="$router.push('/whiteboard/create', $_.noop)"
+          @keypress.enter="$router.push('/whiteboard/create', $_.noop)"
+        >
+          <font-awesome-icon class="mr-2" icon="plus" />
+          <span class="sr-only">Create new </span>Whiteboard
+        </v-btn>
+        <!--        <v-btn @click data-ng-href="/whiteboards/create">-->
+        <!--          <i class="fa fa-plus-circle"></i>-->
+        <!--          <span class="sr-only">Add </span>-->
+        <!--          <span>Whiteboard</span>-->
+        <!--        </v-btn>-->
       </div>
     </div>
     <v-alert
@@ -20,10 +29,10 @@
       type="success"
       elevation="2"
     >
-      <router-link to="/whiteboards/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
+      <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
     </v-alert>
     <div data-ng-if="me.is_admin && (!me.course.active || me.course.reactivated)" data-ng-include="'/app/shared/syncdisabled.html'"></div>
-    <div data-ng-if="me.is_admin">
+    <div v-if="!$_.isNil(totalWhiteboardCount) && !totalWhiteboardCount">
       <!-- SEARCH -->
       <WhiteboardSearch />
       <!--
