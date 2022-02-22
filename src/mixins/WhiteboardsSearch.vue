@@ -3,15 +3,15 @@ import Context from '@/mixins/Context'
 import {mapActions, mapGetters} from 'vuex'
 
 export default {
-  name: 'WhiteboardsSession',
+  name: 'WhiteboardsSearch',
   mixins: [Context],
   computed: {
     ...mapGetters('whiteboards', [
       'whiteboards',
-      'whiteboardType',
       'collaborators',
       'collaborator',
       'expanded',
+      'includeDeleted',
       'isDirty',
       'keywords',
       'limit',
@@ -38,6 +38,7 @@ export default {
       'search',
       'setCollaborator',
       'setExpanded',
+      'setIncludeDeleted',
       'setKeywords',
       'setOrderBy',
       'setUserId',

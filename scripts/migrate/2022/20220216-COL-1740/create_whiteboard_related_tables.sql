@@ -15,6 +15,7 @@ ALTER TABLE ONLY asset_whiteboard_elements
 --
 
 CREATE TABLE whiteboard_elements (
+    id integer NOT NULL,
     uid integer NOT NULL,
     element json NOT NULL,
     whiteboard_id integer NOT NULL,
@@ -23,8 +24,17 @@ CREATE TABLE whiteboard_elements (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
-ALTER TABLE ONLY whiteboard_elements
-    ADD CONSTRAINT whiteboard_elements_pkey PRIMARY KEY (uid, whiteboard_id);
+CREATE SEQUENCE whiteboard_elements_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER SEQUENCE whiteboard_elements_id_seq OWNED BY whiteboard_elements.id;
+ALTER TABLE ONLY whiteboard_elements ALTER COLUMN id SET DEFAULT nextval('whiteboard_elements_id_seq'::regclass);
+
+CREATE UNIQUE INDEX whiteboard_elements_created_at_uid_whiteboard_id_idx ON whiteboard_elements
+    USING btree (uid, whiteboard_id, created_at);
 
 --
 

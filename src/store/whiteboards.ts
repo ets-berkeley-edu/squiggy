@@ -7,6 +7,7 @@ const orderByDefault = 'recent'
 function $_search(commit, state, addToExisting?: boolean) {
   return new Promise(resolve => {
     getWhiteboards(
+      state.includeDeleted,
       state.limit,
       state.offset,
       state.orderBy,
@@ -22,10 +23,10 @@ function $_search(commit, state, addToExisting?: boolean) {
 
 const state = {
   whiteboards: undefined,
-  whiteboardType: undefined,
   collaborators: undefined,
   collaborator: undefined,
   expanded: undefined,
+  includeDeleted: false,
   isDirty: false,
   keywords: undefined,
   limit: 20,
@@ -39,10 +40,10 @@ const state = {
 
 const getters = {
   whiteboards: (state: any): any[] => state.whiteboards,
-  whiteboardType: (state: any): string => state.whiteboardType,
   collaborators: (state: any): any[] => state.collaborators,
   collaborator: (state: any): number => state.collaborator,
   expanded: (state: any): boolean => state.expanded,
+  includeDeleted: (state: any): boolean => state.includeDeleted,
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
@@ -56,10 +57,6 @@ const getters = {
 const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
   setWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards = whiteboards,
-  setWhiteboardType: (state: any, whiteboardType: string) => {
-    state.whiteboardType = whiteboardType
-    state.isDirty = true
-  },
   setCollaborators: (state: any, collaborators: any[]) => state.collaborators = collaborators,
   setCollaborator: (state: any, collaborator: number) => {
     state.collaborator = collaborator
@@ -67,6 +64,7 @@ const mutations = {
   },
   setDirty: (state: any, dirty: boolean) => state.isDirty = dirty,
   setExpanded: (state: any, expanded: boolean) => state.expanded = expanded,
+  setIncludeDeleted: (state: any, includeDeleted: boolean) => state.includeDeleted = includeDeleted,
   setKeywords: (state: any, keywords: string) => {
     state.keywords = keywords
     state.isDirty = true
@@ -110,6 +108,7 @@ const actions = {
   search: ({commit, state}) => $_search(commit, state),
   setCollaborator: ({commit}, collaborator) => commit('setCollaborator', collaborator),
   setExpanded: ({commit}, expanded) => commit('setExpanded', expanded),
+  setIncludeDeleted: ({commit}, includeDeleted) => commit('setIncludeDeleted', includeDeleted),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
   setUserId: ({commit}, userId) => commit('setUserId', userId),

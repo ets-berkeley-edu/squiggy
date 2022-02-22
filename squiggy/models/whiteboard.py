@@ -25,7 +25,9 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
+from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
+from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_user import whiteboard_user_table
 
 
@@ -51,14 +53,12 @@ class Whiteboard(Base):
         image_url=None,
         thumbnail_url=None,
         title=None,
-        whiteboard_elements=None,
     ):
         self.course_id = course_id
         self.image_url = image_url
         self.thumbnail_url = thumbnail_url
         self.title = title
         self.users = users or []
-        self.whiteboard_elements = whiteboard_elements or []
 
     def __repr__(self):
         return f"""<Whiteboard
@@ -106,6 +106,7 @@ class Whiteboard(Base):
     def get_whiteboards(
             cls,
             course_id,
+            include_deleted,
             limit,
             offset,
             order_by,
@@ -126,7 +127,7 @@ class Whiteboard(Base):
                 AND w.id = act.object_id
                 AND act.course_id = :course_id
             WHERE
-                w.deleted_at IS NULL
+                {'' if include_deleted else 'w.deleted_at IS NULL'}
                 AND w.course_id = :course_id
             ORDER BY {order_by_clause}, u.canvas_full_name
             LIMIT :limit OFFSET :offset
@@ -167,6 +168,33 @@ class Whiteboard(Base):
         }
 
     @classmethod
+    def reconstitute(cls, asset, course_id):
+        # Remix
+        whiteboard = cls.create(
+            course_id=course_id,
+            image_url=asset.image_url,
+            title=asset.title,
+        )
+        for asset_whiteboard_element in AssetWhiteboardElement.find_by_asset_id(asset.id):
+            WhiteboardElement.create(
+                asset_id=asset.id,
+                element=asset_whiteboard_element.element,  # TODO: Storage.signWhiteboardElementSrc(asset_whiteboard_element.element)
+                uid=whiteboard.uid,
+                whiteboard_id=whiteboard.id,
+            )
+        db.session.add(whiteboard)
+        std_commit()
+        return whiteboard
+
+    @classmethod
+    def undelete(cls, whiteboard_id, title):
+        whiteboard = cls.find_by_id(whiteboard_id)
+        whiteboard.title = title
+        db.session.add(whiteboard)
+        std_commit()
+        return whiteboard
+
+    @classmethod
     def update(cls, whiteboard_id, title):
         whiteboard = cls.find_by_id(whiteboard_id)
         whiteboard.title = title
@@ -175,12 +203,6 @@ class Whiteboard(Base):
         return whiteboard
 
     def to_api_json(self):
-        def _whiteboard_element_to_json(e):
-            return {
-                'element': e.element,
-                'uid': e.uid,
-                'assetId': e.asset_id,
-            }
         return {
             'id': self.id,
             'courseId': self.course_id,
@@ -188,7 +210,7 @@ class Whiteboard(Base):
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [u.to_api_json() for u in self.users],
-            'whiteboardElements': [_whiteboard_element_to_json(e) for e in self.whiteboard_elements],
+            'whiteboardElements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
             'createdAt': isoformat(self.created_at),
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
