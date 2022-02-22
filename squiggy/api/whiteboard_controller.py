@@ -30,6 +30,7 @@ from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_session import WhiteboardSession
 
 # TODO
 # GET: '/whiteboard/<whiteboard_id>/export/png',
@@ -42,6 +43,13 @@ from squiggy.models.whiteboard import Whiteboard
 def get_whiteboard(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
+        socket_id = request.args.get('socketId')
+        if socket_id:
+            WhiteboardSession.upsert(
+                socket_id=socket_id,
+                user_id=current_user.get_id(),
+                whiteboard_id=whiteboard_id,
+            )
         return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')

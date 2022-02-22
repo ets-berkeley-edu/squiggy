@@ -27,6 +27,7 @@ import Squiggy from '@/components/Squiggy.vue'
 import store from '@/store'
 import Vue from 'vue'
 import WhiteboardCreate from '@/components/whiteboards/WhiteboardCreate.vue'
+import Whiteboard from '@/components/whiteboards/Whiteboard.vue'
 import Whiteboards from '@/components/whiteboards/Whiteboards.vue'
 
 Vue.use(Router)
@@ -166,6 +167,13 @@ const router = new Router({
           }
         }
       ]
+    },
+    {
+      path: '/whiteboard/:id',
+      component: Whiteboard,
+      meta: {
+        title: 'Whiteboard'
+      }
     },
     {
       path: '/',

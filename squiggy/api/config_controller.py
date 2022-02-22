@@ -44,6 +44,7 @@ def app_config():
         'squiggyEnv': app.config['SQUIGGY_ENV'],
         'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],
+        'whiteboardsRefreshInterval': app.config['WHITEBOARDS_REFRESH_INTERVAL'],
     })
 
 

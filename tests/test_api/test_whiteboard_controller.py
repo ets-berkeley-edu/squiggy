@@ -116,7 +116,7 @@ class TestGetWhiteboards:
         )
         Whiteboard.delete(whiteboard.id)
         # Session
-        WhiteboardSession.create(
+        WhiteboardSession.upsert(
             socket_id=str('%032x' % random.getrandbits(128)),
             user_id=user.id,
             whiteboard_id=mock_whiteboard.id,

@@ -56,6 +56,13 @@ const getters = {
 
 const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
+  refresh: (state: any) => {
+    const updated = []
+    _.each(state.whiteboards, () => {
+      // TODO: getWhiteboard(whiteboard.id).then(data => updated.push(data))
+    })
+    state.whiteboards = updated
+  },
   setWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards = whiteboards,
   setCollaborators: (state: any, collaborators: any[]) => state.collaborators = collaborators,
   setCollaborator: (state: any, collaborator: number) => {
@@ -104,6 +111,7 @@ const actions = {
     commit('setOffset', state.offset + state.limit)
     return $_search(commit, state, true)
   },
+  refresh: ({commit}) => commit('refresh'),
   resetSearch: ({commit}) => commit('setOffset', 0),
   search: ({commit, state}) => $_search(commit, state),
   setCollaborator: ({commit}, collaborator) => commit('setCollaborator', collaborator),

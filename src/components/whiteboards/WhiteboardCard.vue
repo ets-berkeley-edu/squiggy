@@ -16,8 +16,8 @@
         :id="`whiteboard-${whiteboard.id}`"
         hover
         class="card-class"
-        @keypress.enter="go(`/whiteboard/${whiteboard.id}`)"
-        @click="go(`/whiteboard/${whiteboard.id}`)"
+        @keypress.enter="open(whiteboard)"
+        @click="open(whiteboard)"
       >
         <v-sheet elevation="1">
           <v-img
@@ -67,6 +67,10 @@ export default {
     }
   },
   methods: {
+    open(whiteboard) {
+      this.$announcer.assertive('Opening whiteboard in new tab')
+      window.open(this.$router.resolve({path: `/whiteboard/${whiteboard.id}`}).href)
+    },
     setImageError() {
       this.imageError = true
     }

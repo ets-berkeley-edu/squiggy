@@ -61,7 +61,8 @@ export default {
   components: {WhiteboardCard, WhiteboardsHeader},
   data: () => ({
     anchor: null,
-    isComplete: false
+    isComplete: false,
+    refreshJob: undefined
   }),
   computed: {
     whiteboardGrid() {
@@ -82,6 +83,9 @@ export default {
   created() {
     this.$loading(true)
   },
+  destroyed() {
+    clearTimeout(this.refreshJob)
+  },
   mounted() {
     this.anchor = this.$route.query.anchor
     this.isReturning = this.anchor && this.$_.size(this.whiteboards)
@@ -96,16 +100,16 @@ export default {
           this.setOrderBy(bookmarkHash.orderBy)
           this.setUserId(parseInt(bookmarkHash.userId, 10))
           this.$announcer.polite('Searching for matching whiteboards')
-          this.search().then(data => {
-            this.handleResults(data, true)
+          this.search().then(() => {
+            this.handleResults(true)
           })
         } else if (this.$route.query.userId) {
           this.setUserId(parseInt(this.$route.query.userId, 10))
           this.$router.replace({query: {userId: undefined}})
           this.$announcer.polite('Searching for whiteboards by user')
-          this.search().then(data => {
+          this.search().then(() => {
             this.updateSearchBookmark()
-            this.handleResults(data, true)
+            this.handleResults(true)
           })
         } else {
           this.search().then(this.handleResults)
@@ -125,7 +129,7 @@ export default {
       })
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
-    handleResults(data, isSearching) {
+    handleResults(isSearching) {
       if (this.isReturning) {
         this.$ready('Whiteboards', null, 'Returning to Whiteboards')
       } else {
@@ -141,6 +145,11 @@ export default {
         this.scrollTo(`#${this.anchor}`)
         this.$putFocusNextTick(this.anchor)
       }
+      this.scheduleRefreshJob()
+    },
+    scheduleRefreshJob() {
+      clearTimeout(this.refreshJob)
+      this.refreshJob = setTimeout(this.refresh, this.$config.whiteboardsRefreshInterval)
     }
   }
 }

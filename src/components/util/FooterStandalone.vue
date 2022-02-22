@@ -34,7 +34,7 @@
             <div>
               <v-btn id="go-whiteboards-btn" icon @click="go('/whiteboards')">
                 <span class="sr-only">Go to Whiteboards</span>
-                <font-awesome-icon icon="pen-to-square" />
+                <font-awesome-icon icon="palette" />
               </v-btn>
             </div>
           </div>
