@@ -56,8 +56,14 @@ def can_view_asset(asset, user):
     return user and (user.course.id == asset.course_id or user.is_admin)
 
 
+def can_update_whiteboard(user, whiteboard):
+    user_id = _get_user_id(user)
+    user_ids = [user['id'] for user in whiteboard['users']]
+    return user.course.id == whiteboard['courseId'] and (is_teaching(user) or is_admin(user) or user_id in user_ids)
+
+
 def can_view_whiteboard(whiteboard, user):
-    return user and (user.course.id == whiteboard.course_id or user.is_admin)
+    return user and (user.course.id == whiteboard['courseId'] or user.is_admin)
 
 
 def can_delete_comment(comment, user):

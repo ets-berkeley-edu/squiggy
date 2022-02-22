@@ -24,9 +24,14 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
+import random
 
+from squiggy import std_commit
 from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
+from squiggy.models.user import User
+from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_session import WhiteboardSession
 
 unauthorized_user_id = '666'
 
@@ -71,11 +76,13 @@ class TestGetWhiteboards:
             cls,
             client,
             expected_status_code=200,
+            include_deleted=False,
             limit=None,
             offset=None,
             order_by=None,
     ):
         params = {
+            'includeDeleted': include_deleted,
             'limit': limit,
             'offset': offset,
             'orderBy': order_by,
@@ -97,12 +104,32 @@ class TestGetWhiteboards:
         fake_auth.login(unauthorized_user_id)
         self._api_get_whiteboards(client, expected_status_code=401)
 
-    def test_admin(self, client, fake_auth, authorized_user_id):
-        """Returns a well-formed response."""
-        fake_auth.login(authorized_user_id)
-        api_json = self._api_get_whiteboards(client)
-        assert 'total' in api_json
-        assert 'results' in api_json
+    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+        """Get all whiteboards."""
+        user = User.find_by_id(authorized_user_id)
+        # Include deleted
+        deleted_title = 'Delete me'
+        whiteboard = Whiteboard.create(
+            course_id=mock_whiteboard.course_id,
+            title=deleted_title,
+            users=[user],
+        )
+        Whiteboard.delete(whiteboard.id)
+        # Session
+        WhiteboardSession.create(
+            socket_id=str('%032x' % random.getrandbits(128)),
+            user_id=user.id,
+            whiteboard_id=mock_whiteboard.id,
+        )
+        std_commit(allow_test_environment=True)
+        # Test
+        fake_auth.login(user.id)
+        api_json = self._api_get_whiteboards(client=client, include_deleted=True)
+        whiteboards = api_json['results']
+        assert len(whiteboards) == api_json['total']
+        assert next((w for w in whiteboards if w['deletedAt']), None)
+        whiteboard_with_session = next((w for w in whiteboards if len(w['sessions'])), None)
+        assert len(whiteboard_with_session['sessions']) == 1
 
 
 # class TestCreateWhiteboard:

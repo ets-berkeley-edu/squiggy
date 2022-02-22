@@ -74,8 +74,9 @@ class Whiteboard(Base):
         """
 
     @classmethod
-    def find_by_id(cls, whiteboard_id):
-        return cls.query.filter_by(id=whiteboard_id, deleted_at=None).first()
+    def find_by_id(cls, whiteboard_id, include_deleted=True):
+        whiteboards = cls.get_whiteboards(include_deleted=include_deleted, whiteboard_id=whiteboard_id)
+        return whiteboards['results'][0] if whiteboards['total'] else None
 
     @classmethod
     def create(
@@ -97,7 +98,7 @@ class Whiteboard(Base):
 
     @classmethod
     def delete(cls, whiteboard_id):
-        whiteboard = cls.find_by_id(whiteboard_id)
+        whiteboard = cls.query.filter_by(id=whiteboard_id, deleted_at=None).first()
         if whiteboard:
             whiteboard.deleted_at = utc_now()
             std_commit()
@@ -105,11 +106,12 @@ class Whiteboard(Base):
     @classmethod
     def get_whiteboards(
             cls,
-            course_id,
-            include_deleted,
-            limit,
-            offset,
-            order_by,
+            course_id=None,
+            include_deleted=False,
+            limit=20,
+            offset=0,
+            order_by='recent',
+            whiteboard_id=None,
     ):
         order_by_clause = {
             'recent': 'w.id DESC',
@@ -127,8 +129,9 @@ class Whiteboard(Base):
                 AND w.id = act.object_id
                 AND act.course_id = :course_id
             WHERE
-                {'' if include_deleted else 'w.deleted_at IS NULL'}
-                AND w.course_id = :course_id
+                {'TRUE' if include_deleted else 'w.deleted_at IS NULL'}
+                {'AND w.course_id = :course_id' if course_id else ''}
+                {'AND w.id = :whiteboard_id' if whiteboard_id else ''}
             ORDER BY {order_by_clause}, u.canvas_full_name
             LIMIT :limit OFFSET :offset
         """
@@ -136,17 +139,21 @@ class Whiteboard(Base):
             'course_id': course_id,
             'offset': offset,
             'limit': limit,
+            'whiteboard_id': whiteboard_id,
         }
         whiteboards_by_id = {}
         for row in list(db.session.execute(sql, params)):
             whiteboard_id = row['id']
             whiteboard = whiteboards_by_id.get(whiteboard_id) or {
                 'id': whiteboard_id,
-                'course_id': row['course_id'],
-                'deleted_at': row['deleted_at'],
-                'image_url': row['image_url'],
-                'thumbnail_url': row['thumbnail_url'],
+                'courseId': row['course_id'],
+                'createdAt': isoformat(row['created_at']),
+                'deletedAt': isoformat(row['deleted_at']),
+                'imageUrl': row['image_url'],
+                'thumbnailUrl': row['thumbnail_url'],
                 'title': row['title'],
+                'updatedAt': isoformat(row['updated_at']),
+                'sessions': [],
                 'users': [],
             }
             user_id = row['user_id']
@@ -161,6 +168,16 @@ class Whiteboard(Base):
                     'canvasUserId': row['canvas_user_id'],
                 })
             whiteboards_by_id[whiteboard_id] = whiteboard
+        # Get sessions
+        sql = 'SELECT * FROM whiteboard_sessions WHERE whiteboard_id = ANY(:whiteboard_ids) ORDER BY created_at'
+        for row in db.session.execute(sql, {'whiteboard_ids': list(whiteboards_by_id.keys())}):
+            whiteboard_id = row['whiteboard_id']
+            whiteboards_by_id[whiteboard_id]['sessions'].append({
+                'createdAt': isoformat(row['created_at']),
+                'socketId': row['socket_id'],
+                'updatedAt': isoformat(row['updated_at']),
+                'userId': row['user_id'],
+            })
         return {
             'offset': offset,
             'results': list(whiteboards_by_id.values()),
