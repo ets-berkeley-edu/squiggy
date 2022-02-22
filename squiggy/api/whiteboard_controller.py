@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_asset, can_view_whiteboard
+from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.user import User
@@ -41,9 +41,8 @@ from squiggy.models.whiteboard import Whiteboard
 @login_required
 def get_whiteboard(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
-    app.logger.warn(f'current_user: {current_user.course}')
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
-        return tolerant_jsonify(whiteboard.to_api_json())
+        return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
 
@@ -90,9 +89,9 @@ def delete_whiteboard(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
-    if not can_update_asset(asset=whiteboard, user=current_user):
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
-
+    whiteboard_id = whiteboard['id']
     Whiteboard.delete(whiteboard_id=whiteboard_id)
     return tolerant_jsonify({'message': f'Whiteboard {whiteboard_id} deleted'}), 200
 
@@ -106,7 +105,7 @@ def update_whiteboard():
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard or not title:
         raise BadRequestError('Whiteboard update requires a valid ID and title.')
-    if not can_update_asset(asset=whiteboard, user=current_user):
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update an asset you must own it or be a teacher in the course.')
 
     whiteboard = Whiteboard.update(whiteboard_id=whiteboard_id, title=title)

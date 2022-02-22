@@ -215,7 +215,7 @@ def mock_asset(app, db_session):
 
 @pytest.fixture(scope='function')
 def mock_whiteboard(app, db_session):
-    course = Course.create(
+    Course.create(
         canvas_api_domain='bcourses.berkeley.edu',
         canvas_course_id=randrange(1000000),
     )
@@ -230,16 +230,16 @@ def mock_whiteboard(app, db_session):
         canvas_user_id=canvas_user_id,
         course_id=course.id,
     )
-    asset = Whiteboard.create(
+    whiteboard = Whiteboard.create(
         course_id=course.id,
         title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',
         users=[user],
     )
     std_commit(allow_test_environment=True)
 
-    yield asset
+    yield whiteboard
 
-    db_session.delete(asset)
+    db_session.delete(whiteboard)
     std_commit(allow_test_environment=True)
 
 

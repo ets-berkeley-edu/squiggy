@@ -24,38 +24,26 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from sqlalchemy import ForeignKey, Integer
-from sqlalchemy.dialects.postgresql import JSONB
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
 
 
-class WhiteboardElement(Base):
-    __tablename__ = 'whiteboard_elements'
+class WhiteboardSession(Base):
+    __tablename__ = 'whiteboard_sessions'
 
-    id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    asset_id = db.Column('asset_id', Integer, ForeignKey('assets.id'))
-    element = db.Column('element', JSONB, nullable=False)
-    uid = db.Column('uid', db.String(255), nullable=False)
+    socket_id = db.Column('socket_id', db.String(255), nullable=False, primary_key=True)
+    user_id = db.Column('user_id', Integer, nullable=False)
     whiteboard_id = db.Column('whiteboard_id', Integer, ForeignKey('whiteboards.id'), nullable=False)
-
-    __table_args__ = (db.UniqueConstraint(
-        'created_at',
-        'uid',
-        'whiteboard_id',
-        name='whiteboard_elements_created_at_uid_whiteboard_id_idx',
-    ),)
 
     def __init__(
             self,
-            asset_id,
-            element,
-            uid,
+            socket_id,
+            user_id,
             whiteboard_id,
     ):
-        self.asset_id = asset_id
-        self.element = element
-        self.uid = uid
+        self.socket_id = socket_id
+        self.user_id = user_id
         self.whiteboard_id = whiteboard_id
 
     @classmethod
@@ -63,24 +51,21 @@ class WhiteboardElement(Base):
         return cls.query.filter_by(whiteboard_id=whiteboard_id).all()
 
     @classmethod
-    def create(cls, asset_id, element, uid, whiteboard_id):
-        asset_whiteboard_element = cls(
-            asset_id=asset_id,
-            element=element,
-            uid=uid,
+    def create(cls, socket_id, user_id, whiteboard_id):
+        whiteboard_session = cls(
+            socket_id=socket_id,
+            user_id=user_id,
             whiteboard_id=whiteboard_id,
         )
-        db.session.add(asset_whiteboard_element)
+        db.session.add(whiteboard_session)
         std_commit()
-        return asset_whiteboard_element
+        return whiteboard_session
 
     def to_api_json(self):
         return {
-            'id': self.id,
-            'assetId': self.asset_id,
             'createdAt': isoformat(self.created_at),
-            'element': self.element,
-            'uid': self.uid,
+            'socketId': self.socket_id,
+            'userId': self.user_id,
             'updatedAt': isoformat(self.updated_at),
             'whiteboardId': self.whiteboard_id,
         }
