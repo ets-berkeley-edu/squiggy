@@ -113,8 +113,6 @@ ALTER TABLE IF EXISTS public.courses ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
 ALTER TABLE IF EXISTS public.users ALTER COLUMN id DROP DEFAULT;
 
-ALTER TABLE IF EXISTS ONLY public.whiteboard_elements DROP CONSTRAINT IF EXISTS whiteboard_elements_pkey;
-
 ALTER TABLE IF EXISTS ONLY public.whiteboard_sessions DROP CONSTRAINT IF EXISTS whiteboard_sessions_pkey;
 
 ALTER TABLE IF EXISTS ONLY public.whiteboard_users DROP CONSTRAINT IF EXISTS whiteboard_users_pkey;
@@ -135,6 +133,8 @@ DROP INDEX IF EXISTS asset_categories_category_id_idx;
 
 DROP INDEX IF EXISTS asset_users_asset_id_idx;
 DROP INDEX IF EXISTS asset_users_user_id_idx;
+
+DROP INDEX IF EXISTS whiteboard_elements_created_at_uid_whiteboard_id_idx;
 
 --
 
@@ -158,6 +158,7 @@ DROP TABLE IF EXISTS public.courses;
 DROP SEQUENCE IF EXISTS public.users_id_seq;
 DROP TABLE IF EXISTS public.users;
 DROP TABLE IF EXISTS public.whiteboard_elements;
+DROP SEQUENCE IF EXISTS public.whiteboard_elements_id_seq;
 DROP TABLE IF EXISTS public.whiteboard_sessions;
 DROP TABLE IF EXISTS public.whiteboard_users;
 DROP SEQUENCE IF EXISTS public.whiteboards_id_seq;

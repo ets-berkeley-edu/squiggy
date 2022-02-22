@@ -52,11 +52,13 @@ def get_whiteboard(whiteboard_id):
 @login_required
 def get_whiteboards():
     params = request.get_json()
+    include_deleted = params.get('includeDeleted', False)
     limit = params.get('limit')
     offset = params.get('offset')
     order_by = params.get('orderBy') or 'recent'
     return tolerant_jsonify(Whiteboard.get_whiteboards(
         course_id=current_user.course.id,
+        include_deleted=include_deleted,
         limit=limit,
         offset=offset,
         order_by=order_by,

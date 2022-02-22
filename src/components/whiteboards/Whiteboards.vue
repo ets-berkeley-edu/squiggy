@@ -1,48 +1,6 @@
 <template>
   <div>
-    <div class="align-center d-flex justify-space-between py-3">
-      <div>
-        <h2>My whiteboards</h2>
-      </div>
-      <div>
-        <v-btn
-          id="done-btn"
-          color="primary"
-          @click="$router.push('/whiteboard/create', $_.noop)"
-          @keypress.enter="$router.push('/whiteboard/create', $_.noop)"
-        >
-          <font-awesome-icon class="mr-2" icon="plus" />
-          <span class="sr-only">Create new </span>Whiteboard
-        </v-btn>
-      </div>
-    </div>
-    <v-alert
-      v-if="!$_.isNil(totalWhiteboardCount) && !totalWhiteboardCount"
-      role="alert"
-      outlined
-      text
-      type="success"
-      elevation="2"
-    >
-      <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
-    </v-alert>
-    <!--
-    <div data-ng-if="me.is_admin && (!me.course.active || me.course.reactivated)" data-ng-include="'/app/shared/syncdisabled.html'"></div>
-    -->
-    <div v-if="!$_.isNil(totalWhiteboardCount) && !totalWhiteboardCount">
-      <WhiteboardSearch />
-    </div>
-    <!--
-    <whiteboards-search
-      data-is-advanced-search="isAdvancedSearch"
-      data-search-options-keywords="searchOptions.keywords"
-      data-search-options-user="searchOptions.user"
-      class="col-xs-{{ isAdvancedSearch ? 12 : 8 }} whiteboards-list-search-container"
-    />
-    <div role="alert" data-ng-if="popupBlocked">
-      Your browser prevented us from opening the whiteboard. <strong><a target="_blank" data-ng-href="{{generateWhiteboardURL(deepLinkedWhiteboard)}}">Open the whiteboard.</a></strong>
-    </div>
-    -->
+    <WhiteboardsHeader :put-focus-on-load="anchor ? null : 'basic-search-input'" />
     <v-card class="d-flex flex-wrap" flat tile>
       <WhiteboardCard
         v-for="(whiteboard, index) in whiteboardGrid"
@@ -94,13 +52,13 @@ import Context from '@/mixins/Context'
 import InfiniteScrolling from '@/mixins/InfiniteScrolling'
 import Utils from '@/mixins/Utils'
 import WhiteboardCard from '@/components/whiteboards/WhiteboardCard'
-import WhiteboardsSession from '@/mixins/WhiteboardsSession'
-import WhiteboardSearch from '@/components/whiteboards/WhiteboardSearch'
+import WhiteboardsSearch from '@/mixins/WhiteboardsSearch'
+import WhiteboardsHeader from '@/components/whiteboards/WhiteboardsHeader'
 
 export default {
   name: 'Whiteboards',
-  mixins: [Context, InfiniteScrolling, Utils, WhiteboardsSession],
-  components: {WhiteboardCard, WhiteboardSearch},
+  mixins: [Context, InfiniteScrolling, Utils, WhiteboardsSearch],
+  components: {WhiteboardCard, WhiteboardsHeader},
   data: () => ({
     anchor: null,
     isComplete: false
