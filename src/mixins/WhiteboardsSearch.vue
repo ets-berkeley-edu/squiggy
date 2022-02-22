@@ -34,6 +34,7 @@ export default {
     ...mapActions('whiteboards', [
       'init',
       'nextPage',
+      'refresh',
       'resetSearch',
       'search',
       'setCollaborator',

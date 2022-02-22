@@ -1,10 +1,10 @@
 boto3==1.20.24
 canvasapi==2.2.0
 cryptography==36.0.1
-decorator==5.1.0
+decorator==5.1.1
 Flask-Login==0.5.0
 Flask-SQLAlchemy==2.5.1
-Flask==2.0.2
+Flask==2.0.3
 lti==0.9.5
 oauthlib==3.1.1
 psycopg2-binary==2.9.3
@@ -14,13 +14,13 @@ pytz==2021.3
 simplejson==3.17.6
 smart-open==4.2.0
 SQLAlchemy==1.4.31
-Werkzeug==2.0.2
+Werkzeug==2.0.3
 https://github.com/python-cas/python-cas/archive/master.zip
 
 # For testing
 
 moto==2.2.19
-pytest==6.2.5
+pytest==7.0.1
 pytest-flask==1.2.0
-responses==0.17.0
+responses==0.18.0
 tox==3.24.5
