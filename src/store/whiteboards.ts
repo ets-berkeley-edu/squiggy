@@ -4,14 +4,11 @@ import {getWhiteboards} from '@/api/whiteboards'
 
 const orderByDefault = 'recent'
 
-function $_search(commit, state, addToExisting?: boolean) {
+const fetch = (includeDeleted, limit, offset, orderBy) => getWhiteboards(includeDeleted, limit, offset, orderBy)
+
+const $_search = (commit, state, addToExisting?: boolean) => {
   return new Promise(resolve => {
-    getWhiteboards(
-      state.includeDeleted,
-      state.limit,
-      state.offset,
-      state.orderBy,
-    ).then(data => {
+    fetch(state.includeDeleted, state.limit, state.offset, state.orderBy).then(data => {
       const whiteboards = _.get(data, 'results')
       commit(addToExisting ? 'addWhiteboards' : 'setWhiteboards', whiteboards)
       commit('setTotalWhiteboardCount', _.get(data, 'total'))
@@ -56,13 +53,6 @@ const getters = {
 
 const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
-  refresh: (state: any) => {
-    const updated = []
-    _.each(state.whiteboards, () => {
-      // TODO: getWhiteboard(whiteboard.id).then(data => updated.push(data))
-    })
-    state.whiteboards = updated
-  },
   setWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards = whiteboards,
   setCollaborators: (state: any, collaborators: any[]) => state.collaborators = collaborators,
   setCollaborator: (state: any, collaborator: number) => {
@@ -111,7 +101,23 @@ const actions = {
     commit('setOffset', state.offset + state.limit)
     return $_search(commit, state, true)
   },
-  refresh: ({commit}) => commit('refresh'),
+  refresh: ({commit, state}) => {
+    return new Promise(resolve => {
+      console.log(`Refreshing on ${new Date().getTime()}...`)
+      fetch(
+        state.includeDeleted,
+        state.limit,
+        0,
+        state.orderBy,
+      ).then(data => {
+        const whiteboards = _.get(data, 'results')
+        commit('setWhiteboards', whiteboards)
+        commit('setTotalWhiteboardCount', _.get(data, 'total'))
+        commit('setDirty', false)
+        resolve(data)
+      })
+    })
+  },
   resetSearch: ({commit}) => commit('setOffset', 0),
   search: ({commit, state}) => $_search(commit, state),
   setCollaborator: ({commit}, collaborator) => commit('setCollaborator', collaborator),

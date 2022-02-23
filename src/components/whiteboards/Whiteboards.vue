@@ -147,9 +147,14 @@ export default {
       }
       this.scheduleRefreshJob()
     },
+    runRefresh() {
+      this.refresh().then(() => {
+        this.scheduleRefreshJob()
+      })
+    },
     scheduleRefreshJob() {
       clearTimeout(this.refreshJob)
-      this.refreshJob = setTimeout(this.refresh, this.$config.whiteboardsRefreshInterval)
+      this.refreshJob = setTimeout(this.runRefresh, this.$config.whiteboardsRefreshInterval)
     }
   }
 }

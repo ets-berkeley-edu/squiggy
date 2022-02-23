@@ -31,7 +31,8 @@
                 {{ whiteboard.title }}
               </div>
               <div>
-                by {{ oxfordJoin($_.map(whiteboard.users, 'canvasFullName')) }}
+                <span v-if="!whiteboard.deletedAt">{{ whiteboard.sessions.length }} online</span>
+                <span v-if="whiteboard.deletedAt">Deleted</span>
               </div>
             </v-card-text>
           </v-img>
