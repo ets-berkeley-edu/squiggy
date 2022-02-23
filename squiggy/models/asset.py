@@ -52,6 +52,7 @@ assets_sort_by_options = {
 assets_type = ENUM(
     'file',
     'link',
+    'whiteboard',
     name='enum_assets_type',
     create_type=False,
 )

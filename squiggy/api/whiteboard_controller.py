@@ -28,13 +28,16 @@ from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.models.asset import Asset
+from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
+from squiggy.models.category import Category
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 # TODO
 # GET: '/whiteboard/<whiteboard_id>/export/png',
-# POST: '/whiteboards/<whiteboard_id>/export/asset',
 # POST: '/whiteboards/<whiteboard_id>/restore',
 
 
@@ -51,6 +54,40 @@ def get_whiteboard(whiteboard_id):
                 whiteboard_id=whiteboard_id,
             )
         return tolerant_jsonify(whiteboard)
+    else:
+        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+
+
+@app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
+@login_required
+def export_as_asset(whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
+        whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
+        if whiteboard_elements:
+            params = request.get_json()
+            category_ids = list(params.get('categoryIds'))
+            description = params.get('description')
+            title = params.get('title') or whiteboard['title']
+            asset = Asset.create(
+                asset_type='whiteboard',
+                canvas_assignment_id=None,
+                categories=[Category.find_by_id(category_id=category_id) for category_id in category_ids],
+                course_id=current_user.course.id,
+                create_activity=True,
+                description=description,
+                download_url=whiteboard['imageUrl'],
+                mime=None,
+                source=str(whiteboard['id']),
+                title=title,
+                url=None,
+                users=[User.find_by_id(current_user.get_id())],
+                visible=True,
+            )
+            AssetWhiteboardElement.create(asset_id=asset.id, whiteboard_elements=whiteboard_elements)
+            return tolerant_jsonify(Asset.find_by_id(asset_id=asset.id).to_api_json())
+        else:
+            raise BadRequestError('An empty whiteboard cannot be exported')
     else:
         raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
 
