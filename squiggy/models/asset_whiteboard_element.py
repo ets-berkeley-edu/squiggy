@@ -25,30 +25,41 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
-from squiggy import db
+from squiggy import db, std_commit
 from squiggy.models.base import Base
 
 
 class AssetWhiteboardElement(Base):
     __tablename__ = 'asset_whiteboard_elements'
 
-    id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
-    asset_id = db.Column(Integer, ForeignKey('assets.id'))
+    asset_id = db.Column(Integer, ForeignKey('assets.id'), primary_key=True)
     element = db.Column(JSONB, nullable=False)
-    uid = db.Column(db.String(255), nullable=False)
-    whiteboard_id = db.Column(Integer, ForeignKey('whiteboards.id'), nullable=False)
+    element_asset_id = db.Column(Integer, ForeignKey('assets.id'))
+    uid = db.Column(db.String(255), nullable=False, primary_key=True)
 
     def __init__(
             self,
             element,
             uid,
-            whiteboard_id,
             asset_id=None,
+            element_asset_id=None,
     ):
         self.asset_id = asset_id
         self.element = element
+        self.element_asset_id = element_asset_id
         self.uid = uid
-        self.whiteboard_id = whiteboard_id
+
+    @classmethod
+    def create(cls, asset_id, whiteboard_elements):
+        for whiteboard_element in whiteboard_elements:
+            asset_whiteboard_element = cls(
+                asset_id=asset_id,
+                element=whiteboard_element.element,
+                element_asset_id=whiteboard_element.asset_id,
+                uid=whiteboard_element.uid,
+            )
+            db.session.add(asset_whiteboard_element)
+        std_commit()
 
     @classmethod
     def find_by_asset_id(cls, asset_id):
@@ -56,10 +67,8 @@ class AssetWhiteboardElement(Base):
 
     def to_api_json(self):
         return {
-            'id': self.id,
             'assetId': self.asset_id,
             'element': self.element,
             'elementAssetId': self.element_asset_id,
             'uid': self.uid,
-            'whiteboardId': self.whiteboard_id,
         }

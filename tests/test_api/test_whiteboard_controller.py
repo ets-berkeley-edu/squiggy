@@ -31,6 +31,7 @@ from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 unauthorized_user_id = '666'
@@ -132,128 +133,52 @@ class TestGetWhiteboards:
         assert len(whiteboard_with_session['sessions']) == 1
 
 
-# class TestCreateWhiteboard:
-#     """Create whiteboard API."""
-#
-#     @staticmethod
-#     def _api_create_link_whiteboard(
-#             client,
-#             asset_type='link',
-#             category=None,
-#             description='Baby, be good, do what you should. You know it will be alright',
-#             title='What goes on in your mind?',
-#             url='https://www.youtube.com/watch?v=Pxq63cYIY1c',
-#             expected_status_code=200,
-#     ):
-#         params = {
-#             'categoryId': category and category.id,
-#             'description': description,
-#             'title': title,
-#             'type': asset_type,
-#             'url': url,
-#         }
-#         response = client.post(
-#             '/api/whiteboard/create',
-#             data=json.dumps(params),
-#             content_type='application/json',
-#         )
-#         assert response.status_code == expected_status_code
-#         return json.loads(response.data)
-#
-#     @staticmethod
-#     def _api_create_file_whiteboard(
-#             client,
-#             asset_type='file',
-#             bookmarklet=False,
-#             category=None,
-#             description='Gone to choose, choose again',
-#             title='The Black Angel\'s Death Song',
-#             url=None,
-#             expected_status_code=200,
-#     ):
-#         params = {
-#             'bookmarklet': bookmarklet,
-#             'description': description,
-#             'title': title,
-#             'type': asset_type,
-#             'url': url,
-#         }
-#         if category and category.id:
-#             params['categoryId'] = category.id
-#         if not bookmarklet:
-#             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-#             params['file[0]'] = open(f'{base_dir}/fixtures/mock_file_upload/the_gift.txt', 'rb')
-#         response = client.post(
-#             '/api/whiteboard/create',
-#             data=params,
-#             content_type='multipart/form-data',
-#         )
-#         assert response.status_code == expected_status_code
-#         return json.loads(response.data)
-#
-#     def test_anonymous(self, client):
-#         """Denies anonymous user."""
-#         self._api_create_link_whiteboard(client, expected_status_code=401)
-#
-#     def test_unauthorized(self, client, fake_auth):
-#         """Denies unauthorized user."""
-#         fake_auth.login(unauthorized_user_id)
-#         self._api_create_link_whiteboard(client, expected_status_code=401)
-#
-#     def test_create_link_whiteboard(self, client, fake_auth, authorized_user_id):
-#         """Authorized user can create an whiteboard."""
-#         fake_auth.login(authorized_user_id)
-#         api_json = self._api_create_link_whiteboard(client)
-#         assert 'id' in api_json
-#         assert api_json['title'] == 'What goes on in your mind?'
-#         categories = api_json['categories']
-#         assert len(categories) == 0
-#
-#     def test_create_link_whiteboard_with_category(self, client, fake_auth, authorized_user_id):
-#         """Returns a well-formed response."""
-#         fake_auth.login(authorized_user_id)
-#         user_points = User.find_by_id(authorized_user_id).points
-#         api_json = self._api_create_link_whiteboard(client, category=mock_category)
-#         assert 'id' in api_json
-#         assert api_json['title'] == 'What goes on in your mind?'
-#         categories = api_json['categories']
-#         assert len(categories) == 1
-#         assert categories[0]['id'] == mock_category.id
-#         assert categories[0]['title'] == mock_category.title
-#         assert User.find_by_id(authorized_user_id).points == user_points + 5
-#
-#     @mock_s3
-#     def test_create_file_whiteboard(self, client, app, fake_auth, authorized_user_id):
-#         """Authorized user can create an whiteboard."""
-#         fake_auth.login(authorized_user_id)
-#         user_points = User.find_by_id(authorized_user_id).points
-#         with mock_s3_bucket(app):
-#             api_json = self._api_create_file_whiteboard(client)
-#             assert 'id' in api_json
-#             assert api_json['title'] == 'The Black Angel\'s Death Song'
-#             assert api_json['mime'] == 'text/plain'
-#             categories = api_json['categories']
-#             assert len(categories) == 0
-#         assert User.find_by_id(authorized_user_id).points == user_points + 5
-#
-#     @mock_s3
-#     def test_bookmarklet_create_file_whiteboard(self, client, app, fake_auth, authorized_user_id):
-#         """Authorized user can create an asset with the Bookmarklet."""
-#         fake_auth.login(authorized_user_id)
-#         user_points = User.find_by_id(authorized_user_id).points
-#         with mock_s3_bucket(app):
-#             filename = 'lenny_and_squiggy.ico'
-#             api_json = self._api_create_file_whiteboard(
-#                 client,
-#                 bookmarklet=True,
-#                 url=f'https://en.wikipedia.org/static/favicon/{filename}#anchor?ref=#?uestlove',
-#             )
-#             assert 'id' in api_json
-#             download_url = api_json['downloadUrl']
-#             assert download_url and download_url.endswith(f'-{filename}')
-#         assert User.find_by_id(authorized_user_id).points == user_points + 5
-#
-#
+class TestExportAsAsset:
+
+    @staticmethod
+    def _api_export(
+            client,
+            whiteboard_id,
+            category_ids=[],
+            description=None,
+            title=None,
+            expected_status_code=200,
+    ):
+        params = {
+            'categoryIds': category_ids,
+            'description': description,
+            'title': title,
+        }
+        response = client.post(
+            f'/api/whiteboard/{whiteboard_id}/export/asset',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client, mock_whiteboard):
+        """Denies anonymous user."""
+        self._api_export(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_export(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+
+    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+        """Authorized user can export whiteboard as asset."""
+        fake_auth.login(authorized_user_id)
+        WhiteboardElement.create(
+            element={},
+            uid='765432',
+            whiteboard_id=mock_whiteboard.id,
+        )
+        std_commit(allow_test_environment=True)
+        api_json = self._api_export(client, whiteboard_id=mock_whiteboard.id)
+        assert 'id' in api_json
+
+
 # class TestUpdateWhiteboard:
 #     """Update whiteboard API."""
 #

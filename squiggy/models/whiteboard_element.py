@@ -63,7 +63,7 @@ class WhiteboardElement(Base):
         return cls.query.filter_by(whiteboard_id=whiteboard_id).all()
 
     @classmethod
-    def create(cls, asset_id, element, uid, whiteboard_id):
+    def create(cls, element, uid, whiteboard_id, asset_id=None):
         asset_whiteboard_element = cls(
             asset_id=asset_id,
             element=element,
