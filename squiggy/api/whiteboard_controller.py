@@ -23,11 +23,15 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, request
+import re
+
+from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.util import local_now
+from squiggy.lib.whiteboard_util import get_whiteboard_png_stream
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.category import Category
@@ -35,10 +39,6 @@ from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
-
-# TODO
-# GET: '/whiteboard/<whiteboard_id>/export/png',
-# POST: '/whiteboards/<whiteboard_id>/restore',
 
 
 @app.route('/api/whiteboard/<whiteboard_id>')
@@ -88,6 +88,43 @@ def export_as_asset(whiteboard_id):
             return tolerant_jsonify(Asset.find_by_id(asset_id=asset.id).to_api_json())
         else:
             raise BadRequestError('An empty whiteboard cannot be exported')
+    else:
+        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+
+
+@app.route('/api/whiteboard/<whiteboard_id>/export/png')
+@login_required
+def export_as_png(whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
+        # TODO?
+        #   // If a downloadId parameter was provided, we set a cookie with it. This allows the UI to detect
+        #   // when the whiteboard download is ready
+        #   var downloadId = req.query.downloadId;
+        #   if (downloadId) {
+        #     var cookieName = util.format('whiteboard.%s.png', downloadId);
+        #     res.cookie(cookieName, 'true', {'expires': 0, 'sameSite': 'None', 'secure': true});
+        #   }
+        now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard.title)
+        return Response(
+            get_whiteboard_png_stream(session=current_user, whiteboard=whiteboard),
+            headers={
+                'Content-disposition': f'attachment; filename="{filename}_{now}.png"',
+                'Content-Type': 'image/png',
+            },
+        )
+    else:
+        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+
+
+@app.route('/api/whiteboard/<whiteboard_id>/restore')
+@login_required
+def restore_whiteboard(whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    if whiteboard and can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        restored = Whiteboard.restore(whiteboard_id)
+        return tolerant_jsonify(restored.to_api_json())
     else:
         raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
 

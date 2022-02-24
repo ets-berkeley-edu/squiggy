@@ -204,6 +204,15 @@ class Whiteboard(Base):
         return whiteboard
 
     @classmethod
+    def restore(cls, whiteboard_id):
+        whiteboard = cls.query.filter_by(id=whiteboard_id).first()
+        if whiteboard and whiteboard.deleted_at:
+            whiteboard.deleted_at = None
+            whiteboard.updated_at = utc_now()
+            std_commit()
+        return whiteboard
+
+    @classmethod
     def undelete(cls, whiteboard_id, title):
         whiteboard = cls.find_by_id(whiteboard_id)
         whiteboard.title = title

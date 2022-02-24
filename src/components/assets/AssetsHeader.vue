@@ -49,7 +49,7 @@
         </div>
         <div>
           <v-btn
-            v-if="$currentUser.isAdmin || $currentUser.isTeaching"
+            v-if="hideManageAssetsButton && ($currentUser.isAdmin || $currentUser.isTeaching)"
             id="manage-assets-btn"
             elevation="2"
             :disabled="isBusy"
@@ -222,6 +222,10 @@ export default {
   components: {AccessibleSelect, Alert},
   mixins: [AssetsSearch, Context, Utils],
   props: {
+    hideManageAssetsButton: {
+      required: false,
+      type: Boolean
+    },
     putFocusOnLoad: {
       default: undefined,
       required: false,

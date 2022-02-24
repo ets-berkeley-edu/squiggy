@@ -179,58 +179,33 @@ class TestExportAsAsset:
         assert 'id' in api_json
 
 
-# class TestUpdateWhiteboard:
-#     """Update whiteboard API."""
-#
-#     @staticmethod
-#     def _api_update_whiteboard(client, asset, expected_status_code=200):
-#         params = {
-#             'assetId': whiteboard.id,
-#             'categoryId': whiteboard.categories[0].id if len(asset.categories) else None,
-#             'description': whiteboard.description,
-#             'title': whiteboard.title,
-#         }
-#         response = client.post(
-#             '/api/whiteboard/update',
-#             data=json.dumps(params),
-#             content_type='application/json',
-#         )
-#         assert response.status_code == expected_status_code
-#         return json.loads(response.data)
-#
-#     def test_anonymous(self, client, mock_whiteboard):
-#         """Denies anonymous user."""
-#         self._api_update_whiteboard(client, asset=mock_whiteboard, expected_status_code=401)
-#
-#     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
-#         """Denies unauthorized user."""
-#         fake_auth.login(unauthorized_user_id)
-#         self._api_update_whiteboard(client, asset=mock_whiteboard, expected_status_code=401)
-#
-#     def test_update_whiteboard_by_owner(self, client, fake_auth, mock_whiteboard):
-#         """Authorized user can update whiteboard."""
-#         fake_auth.login(mock_whiteboard.users[0].id)
-#         self._verify_update_whiteboard(client, mock_whiteboard)
-#
-#     def test_update_whiteboard_by_teacher(self, client, fake_auth, mock_whiteboard):
-#         """Authorized user can update whiteboard."""
-#         course = Course.find_by_id(mock_whiteboard.course_id)
-#         instructors = list(filter(lambda u: is_teaching(u), course.users))
-#         fake_auth.login(instructors[0].id)
-#         self._verify_update_whiteboard(client, mock_whiteboard)
-#
-#     def _verify_update_whiteboard(self, client, mock_whiteboard):
-#         mock_whiteboard.title = "I'll be your mirror"
-#         mock_whiteboard.description = "Reflect what you are, in case you don't know"
-#         mock_whiteboard.categories = [mock_category]
-#         api_json = self._api_update_whiteboard(client, asset=mock_whiteboard)
-#         assert api_json['id'] == mock_whiteboard.id
-#         assert len(api_json['categories']) == 1
-#         assert api_json['categories'][0]['id'] == mock_category.id
-#         assert api_json['description'] == mock_whiteboard.description
-#         assert api_json['title'] == mock_whiteboard.title
-#
-#
+class TestRestoreWhiteboard:
+
+    @staticmethod
+    def _api_restore_whiteboard(client, whiteboard_id, expected_status_code=200):
+        response = client.get(f'/api/whiteboard/{whiteboard_id}/restore')
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client, mock_whiteboard):
+        """Denies anonymous user."""
+        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+
+    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+        """Authorized user can update whiteboard."""
+        fake_auth.login(authorized_user_id)
+        Whiteboard.delete(mock_whiteboard.id)
+        std_commit(allow_test_environment=True)
+        api_json = self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard.id)
+        assert api_json['deletedAt'] is None
+        assert client.get(f'/api/whiteboard/{mock_whiteboard.id}').json['deletedAt'] is None
+
+
 # class TestRefreshAssetPreview:
 #     """Refresh asset preview API."""
 #

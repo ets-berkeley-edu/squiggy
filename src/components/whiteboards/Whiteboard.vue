@@ -1,18 +1,27 @@
 <template>
   <div>
-    {{ whiteboard }}
+    <div>
+      <AddAssetsDialog
+        :hide-managed-assets-button="true"
+        :on-cancel="$_.noop"
+        :on-save="$_.noop"
+      />
+    </div>
+    <div class="pa-10">
+      {{ whiteboard }}
+    </div>
   </div>
 </template>
 
 <script>
+import AddAssetsDialog from '@/components/whiteboards/AddAssetsDialog'
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 import {getWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'Whiteboard',
-  components: {
-  },
+  components: {AddAssetsDialog},
   mixins: [Context, Utils],
   data: () => ({
     whiteboard: undefined
@@ -26,6 +35,11 @@ export default {
       this.whiteboard = data
       this.$ready()
     })
+  },
+  methods: {
+    addAsset() {
+
+    }
   }
 }
 </script>
