@@ -219,6 +219,7 @@ class Asset(Base):
         params = {
             'course_id': session.course.id,
             'user_id': session.user.id,
+            'asset_ids': filters.get('asset_ids'),
             'asset_types': filters.get('asset_type'),
             'category_id': filters.get('category_id'),
             'owner_id': filters.get('owner_id'),
