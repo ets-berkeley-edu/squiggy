@@ -16,8 +16,8 @@
         :id="`asset-${asset.id}`"
         hover
         class="card-class"
-        @keypress.enter="go(`/asset/${asset.id}`)"
-        @click="go(`/asset/${asset.id}`)"
+        @keypress.enter="onClick"
+        @click="onClick"
       >
         <v-sheet elevation="1">
           <v-img
@@ -26,17 +26,19 @@
             :src="thumbnailUrl"
             @error="setImageError"
           >
-            <v-card-text class="asset-metadata">
-              <div class="mb-3">
-                {{ asset.title }}
-              </div>
-              <div>
-                by {{ oxfordJoin($_.map(asset.users, 'canvasFullName')) }}
-              </div>
+            <v-card-text :class="`${context}-asset-metadata`">
+              <slot>
+                <div class="mb-3">
+                  {{ asset.title }}
+                </div>
+                <div>
+                  by {{ oxfordJoin($_.map(asset.users, 'canvasFullName')) }}
+                </div>
+              </slot>
             </v-card-text>
           </v-img>
         </v-sheet>
-        <v-card-actions class="actions">
+        <v-card-actions v-if="!hideEngagementCounts" class="actions">
           <div class="d-flex justify-end w-100">
             <div>
               <div class="align-center d-flex">
@@ -74,6 +76,20 @@ export default {
     asset: {
       required: true,
       type: Object
+    },
+    context: {
+      default: 'asset-library',
+      required: false,
+      type: String
+    },
+    hideEngagementCounts: {
+      required: false,
+      type: Boolean
+    },
+    onAssetClick: {
+      default: undefined,
+      required: false,
+      type: Function
     }
   },
   data: function() {
@@ -90,6 +106,13 @@ export default {
     }
   },
   methods: {
+    onClick(asset) {
+      if (this.onAssetClick) {
+        this.onAssetClick(asset)
+      } else {
+        this.go(`/asset/${asset.id}`)
+      }
+    },
     setImageError() {
       this.imageError = true
     }
@@ -104,12 +127,22 @@ export default {
 .asset-icon-liked {
   color: #4172b4 !important;
 }
-.asset-metadata {
-  background-color: #333;
+.asset-library-asset-metadata {
   background-color: rgba(51, 51, 51, 0.9);
   bottom: 0;
   color: #FFF;
   left: 0;
+  position: absolute;
+  right: 0;
+}
+.whiteboard-asset-metadata {
+  background-color: rgba(51, 51, 51, 0.9);
+  bottom: 0;
+  color: #FFF;
+  left: 0;
+  margin-top: 0;
+  padding-bottom: 0;
+  padding-top: 0;
   position: absolute;
   right: 0;
 }

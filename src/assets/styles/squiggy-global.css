@@ -1,3 +1,7 @@
+.asset-card {
+  height: 270px !important;
+  width: 236px !important;
+}
 .bg-transparent {
   background-color: transparent !important;
 }
