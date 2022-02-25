@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog">
+  <v-dialog v-model="dialog" scrollable transition="dialog-bottom-transition">
     <template #activator="{on, attrs}">
       <v-btn
         :disabled="isModalLoading"
@@ -13,23 +13,35 @@
       <v-card-title class="pb-1">
         <h2 id="modal-header" class="title">Add asset(s)</h2>
       </v-card-title>
-      <v-card-text>
-        <div id="asset-library">
-          <AssetsHeader ref="header" put-focus-on-load="basic-search-input" />
-          <v-card class="d-flex flex-wrap" flat tile>
+      <v-divider></v-divider>
+      <v-card-text style="height: 60vh;">
+        <AssetsHeader put-focus-on-load="basic-search-input" />
+        <v-card class="d-flex flex-wrap" flat tile>
+          <div v-for="(asset, index) in assetGrid" :key="index">
             <AssetCard
-              v-for="(asset, index) in assetGrid"
-              :key="index"
               :asset="asset"
-              class="asset-card ma-3"
-            />
-          </v-card>
-          <InfiniteLoading spinner="spiral" @infinite="infiniteHandler">
-            <span slot="spinner" class="sr-only">Loading...</span>
-          </InfiniteLoading>
-        </div>
+              class="asset-card"
+              context="whiteboard"
+              :hide-engagement-counts="true"
+              :on-asset-click="asset => selectedAssets.push(asset.id)"
+            >
+              <v-checkbox
+                v-model="selectedAssets"
+                class="mb-0 pt-0"
+                dark
+                :value="asset.id"
+              >
+                <template #label>
+                  <div class="asset-checkbox-label">
+                    {{ asset.title }}, by {{ oxfordJoin($_.map(asset.users, 'canvasFullName')) }}
+                  </div>
+                </template>
+              </v-checkbox>
+            </AssetCard>
+          </div>
+        </v-card>
       </v-card-text>
-      <v-card-actions class="pt-0">
+      <v-card-actions class="pt-5">
         <v-spacer></v-spacer>
         <div class="pb-3 pr-2">
           <v-btn
@@ -58,6 +70,9 @@
             Cancel
           </v-btn>
         </div>
+        <InfiniteLoading spinner="spiral" @infinite="infiniteHandler">
+          <span slot="spinner" class="sr-only">Loading...</span>
+        </InfiniteLoading>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -108,7 +123,7 @@ export default {
       }
     },
     disableSave() {
-      return !this.selectedAssets.length
+      return !this.$_.size(this.selectedAssets)
     }
   },
   watch: {
@@ -154,3 +169,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.asset-checkbox-label {
+  max-width: 240px;
+}
+</style>

@@ -131,10 +131,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.asset-card {
-  height: 270px !important;
-  width: 236px !important;
-}
-</style>
