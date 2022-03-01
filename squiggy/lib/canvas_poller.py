@@ -44,7 +44,7 @@ from squiggy.models.user import User
 
 def launch_pollers():
     keys = CanvasPollerApiKey.query.all()
-    logger.info(f'Will start {len(keys)} poller instances')
+    logger.info(f'Next, we start {len(keys)} poller instances')
     for (i, key) in enumerate(keys):
         CanvasPoller(poller_id=i, canvas_api_domain=key.canvas_api_domain, api_key=key.api_key).run_async()
 
@@ -73,7 +73,7 @@ class CanvasPoller(BackgroundJob):
             if not course:
                 logger.info(f'No active courses found: {canvas_api_domain}')
             else:
-                logger.info(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
+                logger.debug(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
                 course.last_polled = utc_now()
                 db.session.add(course)
                 std_commit()
@@ -102,20 +102,20 @@ class CanvasPoller(BackgroundJob):
         if db_course.asset_library_url:
             asset_library_tab = next((t for t in tabs if db_course.asset_library_url.endswith(t.html_url)), None)
             if not asset_library_tab or getattr(asset_library_tab, 'hidden', None):
-                logger.info(f'No active tab found for Asset Library, will remove URL from db: {_format_course(db_course)}')
+                logger.debug(f'No active tab found for Asset Library, will remove URL from db: {_format_course(db_course)}')
                 course_updates['asset_library_url'] = None
             else:
                 has_active_tools = True
         if db_course.engagement_index_url:
             engagement_index_tab = next((t for t in tabs if db_course.engagement_index_url.endswith(t.html_url)), None)
             if not engagement_index_tab or getattr(engagement_index_tab, 'hidden', None):
-                logger.info(f'No active tab found for Engagement Index, will remove URL from db: {_format_course(db_course)}')
+                logger.debug(f'No active tab found for Engagement Index, will remove URL from db: {_format_course(db_course)}')
                 course_updates['engagement_index_url'] = None
             else:
                 has_active_tools = True
 
         if not has_active_tools:
-            logger.info(f'No active tools found for course, will mark inactive: {_format_course(db_course)}')
+            logger.debug(f'No active tools found for course, will mark inactive: {_format_course(db_course)}')
             course_updates['active'] = False
 
         if course_updates:
@@ -130,7 +130,7 @@ class CanvasPoller(BackgroundJob):
         db_users_by_canvas_id = {u.canvas_user_id: u for u in db_course.users}
 
         api_sections = list(api_course.get_sections(include=['students']))
-        logger.info(f'Retrieved {len(api_sections)} sections from Canvas: {_format_course(db_course)}')
+        logger.debug(f'Retrieved {len(api_sections)} sections from Canvas: {_format_course(db_course)}')
         api_sections_by_user_id = {}
         for s in api_sections:
             for u in (s.students or []):
@@ -141,7 +141,7 @@ class CanvasPoller(BackgroundJob):
                     api_sections_by_user_id[user_id] = [s.name]
 
         api_users = list(api_course.get_users(include=['enrollments', 'avatar_url', 'email']))
-        logger.info(f'Retrieved {len(api_users)} users from Canvas: {_format_course(db_course)}')
+        logger.debug(f'Retrieved {len(api_users)} users from Canvas: {_format_course(db_course)}')
         api_user_ids = set()
         for u in api_users:
             api_user_ids.add(u.id)
@@ -192,7 +192,7 @@ class CanvasPoller(BackgroundJob):
     def poll_assignments(self, db_course, api_course, users_by_canvas_id):
         course_categories = Category.query.filter_by(course_id=db_course.id).all()
         assignments = list(api_course.get_assignments())
-        logger.info(f'Retrieved {len(assignments)} assignments from Canvas: {_format_course(db_course)}')
+        logger.debug(f'Retrieved {len(assignments)} assignments from Canvas: {_format_course(db_course)}')
         assignment_ids = set()
         for assignment in assignments:
             # Ignore unpublished assignments.
@@ -265,7 +265,7 @@ class CanvasPoller(BackgroundJob):
 
         submissions = list(assignment.get_submissions())
         active_submissions = [s for s in submissions if _is_submission_active(s)]
-        logger.info(
+        logger.debug(
             f'Got {len(submissions)} submissions, will process {len(active_submissions)} active submissions: '
             f'assignment {assignment.id}, {_format_course(db_course)}')
         if len(active_submissions) > 0:
@@ -359,7 +359,7 @@ class CanvasPoller(BackgroundJob):
                 db.session.add(existing_submission_asset)
                 std_commit()
             else:
-                logger.info(
+                logger.debug(
                     f'Will create link asset for submission: '
                     f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
                 link_submission_tracker[submission.url] = Asset.create(
@@ -380,7 +380,7 @@ class CanvasPoller(BackgroundJob):
             logger.exception(e)
 
     def create_file_submission_assets(self, course, user, category, assignment, submission, file_submission_tracker):
-        logger.info(
+        logger.debug(
             f'Will create file assets for submission attachments: '
             f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
         for attachment in getattr(submission, 'attachments', []):
@@ -422,7 +422,7 @@ class CanvasPoller(BackgroundJob):
         if not discussion_topics:
             return
 
-        logger.info(f'Retrieved {len(discussion_topics)} discussion topics from Canvas: {_format_course(db_course)}')
+        logger.debug(f'Retrieved {len(discussion_topics)} discussion topics from Canvas: {_format_course(db_course)}')
         discussion_activity_index = self.index_activities(
             Activity.query.filter(
                 Activity.course_id == db_course.id,
@@ -450,7 +450,7 @@ class CanvasPoller(BackgroundJob):
                 if not getattr(topic, 'discussion_subentry_count', 0):
                     continue
                 entries = list(topic.get_topic_entries())
-                logger.info(f'Retrieved {len(entries)} discussion entries from Canvas: topic {topic.id}, {_format_course(db_course)}')
+                logger.debug(f'Retrieved {len(entries)} discussion entries from Canvas: topic {topic.id}, {_format_course(db_course)}')
                 for entry in entries:
                     self.create_discussion_entry_activities(entry, topic, db_course, users_by_canvas_id, discussion_activity_index)
             except Exception as e:
@@ -509,7 +509,7 @@ class CanvasPoller(BackgroundJob):
     def poll_last_activity(self, db_course):
         last_activity = Activity.get_last_activity_for_course(course_id=db_course.id)
         if last_activity and (utc_now() - last_activity).days >= app.config['CANVAS_POLLER_DEACTIVATION_THRESHOLD']:
-            logger.info(
+            logger.debug(
                 f"Last course activity {last_activity} older than {app.config['CANVAS_POLLER_DEACTIVATION_THRESHOLD']} days, deactivating: "
                 f'{_format_course(db_course)}')
             db_course.active = False
