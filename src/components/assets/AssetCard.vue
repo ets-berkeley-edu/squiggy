@@ -106,11 +106,11 @@ export default {
     }
   },
   methods: {
-    onClick(asset) {
+    onClick() {
       if (this.onAssetClick) {
-        this.onAssetClick(asset)
+        this.onAssetClick(this.asset)
       } else {
-        this.go(`/asset/${asset.id}`)
+        this.go(`/asset/${this.asset.id}`)
       }
     },
     setImageError() {
