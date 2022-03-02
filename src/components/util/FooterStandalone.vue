@@ -31,7 +31,7 @@
                 <font-awesome-icon icon="list-ol" />
               </v-btn>
             </div>
-            <div>
+            <div v-if="$config.featureFlagWhiteboards">
               <v-btn id="go-whiteboards-btn" icon @click="go('/whiteboards')">
                 <span class="sr-only">Go to Whiteboards</span>
                 <font-awesome-icon icon="palette" />
