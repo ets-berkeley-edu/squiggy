@@ -59,6 +59,8 @@ DIST_STATIC_DIR = 'dist/static'
 
 EMAIL_ADDRESS_SUPPORT = 'bcourseshelp@berkeley.edu'
 
+FEATURE_FLAG_WHITEBOARDS = False
+
 # Directory to search for mock fixtures, if running in "test" or "demo" mode.
 FIXTURES_PATH = None
 

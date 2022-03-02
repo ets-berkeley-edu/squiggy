@@ -23,13 +23,23 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from flask import current_app as app
+from squiggy.models.asset import assets_type
+from tests.util import override_config
+
 
 class TestConfigController:
-    """Config API."""
 
     def test_anonymous(self, client):
         """Do not deny the anonymous user."""
         assert client.get('/api/config').status_code == 200
+
+    def test_feature_flag(self, client):
+        """Asset types include 'whiteboard'."""
+        with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', True):
+            response = client.get('/api/config')
+            assert response.status_code == 200
+            assert response.json['assetTypes'] == assets_type.enums
 
     def test_logged_in(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response to logged-in user."""
@@ -38,6 +48,7 @@ class TestConfigController:
         assert response.status_code == 200
         assert 'squiggyEnv' in response.json
         data = response.json
+        assert data['assetTypes'] == ['file', 'link']
         assert data['ebEnvironment'] is None
         assert data['timezone'] == 'America/Los_Angeles'
 

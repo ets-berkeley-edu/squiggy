@@ -31,6 +31,7 @@ from squiggy.lib.errors import UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.logger import logger
+from squiggy.models.asset import assets_type
 from squiggy.models.canvas import Canvas
 
 
@@ -44,6 +45,10 @@ def teacher_required(func):
             logger.warning(f'Unauthorized request to {request.path}')
             return app.login_manager.unauthorized()
     return _teacher_required
+
+
+def assets_type_enums():
+    return assets_type.enums if app.config['FEATURE_FLAG_WHITEBOARDS'] else ('file', 'link')
 
 
 def can_update_asset(user, asset):

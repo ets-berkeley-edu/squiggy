@@ -27,14 +27,15 @@ import json
 
 from flask import current_app as app, request
 from squiggy import __version__ as version
+from squiggy.api.api_util import assets_type_enums
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.models.asset import assets_sort_by_options, assets_type
+from squiggy.models.asset import assets_sort_by_options
 
 
 @app.route('/api/config')
 def app_config():
     return tolerant_jsonify({
-        'assetTypes': assets_type.enums,
+        'assetTypes': assets_type_enums(),
         'baseUrl': app.config['VUE_LOCALHOST_BASE_URL'] or request.url_root,
         'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
