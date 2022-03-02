@@ -25,8 +25,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
+from flask import current_app as app
 from squiggy.models.activity_type import DEFAULT_ACTIVITY_TYPE_CONFIGURATION
 from squiggy.models.user import User
+from tests.util import override_config
 
 
 def api_get_configuration(client, expected_status_code=200):
@@ -56,7 +58,10 @@ class TestGetActivityConfiguration:
         user = User.find_by_canvas_user_id(canvas_id)
         fake_auth.login(user.id)
         response = api_get_configuration(client)
-        assert len(response) == len(DEFAULT_ACTIVITY_TYPE_CONFIGURATION)
+
+        expected_length = len(DEFAULT_ACTIVITY_TYPE_CONFIGURATION) if app.config['FEATURE_FLAG_WHITEBOARDS'] else 12
+        assert len(response) == expected_length
+
         for config in response:
             default_config = next(c for c in DEFAULT_ACTIVITY_TYPE_CONFIGURATION if c['type'] == config['type'])
             if config['type'] == 'asset_add':
@@ -105,46 +110,50 @@ class TestUpdateActivityConfiguration:
         )
 
     def test_well_formed_data(self, client, fake_auth):
-        teacher = User.find_by_canvas_user_id(9876543)
-        fake_auth.login(teacher.id)
+        for flag in (True, False):
+            with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', flag):
+                teacher = User.find_by_canvas_user_id(9876543)
+                fake_auth.login(teacher.id)
 
-        old_points = User.find_by_id(1).points
+                old_points = User.find_by_id(1).points
 
-        api_update_configuration(
-            client,
-            updates=[
-                {'type': 'asset_add', 'enabled': True, 'points': 3},
-                {'type': 'get_asset_comment', 'enabled': False, 'points': 12},
-            ],
-        )
-        new_config = api_get_configuration(client)
-        assert len(new_config) == len(DEFAULT_ACTIVITY_TYPE_CONFIGURATION)
-        for config in new_config:
-            default_config = next(c for c in DEFAULT_ACTIVITY_TYPE_CONFIGURATION if c['type'] == config['type'])
-            if config['type'] == 'asset_add':
-                assert config['points'] == 3
-                assert config['enabled'] is True
-            elif config['type'] == 'asset_comment':
-                assert config['points'] == 2
-                assert config['enabled'] is True
-            elif config['type'] == 'get_asset_comment':
-                assert config['points'] == 12
-                assert config['enabled'] is False
-            else:
-                assert config['points'] == default_config['points']
-                assert config['enabled'] == default_config['enabled']
+                api_update_configuration(
+                    client,
+                    updates=[
+                        {'type': 'asset_add', 'enabled': True, 'points': 3},
+                        {'type': 'get_asset_comment', 'enabled': False, 'points': 12},
+                    ],
+                )
+                new_config = api_get_configuration(client)
+                expected_length = len(DEFAULT_ACTIVITY_TYPE_CONFIGURATION) if app.config['FEATURE_FLAG_WHITEBOARDS'] else 12
+                assert len(new_config) == expected_length
 
-        assert User.find_by_id(1).points == old_points - 6
+                for config in new_config:
+                    default_config = next(c for c in DEFAULT_ACTIVITY_TYPE_CONFIGURATION if c['type'] == config['type'])
+                    if config['type'] == 'asset_add':
+                        assert config['points'] == 3
+                        assert config['enabled'] is True
+                    elif config['type'] == 'asset_comment':
+                        assert config['points'] == 2
+                        assert config['enabled'] is True
+                    elif config['type'] == 'get_asset_comment':
+                        assert config['points'] == 12
+                        assert config['enabled'] is False
+                    else:
+                        assert config['points'] == default_config['points']
+                        assert config['enabled'] == default_config['enabled']
 
-        # Reset to default.
-        api_update_configuration(
-            client,
-            updates=[
-                {'type': 'asset_add', 'enabled': True, 'points': 5},
-                {'type': 'get_asset_comment', 'enabled': True, 'points': 1},
-            ],
-        )
-        assert User.find_by_id(1).points == old_points
+                assert User.find_by_id(1).points == old_points - 6
+
+                # Reset to default.
+                api_update_configuration(
+                    client,
+                    updates=[
+                        {'type': 'asset_add', 'enabled': True, 'points': 5},
+                        {'type': 'get_asset_comment', 'enabled': True, 'points': 1},
+                    ],
+                )
+                assert User.find_by_id(1).points == old_points
 
 
 class TestActivityCsvDownload:

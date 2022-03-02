@@ -25,11 +25,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
-from squiggy.api.api_util import teacher_required
+from squiggy.api.api_util import activities_type_enums, teacher_required
 from squiggy.lib.errors import BadRequestError
 from squiggy.lib.http import response_with_csv_download, tolerant_jsonify
 from squiggy.models.activity import Activity
-from squiggy.models.activity_type import activities_type, ActivityType
+from squiggy.models.activity_type import ActivityType
 
 
 @app.route('/api/activities/configuration', methods=['GET'])
@@ -46,7 +46,7 @@ def update_activity_configuration():
     for update in params:
         if (
             type(update) is not dict
-            or update.get('type', None) not in activities_type.enums
+            or update.get('type', None) not in activities_type_enums()
             or 'points' not in update
             or 'enabled' not in update
         ):
