@@ -31,6 +31,7 @@ from squiggy.lib.errors import UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.logger import logger
+from squiggy.models.activity_type import activities_type
 from squiggy.models.asset import assets_type
 from squiggy.models.canvas import Canvas
 
@@ -47,8 +48,12 @@ def teacher_required(func):
     return _teacher_required
 
 
+def activities_type_enums():
+    return _filter_per_feature_flag(activities_type.enums)
+
+
 def assets_type_enums():
-    return assets_type.enums if app.config['FEATURE_FLAG_WHITEBOARDS'] else ('file', 'link')
+    return _filter_per_feature_flag(assets_type.enums)
 
 
 def can_update_asset(user, asset):
@@ -111,6 +116,11 @@ def start_login_session(login_session, redirect_path=None, tool_id=None):
         raise UnauthorizedRequestError(f'Unauthorized user during {tool_id} LTI launch (user_id = {login_session.user_id})')
     else:
         return tolerant_jsonify({'message': f'User {login_session.user_id} failed to authenticate.'}, 403)
+
+
+def _filter_per_feature_flag(enums):
+    feature_flag = app.config['FEATURE_FLAG_WHITEBOARDS']
+    return enums if feature_flag else list(filter(lambda enum: 'whiteboard' not in enum, enums))
 
 
 def _get_user_id(user):
