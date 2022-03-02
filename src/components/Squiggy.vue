@@ -1,6 +1,6 @@
 <template>
   <div v-if="!isLoading" class="align-center d-flex flex-column my-10">
-    <h1 class="grey--text text--darken-2">Squiggy says HELLO</h1>
+    <h1 class="grey--text text--darken-2">Squiggy v{{ $config.squiggyVersion }}</h1>
     <div class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
         v-model="width"
