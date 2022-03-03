@@ -59,7 +59,22 @@
         <label for="share-my-score">
           Yes, I want to share my score on the Engagement Index
         </label>
-        <v-btn v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && $currentUser.sharePoints === null" type="submit">Continue</v-btn>
+        <v-btn
+          v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && $currentUser.sharePoints === null"
+          id="continue-btn"
+          :disabled="isSaving"
+          @click="saveSharePoints"
+          @keydown.enter="saveSharePoints"
+        >
+          <font-awesome-icon
+            v-if="isSaving"
+            class="mr-2"
+            icon="spinner"
+            :spin="true"
+          />
+          <span v-if="isSaving">Saving</span>
+          <span v-if="!isSaving">Continue</span>
+        </v-btn>
       </v-form>
     </div>
   </div>
@@ -78,6 +93,7 @@ export default {
   data() {
     return {
       boxplotOptions: null,
+      isSaving: false,
       leaderboard: null,
       rank: null,
       sharePoints: this.setInitialSharePoints(),
@@ -239,10 +255,12 @@ export default {
       }
     },
     saveSharePoints() {
+      this.isSaving = true
       updateSharePoints(this.sharePoints).then((data) => {
         this.$currentUser.sharePoints = data.sharePoints
         this.$announcer.polite(this.sharePoints ? 'Sharing points' : 'Not sharing points')
         this.refreshLeaderboard()
+        this.isSaving = false
       })
     },
     setInitialSharePoints() {
