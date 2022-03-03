@@ -114,6 +114,7 @@ class Whiteboard(Base):
             limit=20,
             offset=0,
             order_by='recent',
+            user_id=None,
             whiteboard_id=None,
     ):
         where_clause = 'WHERE TRUE'
@@ -123,6 +124,8 @@ class Whiteboard(Base):
             where_clause += ' AND w.deleted_at IS NULL'
         if keywords:
             where_clause += ' AND (w.title ILIKE :keywords)'
+        if user_id:
+            where_clause += ' AND u.id = :user_id'
         if whiteboard_id:
             where_clause += ' AND w.id = :whiteboard_id'
 
@@ -150,6 +153,7 @@ class Whiteboard(Base):
             'keywords': ('%' + re.sub(r'\s+', '%', keywords.strip()) + '%') if keywords else None,
             'limit': limit,
             'offset': offset,
+            'user_id': user_id,
             'whiteboard_id': whiteboard_id,
         }
         whiteboards_by_id = {}
