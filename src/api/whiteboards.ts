@@ -22,14 +22,16 @@ export function getWhiteboards(
   keywords,
   limit,
   offset,
-  orderBy
+  orderBy,
+  userId
 ) {
   const data = {
     includeDeleted,
     keywords,
     limit,
     offset,
-    orderBy
+    orderBy,
+    userId
   }
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboards`, data)
 }

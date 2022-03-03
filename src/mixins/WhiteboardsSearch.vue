@@ -40,6 +40,7 @@ export default {
       'search',
       'setBusy',
       'setCollaborator',
+      'setDirty',
       'setExpanded',
       'setIncludeDeleted',
       'setKeywords',

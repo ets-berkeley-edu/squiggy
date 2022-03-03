@@ -339,6 +339,7 @@ export default {
       this.setOrderBy(this.orderByDefault)
       this.setUserId(null)
       this.rewriteBookmarkHash({orderBy: this.orderByDefault})
+      this.setDirty(false)
       this.alert = null
       this.alertType = null
       if (this.expanded !== expand) {

@@ -143,6 +143,7 @@ def get_whiteboards():
     limit = params.get('limit')
     offset = params.get('offset')
     order_by = params.get('orderBy') or 'recent'
+    user_id = params.get('userId')
     whiteboards = Whiteboard.get_whiteboards(
         course_id=current_user.course.id,
         include_deleted=include_deleted,
@@ -150,6 +151,7 @@ def get_whiteboards():
         limit=limit,
         offset=offset,
         order_by=order_by,
+        user_id=user_id,
     )
     return tolerant_jsonify(whiteboards)
 

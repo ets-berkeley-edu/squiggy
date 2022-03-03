@@ -4,7 +4,14 @@ import {getWhiteboards} from '@/api/whiteboards'
 
 const orderByDefault = 'recent'
 
-const fetch = (includeDeleted, keywords, limit, offset, orderBy) => getWhiteboards(includeDeleted, keywords, limit, offset, orderBy)
+const fetch = (
+  includeDeleted,
+  keywords,
+  limit,
+  offset,
+  orderBy,
+  userId
+) => getWhiteboards(includeDeleted, keywords, limit, offset, orderBy, userId)
 
 const $_search = (commit, state, addToExisting?: boolean) => {
   return new Promise(resolve => {
@@ -14,7 +21,8 @@ const $_search = (commit, state, addToExisting?: boolean) => {
       state.keywords,
       state.limit,
       state.offset,
-      state.orderBy
+      state.orderBy,
+      state.userId
     ).then(data => {
       const whiteboards = _.get(data, 'results')
       commit(addToExisting ? 'addWhiteboards' : 'setWhiteboards', whiteboards)
@@ -120,6 +128,7 @@ const actions = {
         state.limit,
         0,
         state.orderBy,
+        state.userId
       ).then(data => {
         const whiteboards = _.get(data, 'results')
         commit('setWhiteboards', whiteboards)
@@ -133,6 +142,7 @@ const actions = {
   search: ({commit, state}) => $_search(commit, state),
   setBusy: ({commit}, isBusy) => commit('setBusy', isBusy),
   setCollaborator: ({commit}, collaborator) => commit('setCollaborator', collaborator),
+  setDirty: ({commit}, isDirty) => commit('setDirty', isDirty),
   setExpanded: ({commit}, expanded) => commit('setExpanded', expanded),
   setIncludeDeleted: ({commit}, includeDeleted) => commit('setIncludeDeleted', includeDeleted),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
