@@ -5,12 +5,12 @@ import {getWhiteboards} from '@/api/whiteboards'
 const orderByDefault = 'recent'
 
 const fetch = (
-  includeDeleted,
-  keywords,
-  limit,
-  offset,
-  orderBy,
-  userId
+  includeDeleted: boolean,
+  keywords: string,
+  limit: number,
+  offset: number,
+  orderBy: string,
+  userId: number
 ) => getWhiteboards(includeDeleted, keywords, limit, offset, orderBy, userId)
 
 const $_search = (commit, state, addToExisting?: boolean) => {
