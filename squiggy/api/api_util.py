@@ -36,6 +36,17 @@ from squiggy.models.asset import assets_type
 from squiggy.models.canvas import Canvas
 
 
+def feature_flag_whiteboards(func):
+    @wraps(func)
+    def _feature_flag_required(*args, **kw):
+        if app.config['FEATURE_FLAG_WHITEBOARDS']:
+            return func(*args, **kw)
+        else:
+            logger.warning('Feature flag is false.')
+            return app.login_manager.unauthorized()
+    return _feature_flag_required
+
+
 def teacher_required(func):
     @wraps(func)
     def _teacher_required(*args, **kw):

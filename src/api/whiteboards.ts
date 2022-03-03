@@ -17,8 +17,21 @@ export function getWhiteboard(id, socketId?) {
   return axios.get(url)
 }
 
-export function getWhiteboards(includeDeleted, limit, offset, orderBy) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboards`, {includeDeleted, limit, offset, orderBy})
+export function getWhiteboards(
+  includeDeleted,
+  keywords,
+  limit,
+  offset,
+  orderBy
+) {
+  const data = {
+    includeDeleted,
+    keywords,
+    limit,
+    offset,
+    orderBy
+  }
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboards`, data)
 }
 
 export function updateWhiteboard(title, whiteboardId) {

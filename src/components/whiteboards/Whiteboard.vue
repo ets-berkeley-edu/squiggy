@@ -52,7 +52,10 @@
           </v-btn>
         </v-btn-toggle>
         <v-btn-toggle>
-          <v-btn title="Add asset" @click="setMode('asset')">
+          <v-btn
+            title="Add asset"
+            @click="setMode('asset')"
+          >
             <font-awesome-icon icon="circle-plus" />
             <span>Asset</span>
           </v-btn>

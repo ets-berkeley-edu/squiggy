@@ -36,21 +36,21 @@ class TestConfigController:
 
     def test_feature_flag(self, client):
         """Asset types include 'whiteboard'."""
-        with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', True):
-            response = client.get('/api/config')
-            assert response.status_code == 200
-            assert response.json['assetTypes'] == assets_type.enums
+        response = client.get('/api/config')
+        assert response.status_code == 200
+        assert response.json['assetTypes'] == assets_type.enums
 
     def test_logged_in(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response to logged-in user."""
-        fake_auth.login(authorized_user_id)
-        response = client.get('/api/config')
-        assert response.status_code == 200
-        assert 'squiggyEnv' in response.json
-        data = response.json
-        assert data['assetTypes'] == ['file', 'link']
-        assert data['ebEnvironment'] is None
-        assert data['timezone'] == 'America/Los_Angeles'
+        with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', False):
+            fake_auth.login(authorized_user_id)
+            response = client.get('/api/config')
+            assert response.status_code == 200
+            assert 'squiggyEnv' in response.json
+            data = response.json
+            assert data['assetTypes'] == ['file', 'link']
+            assert data['ebEnvironment'] is None
+            assert data['timezone'] == 'America/Los_Angeles'
 
     def test_anonymous_version_request(self, client):
         """Returns a well-formed response."""
