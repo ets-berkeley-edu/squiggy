@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import json
 import random
 
+from flask import current_app as app
 from squiggy import std_commit
 from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
@@ -33,6 +34,7 @@ from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
+from tests.util import override_config
 
 unauthorized_user_id = '666'
 
@@ -104,6 +106,12 @@ class TestGetWhiteboards:
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
         self._api_get_whiteboards(client, expected_status_code=401)
+
+    def test_false_feature_flag(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+        """Denies authorized user when feature flag is false."""
+        with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', False):
+            fake_auth.login(authorized_user_id)
+            self._api_get_whiteboards(client, expected_status_code=401)
 
     def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
         """Get all whiteboards."""

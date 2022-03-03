@@ -128,7 +128,7 @@ export default {
   },
   watch: {
     dialog(isOpen) {
-      this.resetSearch()
+      this.resetOffset()
       this.isComplete = false
       this.selectedAssets = []
       if (isOpen) {

@@ -23,6 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import re
+
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -108,11 +110,22 @@ class Whiteboard(Base):
             cls,
             course_id=None,
             include_deleted=False,
+            keywords=None,
             limit=20,
             offset=0,
             order_by='recent',
             whiteboard_id=None,
     ):
+        where_clause = 'WHERE TRUE'
+        if course_id:
+            where_clause += ' AND w.course_id = :course_id'
+        if not include_deleted:
+            where_clause += ' AND w.deleted_at IS NULL'
+        if keywords:
+            where_clause += ' AND (w.title ILIKE :keywords)'
+        if whiteboard_id:
+            where_clause += ' AND w.id = :whiteboard_id'
+
         order_by_clause = {
             'recent': 'w.id DESC',
         }.get(order_by)
@@ -128,17 +141,15 @@ class Whiteboard(Base):
                 act.object_type = 'whiteboard'
                 AND w.id = act.object_id
                 AND act.course_id = :course_id
-            WHERE
-                {'TRUE' if include_deleted else 'w.deleted_at IS NULL'}
-                {'AND w.course_id = :course_id' if course_id else ''}
-                {'AND w.id = :whiteboard_id' if whiteboard_id else ''}
+            {where_clause}
             ORDER BY {order_by_clause}, u.canvas_full_name
             LIMIT :limit OFFSET :offset
         """
         params = {
             'course_id': course_id,
-            'offset': offset,
+            'keywords': ('%' + re.sub(r'\s+', '%', keywords.strip()) + '%') if keywords else None,
             'limit': limit,
+            'offset': offset,
             'whiteboard_id': whiteboard_id,
         }
         whiteboards_by_id = {}

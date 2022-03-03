@@ -4,11 +4,18 @@ import {getWhiteboards} from '@/api/whiteboards'
 
 const orderByDefault = 'recent'
 
-const fetch = (includeDeleted, limit, offset, orderBy) => getWhiteboards(includeDeleted, limit, offset, orderBy)
+const fetch = (includeDeleted, keywords, limit, offset, orderBy) => getWhiteboards(includeDeleted, keywords, limit, offset, orderBy)
 
 const $_search = (commit, state, addToExisting?: boolean) => {
   return new Promise(resolve => {
-    fetch(state.includeDeleted, state.limit, state.offset, state.orderBy).then(data => {
+    commit('setKeywords', _.trim(state.keywords))
+    fetch(
+      state.includeDeleted,
+      state.keywords,
+      state.limit,
+      state.offset,
+      state.orderBy
+    ).then(data => {
       const whiteboards = _.get(data, 'results')
       commit(addToExisting ? 'addWhiteboards' : 'setWhiteboards', whiteboards)
       commit('setTotalWhiteboardCount', _.get(data, 'total'))
@@ -24,6 +31,7 @@ const state = {
   collaborator: undefined,
   expanded: undefined,
   includeDeleted: false,
+  isBusy: false,
   isDirty: false,
   keywords: undefined,
   limit: 20,
@@ -41,6 +49,7 @@ const getters = {
   collaborator: (state: any): number => state.collaborator,
   expanded: (state: any): boolean => state.expanded,
   includeDeleted: (state: any): boolean => state.includeDeleted,
+  isBusy: (state: any): boolean => state.isBusy,
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
@@ -53,7 +62,7 @@ const getters = {
 
 const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
-  setWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards = whiteboards,
+  setBusy: (state: any, isBusy: boolean) => state.isBusy = isBusy,
   setCollaborators: (state: any, collaborators: any[]) => state.collaborators = collaborators,
   setCollaborator: (state: any, collaborator: number) => {
     state.collaborator = collaborator
@@ -77,6 +86,7 @@ const mutations = {
   },
   setTotalWhiteboardCount: (state: any, count: number) => state.totalWhiteboardCount = count,
   setUsers: (state: any, users: any[]) => state.users = users,
+  setWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards = whiteboards,
   updateWhiteboardStore: (state: any, updatedWhiteboard: any) => {
     if (state.whiteboards) {
       _.each(state.whiteboards, whiteboard => {
@@ -106,6 +116,7 @@ const actions = {
       console.log(`Refreshing on ${new Date().getTime()}...`)
       fetch(
         state.includeDeleted,
+        state.keywords,
         state.limit,
         0,
         state.orderBy,
@@ -118,8 +129,9 @@ const actions = {
       })
     })
   },
-  resetSearch: ({commit}) => commit('setOffset', 0),
+  resetOffset: ({commit}) => commit('setOffset', 0),
   search: ({commit, state}) => $_search(commit, state),
+  setBusy: ({commit}, isBusy) => commit('setBusy', isBusy),
   setCollaborator: ({commit}, collaborator) => commit('setCollaborator', collaborator),
   setExpanded: ({commit}, expanded) => commit('setExpanded', expanded),
   setIncludeDeleted: ({commit}, includeDeleted) => commit('setIncludeDeleted', includeDeleted),

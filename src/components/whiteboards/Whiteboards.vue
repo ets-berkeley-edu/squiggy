@@ -92,7 +92,7 @@ export default {
     if (this.isReturning) {
       this.handleResults()
     } else {
-      this.resetSearch()
+      this.resetOffset()
       this.isComplete = false
       this.stopInfiniteLoading()
       this.getBookmarkHash().then(bookmarkHash => {
@@ -148,9 +148,11 @@ export default {
       this.scheduleRefreshJob()
     },
     runRefresh() {
-      this.refresh().then(() => {
-        this.scheduleRefreshJob()
-      })
+      if (!this.isBusy) {
+        this.refresh().then(() => {
+          this.scheduleRefreshJob()
+        })
+      }
     },
     scheduleRefreshJob() {
       clearTimeout(this.refreshJob)

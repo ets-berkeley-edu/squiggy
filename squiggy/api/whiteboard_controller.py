@@ -27,7 +27,7 @@ import re
 
 from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard
+from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now
@@ -42,6 +42,7 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 
 
 @app.route('/api/whiteboard/<whiteboard_id>')
+@feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
@@ -59,6 +60,7 @@ def get_whiteboard(whiteboard_id):
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
+@feature_flag_whiteboards
 @login_required
 def export_as_asset(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
@@ -93,6 +95,7 @@ def export_as_asset(whiteboard_id):
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/png')
+@feature_flag_whiteboards
 @login_required
 def export_as_png(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
@@ -119,6 +122,7 @@ def export_as_png(whiteboard_id):
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/restore')
+@feature_flag_whiteboards
 @login_required
 def restore_whiteboard(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
@@ -130,23 +134,28 @@ def restore_whiteboard(whiteboard_id):
 
 
 @app.route('/api/whiteboards', methods=['POST'])
+@feature_flag_whiteboards
 @login_required
 def get_whiteboards():
     params = request.get_json()
     include_deleted = params.get('includeDeleted', False)
+    keywords = params.get('keywords')
     limit = params.get('limit')
     offset = params.get('offset')
     order_by = params.get('orderBy') or 'recent'
-    return tolerant_jsonify(Whiteboard.get_whiteboards(
+    whiteboards = Whiteboard.get_whiteboards(
         course_id=current_user.course.id,
         include_deleted=include_deleted,
+        keywords=keywords,
         limit=limit,
         offset=offset,
         order_by=order_by,
-    ))
+    )
+    return tolerant_jsonify(whiteboards)
 
 
 @app.route('/api/whiteboard/create', methods=['POST'])
+@feature_flag_whiteboards
 @login_required
 def create_whiteboard():
     if not current_user.course:
@@ -166,6 +175,7 @@ def create_whiteboard():
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/delete', methods=['DELETE'])
+@feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
@@ -179,6 +189,7 @@ def delete_whiteboard(whiteboard_id):
 
 
 @app.route('/api/whiteboard/update', methods=['POST'])
+@feature_flag_whiteboards
 @login_required
 def update_whiteboard():
     params = request.get_json()

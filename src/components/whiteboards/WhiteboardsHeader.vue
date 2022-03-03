@@ -26,20 +26,6 @@
     >
       <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
     </v-alert>
-    <!--
-    <div data-ng-if="me.is_admin && (!me.course.active || me.course.reactivated)" data-ng-include="'/app/shared/syncdisabled.html'"></div>
-    <whiteboards-search
-      data-is-advanced-search="isAdvancedSearch"
-      data-search-options-keywords="searchOptions.keywords"
-      data-search-options-user="searchOptions.user"
-      class="col-xs-{{ isAdvancedSearch ? 12 : 8 }} whiteboards-list-search-container"
-    />
-    <div role="alert" data-ng-if="popupBlocked">
-      Your browser prevented us from opening the whiteboard. <strong><a target="_blank" data-ng-href="{{generateWhiteboardURL(deepLinkedWhiteboard)}}">Open the whiteboard.</a></strong>
-    </div>
-    <div v-if="!$_.isNil(totalWhiteboardCount) && !totalWhiteboardCount">
-    </div>
-    -->
     <v-expand-transition>
       <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
         <v-text-field
@@ -97,6 +83,7 @@
               <v-text-field
                 id="adv-search-keywords-input"
                 clearable
+                :disabled="isLoading || isBusy"
                 height="50"
                 :hide-details="true"
                 placeholder="Keyword"
@@ -181,7 +168,7 @@
                   Cancel
                 </v-btn>
               </div>
-              <div v-if="$_.trim(keywords) || userId || (orderBy !== orderByDefault)" class="pl-2">
+              <div v-if="isDirty" class="pl-2">
                 <v-btn
                   id="reset-adv-search-btn"
                   class="text-capitalize"
@@ -305,7 +292,6 @@ export default {
   data: () => ({
     alert: undefined,
     alertType: undefined,
-    isBusy: true,
     keyForSelectReset: new Date().getTime()
   }),
   watch: {
@@ -324,7 +310,7 @@ export default {
       if (this.putFocusOnLoad) {
         this.$putFocusNextTick(this.putFocusOnLoad)
       }
-      this.isBusy = false
+      this.setBusy(false)
     })
   },
   methods: {
@@ -334,12 +320,12 @@ export default {
     },
     fetch() {
       if (this.keywords || this.orderBy || this.userId) {
-        this.resetSearch()
-        this.isBusy = true
+        this.setBusy(true)
+        this.resetOffset()
         this.$announcer.polite('Searching')
         this.search().then(data => {
           this.updateSearchBookmark()
-          this.isBusy = false
+          this.setBusy(false)
           if (data.total) {
             this.$announcer.polite(`${data.total} matching ${data.total === 1 ? 'whiteboard' : 'whiteboards'} found`)
           } else {
