@@ -211,7 +211,6 @@ class Whiteboard(Base):
             WhiteboardElement.create(
                 asset_id=asset.id,
                 element=asset_whiteboard_element.element,  # TODO: Storage.signWhiteboardElementSrc(asset_whiteboard_element.element)
-                uid=whiteboard.uid,
                 whiteboard_id=whiteboard.id,
             )
         db.session.add(whiteboard)
@@ -251,7 +250,7 @@ class Whiteboard(Base):
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [u.to_api_json() for u in self.users],
-            'whiteboardElements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
+            'elements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
             'createdAt': isoformat(self.created_at),
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
