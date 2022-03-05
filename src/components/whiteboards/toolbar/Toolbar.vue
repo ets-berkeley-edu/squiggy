@@ -2,14 +2,14 @@
   <v-toolbar id="whiteboard-toolbar" dense>
     <v-card class="mr-auto" outlined tile>
       <v-btn-toggle v-model="selected">
+        <v-btn @click="() => setDisableAll(false)">
+          <font-awesome-icon icon="mouse" />
+        </v-btn>
         <v-btn id="toolbar-pointer" value="pointer">
           <span class="sr-only">Move and transform</span>
           <font-awesome-icon icon="mouse-pointer" />
         </v-btn>
-        <v-btn id="toolbar-font" value="text">
-          <span class="sr-only">Text</span>
-          <font-awesome-icon icon="font" />
-        </v-btn>
+        <TextToolDialog />
         <v-btn id="toolbar-paint" value="draw">
           <span class="sr-only">Draw</span>
           <font-awesome-icon icon="paint-brush" />
@@ -63,11 +63,13 @@
 
 <script>
 import Context from '@/mixins/Context'
+import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'WhiteboardToolbar',
+  name: 'Toolbar',
   mixins: [Context, Whiteboarding],
+  components: {TextToolDialog},
   data: () => ({
     selected: undefined
   }),

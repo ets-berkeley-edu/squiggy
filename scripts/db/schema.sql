@@ -177,7 +177,7 @@ CREATE INDEX asset_users_user_id_idx ON asset_users USING btree (user_id);
 --
 
 CREATE TABLE asset_whiteboard_elements (
-    uid text NOT NULL,
+    uid character varying(255) NOT NULL,
     element json NOT NULL,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
@@ -381,7 +381,7 @@ ALTER TABLE ONLY users
 
 CREATE TABLE whiteboard_elements (
     id integer NOT NULL,
-    uid integer NOT NULL,
+    uid character varying(255) NOT NULL,
     element json NOT NULL,
     whiteboard_id integer NOT NULL,
     asset_id integer,

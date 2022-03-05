@@ -13,17 +13,23 @@ export default {
   },
   computed: {
     ...mapGetters('whiteboard', [
-      'whiteboard',
+      'board',
+      'disableAll',
       'windowHeight',
       'windowWidth'
     ])
   },
   methods: {
     ...mapActions('whiteboard', [
+      'addEllipsis',
+      'addText',
+      'getObjectAttribute',
       'init'
     ]),
     ...mapMutations('whiteboard', [
-      'onWindowResize'
+      'onWindowResize',
+      'setDisableAll',
+      'setObjectAttribute',
     ])
   }
 }

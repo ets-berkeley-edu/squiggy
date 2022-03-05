@@ -13,29 +13,33 @@
       :stateful="true"
       :width="windowWidth"
     >
-      <FabricCircle :id="3"></FabricCircle>
+      <FabricEllipse
+        v-for="(ellipse, index) in board.ellipses"
+        :id="`ellipse=${index}`"
+        :key="index"
+      />
     </FabricCanvas>
-    <WhiteboardToolbar />
+    <Toolbar />
   </div>
 </template>
 
 <script>
 import AddAssetsDialog from '@/components/whiteboards/AddAssetsDialog'
 import Context from '@/mixins/Context'
+import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
 import vueFabricWrapper from 'vue-fabric-wrapper'
-import WhiteboardToolbar from '@/components/whiteboards/WhiteboardToolbar'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Whiteboard',
+  mixins: [Context, Utils, Whiteboarding],
   components: {
     AddAssetsDialog,
     FabricCanvas: vueFabricWrapper.FabricCanvas,
-    FabricCircle: vueFabricWrapper.FabricCircle,
-    WhiteboardToolbar
+    FabricEllipse: vueFabricWrapper.FabricEllipse,
+    Toolbar
   },
-  mixins: [Context, Utils, Whiteboarding],
   created() {
     this.$loading()
     this.init(this.$route.params.id).then(() => {
