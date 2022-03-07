@@ -88,33 +88,35 @@ export default {
   components: {AccessibleSelect},
   mixins: [Context, Whiteboarding],
   data: () => ({
+    element: undefined,
     dialog: false,
-    isReady: false,
-    uid: undefined
+    isReady: false
   }),
   computed: {
     fill: {
       get() {
-        return this.getObjectAttribute({attribute: 'fill', uid: this.uid})
+        return this.element.fill
       },
       set(value) {
-        return this.setObjectAttribute({attribute: 'fill', uid: this.uid, value: value})
+        this.element.fill = value
+        this.setObjectAttribute({attribute: 'fill', uid: this.uid, value: value})
       }
     },
     fontSize: {
       get() {
-        return this.getObjectAttribute({attribute: 'fontSize', uid: this.uid}) || 14
+        return this.element.fontSize
       },
       set(value) {
-        return this.setObjectAttribute({attribute: 'fontSize', uid: this.uid, value: value})
+        this.element.fontSize = value
+        this.setObjectAttribute({attribute: 'fontSize', uid: this.uid, value: value})
       }
     }
   },
   watch: {
     dialog(isOpen) {
       if (isOpen) {
-        this.addText().then(uid => {
-          this.uid = uid
+        this.add('text').then(element => {
+          this.element = element
           this.$putFocusNextTick('dialog-header')
           this.isReady = true
         })

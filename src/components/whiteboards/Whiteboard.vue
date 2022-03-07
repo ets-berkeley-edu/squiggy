@@ -8,15 +8,22 @@
       />
     </div>
     <FabricCanvas
-      background-color="pink"
-      :height="windowHeight - 50"
+      :background-color="canvas.backgroundColor"
+      :height="canvas.height"
       :stateful="true"
-      :width="windowWidth"
+      :width="canvas.width"
     >
       <FabricEllipse
-        v-for="(ellipse, index) in board.ellipses"
-        :id="`ellipse=${index}`"
+        v-for="(ellipse, index) in ellipsisElements"
+        :id="`ellipse-element-${index}`"
         :key="index"
+      />
+      <FabricText
+        v-for="(element, index) in textElements"
+        :id="`text-element-${index}`"
+        :key="index"
+        :fill="element.fill"
+        :text="element.text"
       />
     </FabricCanvas>
     <Toolbar />
@@ -38,7 +45,19 @@ export default {
     AddAssetsDialog,
     FabricCanvas: vueFabricWrapper.FabricCanvas,
     FabricEllipse: vueFabricWrapper.FabricEllipse,
+    FabricText: vueFabricWrapper.FabricText,
     Toolbar
+  },
+  computed: {
+    canvas() {
+      return this.elementJsons.find(e => e.type === 'canvas')
+    },
+    ellipsisElements() {
+      return this.$_.filter(this.elementJsons, ['type', 'ellipsis'])
+    },
+    textElements() {
+      return this.$_.filter(this.elementJsons, ['type', 'text'])
+    }
   },
   created() {
     this.$loading()
