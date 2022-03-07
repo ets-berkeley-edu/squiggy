@@ -46,7 +46,6 @@ def _api_get_whiteboard(whiteboard_id, client, expected_status_code=200):
 
 
 class TestGetWhiteboard:
-    """Whiteboard API."""
 
     def test_anonymous(self, client, mock_whiteboard):
         """Denies anonymous user."""

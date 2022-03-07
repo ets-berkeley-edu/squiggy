@@ -78,7 +78,10 @@ class Whiteboard(Base):
     @classmethod
     def find_by_id(cls, whiteboard_id, include_deleted=True):
         whiteboards = cls.get_whiteboards(include_deleted=include_deleted, whiteboard_id=whiteboard_id)
-        return whiteboards['results'][0] if whiteboards['total'] else None
+        whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
+        if whiteboard:
+            whiteboard['elements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard['id'])]
+        return whiteboard
 
     @classmethod
     def create(

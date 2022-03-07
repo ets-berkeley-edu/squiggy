@@ -15,14 +15,14 @@ export default {
     ...mapGetters('whiteboard', [
       'board',
       'disableAll',
+      'elementJsons',
       'windowHeight',
       'windowWidth'
     ])
   },
   methods: {
     ...mapActions('whiteboard', [
-      'addEllipsis',
-      'addText',
+      'add',
       'getObjectAttribute',
       'init'
     ]),
