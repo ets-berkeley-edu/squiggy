@@ -8,21 +8,23 @@
       />
     </div>
     <FabricCanvas
-      :background-color="canvas.backgroundColor"
+      v-if="canvas"
       :height="canvas.height"
       :stateful="true"
       :width="canvas.width"
+      @mouse-down="onMousedownCanvas"
     >
       <FabricEllipse
-        v-for="(ellipse, index) in ellipsisElements"
+        v-for="(ellipse, index) in $_.filter(elementJsons, ['type', 'ellipsis'])"
         :id="`ellipse-element-${index}`"
         :key="index"
       />
       <FabricText
-        v-for="(element, index) in textElements"
+        v-for="(element, index) in $_.filter(elementJsons, ['type', 'text'])"
         :id="`text-element-${index}`"
         :key="index"
         :fill="element.fill"
+        :font-size="element.fontSize"
         :text="element.text"
       />
     </FabricCanvas>
@@ -48,22 +50,27 @@ export default {
     FabricText: vueFabricWrapper.FabricText,
     Toolbar
   },
-  computed: {
-    canvas() {
-      return this.elementJsons.find(e => e.type === 'canvas')
-    },
-    ellipsisElements() {
-      return this.$_.filter(this.elementJsons, ['type', 'ellipsis'])
-    },
-    textElements() {
-      return this.$_.filter(this.elementJsons, ['type', 'text'])
-    }
-  },
   created() {
     this.$loading()
     this.init(this.$route.params.id).then(() => {
       this.$ready()
     })
+  },
+  methods: {
+    onMousedownCanvas(event) {
+      if (this.unsavedFabricElement) {
+        console.log(`TODO: Capture position from ${event} object`)
+        const element = {
+          ...this.unsavedFabricElement,
+          ...{
+            text: 'Hello World',
+          }
+        }
+        this.saveElement(element).then(() => {
+          this.setUnsavedFabricElement(undefined)
+        })
+      }
+    }
   }
 }
 </script>

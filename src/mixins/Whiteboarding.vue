@@ -15,21 +15,31 @@ export default {
     ...mapGetters('whiteboard', [
       'board',
       'disableAll',
+      'fabricElementTemplates',
       'elementJsons',
+      'unsavedFabricElement',
       'windowHeight',
       'windowWidth'
-    ])
+    ]),
+    canvas() {
+      return this.elementJsons.find(e => e.type === 'canvas')
+    },
+    elementJsons() {
+      return this.$_.map(this.board.elements, 'element')
+    }
   },
   methods: {
     ...mapActions('whiteboard', [
       'add',
       'getObjectAttribute',
-      'init'
+      'init',
+      'saveElement'
     ]),
     ...mapMutations('whiteboard', [
       'onWindowResize',
       'setDisableAll',
-      'setObjectAttribute',
+      'setUnsavedFabricElement',
+      'updateUnsavedFabricElement'
     ])
   }
 }

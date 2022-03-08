@@ -72,11 +72,6 @@ export default {
   components: {TextToolDialog},
   data: () => ({
     selected: undefined
-  }),
-  watch: {
-    selected(newValue, oldValue) {
-      console.log(`selected: ${newValue} (was ${oldValue})`)
-    }
-  }
+  })
 }
 </script>
