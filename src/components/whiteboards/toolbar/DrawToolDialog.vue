@@ -5,19 +5,18 @@
   >
     <template #activator="{on, attrs}">
       <v-btn
-        id="toolbar-text"
+        id="toolbar-draw"
         :disabled="disableAll"
         v-bind="attrs"
-        value="text"
         v-on="on"
       >
-        <span class="sr-only">Text</span>
-        <font-awesome-icon icon="font" />
+        <span class="sr-only">Draw</span>
+        <font-awesome-icon icon="paintbrush" />
       </v-btn>
     </template>
     <v-card>
       <v-card-title class="sr-only">
-        <h2 id="menu-header" class="sr-only">Select Text Size and Color</h2>
+        <h2 id="menu-header" class="sr-only">Select brush and color</h2>
       </v-card-title>
       <v-card-text v-if="unsavedFabricElement">
         <v-container class="text-body-1">
@@ -42,7 +41,7 @@
               />
             </v-col>
           </v-row>
-          <ColorPicker tool="text" />
+          <ColorPicker tool="draw" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -52,20 +51,19 @@
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
-import Context from '@/mixins/Context'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'TextToolDialog',
+  name: 'DrawToolDialog',
   components: {AccessibleSelect, ColorPicker},
-  mixins: [Context, Whiteboarding],
+  mixins: [Whiteboarding],
   data: () => ({
     menu: false
   }),
   watch: {
     menu(isOpen) {
       if (isOpen) {
-        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.text))
+        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.paint))
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(isOpen)
