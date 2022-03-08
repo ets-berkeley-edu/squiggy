@@ -1,70 +1,74 @@
 import _ from 'lodash'
-import {createWhiteboardElement, getWhiteboard, updateWhiteboardElement} from '@/api/whiteboards'
+import {createWhiteboardElement, getWhiteboard} from '@/api/whiteboards'
 
-const $_createWhiteboardElement = (commit: any, elementType: string, whiteboardId: number) => {
-  const element = {
-    canvas: {
-      backgroundColor: 'green',
-      height: window.innerHeight - 50,
-      type: 'canvas',
-      width: window.innerWidth,
-    },
-    ellipsis: {
-      fill: 'rgb(0,0,0)',
-      type: 'ellipsis'
-    },
-    text: {
-      fill: 'rgb(0,0,0)',
-      text: '',
-      type: 'text'
-    }
-  }[elementType]
-  return createWhiteboardElement(element, whiteboardId).then(data => _.get(data, 'element'))
+const defaultFabricElementBase = {
+  fill: 'rgb(0,0,0)',
 }
 
 const $_findElement = (state: any, uid: number) => _.find(state.board.elements, ['uid', uid])
 
-const $_getElementJsons = (state: any) => _.map(state.board.elements, 'element')
-
 const state = {
   board: undefined,
+  fabricElementTemplates: {
+    canvas: {
+      height: window.innerHeight - 50,
+      type: 'canvas',
+      width: window.innerWidth
+    },
+    ellipsis: {
+      ...defaultFabricElementBase,
+      ...{
+        type: 'ellipsis'
+      }
+    },
+    text: {
+      ...defaultFabricElementBase,
+      ...{
+        fontSize: 14,
+        text: '',
+        type: 'text'
+      }
+    }
+  },
   disableAll: true,
+  unsavedFabricElement: undefined,
   windowHeight: window.innerHeight,
   windowWidth: window.innerWidth
 }
 
 const getters = {
   board: (state: any): any => state.board,
-  elementJsons: (state: any): any => $_getElementJsons(state),
   disableAll: (state: any): boolean => state.disableAll,
+  fabricElementTemplates: (state: any): any => state.fabricElementTemplates,
+  unsavedFabricElement: (state: any): any => state.unsavedFabricElement,
   windowHeight: (state: any): number => state.windowHeight,
   windowWidth: (state: any): number => state.windowWidth,
 }
 
 const mutations = {
-  add: (state: any, element: any) => {
-    state.disableAll = true
-    state.board.elements.push(element)
-  },
+  add: (state: any, element: any) => state.board.elements.push(element),
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
   },
   setBoard: (state: any, whiteboard: any) => state.board = whiteboard,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
-  setObjectAttribute: (state: any, {key, uid, value}) => {
-    updateWhiteboardElement(key, uid, value).then()
-  }
+  setUnsavedFabricElement: (state: any, unsavedFabricElement: any) => state.unsavedFabricElement = unsavedFabricElement,
+  updateUnsavedFabricElement: (state: any, {key, value}) => state.unsavedFabricElement[key] = value
 }
 
 const actions = {
-  add: ({commit, state}: any, elementType: string) => {
-    commit('setDisableAll', true)
-    const done = (element: any) => {
-      commit('setDisableAll', false)
-      return element
-    }
-    return $_createWhiteboardElement(commit, elementType, state.board.id).then(element => commit('add', element)).then(done)
+  saveElement: ({commit, state}: any, element: any) => {
+    return new Promise<Object>(resolve => {
+      commit('setDisableAll', true)
+      return createWhiteboardElement(element, state.board.id)
+      .then(data => _.get(data, 'element'))
+      .then(element => {
+        commit('add', element)
+        commit('setDisableAll', false)
+        return resolve(element)
+      })
+    })
   },
   getObjectAttribute: ({state}, {key, uid}) => {
     const object = $_findElement(state, uid)
@@ -81,12 +85,14 @@ const actions = {
           commit('setDisableAll', false)
           resolve()
         }
-        // const elementJsons = _.map(state.board.elements, 'element')
-        const hasCanvas = !!_.find($_getElementJsons(state), ['type', 'canvas'])
-        if (hasCanvas) {
+        const elementJsons = _.map(state.board.elements, 'element')
+        if (_.find(elementJsons, ['type', 'canvas'])) {
           done()
         } else {
-          $_createWhiteboardElement(commit, 'canvas', state.board.id).then(element => commit('add', element)).then(done)
+          return createWhiteboardElement(
+            state.fabricElementTemplates.canvas,
+            state.board.id
+          ).then(data => _.get(data, 'element')).then(done)
         }
       })
     })
