@@ -8,6 +8,8 @@
     <v-col cols="10">
       <div class="justify-start text-left">
         <v-color-picker
+          id="color-picker"
+          class="white--text"
           hide-canvas
           hide-inputs
           hide-sliders
