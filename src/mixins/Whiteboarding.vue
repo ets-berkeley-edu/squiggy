@@ -12,7 +12,7 @@ export default {
     window.removeEventListener('resize', this.onWindowResize)
   },
   computed: {
-    ...mapGetters('whiteboard', [
+    ...mapGetters('whiteboarding', [
       'board',
       'disableAll',
       'fabricElementTemplates',
@@ -29,13 +29,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions('whiteboard', [
+    ...mapActions('whiteboarding', [
       'add',
       'getObjectAttribute',
       'init',
       'saveElement'
     ]),
-    ...mapMutations('whiteboard', [
+    ...mapMutations('whiteboarding', [
       'onWindowResize',
       'setDisableAll',
       'setUnsavedFabricElement',

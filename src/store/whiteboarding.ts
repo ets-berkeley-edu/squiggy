@@ -2,7 +2,8 @@ import _ from 'lodash'
 import {createWhiteboardElement, getWhiteboard} from '@/api/whiteboards'
 
 const defaultFabricElementBase = {
-  fill: 'rgb(0,0,0)',
+  backgroundColor: 'lightblue',
+  fill: 'rgb(0,0,0)'
 }
 
 const $_findElement = (state: any, uid: number) => _.find(state.board.elements, ['uid', uid])
@@ -19,6 +20,12 @@ const state = {
       ...defaultFabricElementBase,
       ...{
         type: 'ellipsis'
+      }
+    },
+    paint: {
+      ...defaultFabricElementBase,
+      ...{
+        type: 'draw'
       }
     },
     text: {

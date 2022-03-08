@@ -5,19 +5,18 @@
   >
     <template #activator="{on, attrs}">
       <v-btn
-        id="toolbar-text"
+        id="toolbar-shapes"
         :disabled="disableAll"
         v-bind="attrs"
-        value="text"
         v-on="on"
       >
-        <span class="sr-only">Text</span>
-        <font-awesome-icon icon="font" />
+        <span class="sr-only">Shapes</span>
+        <font-awesome-icon icon="shapes" />
       </v-btn>
     </template>
     <v-card>
       <v-card-title class="sr-only">
-        <h2 id="menu-header" class="sr-only">Select Text Size and Color</h2>
+        <h2 id="menu-header" class="sr-only">Select Shape and Color</h2>
       </v-card-title>
       <v-card-text v-if="unsavedFabricElement">
         <v-container class="text-body-1">
@@ -42,7 +41,27 @@
               />
             </v-col>
           </v-row>
-          <ColorPicker tool="text" />
+          <v-row>
+            <v-col cols="2">
+              <div class="float-right pt-2">
+                Color
+              </div>
+            </v-col>
+            <v-col cols="10">
+              <div class="justify-start text-left">
+                <v-color-picker
+                  hide-canvas
+                  hide-inputs
+                  hide-sliders
+                  show-swatches
+                  :swatches="swatches"
+                  :value="unsavedFabricElement.fill"
+                  width="260"
+                  @input="setFill"
+                />
+              </div>
+            </v-col>
+          </v-row>
         </v-container>
       </v-card-text>
     </v-card>
@@ -51,16 +70,16 @@
 
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
-import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import Context from '@/mixins/Context'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'TextToolDialog',
-  components: {AccessibleSelect, ColorPicker},
+  name: 'ShapeToolDialog',
+  components: {AccessibleSelect},
   mixins: [Context, Whiteboarding],
   data: () => ({
-    menu: false
+    menu: false,
+    swatches: [['#000000', '#e6e6e6'], ['#5a6c7a', '#bc3aa7'], ['#0295de', '#af3837'], ['#0a8b00', '#bd8100']]
   }),
   watch: {
     menu(isOpen) {
@@ -75,6 +94,9 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
+    setFill(value) {
+      this.updateUnsavedFabricElement({key: 'fill', value})
+    },
     setFontSize(value) {
       this.updateUnsavedFabricElement({key: 'fontSize', value})
     }

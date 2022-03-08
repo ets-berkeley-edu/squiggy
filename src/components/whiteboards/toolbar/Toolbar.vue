@@ -10,14 +10,8 @@
           <font-awesome-icon icon="mouse-pointer" />
         </v-btn>
         <TextToolDialog />
-        <v-btn id="toolbar-paint" value="draw">
-          <span class="sr-only">Draw</span>
-          <font-awesome-icon icon="paint-brush" />
-        </v-btn>
-        <v-btn id="toolbar-shape" value="shape">
-          <span class="sr-only">Shape</span>
-          <font-awesome-icon icon="shapes" />
-        </v-btn>
+        <DrawToolDialog />
+        <ShapeToolDialog />
       </v-btn-toggle>
     </v-card>
     <v-card outlined tile>
@@ -63,13 +57,15 @@
 
 <script>
 import Context from '@/mixins/Context'
+import DrawToolDialog from '@/components/whiteboards/toolbar/DrawToolDialog'
 import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
+import ShapeToolDialog from '@/components/whiteboards/toolbar/ShapeToolDialog'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Toolbar',
   mixins: [Context, Whiteboarding],
-  components: {TextToolDialog},
+  components: {DrawToolDialog, ShapeToolDialog, TextToolDialog},
   data: () => ({
     selected: undefined
   })
