@@ -16,52 +16,38 @@
     </template>
     <v-card>
       <v-card-title class="sr-only">
-        <h2 id="menu-header" class="sr-only">Select Shape and Color</h2>
+        <h2 id="menu-header" class="sr-only">Select shape and color</h2>
       </v-card-title>
       <v-card-text v-if="unsavedFabricElement">
         <v-container class="text-body-1">
           <v-row>
             <v-col cols="2">
               <div class="float-right pt-2">
-                Size
+                Shape
               </div>
             </v-col>
             <v-col cols="6">
-              <AccessibleSelect
-                :dense="true"
+              <v-combobox
+                id="select-shape"
+                aria-labelledby="label-select-shape"
+                dense
                 :hide-details="true"
-                id-prefix="tool-select-text-size"
-                :items="[
-                  {text: 'Normal', value: 14},
-                  {text: 'Title', value: 36}
-                ]"
-                :unclearable="true"
-                :value="unsavedFabricElement.fontSize"
-                @input="setFontSize"
-              />
+                :items="$_.keys(options)"
+                :value="unsavedFabricElement.shape"
+                @input="setLineWidth"
+              >
+                <template #selection="{item}">
+                  <span id="selected-shape" class="sr-only">{{ item }} shape</span>
+                  <img aria-labelledby="selected-shape" :src="options[item]" />
+                </template>
+                <template slot="item" slot-scope="data">
+                  <span :id="`label-shape-${data.item}`" class="sr-only">{{ data.item }} shape</span>
+                  <img :aria-labelledby="`label-shape-${data.item}`" :src="options[data.item]" />
+                </template>
+              </v-combobox>
             </v-col>
           </v-row>
-          <v-row>
-            <v-col cols="2">
-              <div class="float-right pt-2">
-                Color
-              </div>
-            </v-col>
-            <v-col cols="10">
-              <div class="justify-start text-left">
-                <v-color-picker
-                  hide-canvas
-                  hide-inputs
-                  hide-sliders
-                  show-swatches
-                  :swatches="swatches"
-                  :value="unsavedFabricElement.fill"
-                  width="260"
-                  @input="setFill"
-                />
-              </div>
-            </v-col>
-          </v-row>
+          <ColorPicker tool="draw" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -69,22 +55,28 @@
 </template>
 
 <script>
-import AccessibleSelect from '@/components/util/AccessibleSelect'
-import Context from '@/mixins/Context'
+import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'ShapeToolDialog',
-  components: {AccessibleSelect},
-  mixins: [Context, Whiteboarding],
+  components: {ColorPicker},
+  mixins: [Whiteboarding],
   data: () => ({
     menu: false,
-    swatches: [['#000000', '#e6e6e6'], ['#5a6c7a', '#bc3aa7'], ['#0295de', '#af3837'], ['#0a8b00', '#bd8100']]
+    options: {
+      'Rect:thin': require('@/assets/whiteboard/shape-rect-thin.png'),
+      'Rect:thick': require('@/assets/whiteboard/shape-rect-thick.png'),
+      'Rect:fill': require('@/assets/whiteboard/shape-rect-fill.png'),
+      'Circle:thin': require('@/assets/whiteboard/shape-circle-thin.png'),
+      'Circle:thick': require('@/assets/whiteboard/shape-circle-thick.png'),
+      'Circle:fill': require('@/assets/whiteboard/shape-circle-fill.png')
+    }
   }),
   watch: {
     menu(isOpen) {
       if (isOpen) {
-        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.text))
+        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.shape))
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(isOpen)
@@ -94,9 +86,6 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
-    setFill(value) {
-      this.updateUnsavedFabricElement({key: 'fill', value})
-    },
     setFontSize(value) {
       this.updateUnsavedFabricElement({key: 'fontSize', value})
     }

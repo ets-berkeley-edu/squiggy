@@ -16,16 +16,24 @@ const state = {
       type: 'canvas',
       width: window.innerWidth
     },
+    draw: {
+      ...defaultFabricElementBase,
+      ...{
+        lineWidth: 1,
+        type: 'draw'
+      }
+    },
     ellipsis: {
       ...defaultFabricElementBase,
       ...{
         type: 'ellipsis'
       }
     },
-    paint: {
+    shape: {
       ...defaultFabricElementBase,
       ...{
-        type: 'draw'
+        shape: 'Rect:thin',
+        type: 'shape'
       }
     },
     text: {

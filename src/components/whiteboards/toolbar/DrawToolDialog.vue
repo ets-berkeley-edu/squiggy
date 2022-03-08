@@ -22,23 +22,29 @@
         <v-container class="text-body-1">
           <v-row>
             <v-col cols="2">
-              <div class="float-right pt-2">
+              <div id="label-select-line-width" class="float-right pt-2">
                 Size
               </div>
             </v-col>
             <v-col cols="6">
-              <AccessibleSelect
-                :dense="true"
+              <v-combobox
+                id="select-line-width"
+                aria-labelledby="label-select-line-width"
+                dense
                 :hide-details="true"
-                id-prefix="tool-select-text-size"
-                :items="[
-                  {text: 'Normal', value: 14},
-                  {text: 'Title', value: 36}
-                ]"
-                :unclearable="true"
-                :value="unsavedFabricElement.fontSize"
-                @input="setFontSize"
-              />
+                :items="$_.keys(options)"
+                :value="unsavedFabricElement.shape"
+                @input="setShape"
+              >
+                <template #selection="{item}">
+                  <span id="selected-line-width" class="sr-only">{{ item }} pixel line width</span>
+                  <img aria-labelledby="selected-line-width" :src="options[item]" />
+                </template>
+                <template slot="item" slot-scope="data">
+                  <span :id="`label-line-width-${data.item}`" class="sr-only">{{ data.item }} pixel line width</span>
+                  <img :aria-labelledby="`label-line-width-${data.item}`" :src="options[data.item]" />
+                </template>
+              </v-combobox>
             </v-col>
           </v-row>
           <ColorPicker tool="draw" />
@@ -49,21 +55,25 @@
 </template>
 
 <script>
-import AccessibleSelect from '@/components/util/AccessibleSelect'
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'DrawToolDialog',
-  components: {AccessibleSelect, ColorPicker},
+  components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
-    menu: false
+    menu: false,
+    options: {
+      1: require('@/assets/whiteboard/draw-small.png'),
+      5: require('@/assets/whiteboard/draw-medium.png'),
+      10: require('@/assets/whiteboard/draw-large.png')
+    }
   }),
   watch: {
     menu(isOpen) {
       if (isOpen) {
-        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.paint))
+        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.draw))
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(isOpen)
@@ -73,8 +83,8 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
-    setFontSize(value) {
-      this.updateUnsavedFabricElement({key: 'fontSize', value})
+    setShape(value) {
+      this.updateUnsavedFabricElement({key: 'shape', value})
     }
   }
 }
