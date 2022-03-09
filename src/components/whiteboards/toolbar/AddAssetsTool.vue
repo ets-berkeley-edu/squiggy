@@ -1,12 +1,14 @@
 <template>
-  <v-dialog v-model="dialog" scrollable transition="dialog-bottom-transition">
+  <v-dialog v-model="dialog" scrollable>
     <template #activator="{on, attrs}">
       <v-btn
-        :disabled="isModalLoading"
+        id="toolbar-add-asset"
+        :disabled="disableAll"
         v-bind="attrs"
         v-on="on"
       >
-        Add asset(s)
+        <font-awesome-icon icon="circle-plus" size="2x" />
+        <span class="pl-2">Asset</span>
       </v-btn>
     </template>
     <v-card>
@@ -14,8 +16,11 @@
         <h2 id="modal-header" class="title">Add asset(s)</h2>
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text style="height: 60vh;">
-        <AssetsHeader put-focus-on-load="basic-search-input" />
+      <v-card-text v-if="!isModalLoading" style="height: 60vh;">
+        <AssetsHeader
+          :hide-manage-assets-button="true"
+          put-focus-on-load="basic-search-input"
+        />
         <v-card class="d-flex flex-wrap" flat tile>
           <div v-for="(asset, index) in assetGrid" :key="index">
             <AssetCard
@@ -85,21 +90,12 @@ import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import InfiniteLoading from 'vue-infinite-loading'
 import Utils from '@/mixins/Utils'
+import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'AddAssetsDialog',
+  name: 'AddAssetsTool',
   components: {AssetCard, AssetsHeader, InfiniteLoading},
-  mixins: [AssetsSearch, Context, Utils],
-  props: {
-    onCancel: {
-      required: true,
-      type: Function
-    },
-    onSave: {
-      required: true,
-      type: Function
-    }
-  },
+  mixins: [AssetsSearch, Context, Utils, Whiteboarding],
   data: () => ({
     dialog: false,
     isComplete: false,
@@ -123,12 +119,12 @@ export default {
       }
     },
     disableSave() {
-      return !this.$_.size(this.selectedAssets)
+      return this.isModalLoading || !this.$_.size(this.selectedAssets)
     }
   },
   watch: {
     dialog(isOpen) {
-      this.resetOffset()
+      this.resetSearch()
       this.isComplete = false
       this.selectedAssets = []
       if (isOpen) {
@@ -145,7 +141,6 @@ export default {
     cancel() {
       this.dialog = false
       this.$announcer.polite('Canceled.')
-      this.onCancel()
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     infiniteHandler($state) {
@@ -159,11 +154,11 @@ export default {
     },
     save() {
       this.isSaving = true
+      console.log('TODO: Add assets')
       this.$_.noop().then(() => {
         this.$announcer.polite('Assets added')
         this.isSaving = false
         this.dialog = false
-        this.onSave()
       })
     }
   }
