@@ -1,12 +1,5 @@
 <template>
   <v-card v-if="!isLoading">
-    <div class="sr-only">
-      <AddAssetsDialog
-        :hide-managed-assets-button="true"
-        :on-cancel="$_.noop"
-        :on-save="$_.noop"
-      />
-    </div>
     <FabricCanvas
       v-if="canvas"
       :height="canvas.height"
@@ -35,7 +28,6 @@
 </template>
 
 <script>
-import AddAssetsDialog from '@/components/whiteboards/AddAssetsDialog'
 import Context from '@/mixins/Context'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
@@ -46,7 +38,6 @@ export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
   components: {
-    AddAssetsDialog,
     FabricCanvas: vueFabricWrapper.FabricCanvas,
     FabricEllipse: vueFabricWrapper.FabricEllipse,
     FabricText: vueFabricWrapper.FabricText,

@@ -23,10 +23,7 @@
       </v-btn>
     </div>
     <div class="pr-4">
-      <v-btn id="toolbar-add-asset" value="addAsset">
-        <font-awesome-icon icon="circle-plus" size="2x" />
-        <span class="pl-2">Asset</span>
-      </v-btn>
+      <AddAssetsTool />
     </div>
     <v-btn id="toolbar-export" value="export">
       <span class="sr-only">Export</span>
@@ -40,6 +37,7 @@
 </template>
 
 <script>
+import AddAssetsTool from '@/components/whiteboards/toolbar/AddAssetsTool'
 import Context from '@/mixins/Context'
 import DrawToolDialog from '@/components/whiteboards/toolbar/DrawToolDialog'
 import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
@@ -49,7 +47,12 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'Toolbar',
   mixins: [Context, Whiteboarding],
-  components: {DrawToolDialog, ShapeToolDialog, TextToolDialog},
+  components: {
+    AddAssetsTool,
+    DrawToolDialog,
+    ShapeToolDialog,
+    TextToolDialog
+  },
   data: () => ({
     selected: undefined
   }),
