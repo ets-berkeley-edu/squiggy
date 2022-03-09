@@ -11,7 +11,7 @@
         v-on="on"
       >
         <span class="sr-only">Draw</span>
-        <font-awesome-icon icon="paintbrush" />
+        <font-awesome-icon icon="paintbrush" size="2x" />
       </v-btn>
     </template>
     <v-card>
@@ -19,22 +19,20 @@
         <h2 id="menu-header" class="sr-only">Select brush and color</h2>
       </v-card-title>
       <v-card-text v-if="unsavedFabricElement">
-        <v-container class="text-body-1">
-          <v-row>
-            <v-col cols="2">
-              <div id="label-select-line-width" class="float-right pt-2">
-                Size
-              </div>
+        <v-container class="pb-0 pt-7 text-body-1">
+          <v-row class="pb-2" no-gutters>
+            <v-col class="pt-2" cols="3">
+              <label id="combobox-label">Size</label>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="9">
               <v-combobox
                 id="select-line-width"
-                aria-labelledby="label-select-line-width"
-                dense
+                aria-labelledby="combobox-label"
                 :hide-details="true"
                 :items="$_.keys(options)"
-                :value="unsavedFabricElement.shape"
-                @input="setShape"
+                outlined
+                :value="unsavedFabricElement.lineWidth"
+                @input="setLineWidth"
               >
                 <template #selection="{item}">
                   <span id="selected-line-width" class="sr-only">{{ item }} pixel line width</span>
@@ -83,8 +81,8 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
-    setShape(value) {
-      this.updateUnsavedFabricElement({key: 'shape', value})
+    setLineWidth(value) {
+      this.updateUnsavedFabricElement({key: 'lineWidth', value})
     }
   }
 }

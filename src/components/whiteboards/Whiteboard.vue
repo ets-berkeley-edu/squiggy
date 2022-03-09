@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isLoading">
+  <v-card v-if="!isLoading">
     <div class="sr-only">
       <AddAssetsDialog
         :hide-managed-assets-button="true"
@@ -28,8 +28,10 @@
         :text="element.text"
       />
     </FabricCanvas>
-    <Toolbar />
-  </div>
+    <div class="text-center">
+      <Toolbar />
+    </div>
+  </v-card>
 </template>
 
 <script>

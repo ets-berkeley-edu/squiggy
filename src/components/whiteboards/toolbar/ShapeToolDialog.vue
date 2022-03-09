@@ -11,7 +11,7 @@
         v-on="on"
       >
         <span class="sr-only">Shapes</span>
-        <font-awesome-icon icon="shapes" />
+        <font-awesome-icon icon="shapes" size="2x" />
       </v-btn>
     </template>
     <v-card>
@@ -19,22 +19,20 @@
         <h2 id="menu-header" class="sr-only">Select shape and color</h2>
       </v-card-title>
       <v-card-text v-if="unsavedFabricElement">
-        <v-container class="text-body-1">
-          <v-row>
-            <v-col cols="2">
-              <div class="float-right pt-2">
-                Shape
-              </div>
+        <v-container class="pb-0 pt-7 text-body-1">
+          <v-row class="pb-2" no-gutters>
+            <v-col class="pt-2" cols="3">
+              <label id="combobox-label">Shape</label>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="9">
               <v-combobox
                 id="select-shape"
-                aria-labelledby="label-select-shape"
-                dense
+                aria-labelledby="combobox-label"
                 :hide-details="true"
                 :items="$_.keys(options)"
+                outlined
                 :value="unsavedFabricElement.shape"
-                @input="setLineWidth"
+                @input="setShape"
               >
                 <template #selection="{item}">
                   <span id="selected-shape" class="sr-only">{{ item }} shape</span>
@@ -86,8 +84,8 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
-    setFontSize(value) {
-      this.updateUnsavedFabricElement({key: 'fontSize', value})
+    setShape(value) {
+      this.updateUnsavedFabricElement({key: 'shape', value})
     }
   }
 }
