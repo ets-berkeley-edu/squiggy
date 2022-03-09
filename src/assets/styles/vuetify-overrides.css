@@ -1,0 +1,9 @@
+#color-picker>div {
+  width: 214px;
+}
+#color-picker>div>div {
+  padding: 0 !important;
+}
+#color-picker .fa-circle-check {
+  color: white;
+}

@@ -1,25 +1,20 @@
 <template>
-  <v-row>
-    <v-col cols="2">
-      <div class="float-right pt-2">
-        Color
-      </div>
+  <v-row no-gutters>
+    <v-col class="pt-2" cols="3">
+      Color
     </v-col>
-    <v-col cols="10">
-      <div class="justify-start text-left">
-        <v-color-picker
-          id="color-picker"
-          class="white--text"
-          hide-canvas
-          hide-inputs
-          hide-sliders
-          show-swatches
-          :swatches="swatches"
-          :value="unsavedFabricElement.fill"
-          width="260"
-          @input="setFill"
-        />
-      </div>
+    <v-col class="text-left" cols="9">
+      <v-color-picker
+        id="color-picker"
+        hide-canvas
+        hide-inputs
+        hide-sliders
+        show-swatches
+        :swatches="swatches"
+        :value="unsavedFabricElement.fill"
+        width="260"
+        @input="setFill"
+      />
     </v-col>
   </v-row>
 </template>

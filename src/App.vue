@@ -22,4 +22,5 @@ export default {
   @import './assets/styles/squiggy-dark.css';
   @import './assets/styles/squiggy-global.css';
   @import './assets/styles/squiggy-light.css';
+  @import './assets/styles/vuetify-overrides.css';
 </style>

@@ -12,7 +12,7 @@
         v-on="on"
       >
         <span class="sr-only">Text</span>
-        <font-awesome-icon icon="font" />
+        <font-awesome-icon icon="font" size="2x" />
       </v-btn>
     </template>
     <v-card>
@@ -20,14 +20,12 @@
         <h2 id="menu-header" class="sr-only">Select Text Size and Color</h2>
       </v-card-title>
       <v-card-text v-if="unsavedFabricElement">
-        <v-container class="text-body-1">
-          <v-row>
-            <v-col cols="2">
-              <div class="float-right pt-2">
-                Size
-              </div>
+        <v-container class="pb-0 pt-7 text-body-1">
+          <v-row class="pb-2" no-gutters>
+            <v-col class="pt-2" cols="3">
+              Size
             </v-col>
-            <v-col cols="6">
+            <v-col cols="9">
               <AccessibleSelect
                 :dense="true"
                 :hide-details="true"
