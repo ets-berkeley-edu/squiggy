@@ -25,10 +25,104 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
-from squiggy.lib.util import is_teaching
+from squiggy import std_commit
+from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.course import Course
 
-unauthorized_user_id = '666'
+
+class TestCreateWhiteboardElement:
+
+    @staticmethod
+    def _api_create_whiteboard_elements(client, whiteboard_elements, whiteboard_id, expected_status_code=200):
+        response = client.post(
+            '/api/whiteboard/elements/create',
+            data=json.dumps({
+                'whiteboardElements': whiteboard_elements,
+                'whiteboardId': whiteboard_id,
+            }),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard_elements, mock_whiteboard):
+        """Denies unauthorized user."""
+        # Anonymous
+        self._api_create_whiteboard_elements(
+            client=client,
+            expected_status_code=401,
+            whiteboard_elements=mock_whiteboard_elements,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+        # Unauthorized
+        fake_auth.login(_get_unauthorized_user_id(mock_whiteboard))
+        self._api_create_whiteboard_elements(
+            client=client,
+            expected_status_code=400,
+            whiteboard_elements=mock_whiteboard_elements,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+
+    def test_authorized(self, client, fake_auth, mock_whiteboard, mock_whiteboard_elements):
+        """Authorized user can view whiteboard."""
+        fake_auth.login(_get_authorized_user_id(mock_whiteboard))
+        api_json = self._api_create_whiteboard_elements(
+            client=client,
+            whiteboard_elements=mock_whiteboard_elements,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+        assert len(api_json) == len(mock_whiteboard_elements)
+
+
+class TestUpdateWhiteboardElements:
+
+    @staticmethod
+    def _api_update_whiteboard_elements(client, whiteboard_elements, whiteboard_id, expected_status_code=200):
+        response = client.post(
+            '/api/whiteboard/elements/update',
+            data=json.dumps({
+                'whiteboardElements': whiteboard_elements,
+                'whiteboardId': whiteboard_id,
+            }),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+        """Denies unauthorized user."""
+        # Anonymous
+        self._api_update_whiteboard_elements(
+            client=client,
+            whiteboard_elements=mock_whiteboard['whiteboardElements'],
+            expected_status_code=401,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+        fake_auth.login(_get_unauthorized_user_id(mock_whiteboard))
+        self._api_update_whiteboard_elements(
+            client=client,
+            whiteboard_elements=mock_whiteboard['whiteboardElements'],
+            expected_status_code=400,
+            whiteboard_id=1,
+        )
+
+    def test_authorized(self, client, fake_auth, mock_whiteboard):
+        """Authorized user can update whiteboard elements."""
+        fake_auth.login(_get_authorized_user_id(mock_whiteboard))
+        whiteboard_elements = mock_whiteboard['whiteboardElements']
+        whiteboard_element = whiteboard_elements[-1]
+        updated_fill = 'rgb(128,255,128)'
+        whiteboard_element['element']['fill'] = updated_fill
+        api_json = self._api_update_whiteboard_elements(
+            client=client,
+            whiteboard_elements=whiteboard_elements,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+        std_commit(allow_test_environment=True)
+        assert len(api_json) and len(api_json) == len(whiteboard_elements)
+        updated_whiteboard_element = next((e for e in api_json if e['id'] == whiteboard_element['id']), None)
+        assert updated_whiteboard_element
+        assert updated_whiteboard_element['element']['fill'] == updated_fill
 
 
 def _api_get_whiteboard(whiteboard_id, client, expected_status_code=200):
@@ -37,33 +131,13 @@ def _api_get_whiteboard(whiteboard_id, client, expected_status_code=200):
     return response.json
 
 
-class TestCreateWhiteboardElement:
+def _get_authorized_user_id(whiteboard):
+    course_id = whiteboard['courseId']
+    instructors = list(filter(lambda u: is_teaching(u), Course.find_by_id(course_id).users))
+    return instructors[0].id
 
-    @staticmethod
-    def _api_create_whiteboard_element(client, whiteboard_id, element, expected_status_code=200):
-        response = client.get('/api/whiteboard/element/create')
-        assert response.status_code == expected_status_code
-        return json.loads(response.data)
 
-    def test_anonymous(self, client, mock_whiteboard):
-        """Denies anonymous user."""
-        _api_get_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
-        """Denies unauthorized user."""
-        fake_auth.login(unauthorized_user_id)
-        _api_get_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
-
-    def test_owner_view_whiteboard(self, client, fake_auth, mock_whiteboard):
-        """Authorized user can view whiteboard."""
-        fake_auth.login(mock_whiteboard.users[0].id)
-        asset = _api_get_whiteboard(client=client, whiteboard_id=mock_whiteboard.id)
-        assert asset['id'] == mock_whiteboard.id
-
-    def test_teacher_view_whiteboard(self, client, fake_auth, mock_whiteboard):
-        """Authorized user can view whiteboard."""
-        course = Course.find_by_id(mock_whiteboard.course_id)
-        instructors = list(filter(lambda u: is_teaching(u), course.users))
-        fake_auth.login(instructors[0].id)
-        asset = _api_get_whiteboard(whiteboard_id=mock_whiteboard.id, client=client)
-        assert asset['id'] == mock_whiteboard.id
+def _get_unauthorized_user_id(whiteboard):
+    course_id = whiteboard['courseId']
+    instructors = list(filter(lambda u: not is_admin(u) and not is_teaching(u), Course.find_by_id(course_id).users))
+    return instructors[0].id

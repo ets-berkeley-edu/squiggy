@@ -8,12 +8,12 @@
       @mouse-down="onMousedownCanvas"
     >
       <FabricEllipse
-        v-for="(ellipse, index) in $_.filter(elementJsons, ['type', 'ellipsis'])"
-        :id="`ellipse-element-${index}`"
+        v-for="(ellipse, index) in $_.filter($_.map(board.whiteboardElements, 'element'), ['type', 'shape'])"
+        :id="`shape-element-${index}`"
         :key="index"
       />
       <FabricText
-        v-for="(element, index) in $_.filter(elementJsons, ['type', 'text'])"
+        v-for="(element, index) in $_.filter($_.map(board.whiteboardElements, 'element'), ['type', 'text'])"
         :id="`text-element-${index}`"
         :key="index"
         :fill="element.fill"
@@ -59,7 +59,7 @@ export default {
             text: 'Hello World',
           }
         }
-        this.saveElement(element).then(() => {
+        this.saveWhiteboardElements([{element}]).then(() => {
           this.setUnsavedFabricElement(undefined)
         })
       }

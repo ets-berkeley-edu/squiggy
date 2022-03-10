@@ -1,12 +1,11 @@
 import _ from 'lodash'
-import {createWhiteboardElement, getWhiteboard} from '@/api/whiteboards'
+import {createWhiteboardElements, getWhiteboard} from '@/api/whiteboards'
 
 const defaultFabricElementBase = {
-  backgroundColor: 'lightblue',
   fill: 'rgb(0,0,0)'
 }
 
-const $_findElement = (state: any, uid: number) => _.find(state.board.elements, ['uid', uid])
+const $_findElement = (state: any, uid: number) => _.find(state.board.whiteboardElements, ['uid', uid])
 
 const state = {
   board: undefined,
@@ -61,7 +60,7 @@ const getters = {
 }
 
 const mutations = {
-  add: (state: any, element: any) => state.board.elements.push(element),
+  add: (state: any, whiteboardElement: any) => state.board.whiteboardElements.push(whiteboardElement),
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
@@ -73,18 +72,6 @@ const mutations = {
 }
 
 const actions = {
-  saveElement: ({commit, state}: any, element: any) => {
-    return new Promise<Object>(resolve => {
-      commit('setDisableAll', true)
-      return createWhiteboardElement(element, state.board.id)
-      .then(data => _.get(data, 'element'))
-      .then(element => {
-        commit('add', element)
-        commit('setDisableAll', false)
-        return resolve(element)
-      })
-    })
-  },
   getObjectAttribute: ({state}, {key, uid}) => {
     const object = $_findElement(state, uid)
     return object && object.get(key)
@@ -100,18 +87,29 @@ const actions = {
           commit('setDisableAll', false)
           resolve()
         }
-        const elementJsons = _.map(state.board.elements, 'element')
-        if (_.find(elementJsons, ['type', 'canvas'])) {
+        if (_.find(_.map(state.board.whiteboardElements, 'element'), ['type', 'canvas'])) {
           done()
         } else {
-          return createWhiteboardElement(
-            state.fabricElementTemplates.canvas,
+          return createWhiteboardElements(
+            [state.fabricElementTemplates.canvas],
             state.board.id
           ).then(data => _.get(data, 'element')).then(done)
         }
       })
     })
   },
+  saveWhiteboardElements: ({commit, state}: any, whiteboardElements: any[]) => {
+    return new Promise<void>(resolve => {
+      commit('setDisableAll', true)
+      return createWhiteboardElements(whiteboardElements, state.board.id)
+      .then(data => _.get(data, 'element'))
+      .then(data => {
+        _.each(data, whiteboardElement => commit('add', whiteboardElement))
+        commit('setDisableAll', false)
+        return resolve()
+      })
+    })
+  }
 }
 
 export default {

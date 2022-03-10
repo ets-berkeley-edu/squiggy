@@ -58,17 +58,17 @@ class TestGetWhiteboard:
 
     def test_owner_view_whiteboard(self, client, fake_auth, mock_whiteboard):
         """Authorized user can view whiteboard."""
-        fake_auth.login(mock_whiteboard.users[0].id)
-        asset = _api_get_whiteboard(client=client, whiteboard_id=mock_whiteboard.id)
-        assert asset['id'] == mock_whiteboard.id
+        fake_auth.login(mock_whiteboard['users'][0]['id'])
+        asset = _api_get_whiteboard(client=client, whiteboard_id=mock_whiteboard['id'])
+        assert asset['id'] == mock_whiteboard['id']
 
     def test_teacher_view_whiteboard(self, client, fake_auth, mock_whiteboard):
         """Authorized user can view whiteboard."""
-        course = Course.find_by_id(mock_whiteboard.course_id)
+        course = Course.find_by_id(mock_whiteboard['courseId'])
         instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
-        asset = _api_get_whiteboard(whiteboard_id=mock_whiteboard.id, client=client)
-        assert asset['id'] == mock_whiteboard.id
+        asset = _api_get_whiteboard(whiteboard_id=mock_whiteboard['id'], client=client)
+        assert asset['id'] == mock_whiteboard['id']
 
 
 class TestGetWhiteboards:
@@ -118,16 +118,16 @@ class TestGetWhiteboards:
         # Include deleted
         deleted_title = 'Delete me'
         whiteboard = Whiteboard.create(
-            course_id=mock_whiteboard.course_id,
+            course_id=mock_whiteboard['courseId'],
             title=deleted_title,
             users=[user],
         )
-        Whiteboard.delete(whiteboard.id)
+        Whiteboard.delete(whiteboard['id'])
         # Session
         WhiteboardSession.upsert(
             socket_id=str('%032x' % random.getrandbits(128)),
             user_id=user.id,
-            whiteboard_id=mock_whiteboard.id,
+            whiteboard_id=mock_whiteboard['id'],
         )
         std_commit(allow_test_environment=True)
         # Test
@@ -166,19 +166,19 @@ class TestExportAsAsset:
 
     def test_anonymous(self, client, mock_whiteboard):
         """Denies anonymous user."""
-        self._api_export(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+        self._api_export(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
 
     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_export(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+        self._api_export(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
 
     def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
         """Authorized user can export whiteboard as asset."""
         fake_auth.login(authorized_user_id)
-        WhiteboardElement.create(element={}, whiteboard_id=mock_whiteboard.id)
+        WhiteboardElement.create(element={}, whiteboard_id=mock_whiteboard['id'])
         std_commit(allow_test_environment=True)
-        api_json = self._api_export(client, whiteboard_id=mock_whiteboard.id)
+        api_json = self._api_export(client, whiteboard_id=mock_whiteboard['id'])
         assert 'id' in api_json
 
 
@@ -192,21 +192,21 @@ class TestRestoreWhiteboard:
 
     def test_anonymous(self, client, mock_whiteboard):
         """Denies anonymous user."""
-        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
 
     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard.id, expected_status_code=401)
+        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
 
     def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
         """Authorized user can update whiteboard."""
         fake_auth.login(authorized_user_id)
-        Whiteboard.delete(mock_whiteboard.id)
+        Whiteboard.delete(mock_whiteboard['id'])
         std_commit(allow_test_environment=True)
-        api_json = self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard.id)
+        api_json = self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard['id'])
         assert api_json['deletedAt'] is None
-        assert client.get(f'/api/whiteboard/{mock_whiteboard.id}').json['deletedAt'] is None
+        assert client.get(f"/api/whiteboard/{mock_whiteboard['id']}").json['deletedAt'] is None
 
 
 # class TestRefreshAssetPreview:
@@ -219,33 +219,33 @@ class TestRestoreWhiteboard:
 #
 #     def test_anonymous(self, client, mock_whiteboard):
 #         """Denies anonymous user."""
-#         self._api_refresh_whiteboard_preview(mock_whiteboard.id, client, expected_status_code=401)
+#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client, expected_status_code=401)
 #
 #     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
 #         """Denies unauthorized user."""
 #         fake_auth.login(unauthorized_user_id)
-#         self._api_refresh_whiteboard_preview(mock_whiteboard.id, client, expected_status_code=401)
+#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client, expected_status_code=401)
 #
 #     def test_refresh_whiteboard_by_owner(self, client, db_session, fake_auth, mock_whiteboard):
 #         """Authorized user can refresh asset preview."""
 #         mock_whiteboard.preview_status = 'done'
 #         fake_auth.login(mock_whiteboard.users[0].id)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard.id, client)
+#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
 #         assert asset_feed['previewStatus'] == 'done'
-#         self._api_refresh_whiteboard_preview(mock_whiteboard.id, client)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard.id, client)
+#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client)
+#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
 #         assert asset_feed['previewStatus'] == 'pending'
 #
 #     def test_refresh_whiteboard_by_instructor(self, client, db_session, fake_auth, mock_whiteboard):
 #         """Instructor can refresh asset preview."""
 #         mock_whiteboard.preview_status = 'done'
-#         course = Course.find_by_id(mock_whiteboard.course_id)
+#         course = Course.find_by_id(mock_whiteboard['courseId'])
 #         instructors = list(filter(lambda u: is_teaching(u), course.users))
 #         fake_auth.login(instructors[0].id)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard.id, client)
+#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
 #         assert asset_feed['previewStatus'] == 'done'
-#         self._api_refresh_whiteboard_preview(mock_whiteboard.id, client)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard.id, client)
+#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client)
+#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
 #         assert asset_feed['previewStatus'] == 'pending'
 #
 #
@@ -268,10 +268,10 @@ class TestRestoreWhiteboard:
 #
 #     def test_delete_whiteboard_by_teacher(self, client, fake_auth, mock_whiteboard):
 #         """Authorized user can delete whiteboard."""
-#         course = Course.find_by_id(mock_whiteboard.course_id)
+#         course = Course.find_by_id(mock_whiteboard['courseId'])
 #         instructors = list(filter(lambda u: is_teaching(u), course.users))
 #         fake_auth.login(instructors[0].id)
-#         self._verify_delete_whiteboard(mock_whiteboard.id, client)
+#         self._verify_delete_whiteboard(mock_whiteboard['id'], client)
 #
 #     def _verify_delete_whiteboard(self, whiteboard_id, client):
 #         self._api_delete_whiteboard(whiteboard_id=whiteboard_id, client=client)

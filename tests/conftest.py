@@ -27,6 +27,7 @@ from datetime import datetime
 import json
 import os
 from random import randint, randrange
+import uuid
 
 from moto import mock_sts  # noqa
 import pytest  # noqa
@@ -232,6 +233,19 @@ def mock_whiteboard(app, db_session):
     )
     whiteboard = Whiteboard.create(
         course_id=course.id,
+        elements=[
+            {
+                'height': 600,
+                'type': 'canvas',
+                'width': 800,
+            },
+            {
+                'fill': 'rgb(0,0,0)',
+                'fontSize': 14,
+                'text': '',
+                'type': 'text',
+            },
+        ],
         title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',
         users=[user],
     )
@@ -239,8 +253,33 @@ def mock_whiteboard(app, db_session):
 
     yield whiteboard
 
-    db_session.delete(whiteboard)
+    Whiteboard.delete(whiteboard_id=whiteboard['id'])
     std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
+def mock_whiteboard_elements():
+    return [
+        {
+            'assetId': 1,
+            'element': {
+                'fill': 'rgb(0,0,0)',
+                'fontSize': 14,
+                'text': '',
+                'type': 'text',
+            },
+            'uid': str(uuid.uuid4()),
+        },
+        {
+            'assetId': 2,
+            'element': {
+                'fill': 'rgb(0,0,0)',
+                'shape': 'Rect:thin',
+                'type': 'shape',
+            },
+            'uid': str(uuid.uuid4()),
+        },
+    ]
 
 
 @pytest.fixture(scope='function')

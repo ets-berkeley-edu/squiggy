@@ -81,12 +81,12 @@ class WhiteboardElement(Base):
         return asset_whiteboard_element
 
     @classmethod
-    def update(cls, uid, key, value):
-        element = cls.query.filter_by(uid=uid).first()
-        element.element[key] = value
-        db.session.add(element)
+    def update(cls, element, whiteboard_element_id):
+        whiteboard_element = cls.query.filter_by(id=whiteboard_element_id).first()
+        whiteboard_element.element = element
+        db.session.add(whiteboard_element)
         std_commit()
-        return element
+        return whiteboard_element
 
     def to_api_json(self):
         return {

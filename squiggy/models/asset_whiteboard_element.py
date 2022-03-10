@@ -32,6 +32,7 @@ from squiggy.models.base import Base
 class AssetWhiteboardElement(Base):
     __tablename__ = 'asset_whiteboard_elements'
 
+    # Tracks whiteboards which were exported to Asset Library.
     asset_id = db.Column(Integer, ForeignKey('assets.id'), primary_key=True)
     element = db.Column(JSONB, nullable=False)
     element_asset_id = db.Column(Integer, ForeignKey('assets.id'))

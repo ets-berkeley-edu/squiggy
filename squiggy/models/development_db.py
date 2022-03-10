@@ -302,7 +302,6 @@ def _create_whiteboards(courses, users):
             title=w['title'],
             users=[users[0]],
         )
-        db.session.add(whiteboard)
         whiteboards.append(whiteboard)
     std_commit(allow_test_environment=True)
     return whiteboards

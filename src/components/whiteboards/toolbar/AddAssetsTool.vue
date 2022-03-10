@@ -28,10 +28,10 @@
               class="asset-card"
               context="whiteboard"
               :hide-engagement-counts="true"
-              :on-asset-click="asset => selectedAssets.push(asset.id)"
+              :on-asset-click="asset => selectedAssetIds.push(asset.id)"
             >
               <v-checkbox
-                v-model="selectedAssets"
+                v-model="selectedAssetIds"
                 class="mb-0 pt-0"
                 dark
                 :value="asset.id"
@@ -101,7 +101,7 @@ export default {
     isComplete: false,
     isModalLoading: true,
     isSaving: false,
-    selectedAssets: []
+    selectedAssetIds: []
   }),
   computed: {
     assetGrid() {
@@ -119,14 +119,14 @@ export default {
       }
     },
     disableSave() {
-      return this.isModalLoading || !this.$_.size(this.selectedAssets)
+      return this.isModalLoading || !this.$_.size(this.selectedAssetIds)
     }
   },
   watch: {
     dialog(isOpen) {
       this.resetSearch()
       this.isComplete = false
-      this.selectedAssets = []
+      this.selectedAssetIds = []
       if (isOpen) {
         this.$putFocusNextTick('modal-header')
       }
@@ -153,13 +153,18 @@ export default {
       }
     },
     save() {
-      this.isSaving = true
-      console.log('TODO: Add assets')
-      this.$_.noop().then(() => {
-        this.$announcer.polite('Assets added')
-        this.isSaving = false
-        this.dialog = false
-      })
+      if (this.selectedAssetIds.length) {
+        this.isSaving = true
+        const whiteboardElements = this.$_.map(this.selectedAssetIds, assetId => ({
+          assetId,
+          element: {}
+        }))
+        this.saveWhiteboardElements(whiteboardElements).then(() => {
+          this.$announcer.polite('Assets added')
+          this.isSaving = false
+          this.dialog = false
+        })
+      }
     }
   }
 }
