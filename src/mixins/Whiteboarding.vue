@@ -16,16 +16,12 @@ export default {
       'board',
       'disableAll',
       'fabricElementTemplates',
-      'elementJsons',
       'unsavedFabricElement',
       'windowHeight',
       'windowWidth'
     ]),
     canvas() {
-      return this.elementJsons.find(e => e.type === 'canvas')
-    },
-    elementJsons() {
-      return this.$_.map(this.board.elements, 'element')
+      return this.$_.map(this.board.whiteboardElements, 'element').find(e => e.type === 'canvas')
     }
   },
   methods: {
@@ -33,7 +29,7 @@ export default {
       'add',
       'getObjectAttribute',
       'init',
-      'saveElement'
+      'saveWhiteboardElements'
     ]),
     ...mapMutations('whiteboarding', [
       'onWindowResize',

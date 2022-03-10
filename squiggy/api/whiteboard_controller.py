@@ -173,7 +173,7 @@ def create_whiteboard():
         title=title,
         users=User.find_by_ids(user_ids),
     )
-    return tolerant_jsonify(whiteboard.to_api_json())
+    return tolerant_jsonify(whiteboard)
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/delete', methods=['DELETE'])

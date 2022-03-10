@@ -32,44 +32,56 @@ from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 
 
-@app.route('/api/whiteboard/element/create', methods=['POST'])
+@app.route('/api/whiteboard/elements/create', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def create_whiteboard_element():
+def create_whiteboard_elements():
     params = request.get_json()
     whiteboard_id = params.get('whiteboardId')
-    element = params.get('element')
+    whiteboard_elements = params.get('whiteboardElements')
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
-    if not element or not element.get('type'):
-        raise BadRequestError(f"Element{' type' if element else ''} required")
+    if not len(whiteboard_elements):
+        raise BadRequestError('One or more whiteboard-elements required')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
-
-    def has_canvas():
-        return 'canvas' in [e.get('element').get('type') for e in whiteboard['elements']]
-
-    if element.get('type') == 'canvas' and has_canvas():
+    if _has_canvas(whiteboard_elements) and _has_canvas(whiteboard['elements']):
         raise BadRequestError('Whiteboard can have one, and only one, element of type canvas.')
-    whiteboard_element = WhiteboardElement.create(element=element, whiteboard_id=whiteboard_id)
-    return tolerant_jsonify(whiteboard_element.to_api_json())
+
+    api_json = []
+    for whiteboard_element in whiteboard_elements:
+        api_json.append(WhiteboardElement.create(
+            asset_id=whiteboard_element['assetId'],
+            element=whiteboard_element['element'],
+            whiteboard_id=whiteboard_id,
+        ).to_api_json())
+    return tolerant_jsonify(api_json)
 
 
-@app.route('/api/whiteboard/element/update', methods=['POST'])
+@app.route('/api/whiteboard/elements/update', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def update_whiteboard_element():
+def update_whiteboard_elements():
     params = request.get_json()
-    uid = params.get('uid')
-    key = params.get('key')
-    value = params.get('key')
-    element = WhiteboardElement.find_by_uid(uid) if uid else None
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=element.whiteboard_id)
+    whiteboard_elements = params.get('whiteboardElements', [])
+    whiteboard_id = params.get('whiteboardId')
+    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
+    if not len(whiteboard_elements):
+        raise BadRequestError('One or more elements required')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
 
-    element = WhiteboardElement.update(uid=uid, key=key, value=value)
-    return tolerant_jsonify(element.to_api_json())
+    api_json = []
+    for whiteboard_element in whiteboard_elements:
+        api_json.append(WhiteboardElement.update(
+            element=whiteboard_element['element'],
+            whiteboard_element_id=whiteboard_element['id'],
+        ).to_api_json())
+    return tolerant_jsonify(api_json)
+
+
+def _has_canvas(elements):
+    return 'canvas' in [e.get('type') for e in elements]

@@ -80,7 +80,7 @@ class Whiteboard(Base):
         whiteboards = cls.get_whiteboards(include_deleted=include_deleted, whiteboard_id=whiteboard_id)
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
         if whiteboard:
-            whiteboard['elements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard['id'])]
+            whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard['id'])]
         return whiteboard
 
     @classmethod
@@ -89,6 +89,7 @@ class Whiteboard(Base):
         course_id,
         title,
         users,
+        elements=None,
         image_url=None,
     ):
         whiteboard = cls(
@@ -99,7 +100,9 @@ class Whiteboard(Base):
         )
         db.session.add(whiteboard)
         std_commit()
-        return whiteboard
+        for element in (elements or []):
+            element = WhiteboardElement.create(element=element, whiteboard_id=whiteboard.id)
+        return whiteboard.to_api_json()
 
     @classmethod
     def delete(cls, whiteboard_id):
@@ -253,7 +256,7 @@ class Whiteboard(Base):
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [u.to_api_json() for u in self.users],
-            'elements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
+            'whiteboardElements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
             'createdAt': isoformat(self.created_at),
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
