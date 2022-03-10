@@ -46,7 +46,7 @@ def create_whiteboard_elements():
         raise BadRequestError('One or more whiteboard-elements required')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
-    if _has_canvas(whiteboard_elements) and _has_canvas(whiteboard['elements']):
+    if _has_canvas(whiteboard_elements) and _has_canvas(whiteboard['whiteboardElements']):
         raise BadRequestError('Whiteboard can have one, and only one, element of type canvas.')
 
     api_json = []

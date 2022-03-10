@@ -177,7 +177,7 @@ CREATE INDEX asset_users_user_id_idx ON asset_users USING btree (user_id);
 --
 
 CREATE TABLE asset_whiteboard_elements (
-    uid character varying(255) NOT NULL,
+    uuid character varying(255) NOT NULL,
     element json NOT NULL,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE asset_whiteboard_elements (
 );
 
 ALTER TABLE ONLY asset_whiteboard_elements
-    ADD CONSTRAINT asset_whiteboard_elements_pkey PRIMARY KEY (uid, asset_id);
+    ADD CONSTRAINT asset_whiteboard_elements_pkey PRIMARY KEY (uuid, asset_id);
 
 --
 
@@ -381,7 +381,7 @@ ALTER TABLE ONLY users
 
 CREATE TABLE whiteboard_elements (
     id integer NOT NULL,
-    uid character varying(255) NOT NULL,
+    uuid character varying(255) NOT NULL,
     element json NOT NULL,
     whiteboard_id integer NOT NULL,
     asset_id integer,
@@ -398,7 +398,7 @@ CREATE SEQUENCE whiteboard_elements_id_seq
 ALTER SEQUENCE whiteboard_elements_id_seq OWNED BY whiteboard_elements.id;
 ALTER TABLE ONLY whiteboard_elements ALTER COLUMN id SET DEFAULT nextval('whiteboard_elements_id_seq'::regclass);
 
-CREATE UNIQUE INDEX whiteboard_elements_created_at_uid_whiteboard_id_idx ON whiteboard_elements USING btree (uid, whiteboard_id, created_at);
+CREATE UNIQUE INDEX whiteboard_elements_created_at_uuid_whiteboard_id_idx ON whiteboard_elements USING btree (uuid, whiteboard_id, created_at);
 
 --
 

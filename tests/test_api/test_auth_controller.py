@@ -79,7 +79,7 @@ class TestDevAuth:
             )
 
     def test_authorized_user_fail(self, app, client):
-        """Fails if the chosen UID does not match an authorized user."""
+        """Fails if the chosen user_id does not match an authorized user."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
@@ -89,7 +89,7 @@ class TestDevAuth:
             )
 
     def test_unauthorized_user(self, app, client):
-        """Fails if the chosen UID does not match an authorized user."""
+        """Fails if the chosen user_id does not match an authorized user."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             self._api_dev_auth_login(
                 client,
