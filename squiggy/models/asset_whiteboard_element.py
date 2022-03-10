@@ -36,19 +36,19 @@ class AssetWhiteboardElement(Base):
     asset_id = db.Column(Integer, ForeignKey('assets.id'), primary_key=True)
     element = db.Column(JSONB, nullable=False)
     element_asset_id = db.Column(Integer, ForeignKey('assets.id'))
-    uid = db.Column(db.String(255), nullable=False, primary_key=True)
+    uuid = db.Column(db.String(255), nullable=False, primary_key=True)
 
     def __init__(
             self,
             element,
-            uid,
+            uuid,
             asset_id=None,
             element_asset_id=None,
     ):
         self.asset_id = asset_id
         self.element = element
         self.element_asset_id = element_asset_id
-        self.uid = uid
+        self.uuid = uuid
 
     @classmethod
     def create(cls, asset_id, whiteboard_elements):
@@ -57,7 +57,7 @@ class AssetWhiteboardElement(Base):
                 asset_id=asset_id,
                 element=whiteboard_element.element,
                 element_asset_id=whiteboard_element.asset_id,
-                uid=whiteboard_element.uid,
+                uuid=whiteboard_element.uuid,
             )
             db.session.add(asset_whiteboard_element)
         std_commit()
@@ -71,5 +71,5 @@ class AssetWhiteboardElement(Base):
             'assetId': self.asset_id,
             'element': self.element,
             'elementAssetId': self.element_asset_id,
-            'uid': self.uid,
+            'uuid': self.uuid,
         }

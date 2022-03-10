@@ -38,31 +38,27 @@ class WhiteboardElement(Base):
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
     asset_id = db.Column('asset_id', Integer, ForeignKey('assets.id'))
     element = db.Column('element', JSONB, nullable=False)
-    uid = db.Column('uid', db.String(255), nullable=False)
+    uuid = db.Column('uuid', db.String(255), nullable=False)
     whiteboard_id = db.Column('whiteboard_id', Integer, ForeignKey('whiteboards.id'), nullable=False)
 
     __table_args__ = (db.UniqueConstraint(
         'created_at',
-        'uid',
+        'uuid',
         'whiteboard_id',
-        name='whiteboard_elements_created_at_uid_whiteboard_id_idx',
+        name='whiteboard_elements_created_at_uuid_whiteboard_id_idx',
     ),)
 
     def __init__(
             self,
             asset_id,
             element,
-            uid,
+            uuid,
             whiteboard_id,
     ):
         self.asset_id = asset_id
         self.element = element
-        self.uid = uid
+        self.uuid = uuid
         self.whiteboard_id = whiteboard_id
-
-    @classmethod
-    def find_by_uid(cls, uid):
-        return cls.query.filter_by(uid=uid).first()
 
     @classmethod
     def find_by_whiteboard_id(cls, whiteboard_id):
@@ -73,7 +69,7 @@ class WhiteboardElement(Base):
         asset_whiteboard_element = cls(
             asset_id=asset_id,
             element=element,
-            uid=str(uuid.uuid4()),
+            uuid=str(uuid.uuid4()),
             whiteboard_id=whiteboard_id,
         )
         db.session.add(asset_whiteboard_element)
@@ -94,7 +90,7 @@ class WhiteboardElement(Base):
             'assetId': self.asset_id,
             'createdAt': isoformat(self.created_at),
             'element': self.element,
-            'uid': self.uid,
             'updatedAt': isoformat(self.updated_at),
+            'uuid': self.uuid,
             'whiteboardId': self.whiteboard_id,
         }

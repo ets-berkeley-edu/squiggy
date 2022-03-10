@@ -134,7 +134,7 @@ DROP INDEX IF EXISTS asset_categories_category_id_idx;
 DROP INDEX IF EXISTS asset_users_asset_id_idx;
 DROP INDEX IF EXISTS asset_users_user_id_idx;
 
-DROP INDEX IF EXISTS whiteboard_elements_created_at_uid_whiteboard_id_idx;
+DROP INDEX IF EXISTS whiteboard_elements_created_at_uuid_whiteboard_id_idx;
 
 --
 

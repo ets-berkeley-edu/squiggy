@@ -35,10 +35,10 @@ class TestUser:
     """User model."""
 
     def test_load_unknown_user(self):
-        """Returns None to Flask-Login for unrecognized UID."""
+        """Returns None to Flask-Login for unrecognized user_id."""
         assert User.find_by_id(unauthorized_user_id) is None
 
     def test_load_admin_user(self, authorized_user_id):
-        """Returns authorization record to Flask-Login for recognized UID."""
+        """Returns authorization record to Flask-Login for recognized user_id."""
         loaded_user = User.find_by_id(authorized_user_id)
         assert loaded_user.id == authorized_user_id

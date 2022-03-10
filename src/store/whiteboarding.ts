@@ -5,7 +5,7 @@ const defaultFabricElementBase = {
   fill: 'rgb(0,0,0)'
 }
 
-const $_findElement = (state: any, uid: number) => _.find(state.board.whiteboardElements, ['uid', uid])
+const $_findElement = (state: any, uuid: number) => _.find(state.board.whiteboardElements, ['uuid', uuid])
 
 const state = {
   board: undefined,
@@ -72,8 +72,8 @@ const mutations = {
 }
 
 const actions = {
-  getObjectAttribute: ({state}, {key, uid}) => {
-    const object = $_findElement(state, uid)
+  getObjectAttribute: ({state}, {key, uuid}) => {
+    const object = $_findElement(state, uuid)
     return object && object.get(key)
   },
   init: ({commit, state}, whiteboardId: number) => {
@@ -91,7 +91,11 @@ const actions = {
           done()
         } else {
           return createWhiteboardElements(
-            [state.fabricElementTemplates.canvas],
+            [{
+              assetId: undefined,
+              element: state.fabricElementTemplates.canvas,
+              whiteboardId: state.board.id
+            }],
             state.board.id
           ).then(data => _.get(data, 'element')).then(done)
         }

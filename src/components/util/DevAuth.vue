@@ -10,7 +10,7 @@
     <v-card color="transparent" flat width="360">
       <v-form @submit="devAuth">
         <v-text-field
-          id="uid-input"
+          id="user-id-input"
           v-model="userId"
           outlined
           placeholder="User ID"
