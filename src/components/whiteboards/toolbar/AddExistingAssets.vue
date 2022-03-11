@@ -1,19 +1,8 @@
 <template>
-  <v-dialog v-model="dialog" scrollable>
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-add-asset"
-        :disabled="disableAll"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <font-awesome-icon icon="circle-plus" size="2x" />
-        <span class="pl-2">Asset</span>
-      </v-btn>
-    </template>
+  <v-dialog v-model="dialog" fullscreen scrollable>
     <v-card>
       <v-card-title class="pb-1">
-        <h2 id="modal-header" class="title">Add asset(s)</h2>
+        <h2 id="modal-header" class="title">Add Asset(s)</h2>
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text v-if="!isModalLoading" style="height: 60vh;">
@@ -93,11 +82,24 @@ import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'AddAssetsTool',
+  name: 'AddExistingAssets',
   components: {AssetCard, AssetsHeader, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils, Whiteboarding],
+  props: {
+    afterSave: {
+      required: true,
+      type: Function
+    },
+    onCancel: {
+      required: true,
+      type: Function
+    },
+    open: {
+      required: true,
+      type: Boolean
+    }
+  },
   data: () => ({
-    dialog: false,
     isComplete: false,
     isModalLoading: true,
     isSaving: false,
@@ -116,6 +118,16 @@ export default {
         }
         this.nextPage()
         return (this.assets || []).concat(this.getSkeletons(skeletonCount))
+      }
+    },
+    dialog: {
+      get() {
+        return this.open
+      },
+      set(value) {
+        if (!value) {
+          this.onCancel()
+        }
       }
     },
     disableSave() {
@@ -140,7 +152,7 @@ export default {
   methods: {
     cancel() {
       this.dialog = false
-      this.$announcer.polite('Canceled.')
+      this.onCancel()
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     infiniteHandler($state) {

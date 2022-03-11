@@ -21,7 +21,7 @@
         :text="element.text"
       />
     </FabricCanvas>
-    <div class="text-center">
+    <div id="toolbar" class="text-center">
       <Toolbar />
     </div>
   </v-card>

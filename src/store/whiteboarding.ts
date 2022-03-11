@@ -92,7 +92,6 @@ const actions = {
         } else {
           return createWhiteboardElements(
             [{
-              assetId: undefined,
               element: state.fabricElementTemplates.canvas,
               whiteboardId: state.board.id
             }],

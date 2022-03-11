@@ -52,7 +52,7 @@ def create_whiteboard_elements():
     api_json = []
     for whiteboard_element in whiteboard_elements:
         api_json.append(WhiteboardElement.create(
-            asset_id=whiteboard_element['assetId'],
+            asset_id=whiteboard_element.get('assetId', None),
             element=whiteboard_element['element'],
             whiteboard_id=whiteboard_id,
         ).to_api_json())
