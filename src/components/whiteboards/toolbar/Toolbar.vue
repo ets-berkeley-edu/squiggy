@@ -1,5 +1,9 @@
 <template>
-  <v-toolbar class="pt-1" floating prominent>
+  <v-toolbar
+    class="pt-1"
+    floating
+    prominent
+  >
     <div class="pr-4">
       <v-btn @click="unlock">
         <font-awesome-icon icon="unlock" size="2x" />
@@ -23,7 +27,7 @@
       </v-btn>
     </div>
     <div class="pr-4">
-      <AddAssetsTool />
+      <AssetToolDialog />
     </div>
     <v-btn id="toolbar-export" value="export">
       <span class="sr-only">Export</span>
@@ -37,7 +41,7 @@
 </template>
 
 <script>
-import AddAssetsTool from '@/components/whiteboards/toolbar/AddAssetsTool'
+import AssetToolDialog from '@/components/whiteboards/toolbar/AssetToolDialog'
 import Context from '@/mixins/Context'
 import DrawToolDialog from '@/components/whiteboards/toolbar/DrawToolDialog'
 import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
@@ -48,7 +52,7 @@ export default {
   name: 'Toolbar',
   mixins: [Context, Whiteboarding],
   components: {
-    AddAssetsTool,
+    AssetToolDialog,
     DrawToolDialog,
     ShapeToolDialog,
     TextToolDialog

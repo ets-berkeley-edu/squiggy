@@ -21,7 +21,7 @@ export default {
       'windowWidth'
     ]),
     canvas() {
-      return this.$_.map(this.board.whiteboardElements, 'element').find(e => e.type === 'canvas')
+      return this.$_.find(this.$_.map(this.board.whiteboardElements, we => we['element']), e => e.type === 'canvas')
     }
   },
   methods: {
