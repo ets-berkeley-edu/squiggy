@@ -16,6 +16,7 @@ export default {
       'board',
       'disableAll',
       'fabricElementTemplates',
+      'isReadOnly',
       'unsavedFabricElement',
       'windowHeight',
       'windowWidth'
@@ -27,9 +28,13 @@ export default {
   methods: {
     ...mapActions('whiteboarding', [
       'add',
+      'deleteActiveElements',
       'getObjectAttribute',
+      'getSelectedAssetParams',
       'init',
-      'saveWhiteboardElements'
+      'moveLayer',
+      'saveWhiteboardElements',
+      'toggleZoom'
     ]),
     ...mapMutations('whiteboarding', [
       'onWindowResize',

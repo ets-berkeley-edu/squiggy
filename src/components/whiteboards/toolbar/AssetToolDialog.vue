@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="dialog" attach="#toolbar">
+  <v-menu
+    v-model="menu"
+    :close-on-content-click="false"
+    offset-y
+    top
+  >
     <template #activator="{on, attrs}">
       <AddExistingAssets
         :after-save="afterAddExistingAssets"
@@ -8,6 +13,7 @@
       />
       <v-btn
         id="toolbar-add-asset"
+        :disabled="disableAll"
         v-bind="attrs"
         v-on="on"
       >
@@ -29,8 +35,9 @@
         <v-btn
           id="toolbar-upload-new-asset"
           @click="openAddExisting"
-          @keypress.enter="openAddExisting"
+          @keypress.enter="uploadFiles"
         >
+          <!-- Use uploadFiles() function imported from old SuiteC -->
           <font-awesome-icon icon="laptop" />
           <span class="pl-2">Upload New</span>
         </v-btn>
@@ -44,35 +51,35 @@
         </v-btn>
       </v-card-text>
     </v-card>
-  </v-dialog>
+  </v-menu>
 </template>
 
 <script>
 import AddExistingAssets from '@/components/whiteboards/toolbar/AddExistingAssets'
-import Context from '@/mixins/Context'
+import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'AssetToolDialog',
-  mixins: [Context],
+  mixins: [Whiteboarding],
   components: {AddExistingAssets},
   data: () => ({
-    dialog: false,
+    menu: false,
     isOpenAddExisting: false
   }),
   methods: {
     afterAddExistingAssets() {
-      this.dialog = false
+      this.menu = false
       this.isOpenAddExisting = false
     },
     onCancelAddExisting() {
       this.isOpenAddExisting = false
-      this.dialog = true
-      this.$announcer.polite('Canceled dialog to Add Existing Assets.')
+      this.menu = true
+      this.$announcer.polite('Canceled.')
     },
     openAddExisting() {
-      this.dialog = false
+      this.menu = false
       this.isOpenAddExisting = true
-      this.$announcer.polite('Open dialog to Add Existing Assets.')
+      this.$announcer.polite('Open Add Existing Assets menu.')
     }
   }
 }

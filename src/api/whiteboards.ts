@@ -16,12 +16,8 @@ export function deleteWhiteboard(whiteboardId: number) {
   return axios.delete(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/delete`)
 }
 
-export function getWhiteboard(id, socketId?) {
-  let url = `${utils.apiBaseUrl()}/api/whiteboard/${id}`
-  if (socketId) {
-    url += `?socketId=${socketId}`
-  }
-  return axios.get(url)
+export function getWhiteboard(id: number) {
+  return axios.get(`${utils.apiBaseUrl()}/api/whiteboard/${id}`)
 }
 
 export function getWhiteboards(
@@ -41,6 +37,10 @@ export function getWhiteboards(
     userId
   }
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboards`, data)
+}
+
+export function restoreWhiteboard(whiteboardId: number) {
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/restore`, {whiteboardId})
 }
 
 export function updateWhiteboard(title: string, whiteboardId: number) {

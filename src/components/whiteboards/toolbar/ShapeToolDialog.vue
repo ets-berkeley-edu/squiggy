@@ -2,6 +2,8 @@
   <v-menu
     v-model="menu"
     :close-on-content-click="false"
+    offset-y
+    top
   >
     <template #activator="{on, attrs}">
       <v-btn
