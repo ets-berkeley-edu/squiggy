@@ -2,6 +2,8 @@
   <v-menu
     v-model="menu"
     :close-on-content-click="false"
+    offset-y
+    top
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -50,13 +52,12 @@
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
-import Context from '@/mixins/Context'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'TextToolDialog',
   components: {AccessibleSelect, ColorPicker},
-  mixins: [Context, Whiteboarding],
+  mixins: [Whiteboarding],
   data: () => ({
     menu: false
   }),
