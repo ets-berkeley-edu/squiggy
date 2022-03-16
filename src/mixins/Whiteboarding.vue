@@ -1,14 +1,18 @@
 <script>
+import store from '@/store'
+import whiteboarding from '@/store/whiteboarding/index'
 import {mapActions, mapMutations, mapGetters} from 'vuex'
 
 export default {
   name: 'Whiteboarding',
   mounted() {
+    store.registerModule('whiteboarding', whiteboarding)
     this.$nextTick(() => {
       window.addEventListener('resize', this.onWindowResize)
     })
   },
   beforeDestroy() {
+    store.unregisterModule('whiteboarding')
     window.removeEventListener('resize', this.onWindowResize)
   },
   computed: {

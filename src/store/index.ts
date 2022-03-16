@@ -3,12 +3,11 @@ import bookmarklet from '@/store/bookmarklet'
 import context from '@/store/context'
 import Vue from 'vue'
 import Vuex from 'vuex'
-import whiteboarding from '@/store/whiteboarding/index'
 import whiteboards from '@/store/whiteboards'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  modules: {assets, bookmarklet, context, whiteboarding, whiteboards},
+  modules: {assets, bookmarklet, context, whiteboards},
   strict: process.env.NODE_ENV !== 'production'
 })
