@@ -170,7 +170,7 @@ export default {
         const whiteboardElements = this.$_.map(this.selectedAssetIds, assetId => ({
           assetId,
           element: {},
-          whiteboardId: this.board.id
+          whiteboardId: this.whiteboard.id
         }))
         this.saveWhiteboardElements(whiteboardElements).then(() => {
           this.$announcer.polite('Assets added')
