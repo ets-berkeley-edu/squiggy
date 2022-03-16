@@ -1,6 +1,9 @@
 <template>
-  <div id="whiteboard-container">
-    <div id="whiteboard-canvas"></div>
+  <div>
+    <div id="whiteboard-viewport">
+      <canvas id="canvas"></canvas>
+    </div>
+    <!--
     <div id="whiteboard-edit-controls" data-ng-show="isElementSelected() && !isModifyingElement">
       <v-btn
         v-if="getSelectedAsset()"
@@ -31,9 +34,7 @@
         <i class="fa fa-trash"><span class="sr-only">Delete</span></i>
       </v-btn>
     </div>
-    <div v-if="!board.deletedAt" id="toolbar" class="text-center">
-      <Toolbar />
-    </div>
+    -->
 
     <!-- EXPORT POPOVER
     <script type="text/ng-template" id="exportPopoverTemplate">
@@ -109,17 +110,22 @@
       </ul>
     </template>
      -->
+    <div v-if="whiteboard && !whiteboard.deletedAt" id="toolbar" class="text-center">
+      <Toolbar />
+    </div>
   </div>
 </template>
 
 <script>
 import Context from '@/mixins/Context'
+import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
+  components: {Toolbar},
   created() {
     this.$loading()
     this.init(this.$route.params.id).then(() => {
