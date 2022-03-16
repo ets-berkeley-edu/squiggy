@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import fabricator from '@/store/whiteboarding/fabricator'
+import fabricator from '@/store/whiteboarding/utils/fabricator'
 import Vue from 'vue'
 import {fabric} from 'fabric'
 import {io} from 'socket.io-client'

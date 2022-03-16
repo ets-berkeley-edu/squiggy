@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div id="whiteboard-viewport">
+  <div id="whiteboard-container" class="whiteboard-container">
+    <div id="whiteboard-viewport" class="whiteboard-viewport">
       <canvas id="canvas"></canvas>
     </div>
     <!--
@@ -75,14 +75,14 @@
     </script>
     -->
     <!-- SIDEBAR BUTTONS
-    <div id="whiteboards-board-sidebar-buttons" data-ng-class="{'whiteboards-sidebar-expanded': sidebarExpanded}"  data-ng-if="!readonly">
-      <button type="button" class="btn btn-link whiteboards-board-toolbar-collaborators" title="Collaborators" data-ng-click="toggleSidebar('online')" data-ng-class="{'active': sidebarExpanded && sidebarMode === 'online'}">
+    <div id="whiteboard-sidebar-buttons" data-ng-class="{'whiteboard-sidebar-expanded': sidebarExpanded}"  data-ng-if="!readonly">
+      <button type="button" class="btn btn-link whiteboard-toolbar-collaborators" title="Collaborators" data-ng-click="toggleSidebar('online')" data-ng-class="{'active': sidebarExpanded && sidebarMode === 'online'}">
         <i class="fa fa-user">
           <span class="sr-only">Collaborators</span>
         </i>
         <span class="badge" data-ng-bind="getOnlineUsers().length"></span>
       </button>
-      <button type="button" class="btn btn-link whiteboards-board-toolbar-chat" title="Chat" data-ng-click="toggleSidebar('chat')" data-ng-class="{'active': sidebarExpanded && sidebarMode === 'chat'}">
+      <button type="button" class="btn btn-link whiteboard-toolbar-chat" title="Chat" data-ng-click="toggleSidebar('chat')" data-ng-class="{'active': sidebarExpanded && sidebarMode === 'chat'}">
         <i class="fa fa-comments">
           <span class="sr-only">Chat</span>
         </i>
@@ -150,3 +150,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.whiteboard-container {
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 1000;
+}
+.whiteboard-viewport {
+  height: 100%;
+  overflow: scroll;
+  position: relative;
+  width: 100%;
+}
+</style>

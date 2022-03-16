@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import fabricator from '@/store/whiteboarding/fabricator'
-import listeners from '@/store/whiteboarding/listeners'
-import stateDefault from '@/store/whiteboarding/state-default'
+import fabricator from '@/store/whiteboarding/utils/fabricator'
+import listeners from '@/store/whiteboarding/utils/listeners'
+import stateDefault from '@/store/whiteboarding/utils/state-default'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
 
@@ -76,7 +76,7 @@ export default {
     state.whiteboard = whiteboard
     state.exportPngUrl = `${utils.apiBaseUrl()}/whiteboards/${whiteboard.id}/export/png?downloadId=${state.downloadId}`
     state.sidebarExpanded = !whiteboard.deletedAt
-    state.viewport = document.getElementById('whiteboard-container')
+    state.viewport = document.getElementById('whiteboard-viewport')
     listeners.addSocketListeners(state)
     listeners.addModalListeners()
 

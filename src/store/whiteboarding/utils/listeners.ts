@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import fabricator from '@/store/whiteboarding/fabricator'
+import fabricator from '@/store/whiteboarding/utils/fabricator'
 import store from '@/store'
 import Vue from 'vue'
 import {fabric} from 'fabric'
