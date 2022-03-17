@@ -1,8 +1,6 @@
 import _ from 'lodash'
-import initializers from '@/store/whiteboarding/utils/canvas'
 import Vue from 'vue'
 import {createWhiteboardElements, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
-import {fabric} from 'fabric'
 
 const p = Vue.prototype
 
@@ -121,16 +119,8 @@ export default {
     }
   },
   init: ({commit}, whiteboardId: number) => {
-    return new Promise<void>(resolve => {
-      getWhiteboard(whiteboardId).then(whiteboard => {
-        Vue.prototype.$canvas = new fabric.Canvas('canvas', {
-          backgroundColor: 'red'
-        })
-        Vue.prototype.$socket = initializers.initSocket(whiteboard)
-        commit('init', whiteboard)
-        commit('setDisableAll', false)
-        resolve()
-      })
+    return getWhiteboard(whiteboardId).then(whiteboard => {
+      commit('init', whiteboard)
     })
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),

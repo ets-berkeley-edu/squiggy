@@ -129,6 +129,7 @@ export default {
   created() {
     this.$loading()
     this.init(this.$route.params.id).then(() => {
+      this.setDisableAll(false)
       this.$ready()
     })
   },

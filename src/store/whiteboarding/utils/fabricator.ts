@@ -1,8 +1,9 @@
 import _ from 'lodash'
-import {fabric} from 'fabric'
 import constants from '@/store/whiteboarding/utils/constants'
+import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
+import {fabric} from 'fabric'
 
 const p = Vue.prototype
 
@@ -70,19 +71,19 @@ const addAsset = (asset: any, state: any) => {
 /**
  * Calculate the position of an element in a group relative to the whiteboard canvas
  *
- * @param  {Object}         group             The group of which the element is a part
+ * @param  {Object}         selection         The selection (group of objects) of which the element is a part
  * @param  {Object}         element           The Fabric.js element for which the position relative to its group should be calculated
  * @return {Object}                           The position of the element relative to the whiteboard canvas. Will return the `angle`, `left` and `top` postion and the `scaleX` and `scaleY` scaling factors
  */
-const calculateGlobalElementPosition = (group: any, element: any): any => {
-  const center = group.getCenterPoint()
-  const rotated = $_calculateRotatedLeftTop(group, element)
+const calculateGlobalElementPosition = (selection: any, element: any): any => {
+  const center = selection.getCenterPoint()
+  const rotated = $_calculateRotatedLeftTop(selection, element)
   return {
-    'angle': element.getAngle() + group.getAngle(),
+    'angle': element.getAngle() + selection.getAngle(),
     'left': center.x + rotated.left,
     'top': center.y + rotated.top,
-    'scaleX': element.get('scaleX') * group.get('scaleX'),
-    'scaleY': element.get('scaleY') * group.get('scaleY')
+    'scaleX': element.get('scaleX') * selection.get('scaleX'),
+    'scaleY': element.get('scaleY') * selection.get('scaleY')
   }
 }
 
@@ -94,11 +95,11 @@ const deleteActiveElements = (state: any) => {
   const elements = getActiveElements()
   // Delete the selected items
   _.each(elements, (element: any) => p.$canvas.remove(getCanvasElement(element.uuid)))
-  // If a group selection was made, remove the group as well
-  // in case Fabric doesn't clean up after itself
-  if (p.$canvas.getActiveGroup()) {
-    p.$canvas.remove(p.$canvas.getActiveGroup())
-    p.$canvas.deactivateAll().requestRenderAll()
+  // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
+  const selection = p.$canvas.getActiveObject()
+  if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+    p.$canvas.remove(selection)
+    p.$canvas.discardActiveObject().requestRenderAll()
   }
   $_saveDeleteElements(elements, state)
 }
@@ -166,7 +167,7 @@ const ensureWithinCanvas = (event: any) => {
   }
 }
 
-const extendFabricObjects = (state: any) => {
+const init = (state: any) => {
   /**
    * Extend the Fabric.js `toObject` deserialization function to include
    * the property that uniquely identifies an object on the canvas, as well as
@@ -209,19 +210,21 @@ const extendFabricObjects = (state: any) => {
       state.mode = 'move'
     }
   })
+  // Recalculate the size of the p.$canvas when the window is resized
+  window.addEventListener('resize', () => setCanvasDimensions(state))
 }
 
 const getActiveElements = (): any[] => {
   // Get the currently selected whiteboard elements
   // return the selected whiteboard elements
   const activeElements: any[] = []
-  const group = p.$canvas.getActiveGroup()
-  if (group) {
-    _.each(group.objects, function(element) {
+  const selection = p.$canvas.getActiveObject()
+  if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+    _.each(selection.objects, (element: any) => {
       // When a Fabric.js canvas element is part of a group selection, its properties will be
       // relative to the group. Therefore, we calculate the actual position of each element in
       // the group relative to the whiteboard canvas
-      const position = calculateGlobalElementPosition(group, element)
+      const position = calculateGlobalElementPosition(selection, element)
       activeElements.push(_.assignTo({}, element.toObject(), position))
     })
   } else if (p.$canvas.getActiveObject()) {
@@ -254,13 +257,9 @@ const paste = (state: any): void => {
     // When multiple elements were pasted, create a new group
     // for those elements and select them
     } else {
-      const group = new fabric.Group()
-      group.set('isHelper', true)
-      p.$canvas.add(group)
-      _.each(elements, function(element) {
-        group.addWithUpdate(element)
-      })
-      p.$canvas.setActiveGroup(group)
+      const selection = new fabric.ActiveSelection(elements)
+      selection.set('isHelper', true)
+      p.$canvas.setActiveObject(selection)
     }
     p.$canvas.requestRenderAll()
     // Set the size of the whiteboard canvas
@@ -269,10 +268,11 @@ const paste = (state: any): void => {
 
   if (state.clipboard.length > 0) {
     // Clear the current selection
-    if (p.$canvas.getActiveGroup()) {
-      p.$canvas.remove(p.$canvas.getActiveGroup())
+    const selection = p.$canvas.getActiveObject()
+    if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+      p.$canvas.remove(selection)
     }
-    p.$canvas.deactivateAll().requestRenderAll()
+    p.$canvas.discardActiveObject().requestRenderAll()
 
     // Duplicate each copied element. In order to do this, remove
     // the index and unique id from the element and alter the position
@@ -433,9 +433,9 @@ export default {
   deserializeElement,
   enableCanvasElements,
   ensureWithinCanvas,
-  extendFabricObjects,
   getActiveElements,
   getCanvasElement,
+  init,
   paste,
   restoreLayers,
   saveElementUpdates,
@@ -447,18 +447,15 @@ export default {
 /**
  * Calculate the top left position of an element in a group
  *
- * @param  {Object}         group             The group of which the element is a part
+ * @param  {Object}         selection         The selection (group of objects) of which the element is a part
  * @param  {Object}         element           The Fabric.js element for which the top left position in its group should be calculated
  * @return {Object}                           The top left position of the element in its group. Will return the `top` and `left` postion
  */
-const $_calculateRotatedLeftTop = (group: any, element: any): any => {
-  const groupAngle = group.getAngle() * (Math.PI / 180)
-  const left = (-Math.sin(groupAngle) * element.getTop() * group.get('scaleY') + Math.cos(groupAngle) * element.getLeft() * group.get('scaleX'))
-  const top = (Math.cos(groupAngle) * element.getTop() * group.get('scaleY') + Math.sin(groupAngle) * element.getLeft() * group.get('scaleX'))
-  return {
-    'left': left,
-    'top': top
-  }
+const $_calculateRotatedLeftTop = (selection: any, element: any): any => {
+  const groupAngle = selection.getAngle() * (Math.PI / 180)
+  const left = (-Math.sin(groupAngle) * element.getTop() * selection.get('scaleY') + Math.cos(groupAngle) * element.getLeft() * selection.get('scaleX'))
+  const top = (Math.cos(groupAngle) * element.getTop() * selection.get('scaleY') + Math.sin(groupAngle) * element.getLeft() * selection.get('scaleX'))
+  return {left, top}
 }
 
 /**
