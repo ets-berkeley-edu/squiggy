@@ -1,5 +1,5 @@
-import constants from '@/store/whiteboarding/constants'
-import {createDownloadId} from '@/store/whiteboarding/canvas'
+import constants from '@/store/whiteboarding/utils/constants'
+import {createDownloadId} from '@/store/whiteboarding/utils/canvas'
 
 const defaultState = {
   // Variable that will keep track of the copied element(s)

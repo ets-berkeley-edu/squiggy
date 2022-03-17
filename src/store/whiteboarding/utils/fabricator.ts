@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import {fabric} from 'fabric'
-import constants from '@/store/whiteboarding/constants'
+import constants from '@/store/whiteboarding/utils/constants'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
 

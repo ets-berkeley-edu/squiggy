@@ -1,4 +1,3 @@
-
 export default {
   // Variable that will keep track of the placeholder images to use for assets without a preview image
   ASSET_PLACEHOLDERS: {
