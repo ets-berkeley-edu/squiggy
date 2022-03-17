@@ -27,15 +27,6 @@ from canvasapi import Canvas
 from flask import current_app as app
 
 
-def ping_canvas():
-    return get_account() is not None
-
-
-def get_account(api_url=None, access_token=None):
-    canvas = get_canvas(api_url, access_token)
-    return canvas.get_account(app.config['CANVAS_BERKELEY_ACCOUNT_ID'])
-
-
 def get_canvas(api_url=None, access_token=None):
     if not api_url:
         api_url = app.config['CANVAS_API_URL']
