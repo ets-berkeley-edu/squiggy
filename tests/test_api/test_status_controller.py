@@ -22,6 +22,12 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
 ENHANCEMENTS, OR MODIFICATIONS.
 """
+from datetime import timedelta
+
+from squiggy import db, std_commit
+from squiggy.lib.util import utc_now
+from squiggy.models.canvas import Canvas
+from squiggy.models.course import Course
 
 
 class TestStatusController:
@@ -29,7 +35,29 @@ class TestStatusController:
 
     def test_ping(self, client):
         """Answers the phone when pinged."""
-        response = client.get('/api/ping')
-        assert response.status_code == 200
-        assert response.json['app'] is True
-        assert response.json['db'] is True
+        # Set up course
+        canvas = db.session.query(Canvas).first()
+        course = Course(
+            active=True,
+            canvas_api_domain=canvas.canvas_api_domain,
+            canvas_course_id=9999999,
+        )
+        db.session.add(course)
+        std_commit(allow_test_environment=True)
+
+        def _ping(expected_ping_value):
+            response = client.get('/api/ping')
+            assert response.status_code == 200
+            assert response.json['app'] is True
+            assert response.json['db'] is True
+            assert response.json['poller'] is expected_ping_value
+
+        for minutes_ago in [59, 61]:
+            course.last_polled = utc_now() - timedelta(minutes=minutes_ago)
+            db.session.add(course)
+            std_commit(allow_test_environment=True)
+            _ping(minutes_ago < 60)
+
+        # Teardown
+        db.session.execute(f'DELETE FROM courses WHERE id = {course.id}')
+        std_commit(allow_test_environment=True)

@@ -26,6 +26,7 @@ from flask import current_app as app
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 
 
@@ -34,6 +35,7 @@ def app_status():
     resp = {
         'app': True,
         'db': _db_status(),
+        'poller': _poller_status(),
     }
     return tolerant_jsonify(resp)
 
@@ -45,3 +47,16 @@ def _db_status():
     except SQLAlchemyError:
         logger.exception('Database connection error')
         return False
+
+
+def _poller_status():
+    try:
+        first_row = db.session.execute('SELECT last_polled FROM courses WHERE last_polled IS NOT NULL ORDER BY last_polled DESC LIMIT 1').first()
+        if first_row:
+            diff_in_hours = (utc_now() - first_row['last_polled']).total_seconds() / 3600
+            return diff_in_hours < 1
+        else:
+            return False
+    except SQLAlchemyError:
+        logger.exception('Database connection error')
+        return None
