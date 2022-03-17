@@ -47,11 +47,11 @@ def _api_get_whiteboard(whiteboard_id, client, expected_status_code=200):
 
 class TestGetWhiteboard:
 
-    def test_anonymous(self, client, mock_whiteboard):
+    def test_anonymous(self, client):
         """Denies anonymous user."""
         _api_get_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
 
-    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+    def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
         _api_get_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)

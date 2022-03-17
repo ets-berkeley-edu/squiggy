@@ -42,6 +42,8 @@ def create_whiteboard_elements():
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
         raise BadRequestError('One or more whiteboard-elements required')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
@@ -69,6 +71,8 @@ def update_whiteboard_elements():
     whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
         raise BadRequestError('One or more elements required')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
