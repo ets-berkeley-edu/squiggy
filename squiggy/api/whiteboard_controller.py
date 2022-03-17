@@ -45,7 +45,7 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 @feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id, include_deleted=True)
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         socket_id = request.args.get('socketId')
         if socket_id:
@@ -200,6 +200,8 @@ def update_whiteboard():
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
 
