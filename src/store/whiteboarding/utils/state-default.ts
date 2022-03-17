@@ -1,12 +1,11 @@
 import constants from '@/store/whiteboarding/utils/constants'
-import {createDownloadId} from '@/store/whiteboarding/utils/canvas'
 
-const defaultState = {
+export default {
   // Variable that will keep track of the copied element(s)
   clipboard: [],
   colors: constants.COLORS,
   disableAll: true,
-  downloadId: createDownloadId(),
+  downloadId: undefined,
   draw: {
     options: constants.DRAW_OPTIONS,
     selected: {
@@ -50,5 +49,3 @@ const defaultState = {
     }
   }
 } as const
-
-export default defaultState

@@ -1,9 +1,12 @@
 import _ from 'lodash'
+import canvas from '@/store/whiteboarding/utils/canvas'
+import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
 import listeners from '@/store/whiteboarding/utils/listeners'
 import stateDefault from '@/store/whiteboarding/utils/state-default'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
+import socket from '@/store/whiteboarding/utils/socket'
 
 const p = Vue.prototype
 
@@ -13,20 +16,15 @@ export default {
     fabricator.addAsset(asset, state)
   },
   afterCanvasRender: (state: any) => {
-    if (!state.isModifyingElement && p.$canvas.getActiveObject() || p.$canvas.getActiveGroup()) {
+    const selection = p.$canvas.getActiveObject()
+    if (selection && !state.isModifyingElement) {
       // Get the bounding rectangle around the currently selected element(s)
-      let bound: any
-      if (p.$canvas.getActiveObject()) {
-        bound = p.$canvas.getActiveObject().getBoundingRect()
-      } else if (p.$canvas.getActiveGroup()) {
-        bound = p.$canvas.getActiveGroup().getBoundingRect()
-      }
+      const bound = selection.getBoundingRect()
       if (bound) {
         // Explicitly draw the bounding rectangle
         p.$canvas.contextContainer.strokeStyle = '#0295DE'
         p.$canvas.contextContainer.strokeRect(bound.left - 10, bound.top - 10, bound.width + 20, bound.height + 20)
       }
-
       // Position the buttons to modify the selected element(s)
       const editButtons = document.getElementById('whiteboards-board-editelement')
       if (editButtons) {
@@ -72,38 +70,24 @@ export default {
     })
   },
   init: (state: any, whiteboard: any) => {
+    // Reset state
     _.assignIn(state, stateDefault)
-    state.whiteboard = whiteboard
-    state.exportPngUrl = `${utils.apiBaseUrl()}/whiteboards/${whiteboard.id}/export/png?downloadId=${state.downloadId}`
-    state.sidebarExpanded = !whiteboard.deletedAt
-    state.viewport = document.getElementById('whiteboard-viewport')
-    listeners.addSocketListeners(state)
-    listeners.addModalListeners()
-
-    /**
-     * TODO: Detect keydown events in the whiteboard to respond to keyboard shortcuts
-     */
-    // state.viewport.addEventListener('keydown', (event: any) => {
-    //   // Remove the selected elements when the delete or backspace key is pressed
-    //   if (event.keyCode === 8 || event.keyCode === 46) {
-    //     fabricator.deleteActiveElements(state)
-    //     event.preventDefault()
-    //   } else if (event.keyCode === 67 && event.metaKey) {
-    //     // Copy the selected elements
-    //     state.clipboard = fabricator.getActiveElements(p.$canvas)
-    //   } else if (event.keyCode === 86 && event.metaKey) {
-    //     // listeners.Paste the copied elements
-    //     fabricator.paste(state)
-    //   }
-    // }, false)
-
-    // Recalculate the size of the p.$canvas when the window is resized
-    window.addEventListener('resize', () => fabricator.setCanvasDimensions(state))
-    // TODO:
+    _.assignIn(state, {
+      whiteboard: whiteboard,
+      downloadId: $_createDownloadId(),
+      exportPngUrl: `${utils.apiBaseUrl()}/whiteboards/${whiteboard.id}/export/png?downloadId=${state.downloadId}`,
+      sidebarExpanded: !whiteboard.deletedAt,
+      viewport: document.getElementById('whiteboard-viewport')
+    })
+    canvas.init(state)
+    listeners.init(state)
+    if (!whiteboard.deletedAt) {
+      // Open a websocket connection for real-time communication with the server (chat + whiteboard changes) when
+      // the whiteboard is rendered in edit mode. The course ID and API domain are passed in as handshake query parameters
+      socket.init(state)
+    }
     // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
-    //   initializers.initFabricCanvas(state)
-    //   listeners.addFabricCanvasListenters(state)
-    fabricator.extendFabricObjects(state)
+    fabricator.init(state)
   },
   moveLayer: (state: any, direction: string) => {
     /**
@@ -125,8 +109,12 @@ export default {
       }
     })
     // Move the elements to the back or front one by one
-    p.$canvas.remove(p.$canvas.getActiveGroup())
-    p.$canvas.deactivateAll().requestRenderAll()
+    const selection = p.$canvas.getActiveObject()
+    if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+      p.$canvas.remove(selection)
+    }
+
+    p.$canvas.discardActiveObject().requestRenderAll()
     _.each(elements, (e: any) => {
       const element = fabricator.getCanvasElement(e.uuid)
       if (direction === 'back') {
@@ -155,7 +143,7 @@ export default {
   setMode: (state: any, mode: string) => {
     state.mode = mode
     // Deactivate the currently selected item
-    p.$canvas.deactivateAll().requestRenderAll()
+    p.$canvas.discardActiveObject().requestRenderAll()
     // Disable drawing mode
     p.$canvas.isDrawingMode = false
     // Prevent the p.$canvas items from being modified unless
@@ -190,3 +178,14 @@ export default {
   },
   updateUnsavedFabricElement: (state: any, {key, value}) => state.unsavedFabricElement[key] = value
 }
+
+/**
+ * Depending on the size of the whiteboard, exporting it to PNG can sometimes take a while. To
+ * prevent the user from clicking the button twice when waiting to get a response, the button
+ * will be disabled as soon as its clicked. Once the file has been downloaded, it will be
+ * re-enabled. However, there are no cross-browser events that expose whether a file has been
+ * downloaded. The PNG export endpoint works around this by taking in a `downloadId` parameter
+ * and using that to construct a predictable cookie name. When a user clicks the button, the UI
+ * will disable the button and wait until the cookie is set before re-enabling it again
+ */
+ const $_createDownloadId = () => new Date().getTime()

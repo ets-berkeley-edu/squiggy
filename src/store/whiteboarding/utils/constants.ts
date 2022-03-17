@@ -57,6 +57,7 @@ export default {
       label: '<img src="/assets/img/whiteboard-draw-large.png" />'
     }
   ],
+  FABRIC_MULTIPLE_SELECT_TYPE: 'activeSelection',
   MODE_OPTIONS: ['move', 'draw', 'shape', 'text', 'asset'],
   SHAPE_OPTIONS: [
     {

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
 import store from '@/store'
 import Vue from 'vue'
@@ -6,7 +7,18 @@ import {fabric} from 'fabric'
 
 const p = Vue.prototype
 
-const addFabricCanvasListenters = (state: any) => {
+const init = (state: any) => {
+  $_addSocketListeners(state)
+  $_addModalListeners()
+  $_addViewportListeners(state)
+  $_addFabricCanvasListenters(state)
+}
+
+export default {
+  init
+}
+
+const $_addFabricCanvasListenters = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
   const setModifyingElement = () => state.isModifyingElement = true
   p.$canvas.on('object:moving', setModifyingElement)
@@ -38,8 +50,9 @@ const addFabricCanvasListenters = (state: any) => {
    * removed from the canvas when the group is deselected
    */
   p.$canvas.on('before:selection:cleared', () => {
-    if (p.$canvas.getActiveGroup()) {
-      p.$canvas.remove(p.$canvas.getActiveGroup())
+    const selection = p.$canvas.getActiveObject()
+    if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+      p.$canvas.remove(selection)
     }
   })
 
@@ -203,7 +216,7 @@ const addFabricCanvasListenters = (state: any) => {
   })
 }
 
-const addSocketListeners = (state: any) => {
+const $_addSocketListeners = (state: any) => {
   if (p.$socket) {
     /**
      * One or multiple whiteboard canvas elements were updated by a different user
@@ -254,7 +267,7 @@ const addSocketListeners = (state: any) => {
   }
 }
 
-const addModalListeners = () => {
+const $_addModalListeners = () => {
   // TODO: Set the toolbar back to move mode when the asset and export tooltips are hidden.
   // state.$on('tooltip.hide', function(ev, $tooltip) {
   //   if ((state.mode === 'asset' && $tooltip.$id === 'whiteboards-board-asset-trigger') || (state.mode === 'export' && $tooltip.$id === 'whiteboards-board-export-trigger')) {
@@ -267,10 +280,23 @@ const addModalListeners = () => {
   // state.$watch('draw.selected.lineWidth', () => p.$canvas.freeDrawingBrush.width = parseInt(state.draw.selected.lineWidth, 10), true)
 }
 
-export default {
-  addModalListeners,
-  addSocketListeners,
-  addFabricCanvasListenters
+/**
+ * Detect keydown events in the whiteboard to respond to keyboard shortcuts
+ */
+const $_addViewportListeners = (state: any) => {
+  state.viewport.addEventListener('keydown', (event: any) => {
+    // Remove the selected elements when the delete or backspace key is pressed
+    if (event.keyCode === 8 || event.keyCode === 46) {
+      fabricator.deleteActiveElements(state)
+      event.preventDefault()
+    } else if (event.keyCode === 67 && event.metaKey) {
+      // Copy the selected elements
+      state.clipboard = fabricator.getActiveElements()
+    } else if (event.keyCode === 86 && event.metaKey) {
+      // listeners.Paste the copied elements
+      fabricator.paste(state)
+    }
+  }, false)
 }
 
 /**
@@ -279,9 +305,9 @@ export default {
  * elements: The elements that should be checked for presence in the active group
  */
  const $_deactiveActiveGroupIfOverlap = (elements: any[]) => {
-  const group = p.$canvas.getActiveGroup()
-  if (group) {
-    const intersection = _.intersection(_.map(group.objects, 'uuid'), _.map(elements, 'uuid'))
+  const selection = p.$canvas.getActiveObject()
+  if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+    const intersection = _.intersection(_.map(selection.objects, 'uuid'), _.map(elements, 'uuid'))
     if (intersection.length > 0) {
       p.$canvas.discardActiveGroup().requestRenderAll()
     }
