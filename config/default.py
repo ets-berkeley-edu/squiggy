@@ -46,6 +46,7 @@ CAS_SERVER = 'https://auth-test.berkeley.edu/cas/'
 CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'
 
 CANVAS_POLLER = True
+CANVAS_POLLER_ACCEPTABLE_HOURS_SINCE_LAST = 1
 CANVAS_POLLER_DEACTIVATION_THRESHOLD = 90
 
 # Some defaults.

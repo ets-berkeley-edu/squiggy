@@ -54,7 +54,7 @@ def _poller_status():
         first_row = db.session.execute('SELECT last_polled FROM courses WHERE last_polled IS NOT NULL ORDER BY last_polled DESC LIMIT 1').first()
         if first_row:
             diff_in_hours = (utc_now() - first_row['last_polled']).total_seconds() / 3600
-            return diff_in_hours < 1
+            return diff_in_hours < app.config['CANVAS_POLLER_ACCEPTABLE_HOURS_SINCE_LAST']
         else:
             return False
     except SQLAlchemyError:
