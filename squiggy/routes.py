@@ -27,8 +27,10 @@ import datetime
 
 from cryptography.fernet import Fernet, InvalidToken
 from flask import jsonify, make_response, redirect, request, session
-from flask_login import LoginManager
+from flask_login import current_user, LoginManager
+from flask_socketio import emit
 from squiggy.api.api_util import start_login_session
+from squiggy.lib.socket_io_util import create_mock_socket, initialize_socket_io
 from squiggy.lib.util import is_admin, to_int
 from squiggy.models.user import User
 
@@ -38,6 +40,7 @@ def register_routes(app):
     login_manager.init_app(app)
     login_manager.user_loader(_user_loader)
     login_manager.anonymous_user = _user_loader
+    socketio = _initialize_socket_io(app)
 
     # Register API routes.
     import squiggy.api.activity_controller
@@ -107,6 +110,30 @@ def register_routes(app):
                 app.logger.debug(log_message)
 
         return response
+
+    @socketio.on('connect')
+    def connect_handler():
+        _handle_socketio_connect()
+
+    @socketio.on('add_whiteboard_elements')
+    def add_whiteboard_elements(data):
+        from squiggy.api.api_whiteboard_util import create_whiteboard_elements
+
+        create_whiteboard_elements(
+            whiteboard_id=data.get('whiteboardId'),
+            whiteboard_elements=data.get('elements', []),
+        )
+
+
+def _handle_socketio_connect():
+    if current_user.is_authenticated:
+        emit('my response', {'message': '{0} has joined'.format(current_user.name)}, broadcast=True)
+    else:
+        return False  # not allowed here
+
+
+def _initialize_socket_io(app):
+    return create_mock_socket() if app.config['TESTING'] else initialize_socket_io(app)
 
 
 def _user_loader(user_id=None):

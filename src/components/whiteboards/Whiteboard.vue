@@ -132,22 +132,6 @@ export default {
       this.setDisableAll(false)
       this.$ready()
     })
-  },
-  methods: {
-    onMousedownCanvas(event) {
-      if (this.unsavedFabricElement) {
-        console.log(`TODO: Capture position from ${event} object`)
-        const element = {
-          ...this.unsavedFabricElement,
-          ...{
-            text: 'Hello World',
-          }
-        }
-        this.saveWhiteboardElements([{element}]).then(() => {
-          this.setUnsavedFabricElement(undefined)
-        })
-      }
-    }
   }
 }
 </script>

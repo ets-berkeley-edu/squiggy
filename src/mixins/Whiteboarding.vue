@@ -36,7 +36,7 @@ export default {
     ...mapMutations('whiteboarding', [
       'onWindowResize',
       'setDisableAll',
-      'setUnsavedFabricElement',
+      'setMode',
       'updateUnsavedFabricElement'
     ])
   }

@@ -161,7 +161,6 @@ export default {
       p.$canvas.cursor = 'text'
     }
   },
-  setUnsavedFabricElement: (state: any, unsavedFabricElement: any) => state.unsavedFabricElement = unsavedFabricElement,
   toggleSidebar: (state: any, sidebarMode: string) => {
     // Toggle the view mode in the sidebar. If the sidebar was hidden, it will be shown
     // in the requested mode. If the sidebar was shown in a different mode, it will be switched to
@@ -175,8 +174,7 @@ export default {
   toggleZoom: (state: any) => {
     state.fitToScreen = !state.fitToScreen
     fabricator.setCanvasDimensions(state)
-  },
-  updateUnsavedFabricElement: (state: any, {key, value}) => state.unsavedFabricElement[key] = value
+  }
 }
 
 /**
