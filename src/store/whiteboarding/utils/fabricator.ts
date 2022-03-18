@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import constants from '@/store/whiteboarding/utils/constants'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
+import socket from './socket'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
 import {fabric} from 'fabric'
@@ -32,7 +33,7 @@ const addAsset = (asset: any, state: any) => {
   // Add the asset to the center of the whiteboard canvas
   const connector = _.includes(asset.imageUrl, '?') ? '&' : '?'
   const imageUrl = asset.imageUrl + connector + 'track=false'
-  fabric.Image.fromURL(imageUrl, function(element) {
+  fabric.Image.fromURL(imageUrl, (element: any) => {
     // This will exclude the toolbar and the chat/online sidebar (if expanded)
     // Calculate the center point of the whiteboard canvas
     const zoomLevel = p.$canvas.getZoom()
@@ -79,11 +80,11 @@ const calculateGlobalElementPosition = (selection: any, element: any): any => {
   const center = selection.getCenterPoint()
   const rotated = $_calculateRotatedLeftTop(selection, element)
   return {
-    'angle': element.getAngle() + selection.getAngle(),
-    'left': center.x + rotated.left,
-    'top': center.y + rotated.top,
-    'scaleX': element.get('scaleX') * selection.get('scaleX'),
-    'scaleY': element.get('scaleY') * selection.get('scaleY')
+    angle: element.getAngle() + selection.getAngle(),
+    left: center.x + rotated.left,
+    scaleX: element.get('scaleX') * selection.get('scaleX'),
+    scaleY: element.get('scaleY') * selection.get('scaleY'),
+    top: center.y + rotated.top
   }
 }
 
@@ -122,10 +123,8 @@ const deserializeElement = (state: any, element: any, callback: any) => {
     // the element has been created
     element.realSrc = element.src
     element.src = ''
-    fabric[type].fromObject(element, function(e) {
-      e.setSrc(e.get('realSrc'), function() {
-        return callback(e)
-      })
+    fabric[type].fromObject(element, (e: any) => {
+      e.setSrc(e.get('realSrc'), () => callback(e))
     })
   } else if (fabric[type].async) {
     fabric[type].fromObject(element, callback)
@@ -142,10 +141,7 @@ const deserializeElement = (state: any, element: any, callback: any) => {
  */
 const enableCanvasElements = (enabled: boolean) => {
   p.$canvas.selection = enabled
-  const elements = p.$canvas.getObjects()
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].selectable = enabled
-  }
+  _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
 }
 
 /**
@@ -178,11 +174,11 @@ const init = (state: any) => {
     return function() {
       const object:any = this
       return fabric.util.object.extend(toObject.call(object), {
-        'uuid': object.uuid,
-        'index': p.$canvas.getObjects().indexOf(object),
-        'assetId': object.assetId,
-        'width': object.width,
-        'height': object.height
+        assetId: object.assetId,
+        height: object.height,
+        index: p.$canvas.getObjects().indexOf(object),
+        uuid: object.uuid,
+        width: object.width
       })
     }
   }(fabric.Object.prototype.toObject))
@@ -234,12 +230,11 @@ const getActiveElements = (): any[] => {
 }
 
 const getCanvasElement = (uuid: number) => {
-  const elements = p.$canvas.getObjects()
-  for (let i = 0; i < elements.length; i++) {
-    if (elements[i].get('uuid') === uuid) {
-      return elements[i]
+  _.each(p.$canvas.getObjects(), (element: any) => {
+    if (element.get('uuid') === uuid) {
+      return element
     }
-  }
+  })
   return null
 }
 
@@ -277,7 +272,7 @@ const paste = (state: any): void => {
     // Duplicate each copied element. In order to do this, remove
     // the index and unique id from the element and alter the position
     // to ensure its visibility
-    _.each(state.clipboard, function(element) {
+    _.each(state.clipboard, (element: any) => {
       delete element.index
       delete element.uuid
       element.left += 25
@@ -314,7 +309,7 @@ const restoreLayers = (state: any) => {
  */
 const saveElementUpdates = (elements: any[], state: any) => {
   // Notify the server about the updated elements
-  p.$socket.emit('updateActivity', elements)
+  socket.emit('updateActivity', elements)
   // Recalculate the size of the whiteboard canvas
   setCanvasDimensions(state)
 }
@@ -329,7 +324,7 @@ const saveNewElement = (element: any, state: any) => {
     element.set('uuid', Math.round(Math.random() * 1000000))
   }
   // Save the new element
-  p.$socket.emit('add_whiteboard_elements', {
+  socket.emit('add_whiteboard_elements', {
     whiteboardElements: [{
       assetId: undefined,
       element: element.toObject()
@@ -471,7 +466,7 @@ const $_calculateRotatedLeftTop = (selection: any, element: any): any => {
  */
 const $_saveDeleteElements = (elements: any[], state: any): any => {
   // Notify the server about the deleted elements
-  p.$socket.emit('deleteActivity', elements)
+  socket.emit('deleteActivity', elements)
   // Update the layer ordering of the remaining elements
   updateLayers(state)
   // Recalculate the size of the whiteboard canvas

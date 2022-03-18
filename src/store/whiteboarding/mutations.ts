@@ -115,11 +115,13 @@ export default {
 
     p.$canvas.discardActiveObject().requestRenderAll()
     _.each(elements, (e: any) => {
-      const element = fabricator.getCanvasElement(e.uuid)
-      if (direction === 'back') {
-        element.sendToBack()
-      } else if (direction === 'front') {
-        element.bringToFront()
+      const element:any = fabricator.getCanvasElement(e.uuid)
+      if (element) {
+        if (direction === 'back') {
+          element.sendToBack()
+        } else if (direction === 'front') {
+          element.bringToFront()
+        }
       }
     })
     // Notify the server about the updated layers

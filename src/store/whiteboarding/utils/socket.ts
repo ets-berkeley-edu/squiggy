@@ -1,7 +1,8 @@
 import _ from 'lodash'
+import apiUtils from '@/api/api-utils'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
-import utils from '@/api/api-utils'
+import utils from '@/utils'
 import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
@@ -9,21 +10,17 @@ import {fabric} from 'fabric'
 const p = Vue.prototype
 
 const init = (state: any, whiteboard: any) => {
-  const socket = io(utils.apiBaseUrl(), {
+  const socket = io(apiUtils.apiBaseUrl(), {
     query: {
       whiteboardId: whiteboard.id
     }
   })
-  socket.on('connect', function() {
-    console.log('Websocket connected')
-  })
-  socket.on('disconnect', function() {
-    console.log('Websocket disconnected')
-  })
+  socket.on('connect', () => utils.logDebug('Connect socket.io-client'))
+  socket.on('disconnect', () => utils.logDebug('Disconnect socket.io-client'))
   /**
    * When a user has joined or left the whiteboard, update the online status on the list of members
    */
-  socket.on('online', function(onlineUsers) {
+  socket.on('online', (onlineUsers: any[]) => {
     if (whiteboard) {
       for (let i = 0; i < whiteboard.members.length; i++) {
         const member = whiteboard.members[i]
@@ -35,59 +32,69 @@ const init = (state: any, whiteboard: any) => {
   $_addSocketListeners(state)
 }
 
+const emit = (eventName: string, ...args: any) => {
+  utils.logDebug(`socket.emit:\n  event: ${eventName}\n  args: ${JSON.stringify(args)}`)
+  p.$socket.emit(eventName, args)
+}
+
+const on = (eventName: string, callback: Function) => {
+  utils.logDebug(`socket.emit:\n  event: ${eventName}\n  callback: ${callback.name}`)
+  p.$socket.on(eventName, callback)
+}
+
 export default {
-  init
+  emit,
+  init,
+  on
 }
 
 const $_addSocketListeners = (state: any) => {
-  if (p.$socket) {
-    /**
-     * One or multiple whiteboard canvas elements were updated by a different user
-     */
-    p.$socket.on('updateActivity', (elements: any) => {
-      // Deactivate the current group if any of the updated elements are in the current group
-      $_deactiveActiveGroupIfOverlap(elements)
-      // Update the elements
-      _.each(elements, function(element) {
-        $_updateCanvasElement(state, element.uuid, element)
-      })
-      // Recalculate the size of the whiteboard canvas
-      fabricator.setCanvasDimensions(state)
+  /**
+   * One or multiple whiteboard canvas elements were updated by a different user
+   */
+  on('updateActivity', (elements: any) => {
+    // Deactivate the current group if any of the updated elements are in the current group
+    $_deactiveActiveGroupIfOverlap(elements)
+    // Update the elements
+    _.each(elements, function(element) {
+      $_updateCanvasElement(state, element.uuid, element)
     })
-    /**
-     * A whiteboard canvas element was added by a different user
-     */
-     p.$socket.on('add_whiteboard_elements', function(elements) {
-      _.each(elements, (element: any) => {
-        const callback = (e: any) => {
-          // Add the element to the whiteboard canvas and move it to its appropriate index
-          p.$canvas.add(e)
-          element.moveTo(e.get('index'))
-          p.$canvas.requestRenderAll()
-          // Recalculate the size of the whiteboard canvas
-          fabricator.setCanvasDimensions(state)
-        }
-        fabricator.deserializeElement(state, element, callback)
-      })
+    // Recalculate the size of the whiteboard canvas
+    fabricator.setCanvasDimensions(state)
+  })
+  /**
+   * A whiteboard canvas element was added by a different user
+   */
+    on('add_whiteboard_elements', (elements: any[]) => {
+    _.each(elements, (element: any) => {
+      const callback = (e: any) => {
+        // Add the element to the whiteboard canvas and move it to its appropriate index
+        p.$canvas.add(e)
+        element.moveTo(e.get('index'))
+        p.$canvas.requestRenderAll()
+        // Recalculate the size of the whiteboard canvas
+        fabricator.setCanvasDimensions(state)
+      }
+      fabricator.deserializeElement(state, element, callback)
     })
+  })
 
-    /**
-     * One or multiple whiteboard canvas elements were deleted by a different user
-     */
-    p.$socket.on('deleteActivity', function(elements) {
-      // Deactivate the current group if any of the deleted elements are in the current group
-      $_deactiveActiveGroupIfOverlap(elements)
-      // Delete the elements
-      _.each(elements, function(element) {
-        element = fabricator.getCanvasElement(element.uuid)
-        if (element) {
-          p.$canvas.remove(element)
-        }
-      })
-      // Recalculate the size of the whiteboard canvas
-      fabricator.setCanvasDimensions(state)
+  /**
+   * One or multiple whiteboard canvas elements were deleted by a different user
+   */
+  on('deleteActivity', (elements: any[]) => {
+    // Deactivate the current group if any of the deleted elements are in the current group
+    $_deactiveActiveGroupIfOverlap(elements)
+    // Delete the elements
+    _.each(elements, function(element) {
+      element = fabricator.getCanvasElement(element.uuid)
+      if (element) {
+        p.$canvas.remove(element)
+      }
     })
-  }
+    // Recalculate the size of the whiteboard canvas
+    fabricator.setCanvasDimensions(state)
+  })
 }
 
 /**
@@ -110,29 +117,30 @@ const $_addSocketListeners = (state: any) => {
  *
  * @param  {Number}         uuid               The id of the element to update
  * @param  {Object}         update            The updated values to apply to the canvas element
- * @return {void}
  */
- const $_updateCanvasElement = (state: any, uuid: number, update: any): any => {
-  const element = fabricator.getCanvasElement(uuid)
+ const $_updateCanvasElement = (state: any, uuid: number, update: any) => {
+  const element: any = fabricator.getCanvasElement(uuid)
 
   const updateElementProperties = () => {
-    // Update all element properties, except for the image source. The image
-    // source is handled separately as this is an asynchronous action
-    _.each(update, function(value, property) {
-      if (property !== 'src' && value !== element.get(property)) {
-        element.set(property, value)
-      }
-    })
-    // When the source element for an asset has changed, update this last and
-    // re-render the element after it has been loaded
-    if (element.type === 'image' && element.getSrc() !== update.src) {
-      element.setSrc(update.src, function() {
-        p.$canvas.requestRenderAll()
-        // Ensure that the correct position is applied
-        fabricator.restoreLayers(state)
+    if (element) {
+      // Update all element properties, except for the image source. The image
+      // source is handled separately as this is an asynchronous action
+      _.each(update, function(value, property) {
+        if (property !== 'src' && value !== element.get(property)) {
+          element.set(property, value)
+        }
       })
-    } else {
-      fabricator.restoreLayers(state)
+      // When the source element for an asset has changed, update this last and
+      // re-render the element after it has been loaded
+      if (element.type === 'image' && element.getSrc() !== update.src) {
+        element.setSrc(update.src, () => {
+          p.$canvas.requestRenderAll()
+          // Ensure that the correct position is applied
+          fabricator.restoreLayers(state)
+        })
+      } else {
+        fabricator.restoreLayers(state)
+      }
     }
   }
   // If the element is an asset for which the source has changed, we preload
