@@ -330,7 +330,11 @@ const saveNewElement = (element: any, state: any) => {
   }
   // Save the new element
   p.$socket.emit('add_whiteboard_elements', {
-    elements: [element.toObject()],
+    whiteboardElements: [{
+      assetId: undefined,
+      element: element.toObject()
+    }],
+    userId: p.$currentUser.id,
     whiteboardId: state.whiteboard.id
   })
 }

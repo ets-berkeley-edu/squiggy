@@ -2,7 +2,6 @@ import _ from 'lodash'
 import canvas from '@/store/whiteboarding/utils/canvas'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
-import listeners from '@/store/whiteboarding/utils/listeners'
 import stateDefault from '@/store/whiteboarding/utils/state-default'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
@@ -80,11 +79,11 @@ export default {
       viewport: document.getElementById('whiteboard-viewport')
     })
     canvas.init(state)
-    listeners.init(state)
+    // listeners.init(state)
     if (!whiteboard.deletedAt) {
       // Open a websocket connection for real-time communication with the server (chat + whiteboard changes) when
       // the whiteboard is rendered in edit mode. The course ID and API domain are passed in as handshake query parameters
-      socket.init(state)
+      socket.init(state, whiteboard)
     }
     // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
     fabricator.init(state)

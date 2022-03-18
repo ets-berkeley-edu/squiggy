@@ -30,6 +30,7 @@ from flask import jsonify, make_response, redirect, request, session
 from flask_login import current_user, LoginManager
 from flask_socketio import emit
 from squiggy.api.api_util import start_login_session
+from squiggy.lib.login_session import LoginSession
 from squiggy.lib.socket_io_util import create_mock_socket, initialize_socket_io
 from squiggy.lib.util import is_admin, to_int
 from squiggy.models.user import User
@@ -120,8 +121,9 @@ def register_routes(app):
         from squiggy.api.api_whiteboard_util import create_whiteboard_elements
 
         create_whiteboard_elements(
+            user=LoginSession(data.get('userId')),
             whiteboard_id=data.get('whiteboardId'),
-            whiteboard_elements=data.get('elements', []),
+            whiteboard_elements=data.get('whiteboardElements', []),
         )
 
 

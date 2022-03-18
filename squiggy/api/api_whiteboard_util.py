@@ -23,14 +23,13 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask_login import current_user
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 
 
-def create_whiteboard_elements(whiteboard_id, whiteboard_elements):
+def create_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
@@ -38,7 +37,7 @@ def create_whiteboard_elements(whiteboard_id, whiteboard_elements):
         raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
         raise BadRequestError('One or more whiteboard-elements required')
-    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
     if _has_canvas(whiteboard_elements) and _has_canvas(whiteboard['whiteboardElements']):
         raise BadRequestError('Whiteboard can have one, and only one, element of type canvas.')
