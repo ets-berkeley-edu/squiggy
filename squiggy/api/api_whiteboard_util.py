@@ -23,49 +23,34 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, request
-from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_whiteboard, feature_flag_whiteboards
-from squiggy.api.api_whiteboard_util import create_whiteboard_elements
+from flask_login import current_user
+from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
-from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 
 
-@app.route('/api/whiteboard/elements/create', methods=['POST'])
-@feature_flag_whiteboards
-@login_required
-def whiteboard_elements_create():
-    params = request.get_json()
-    whiteboard_elements = create_whiteboard_elements(
-        whiteboard_id=params.get('whiteboardId'),
-        whiteboard_elements=params.get('whiteboardElements'),
-    )
-    return tolerant_jsonify([e.to_api_json() for e in whiteboard_elements])
-
-
-@app.route('/api/whiteboard/elements/update', methods=['POST'])
-@feature_flag_whiteboards
-@login_required
-def update_whiteboard_elements():
-    params = request.get_json()
-    whiteboard_elements = params.get('whiteboardElements', [])
-    whiteboard_id = params.get('whiteboardId')
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+def create_whiteboard_elements(whiteboard_id, whiteboard_elements):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if whiteboard['deletedAt']:
         raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
-        raise BadRequestError('One or more elements required')
+        raise BadRequestError('One or more whiteboard-elements required')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+    if _has_canvas(whiteboard_elements) and _has_canvas(whiteboard['whiteboardElements']):
+        raise BadRequestError('Whiteboard can have one, and only one, element of type canvas.')
 
-    api_json = []
-    for whiteboard_element in whiteboard_elements:
-        api_json.append(WhiteboardElement.update(
+    def _create(whiteboard_element):
+        return WhiteboardElement.create(
+            asset_id=whiteboard_element.get('assetId', None),
             element=whiteboard_element['element'],
-            whiteboard_element_id=whiteboard_element['id'],
-        ).to_api_json())
-    return tolerant_jsonify(api_json)
+            whiteboard_id=whiteboard_id,
+        )
+    return [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
+
+
+def _has_canvas(elements):
+    return 'canvas' in [e.get('type') for e in elements]

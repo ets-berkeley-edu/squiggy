@@ -202,7 +202,7 @@ const init = (state: any) => {
         p.$canvas.remove(element)
       } else if (!element.get('uuid')) {
         // The text element did not exist before. Notify the server that the element was added
-        saveNewElement(element)
+        saveNewElement(element, state)
       } else {
         // The text element existed before. Notify the server that the element was updated
         saveElementUpdates([element], state)
@@ -323,13 +323,16 @@ const saveElementUpdates = (elements: any[], state: any) => {
  * Persist a new element to the server
  * element: The new element to persist to the server
  */
-const saveNewElement = (element: any) => {
+const saveNewElement = (element: any, state: any) => {
   if (!element.get('uuid')) {
     // Add a unique id to the element
     element.set('uuid', Math.round(Math.random() * 1000000))
   }
   // Save the new element
-  p.$socket.emit('addActivity', [element.toObject()])
+  p.$socket.emit('add_whiteboard_elements', {
+    elements: [element.toObject()],
+    whiteboardId: state.whiteboard.id
+  })
 }
 
 /**

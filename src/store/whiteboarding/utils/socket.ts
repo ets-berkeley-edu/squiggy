@@ -1,11 +1,11 @@
 import _ from 'lodash'
+import utils from '@/api/api-utils'
 import Vue from 'vue'
 import {io} from 'socket.io-client'
 
 const init = (whiteboard: any) => {
-  const socket = io(window.location.origin, {
-    'transports': ['websocket'],
-    'query': {
+  const socket = io(utils.apiBaseUrl(), {
+    query: {
       whiteboardId: whiteboard.id
     }
   })

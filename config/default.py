@@ -89,6 +89,9 @@ SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
+# Flask-SocketIO debug logging is verbose.
+SOCKET_IO_DEBUG_MODE = False
+
 # Save DB changes at the end of a request.
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 

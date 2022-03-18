@@ -64,7 +64,8 @@ export default {
   watch: {
     menu(isOpen) {
       if (isOpen) {
-        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.text))
+        this.setMode('text')
+        // this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.text))
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(isOpen)

@@ -65,14 +65,13 @@ const $_addFabricCanvasListenters = (state: any) => {
   p.$canvas.on('object:added', (event: any) => {
     const element = event.target
     // Don't add a new text element until text has been entered
-    if (element.type === 'i-text' && !element.text.trim()) {
-      return false
-    }
-    // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
-    if (!element.get('uuid') && !element.get('isHelper')) {
-      fabricator.saveNewElement(element)
-      // Recalculate the size of the whiteboard canvas
-      fabricator.setCanvasDimensions(state)
+    if (element.type !== 'i-text' || !element.text.trim()) {
+      // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
+      if (!element.get('uuid') && !element.get('isHelper')) {
+        fabricator.saveNewElement(element, state)
+        // Recalculate the size of the whiteboard canvas
+        fabricator.setCanvasDimensions(state)
+      }
     }
   })
 
@@ -234,7 +233,7 @@ const $_addSocketListeners = (state: any) => {
     /**
      * A whiteboard canvas element was added by a different user
      */
-     p.$socket.on('addActivity', function(elements) {
+     p.$socket.on('add_whiteboard_elements', function(elements) {
       _.each(elements, (element: any) => {
         const callback = (e: any) => {
           // Add the element to the whiteboard canvas and move it to its appropriate index
