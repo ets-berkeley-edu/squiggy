@@ -39,6 +39,7 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 def whiteboard_elements_create():
     params = request.get_json()
     whiteboard_elements = create_whiteboard_elements(
+        user=current_user,
         whiteboard_id=params.get('whiteboardId'),
         whiteboard_elements=params.get('whiteboardElements'),
     )
