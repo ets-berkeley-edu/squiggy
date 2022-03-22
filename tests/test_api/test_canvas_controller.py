@@ -40,3 +40,10 @@ class TestLtiCartridgeController:
         assert response.status_code == 200
         assert 'application/xml' in response.content_type
         assert '/api/auth/lti_launch/engagement_index' in str(response.data)
+
+    def test_whiteboards_xml(self, client):
+        """Valid cartridge XML contains Whiboards launch URL."""
+        response = client.get('/lti/cartridge/whiteboards.xml')
+        assert response.status_code == 200
+        assert 'application/xml' in response.content_type
+        assert '/api/auth/lti_launch/whiteboards' in str(response.data)
