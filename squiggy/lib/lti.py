@@ -67,8 +67,11 @@ class LtiRequestValidator(RequestValidator):
 
 
 def get_tool_metadata(host, tool_id):
-    is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
-    api_path = '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index'
+    api_path = {
+        TOOL_ID_ASSET_LIBRARY: '/api/auth/lti_launch/asset_library',
+        TOOL_ID_ENGAGEMENT_INDEX: '/api/auth/lti_launch/engagement_index',
+        TOOL_ID_WHITEBOARDS: '/api/auth/lti_launch/whiteboards',
+    }.get(tool_id, None)
     launch_url = f"https://{host.rstrip('/')}{api_path}"
     return {
         TOOL_ID_ASSET_LIBRARY: {
