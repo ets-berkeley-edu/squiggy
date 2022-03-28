@@ -36,7 +36,9 @@ def initialize_socket_io(app):
         logger=socket_logger,
     )
     if app.config['FEATURE_FLAG_WHITEBOARDS']:
-        socketio.run(app, debug=debug_socketio)
+        using_gunicorn_gevent_server = 'EB_ENVIRONMENT' in app.config
+        if not using_gunicorn_gevent_server:
+            socketio.run(app, debug=debug_socketio)
     return socketio
 
 
