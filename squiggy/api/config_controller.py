@@ -35,6 +35,7 @@ from squiggy.models.asset import assets_sort_by_options
 @app.route('/api/config')
 def app_config():
     return tolerant_jsonify({
+        'app': _app_version(),
         'assetTypes': assets_type_enums(),
         'baseUrl': app.config['VUE_LOCALHOST_BASE_URL'] or request.url_root,
         'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
@@ -44,7 +45,6 @@ def app_config():
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],
         'orderByOptions': assets_sort_by_options,
         'squiggyEnv': app.config['SQUIGGY_ENV'],
-        'squiggyVersion': version,
         'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],
         'whiteboardsRefreshInterval': app.config['WHITEBOARDS_REFRESH_INTERVAL'],
@@ -53,17 +53,7 @@ def app_config():
 
 @app.route('/api/version')
 def app_version():
-    v = {
-        'version': version,
-    }
-    build_stats = load_json('config/build-summary.json')
-    if build_stats:
-        v.update(build_stats)
-    else:
-        v.update({
-            'build': None,
-        })
-    return tolerant_jsonify(v)
+    return tolerant_jsonify(_app_version())
 
 
 def load_json(relative_path):
@@ -72,3 +62,11 @@ def load_json(relative_path):
         return json.load(file)
     except (FileNotFoundError, KeyError, TypeError):
         return None
+
+
+def _app_version():
+    summary = load_json('config/build-summary.json')
+    return {
+        'build': summary.get('build') if summary else None,
+        'version': version,
+    }

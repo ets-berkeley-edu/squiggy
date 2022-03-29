@@ -1,6 +1,17 @@
 <template>
   <div v-if="!isLoading" class="align-center d-flex flex-column my-10">
-    <h1 class="grey--text text--darken-2">Squiggy v{{ $config.squiggyVersion }}</h1>
+    <h1 class="grey--text text--darken-2">Squiggy v{{ $config.app.version }}</h1>
+    <div v-if="$config.app.build">
+      <a
+        id="link-to-github-commit"
+        :href="`https://github.com/ets-berkeley-edu/squiggy/commit/${$config.app.build.gitCommit}`"
+        target="_blank"
+        aria-label="Open Github in new window"
+      >
+        <span class="git-commit pr-1">{{ $config.app.build.gitCommit }}</span>
+        <i class="fa-brands fa-github" />
+      </a>
+    </div>
     <div class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
         v-model="width"
@@ -74,3 +85,10 @@ export default {
   })
 }
 </script>
+
+<style scoped>
+.git-commit {
+  color: #749461;
+  font-size: 18px;
+}
+</style>
