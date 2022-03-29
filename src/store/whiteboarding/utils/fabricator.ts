@@ -34,15 +34,12 @@ const addAsset = (asset: any, state: any) => {
   const connector = _.includes(asset.imageUrl, '?') ? '&' : '?'
   const imageUrl = asset.imageUrl + connector + 'track=false'
   fabric.Image.fromURL(imageUrl, (element: any) => {
-    // This will exclude the toolbar and the chat/online sidebar (if expanded)
-    // Calculate the center point of the whiteboard canvas
+    // This will exclude the toolbar and sidebar, if expanded.
+    // Calculate the center point of the whiteboard canvas.
     const zoomLevel = p.$canvas.getZoom()
-    const centerX = ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel
-    const centerY = ((state.viewport.clientHeight / 2) + state.viewport.scrollTop) / zoomLevel
-
     const canvasCenter = {
-      x: centerX,
-      y: centerY
+      x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
+      y: ((state.viewport.clientHeight / 2) + state.viewport.scrollTop) / zoomLevel
     }
 
     // Scale the element to ensure it takes up a maximum of 80% of the
@@ -309,7 +306,7 @@ const restoreLayers = (state: any) => {
  */
 const saveElementUpdates = (elements: any[], state: any) => {
   // Notify the server about the updated elements
-  socket.emit('updateActivity', elements)
+  socket.emit('update_activity', elements)
   // Recalculate the size of the whiteboard canvas
   setCanvasDimensions(state)
 }

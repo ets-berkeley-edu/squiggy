@@ -35,7 +35,7 @@ from squiggy.lib.util import is_admin, to_int
 from squiggy.models.user import User
 
 
-def register_routes(app, socketio):
+def register_routes(app):
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.user_loader(_user_loader)
@@ -110,19 +110,26 @@ def register_routes(app, socketio):
 
         return response
 
+
+def register_sockets(socketio):
     @socketio.on('connect')
     def connect_handler():
         _handle_socketio_connect()
 
-    @socketio.on('add_whiteboard_elements')
-    def add_whiteboard_elements(data):
-        from squiggy.api.api_whiteboard_util import create_whiteboard_elements
+    @socketio.on('update_activity')
+    def update_activity(payload):
+        pass
 
-        create_whiteboard_elements(
-            user=LoginSession(data.get('userId')),
-            whiteboard_id=data.get('whiteboardId'),
-            whiteboard_elements=data.get('whiteboardElements', []),
-        )
+    @socketio.on('add_whiteboard_elements')
+    def add_whiteboard_elements(payload):
+        from squiggy.api.api_whiteboard_util import create_whiteboard_elements
+        data = payload[0] if len(payload) else None
+        if data:
+            create_whiteboard_elements(
+                user=LoginSession(data.get('userId')),
+                whiteboard_id=data.get('whiteboardId'),
+                whiteboard_elements=data.get('whiteboardElements', []),
+            )
 
 
 def _handle_socketio_connect():
