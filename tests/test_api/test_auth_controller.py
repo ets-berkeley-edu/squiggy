@@ -27,7 +27,7 @@ from datetime import datetime
 import json
 
 from squiggy import db, std_commit
-from squiggy.lib.lti import TOOL_ID_ASSET_LIBRARY
+from squiggy.lib.lti import TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -141,9 +141,13 @@ class TestLtiLaunchUrl:
             'oauth_version': '1.0',
             'roles': roles,
         }
-        is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
+        url = {
+            TOOL_ID_ASSET_LIBRARY: '/api/auth/lti_launch/asset_library',
+            TOOL_ID_ENGAGEMENT_INDEX: '/api/auth/lti_launch/engagement_index',
+            TOOL_ID_WHITEBOARDS: '/api/auth/lti_launch/whiteboards',
+        }.get(tool_id)
         response = client.post(
-            '/api/auth/lti_launch/asset_library' if is_asset_library else '/api/auth/lti_launch/engagement_index',
+            url,
             content_type='application/x-www-form-urlencoded',
             data=data,
             headers={'Referer': custom_external_tool_url},
@@ -163,7 +167,7 @@ class TestLtiLaunchUrl:
         full_name = 'Dee Dee Ramone'
         external_tool_url = f'https://bcourses.berkeley.edu/courses/{canvas_course_id}/external_tools/98765'
 
-        def _create_user_at_lti_launch():
+        def _create_user_at_lti_launch(tool_id):
             _response = self._api_auth_lti_launch(
                 client=client,
                 custom_canvas_api_domain=canvas.canvas_api_domain,
@@ -173,7 +177,7 @@ class TestLtiLaunchUrl:
                 lis_person_name_full=full_name,
                 oauth_consumer_key=canvas.lti_key,
                 roles='Student',
-                tool_id=TOOL_ID_ASSET_LIBRARY,
+                tool_id=tool_id,
             )
             std_commit(allow_test_environment=True)
 
@@ -184,15 +188,23 @@ class TestLtiLaunchUrl:
 
             course = user.course
             assert course.canvas_course_id == canvas_course_id
-            assert course.engagement_index_url is None
-            assert course.asset_library_url == external_tool_url
+            if tool_id == TOOL_ID_ASSET_LIBRARY:
+                assert course.asset_library_url == external_tool_url
+            else:
+                tool_url = course.engagement_index_url if tool_id == TOOL_ID_ENGAGEMENT_INDEX else course.whiteboards_url
+                assert tool_url == external_tool_url
             return _response
 
-        response = _create_user_at_lti_launch()
-        assert f'/assets?canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}' in response.location
-        # Expect no duplicates
-        assert len(User.query.filter_by(canvas_user_id=canvas_user_id).all()) == 1
-        assert len(Course.query.filter_by(canvas_course_id=canvas_course_id).all()) == 1
+        for tool_id in (TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS):
+            # Delete
+            db.session.execute(f'DELETE FROM users WHERE canvas_user_id = {canvas_user_id}')
+            std_commit(allow_test_environment=True)
+
+            response = _create_user_at_lti_launch(tool_id)
+            assert f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}' in response.location
+            # Expect no duplicates
+            assert len(User.query.filter_by(canvas_user_id=canvas_user_id).all()) == 1
+            assert len(Course.query.filter_by(canvas_course_id=canvas_course_id).all()) == 1
 
 
 class TestCookies:

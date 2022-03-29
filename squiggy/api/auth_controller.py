@@ -107,7 +107,8 @@ def _lti_launch(tool_id):
 def _lti_launch_authentication(tool_id):
     is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
     is_engagement_index = tool_id == TOOL_ID_ENGAGEMENT_INDEX
-    if not is_asset_library and not is_engagement_index:
+    is_whiteboards = tool_id == TOOL_ID_WHITEBOARDS
+    if not is_asset_library and not is_engagement_index and not is_whiteboards:
         raise BadRequestError(f'Missing or invalid tool_id: {tool_id}')
 
     def _alpha_num(s):
@@ -173,11 +174,15 @@ def _lti_launch_authentication(tool_id):
         )
         if course:
             active = _check_course_activity(course)
+            asset_library_url = external_tool_url if is_asset_library else course.asset_library_url
+            engagement_index_url = external_tool_url if is_engagement_index else course.engagement_index_url
+            whiteboards_url = external_tool_url if is_whiteboards else course.whiteboards_url
             course = Course.update(
                 active=active,
-                asset_library_url=external_tool_url if is_asset_library else course.asset_library_url,
+                asset_library_url=asset_library_url,
                 course_id=course.id,
-                engagement_index_url=external_tool_url if is_engagement_index else course.engagement_index_url,
+                engagement_index_url=engagement_index_url,
+                whiteboards_url=whiteboards_url,
             )
             logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
         else:
@@ -187,6 +192,7 @@ def _lti_launch_authentication(tool_id):
                 canvas_course_id=canvas_course_id,
                 engagement_index_url=external_tool_url if is_engagement_index else None,
                 name=args.get('context_title'),
+                whiteboards_url=external_tool_url if is_whiteboards else None,
             )
             logger.info(f'Created course via LTI launch: {course.to_api_json()}')
 
@@ -207,7 +213,7 @@ def _lti_launch_authentication(tool_id):
             )
             logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
 
-        path = '/assets' if is_asset_library else '/engage'
+        path = '/assets' if is_asset_library else ('/engage' if is_engagement_index else '/whiteboards')
         params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
         logger.info(f'LTI launch redirect: {path}?{params}')
         return user, f'{path}?{params}'
