@@ -31,17 +31,15 @@ from flask_login import current_user, LoginManager
 from flask_socketio import emit
 from squiggy.api.api_util import start_login_session
 from squiggy.lib.login_session import LoginSession
-from squiggy.lib.socket_io_util import create_mock_socket, initialize_socket_io
 from squiggy.lib.util import is_admin, to_int
 from squiggy.models.user import User
 
 
-def register_routes(app):
+def register_routes(app, socketio):
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.user_loader(_user_loader)
     login_manager.anonymous_user = _user_loader
-    socketio = _initialize_socket_io(app)
 
     # Register API routes.
     import squiggy.api.activity_controller
@@ -132,10 +130,6 @@ def _handle_socketio_connect():
         emit('my response', {'message': '{0} has joined'.format(current_user.name)}, broadcast=True)
     else:
         return False  # not allowed here
-
-
-def _initialize_socket_io(app):
-    return create_mock_socket() if app.config['TESTING'] else initialize_socket_io(app)
 
 
 def _user_loader(user_id=None):

@@ -52,7 +52,7 @@ if __name__.startswith('_mod_wsgi'):
         key, _, value = line.decode('utf-8').rstrip().partition('=')
         os.environ[key] = value
 
-application = create_app()
+application, socketio = create_app()
 
 
 @application.cli.command()
@@ -66,6 +66,13 @@ port = application.config['PORT']
 
 if __name__ == '__main__':
     application.logger.info('Starting development server on %s:%s', host, port)
-    application.run(host=host, port=port)
+    debug_socket = application.config['SOCKET_IO_DEBUG_MODE']
+    socketio.run(
+        app=application,
+        debug=debug_socket,
+        host=host,
+        log_output=debug_socket,
+        port=port,
+    )
 elif __name__.startswith('_mod_wsgi'):
     application.logger.info('Will start WSGI server on %s:%s', host, port)

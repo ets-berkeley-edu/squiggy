@@ -29,6 +29,7 @@ from flask import Flask
 from squiggy import db
 from squiggy.configs import load_configs
 from squiggy.lib.canvas_poller import launch_pollers
+from squiggy.lib.socket_io_util import create_mock_socket, initialize_socket_io
 from squiggy.logger import initialize_app_logger
 from squiggy.routes import register_routes
 
@@ -39,13 +40,14 @@ def create_app():
     load_configs(app)
     initialize_app_logger(app)
     db.init_app(app)
+    socketio = create_mock_socket() if app.config['TESTING'] else initialize_socket_io(app)
 
     with app.app_context():
-        register_routes(app)
+        register_routes(app, socketio)
 
         # See https://stackoverflow.com/questions/9449101/how-to-stop-flask-from-initialising-twice-in-debug-mode
         if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             if app.config['CANVAS_POLLER']:
                 launch_pollers()
 
-    return app
+    return app, socketio
