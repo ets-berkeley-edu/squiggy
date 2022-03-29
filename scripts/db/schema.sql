@@ -327,6 +327,7 @@ CREATE TABLE courses (
     engagement_index_url character varying(255),
     name character varying(255),
     last_polled TIMESTAMP WITH TIME ZONE,
+    whiteboards_url character varying(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
