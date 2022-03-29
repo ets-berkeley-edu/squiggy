@@ -48,7 +48,7 @@ from pprintpp import pprint as pp # noqa
 
 """
 
-app = create_app()
+app, socketio = create_app()
 ac = app.app_context()
 ac.push()
 
