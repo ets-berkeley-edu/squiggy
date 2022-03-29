@@ -88,7 +88,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:added', (event: any) => {
     const element = event.target
     // Don't add a new text element until text has been entered
-    if (element.type !== 'i-text' || !element.text.trim()) {
+    if (element.type !== 'i-text' || element.text.trim()) {
       // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
       if (!element.get('uuid') && !element.get('isHelper')) {
         fabricator.saveNewElement(element, state)
@@ -222,7 +222,6 @@ const $_addListenters = (state: any) => {
         'fontFamily': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
         'fontSize': state.text.selected.size,
         'left': textPointer.x,
-        'text': '',
         'top': textPointer.y
       })
       p.$canvas.add(text)

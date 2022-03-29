@@ -2,6 +2,7 @@ import _ from 'lodash'
 import constants from '@/store/whiteboarding/utils/constants'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import socket from './socket'
+import store from '@/store'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
 import {fabric} from 'fabric'
@@ -14,7 +15,7 @@ const p = Vue.prototype
  */
 const addAsset = (asset: any, state: any) => {
   // Switch the toolbar back to move mode
-  state.mode = 'move'
+  store.commit('whiteboarding/setMode', 'move')
 
   // Default to a placeholder when the asset does not have a preview image
   if (!asset.imageUrl) {
@@ -183,7 +184,7 @@ const init = (state: any) => {
   /**
    * An IText whiteboard canvas element was updated by the current user
    */
-  fabric.IText.prototype.on('editing:exited', () => {
+  fabric.IText.prototype.on('editing:exited', function() {
     const element:any = this
     if (element) {
       // If the text element is empty, it can be removed from the whiteboard canvas
@@ -200,7 +201,7 @@ const init = (state: any) => {
         // The text element existed before. Notify the server that the element was updated
         saveElementUpdates([element], state)
       }
-      state.mode = 'move'
+      store.commit('whiteboarding/setMode', 'move')
     }
   })
   // Recalculate the size of the p.$canvas when the window is resized
