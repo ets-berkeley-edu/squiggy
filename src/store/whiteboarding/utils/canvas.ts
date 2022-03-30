@@ -13,12 +13,11 @@ export function init(state: any) {
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
   // Set the selection style for the whiteboard
   // Set the style of the multi-select helper
-  Vue.prototype.$canvas = new fabric.Canvas('canvas', {
-    backgroundColor: 'red'
+  Vue.prototype.$canvas = fabricator.createCanvas({
+    selectionColor: 'transparent',
+    selectionBorderColor: '#0295DE',
+    selectionLineWidth: 2
   })
-  p.$canvas.selectionColor = 'transparent'
-  p.$canvas.selectionBorderColor = '#0295DE'
-  p.$canvas.selectionLineWidth = 2
   // Make the border dashed
   // @see http://fabricjs.com/fabric-intro-part-4/
   p.$canvas.selectionDashArray = [10, 5]
@@ -115,21 +114,21 @@ const $_addListenters = (state: any) => {
       // of the helper element are set to left and top to make it
       // easier to map the top left corner of the drawing guide with
       // the original cursor postion
-      state.shape = new fabric[state.shapeOptions.selected.type.shape]({
-        'left': state.startShapePointer.x,
-        'top': state.startShapePointer.y,
-        'originX': 'left',
-        'originY': 'top',
-        'radius': 1,
-        'width': 1,
-        'height': 1,
-        'fill': 'transparent',
-        'stroke': state.shapeOptions.selected.color.color,
-        'strokeWidth': state.shapeOptions.selected.type.style === 'thick' ? 10 : 2
+      const selected = state.shapeOptions.selected
+      const shapeType = selected.type.shape
+      const fill = selected.type.style === 'fill' ? state.shapeOptions.selected.color.color : 'transparent'
+      state.shape = fabricator.createShape(shapeType, {
+        fill,
+        height: 1,
+        left: state.startShapePointer.x,
+        originX: 'left',
+        originY: 'top',
+        radius: 1,
+        stroke: state.shapeOptions.selected.color.color,
+        strokeWidth: state.shapeOptions.selected.type.style === 'thick' ? 10 : 2,
+        top: state.startShapePointer.y,
+        width: 1
       })
-      if (state.shapeOptions.selected.type.style === 'fill') {
-        state.shape.fill = state.shapeOptions.selected.color.color
-      }
       // Indicate that this element is a helper element that should
       // not be saved back to the server
       state.shape.set('isHelper', true)
@@ -150,29 +149,29 @@ const $_addListenters = (state: any) => {
       // starting point, move the left of the circle to that point so
       // negative shape drawing can be achieved
       if (state.startShapePointer.x > currentShapePointer.x) {
-        state.shape.set({'left': currentShapePointer.x})
+        state.shape.set({left: currentShapePointer.x})
       }
       // When the user has moved the cursor above the original starting
       // point, move the left of the circle to that point so negative
       // shape drawing can be achieved
       if (state.startShapePointer.y > currentShapePointer.y) {
-        state.shape.set({'top': currentShapePointer.y})
+        state.shape.set({top: currentShapePointer.y})
       }
 
       // Set the radius and width of the circle based on how much the cursor
       // has moved compared to the starting point
       if (state.shapeOptions.selected.type.shape === 'Circle') {
         state.shape.set({
-          'width': Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          'height': Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          'radius': Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2
+          width: Math.abs(state.startShapePointer.x - currentShapePointer.x),
+          height: Math.abs(state.startShapePointer.x - currentShapePointer.x),
+          radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2
         })
       // Set the width and height of the shape based on how much the cursor
       // has moved compared to the starting point
       } else {
         state.shape.set({
-          'width': Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          'height': Math.abs(state.startShapePointer.y - currentShapePointer.y)
+          width: Math.abs(state.startShapePointer.x - currentShapePointer.x),
+          height: Math.abs(state.startShapePointer.y - currentShapePointer.y)
         })
       }
       p.$canvas.requestRenderAll()
@@ -217,12 +216,12 @@ const $_addListenters = (state: any) => {
       const textPointer = p.$canvas.getPointer(event.e)
 
       // Start off with an empty text field
-      const text = new fabric.IText('', {
-        'fill': state.text.selected.color.color,
-        'fontFamily': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
-        'fontSize': state.text.selected.size,
-        'left': textPointer.x,
-        'top': textPointer.y
+      const text = fabricator.createIText({
+        fill: state.text.selected.color.color,
+        fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
+        fontSize: state.text.selected.size,
+        left: textPointer.x,
+        top: textPointer.y
       })
       p.$canvas.add(text)
 

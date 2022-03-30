@@ -42,10 +42,10 @@ export default {
   viewport: undefined,
   whiteboard: undefined,
   text: {
-    'options': constants.TEXT_OPTIONS,
-    'selected': {
-      'size': constants.TEXT_OPTIONS[-1],
-      'color': constants.COLORS[0]
+    options: constants.TEXT_OPTIONS,
+    selected: {
+      size: constants.TEXT_OPTIONS[-1],
+      color: constants.COLORS[0]
     }
   }
 } as const

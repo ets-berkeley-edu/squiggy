@@ -112,7 +112,6 @@ const deserializeElement = (state: any, element: any, callback: any) => {
   if (state.whiteboard.deletedAt) {
     element.selectable = false
   }
-
   // Extract the type from the serialized element
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
   if (element.type === 'image') {
@@ -121,14 +120,16 @@ const deserializeElement = (state: any, element: any, callback: any) => {
     // the element has been created
     element.realSrc = element.src
     element.src = ''
-    fabric[type].fromObject(element, (e: any) => {
+    callback = (e: any) => {
       e.setSrc(e.get('realSrc'), () => callback(e))
-    })
-  } else if (fabric[type].async) {
-    fabric[type].fromObject(element, callback)
-  } else {
-    return callback(fabric[type].fromObject(element))
+    }
+  // TODO: Why the special treatment for 'async'?
+  // } else if (fabric[type].async) {
+  //   fabric[type].fromObject(element, callback)
+  // } else {
+  //   fabric[type].fromObject(element)
   }
+  return fabric[type].fromObject(element, callback)
 }
 
 /**
@@ -252,6 +253,7 @@ const paste = (state: any): void => {
     } else {
       const selection = new fabric.ActiveSelection(elements)
       selection.set('isHelper', true)
+      $_addDebugListenters(selection, 'Object')
       p.$canvas.setActiveObject(selection)
     }
     p.$canvas.requestRenderAll()
@@ -286,6 +288,24 @@ const paste = (state: any): void => {
       deserializeElement(state, element, callback)
     })
   }
+}
+
+const createCanvas = (options: any) => {
+  const canvas = new fabric.Canvas('canvas', options)
+  $_addDebugListenters(canvas, 'Canvas')
+  return canvas
+}
+
+const createIText = (options: any) => {
+  const iText = new fabric.IText('', options)
+  $_addDebugListenters(iText, 'IText')
+  return iText
+}
+
+const createShape = (shapeType: string, options: any) => {
+  const shape = new fabric[shapeType](options)
+  $_addDebugListenters(shape, 'Object')
+  return shape
 }
 
 /**
@@ -429,6 +449,9 @@ const updateLayers = (state: any): void => {
 
 export default {
   addAsset,
+  createCanvas,
+  createIText,
+  createShape,
   deleteActiveElements,
   deserializeElement,
   enableCanvasElements,
@@ -469,4 +492,26 @@ const $_saveDeleteElements = (elements: any[], state: any): any => {
   updateLayers(state)
   // Recalculate the size of the whiteboard canvas
   setCanvasDimensions(state)
+}
+
+const FABRIC_OBJECT_EVENTS = ['event:added', 'event:deselected', 'event:dragenter', 'event:dragleave', 'event:dragover', 'event:drop', 'event:modified', 'event:modified', 'event:mousedblclick', 'event:mousedown', 'event:mouseout', 'event:mouseover', 'event:mouseup', 'event:mousewheel', 'event:moved', 'event:moving', 'event:removed', 'event:rotated', 'event:rotating', 'event:scaled', 'event:scaling', 'event:selected', 'event:skewed', 'event:skewing']
+
+const EVENTS_BY_FABRIC_TYPE = {
+  Canvas: FABRIC_OBJECT_EVENTS.concat(['after:render', 'before:render', 'before:selection:cleared', 'before:transform', 'canvas:cleared', 'drop:before', 'mouse:dblclick', 'mouse:down:before', 'mouse:down', 'mouse:move:before', 'mouse:move', 'mouse:out', 'mouse:over', 'mouse:up:before', 'mouse:up', 'object:added', 'object:modified', 'object:moving', 'object:removed', 'object:rotating', 'object:scaling', 'object:skewing', 'path:created', 'selection:cleared', 'selection:created', 'selection:updated']),
+  IText: FABRIC_OBJECT_EVENTS.concat(['event:changed', 'selection:changed', 'editing:entered', 'editing:exited']),
+  Object: FABRIC_OBJECT_EVENTS
+}
+
+export function $_addDebugListenters(fabricObject: any, objectType: string) {
+  if (p.$config.isVueAppDebugMode) {
+    console.log(`fabric.${objectType}, add debug listenters: ${JSON.stringify(fabricObject)}`)
+    _.each(EVENTS_BY_FABRIC_TYPE[objectType], (eventName: string) => {
+      fabricObject.on(eventName, (event: any) => console.log({
+        fabric: objectType,
+        eventName,
+        type: _.get(event, 'e.type'),
+        event
+      }))
+    })
+  }
 }

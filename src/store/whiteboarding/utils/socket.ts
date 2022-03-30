@@ -2,44 +2,48 @@ import _ from 'lodash'
 import apiUtils from '@/api/api-utils'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
-import utils from '@/utils'
 import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
 
 const p = Vue.prototype
 
+const emit = (eventName: string, ...args: any) => {
+  if (p.$config.isVueAppDebugMode) {
+    console.log(`socket.emit(${eventName})\nArgs: ${JSON.stringify(args)}`)
+  }
+  p.$socket.emit(eventName, args)
+}
+
 const init = (state: any, whiteboard: any) => {
-  const socket = io(apiUtils.apiBaseUrl(), {
+  Vue.prototype.$socket = io(apiUtils.apiBaseUrl(), {
     query: {
       whiteboardId: whiteboard.id
     }
   })
-  socket.on('connect', () => utils.logDebug('Connect socket.io-client'))
-  socket.on('disconnect', () => utils.logDebug('Disconnect socket.io-client'))
-  /**
-   * When a user has joined or left the whiteboard, update the online status on the list of members
-   */
-  socket.on('online', (onlineUsers: any[]) => {
+  onEvent('connect', _.noop)
+  onEvent('disconnect', _.noop)
+  onEvent('online', (onlineUsers: any[]) => {
+    // When a user has joined or left the whiteboard, update the online status on the list of members
     if (whiteboard) {
       for (let i = 0; i < whiteboard.members.length; i++) {
         const member = whiteboard.members[i]
-        member.online = _.find(onlineUsers, {'user_id': member.id}) ? true : false
+        member.online = _.find(onlineUsers, {user_id: member.id}) ? true : false
       }
     }
   })
-  Vue.prototype.$socket = socket
   $_addSocketListeners(state)
 }
 
-const emit = (eventName: string, ...args: any) => {
-  utils.logDebug(`socket.emit:\n  event: ${eventName}\n  args: ${JSON.stringify(args)}`)
-  p.$socket.emit(eventName, args)
-}
-
 const onEvent = (eventName: string, callback: Function) => {
-  utils.logDebug(`socket.emit:\n  event: ${eventName}\n  callback: ${callback.name}`)
-  p.$socket.on(eventName, callback)
+  if (p.$config.isVueAppDebugMode) {
+    p.$socket.on(eventName, (...args: any) => {
+      console.log(`socket.on(${eventName}):\n${JSON.stringify(args)}`)
+      callback(args)
+    })
+  } else {
+    p.$socket.on(eventName, callback)
+  }
 }
 
 export default {
