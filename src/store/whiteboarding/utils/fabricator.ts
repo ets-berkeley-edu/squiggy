@@ -163,29 +163,24 @@ const ensureWithinCanvas = (event: any) => {
 }
 
 const init = (state: any) => {
-  /**
-   * Extend the Fabric.js `toObject` deserialization function to include
-   * the property that uniquely identifies an object on the canvas, as well as
-   * a property containing the index of the object relative to the other items
-   * on the canvas
-   */
-   fabric.Object.prototype.toObject = (function(toObject) {
+  fabric.Object.prototype.toObject = (function(toObject) {
+    // Extend the Fabric.js `toObject` deserialization function to include the property that
+    // uniquely identifies an object on the canvas, as well as a property containing the index
+    // of the object relative to the other items on the canvas.
     return function() {
-      const object:any = this
-      return fabric.util.object.extend(toObject.call(object), {
-        assetId: object.assetId,
-        height: object.height,
-        index: p.$canvas.getObjects().indexOf(object),
-        uuid: object.uuid,
-        width: object.width
-      })
+      const extras = {
+        assetId: this.assetId,
+        height: this.height,
+        index: p.$canvas.getObjects().indexOf(this),
+        uuid: this.uuid,
+        width: this.width
+      }
+      return fabric.util.object.extend(toObject.call(this), extras)
     }
   }(fabric.Object.prototype.toObject))
 
-  /**
-   * An IText whiteboard canvas element was updated by the current user
-   */
   fabric.IText.prototype.on('editing:exited', function() {
+    // An IText whiteboard canvas element was updated by the current user.
     const element:any = this
     if (element) {
       // If the text element is empty, it can be removed from the whiteboard canvas
@@ -214,7 +209,7 @@ const getActiveElements = (): any[] => {
   // return the selected whiteboard elements
   const activeElements: any[] = []
   const selection = p.$canvas.getActiveObject()
-  if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+  if (_.get(selection, 'type') === FABRIC_MULTIPLE_SELECT_TYPE) {
     _.each(selection.objects, (element: any) => {
       // When a Fabric.js canvas element is part of a group selection, its properties will be
       // relative to the group. Therefore, we calculate the actual position of each element in
@@ -297,7 +292,7 @@ const createCanvas = (options: any) => {
 }
 
 const createIText = (options: any) => {
-  const iText = new fabric.IText('', options)
+  const iText = new fabric.IText('Hello World', options)
   $_addDebugListenters(iText, 'IText')
   return iText
 }
@@ -320,14 +315,14 @@ const restoreLayers = (state: any) => {
   setCanvasDimensions(state)
 }
 
-/**
- * Persist element updates to the server
- *
- * elements: The updated elements to persist to the server
- */
 const saveElementUpdates = (elements: any[], state: any) => {
   // Notify the server about the updated elements
-  socket.emit('update_activity', elements)
+  const whiteboardElements = _.map(elements, (element: any) => ({element}))
+  socket.emit('update', {
+    userId: p.$currentUser.id,
+    whiteboardElements,
+    whiteboardId: state.whiteboard.id
+  })
   // Recalculate the size of the whiteboard canvas
   setCanvasDimensions(state)
 }
@@ -337,12 +332,8 @@ const saveElementUpdates = (elements: any[], state: any) => {
  * element: The new element to persist to the server
  */
 const saveNewElement = (element: any, state: any) => {
-  if (!element.get('uuid')) {
-    // Add a unique id to the element
-    element.set('uuid', Math.round(Math.random() * 1000000))
-  }
   // Save the new element
-  socket.emit('add_whiteboard_elements', {
+  socket.emit('add', {
     whiteboardElements: [{
       assetId: undefined,
       element: element.toObject()
@@ -487,7 +478,7 @@ const $_calculateRotatedLeftTop = (selection: any, element: any): any => {
  */
 const $_saveDeleteElements = (elements: any[], state: any): any => {
   // Notify the server about the deleted elements
-  socket.emit('deleteActivity', elements)
+  socket.emit('delete', elements)
   // Update the layer ordering of the remaining elements
   updateLayers(state)
   // Recalculate the size of the whiteboard canvas

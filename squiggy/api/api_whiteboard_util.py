@@ -51,5 +51,26 @@ def create_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
     return [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
 
 
+def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
+    if not len(whiteboard_elements):
+        raise BadRequestError('One or more elements required')
+    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
+        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+
+    def _update(whiteboard_element):
+        return WhiteboardElement.update(
+            asset_id=whiteboard_element.get('assetId', None),
+            element=whiteboard_element['element'],
+            uuid=str(whiteboard_element['uuid']),
+            whiteboard_id=whiteboard_id,
+        )
+    return [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
+
+
 def _has_canvas(elements):
     return 'canvas' in [e.get('type') for e in elements]
