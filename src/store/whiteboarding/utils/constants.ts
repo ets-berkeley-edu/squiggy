@@ -1,9 +1,9 @@
 export default {
   // Variable that will keep track of the placeholder images to use for assets without a preview image
   ASSET_PLACEHOLDERS: {
-    'file': '/assets/img/whiteboard_asset_placeholder_file.png',
-    'link': '/assets/img/whiteboard_asset_placeholder_link.png',
-    'whiteboard': '/assets/img/whiteboard_asset_placeholder_whiteboard.png'
+    file: '/assets/img/whiteboard_asset_placeholder_file.png',
+    link: '/assets/img/whiteboard_asset_placeholder_link.png',
+    whiteboard: '/assets/img/whiteboard_asset_placeholder_whiteboard.png'
   },
   // The base width of the canvas
   CANVAS_BASE_WIDTH: 1000,
@@ -11,36 +11,36 @@ export default {
   CANVAS_PADDING: 60,
   COLORS: [
     {
-      'name': 'Black',
-      'color': 'rgb(0, 0, 0)'
+      name: 'Black',
+      color: 'rgb(0, 0, 0)'
     },
     {
-      'name': 'Dark Blue',
-      'color': 'rgb(90, 108, 122)'
+      name: 'Dark Blue',
+      color: 'rgb(90, 108, 122)'
     },
     {
-      'name': 'Light Blue',
-      'color': 'rgb(2, 149, 222)'
+      name: 'Light Blue',
+      color: 'rgb(2, 149, 222)'
     },
     {
-      'name': 'Green',
-      'color': 'rgb(10, 139, 0)'
+      name: 'Green',
+      color: 'rgb(10, 139, 0)'
     },
     {
-      'name': 'Grey',
-      'color': 'rgb(230, 230, 230)'
+      name: 'Grey',
+      color: 'rgb(230, 230, 230)'
     },
     {
-      'name': 'Purple',
-      'color': 'rgb(188, 58, 167)'
+      name: 'Purple',
+      color: 'rgb(188, 58, 167)'
     },
     {
-      'name': 'Red',
-      'color': 'rgb(175, 56, 55)'
+      name: 'Red',
+      color: 'rgb(175, 56, 55)'
     },
     {
-      'name': 'Yellow',
-      'color': 'rgb(189, 129, 0)'
+      name: 'Yellow',
+      color: 'rgb(189, 129, 0)'
     }
   ],
   DRAW_OPTIONS: [
@@ -93,11 +93,11 @@ export default {
   ],
   TEXT_OPTIONS: [
     {
-      'value': 36,
+      value: 36,
       label: '<span class="whiteboards-text-option">Title</span>'
     },
     {
-      'value': 14,
+      value: 14,
       label: '<span class="whiteboards-text-option">Normal</span>'
     }
   ]

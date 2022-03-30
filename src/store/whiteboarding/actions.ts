@@ -30,8 +30,8 @@ export default {
     }
     // Open the add link modal dialog
     _.noop({
-      'scope': scope,
-      'template': '/app/whiteboards/addlinkmodal/addlinkmodal.html'
+      scope: scope,
+      template: '/app/whiteboards/addlinkmodal/addlinkmodal.html'
     })
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
@@ -80,21 +80,21 @@ export default {
         // const assetLibraryLink = '/assetlibrary?api_domain=' + launchParams.apiDomain + '&course_id=' + launchParams.courseId + '&tool_url=' + launchParams.toolUrl
         // Show a notification indicating the whiteboard was exported
         $_alert({
-          'container': '#whiteboards-board-notifications',
-          'content': 'This board has been successfully added to the <strong>Asset Library</strong>.',
-          'duration': 5,
-          'keyboard': true,
-          'show': true,
-          'templateUrl': 'whiteboards-notification-template',
-          'type': 'success'
+          container: '#whiteboards-board-notifications',
+          content: 'This board has been successfully added to the <strong>Asset Library</strong>.',
+          duration: 5,
+          keyboard: true,
+          show: true,
+          templateUrl: 'whiteboards-notification-template',
+          type: 'success'
         })
       }
       this.$hide()
     }
     // Open the export as asset modal dialog
     $modal({
-      'scope': scope,
-      'templateUrl': '/app/whiteboards/exportasassetmodal/exportasasset.html'
+      scope: scope,
+      templateUrl: '/app/whiteboards/exportasassetmodal/exportasasset.html'
     })
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
@@ -113,8 +113,8 @@ export default {
         // 'api_domain': launchParams.apiDomain,
         // 'course_id': launchParams.courseId,
         // 'tool_url': launchParams.toolUrl,
-        'assetId': assetId,
-        'whiteboard_referral': true
+        assetId: assetId,
+        whiteboard_referral: true
       }
     }
   },
@@ -131,13 +131,13 @@ export default {
         commit('restoreWhiteboard')
         // Show a notification indicating the whiteboard was restored
         $_alert({
-          'container': '#whiteboards-board-notifications',
-          'content': 'The whiteboard has been restored.',
-          'duration': 5,
-          'keyboard': true,
-          'show': true,
-          'templateUrl': 'whiteboards-notification-template',
-          'type': 'success'
+          container: '#whiteboards-board-notifications',
+          content: 'The whiteboard has been restored.',
+          duration: 5,
+          keyboard: true,
+          show: true,
+          templateUrl: 'whiteboards-notification-template',
+          type: 'success'
         })
       })
     }
