@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import constants from '@/store/whiteboarding/utils/constants'
-import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import socket from './socket'
 import store from '@/store'
 import utils from '@/api/api-utils'
@@ -96,7 +95,7 @@ const deleteActiveElements = (state: any) => {
   _.each(elements, (element: any) => p.$canvas.remove(getCanvasElement(element.uuid)))
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const selection = p.$canvas.getActiveObject()
-  if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+  if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
     p.$canvas.remove(selection)
     p.$canvas.discardActiveObject().requestRenderAll()
   }
@@ -209,7 +208,7 @@ const getActiveElements = (): any[] => {
   // return the selected whiteboard elements
   const activeElements: any[] = []
   const selection = p.$canvas.getActiveObject()
-  if (_.get(selection, 'type') === FABRIC_MULTIPLE_SELECT_TYPE) {
+  if (_.get(selection, 'type') === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
     _.each(selection.objects, (element: any) => {
       // When a Fabric.js canvas element is part of a group selection, its properties will be
       // relative to the group. Therefore, we calculate the actual position of each element in
@@ -259,7 +258,7 @@ const paste = (state: any): void => {
   if (state.clipboard.length > 0) {
     // Clear the current selection
     const selection = p.$canvas.getActiveObject()
-    if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+    if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(selection)
     }
     p.$canvas.discardActiveObject().requestRenderAll()
@@ -485,24 +484,22 @@ const $_saveDeleteElements = (elements: any[], state: any): any => {
   setCanvasDimensions(state)
 }
 
-const FABRIC_OBJECT_EVENTS = ['event:added', 'event:deselected', 'event:dragenter', 'event:dragleave', 'event:dragover', 'event:drop', 'event:modified', 'event:modified', 'event:mousedblclick', 'event:mousedown', 'event:mouseout', 'event:mouseover', 'event:mouseup', 'event:mousewheel', 'event:moved', 'event:moving', 'event:removed', 'event:rotated', 'event:rotating', 'event:scaled', 'event:scaling', 'event:selected', 'event:skewed', 'event:skewing']
-
-const EVENTS_BY_FABRIC_TYPE = {
-  Canvas: FABRIC_OBJECT_EVENTS.concat(['after:render', 'before:render', 'before:selection:cleared', 'before:transform', 'canvas:cleared', 'drop:before', 'mouse:dblclick', 'mouse:down:before', 'mouse:down', 'mouse:move:before', 'mouse:move', 'mouse:out', 'mouse:over', 'mouse:up:before', 'mouse:up', 'object:added', 'object:modified', 'object:moving', 'object:removed', 'object:rotating', 'object:scaling', 'object:skewing', 'path:created', 'selection:cleared', 'selection:created', 'selection:updated']),
-  IText: FABRIC_OBJECT_EVENTS.concat(['event:changed', 'selection:changed', 'editing:entered', 'editing:exited']),
-  Object: FABRIC_OBJECT_EVENTS
-}
-
 export function $_addDebugListenters(fabricObject: any, objectType: string) {
   if (p.$config.isVueAppDebugMode) {
     console.log(`fabric.${objectType}, add debug listenters: ${JSON.stringify(fabricObject)}`)
-    _.each(EVENTS_BY_FABRIC_TYPE[objectType], (eventName: string) => {
-      fabricObject.on(eventName, (event: any) => console.log({
-        fabric: objectType,
-        eventName,
-        type: _.get(event, 'e.type'),
-        event
-      }))
-    })
+    // Events listed in FABRIC_JS_DEBUG_EVENTS_EXCLUDE array are ignored when debugging. Developers can silence these
+    // debug-event-listenters by setting FABRIC_JS_DEBUG_EVENTS_EXCLUDE equal to '*' in the .env.development.local file.
+    const exclude = process.env.FABRIC_JS_DEBUG_EVENTS_EXCLUDE
+    if (exclude !== '*') {
+      const eventNames = constants.FABRIC_EVENTS_PER_TYPE[objectType].filter((eventName: string) => !exclude.includes(eventName))
+      _.each(eventNames, (eventName: string) => {
+        fabricObject.on(eventName, (event: any) => console.log({
+          fabric: objectType,
+          eventName,
+          type: _.get(event, 'e.type'),
+          event
+        }))
+      })
+    }
   }
 }

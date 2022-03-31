@@ -1,13 +1,27 @@
 import _ from 'lodash'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
+import socket from '@/store/whiteboarding/utils/socket'
 import store from '@/store'
 import Vue from 'vue'
 import {fabric} from 'fabric'
 
 const p = Vue.prototype
 
-export function init(state: any) {
+export function initialize(state: any, whiteboard: any) {
+  $_initCanvas(state)
+  $_addModalListeners()
+  $_addViewportListeners(state)
+  if (!whiteboard.deletedAt) {
+    // Open a websocket connection for real-time communication with the server (chat + whiteboard changes) when
+    // the whiteboard is rendered in edit mode. The course ID and API domain are passed in as handshake query parameters
+    socket.init(state, whiteboard)
+  }
+  // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
+  fabricator.init(state)
+}
+
+const $_initCanvas = (state: any) => {
   // Initialize the Fabric.js canvas and load the whiteboard content and online users
   // Ensure that the horizontal and vertical origins of objects are set to center
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
@@ -34,10 +48,6 @@ export function init(state: any) {
   // Render the whiteboard
   $_addListenters(state)
   $_renderWhiteboard(state)
-}
-
-export default {
-  init
 }
 
 const $_addListenters = (state: any) => {
@@ -261,4 +271,36 @@ const $_renderWhiteboard = (state: any) => {
       restore()
     })
   })
+}
+
+const $_addModalListeners = () => {
+  // TODO: Set the toolbar back to move mode when the asset and export tooltips are hidden.
+  // state.$on('tooltip.hide', function(ev, $tooltip) {
+  //   if ((state.mode === 'asset' && $tooltip.$id === 'whiteboards-board-asset-trigger') || (state.mode === 'export' && $tooltip.$id === 'whiteboards-board-export-trigger')) {
+  //     state.mode = 'move'
+  //   }
+  // })
+  // // Change the drawing color when a new color has been selected in the color picker
+  // state.$watch('draw.selected.color', () => p.$canvas.freeDrawingBrush.color = state.draw.selected.color.color, true)
+  // // Change the drawing line width when a new line width has been selected in the width picker
+  // state.$watch('draw.selected.lineWidth', () => p.$canvas.freeDrawingBrush.width = parseInt(state.draw.selected.lineWidth, 10), true)
+}
+
+/**
+ * Detect keydown events in the whiteboard to respond to keyboard shortcuts
+ */
+const $_addViewportListeners = (state: any) => {
+  state.viewport.addEventListener('keydown', (event: any) => {
+    // Remove the selected elements when the delete or backspace key is pressed
+    if (event.keyCode === 8 || event.keyCode === 46) {
+      fabricator.deleteActiveElements(state)
+      event.preventDefault()
+    } else if (event.keyCode === 67 && event.metaKey) {
+      // Copy the selected elements
+      state.clipboard = fabricator.getActiveElements()
+    } else if (event.keyCode === 86 && event.metaKey) {
+      // listeners.Paste the copied elements
+      fabricator.paste(state)
+    }
+  }, false)
 }
