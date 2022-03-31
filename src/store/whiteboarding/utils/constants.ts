@@ -18,40 +18,40 @@ export default {
   CANVAS_BASE_WIDTH: 1000,
   // The padding that will be enforced on the canvas when it can be scrolled
   CANVAS_PADDING: 60,
-  COLORS: [
-    {
-      name: 'Black',
-      color: 'rgb(0, 0, 0)'
+  COLORS: {
+    black: {
+      hex: '#000000',
+      rgb: 'rgb(0, 0, 0)'
     },
-    {
-      name: 'Dark Blue',
-      color: 'rgb(90, 108, 122)'
+    darkBlue: {
+      hex: '#5a6c7a',
+      rgb: 'rgb(90, 108, 122)'
     },
-    {
-      name: 'Light Blue',
-      color: 'rgb(2, 149, 222)'
+    lightBlue: {
+      hex: '#0295de',
+      rgb: 'rgb(2, 149, 222)'
     },
-    {
-      name: 'Green',
-      color: 'rgb(10, 139, 0)'
+    green: {
+      hex: '#0a8b00',
+      rgb: 'rgb(10, 139, 0)'
     },
-    {
-      name: 'Grey',
-      color: 'rgb(230, 230, 230)'
+    grey: {
+      hex: '#e6e6e6',
+      rgb: 'rgb(230, 230, 230)'
     },
-    {
-      name: 'Purple',
-      color: 'rgb(188, 58, 167)'
+    purple: {
+      hex: '#bc3aa7',
+      rgb: 'rgb(188, 58, 167)'
     },
-    {
-      name: 'Red',
-      color: 'rgb(175, 56, 55)'
+    red: {
+      hex: '#af3837',
+      rgb: 'rgb(175, 56, 55)'
     },
-    {
-      name: 'Yellow',
-      color: 'rgb(189, 129, 0)'
+    yellow: {
+      hex: '#bd8100',
+      rgb: 'rgb(189, 129, 0)'
     }
-  ],
+  },
   DRAW_OPTIONS: [
     {
       value: 1,
@@ -106,14 +106,8 @@ export default {
       label: '<img src="/assets/img/whiteboard-shape-circle-fill.png" />'
     }
   ],
-  TEXT_OPTIONS: [
-    {
-      value: 36,
-      label: '<span class="whiteboards-text-option">Title</span>'
-    },
-    {
-      value: 14,
-      label: '<span class="whiteboards-text-option">Normal</span>'
-    }
+  TEXT_SIZE_OPTIONS: [
+    {text: 'Normal', value: 14},
+    {text: 'Title', value: 36}
   ]
 }

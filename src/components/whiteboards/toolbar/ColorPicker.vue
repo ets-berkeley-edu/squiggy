@@ -10,7 +10,12 @@
         hide-inputs
         hide-sliders
         show-swatches
-        :swatches="swatches"
+        :swatches="[
+          [colors.black.hex, colors.grey.hex],
+          [colors.darkBlue.hex, colors.purple.hex],
+          [colors.lightBlue.hex, colors.red.hex],
+          [colors.green.hex, colors.yellow.hex]
+        ]"
         value="red"
         width="260"
         @input="setFill"
@@ -25,17 +30,10 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'ColorPicker',
   mixins: [Whiteboarding],
-  data: () => ({
-    swatches: [
-      ['#000000', '#e6e6e6'],
-      ['#5a6c7a', '#bc3aa7'],
-      ['#0295de', '#af3837'],
-      ['#0a8b00', '#bd8100']
-    ]
-  }),
-  methods: {
-    setFill(value) {
-      console.log(`TODO: set fill to ${value}`)
+  props: {
+    setFill: {
+      required: true,
+      type: Function
     }
   }
 }

@@ -57,13 +57,11 @@ export default {
     TextToolDialog
   },
   data: () => ({
-    collapsed: false,
-    selected: undefined
+    collapsed: false
   }),
   methods: {
     unlock() {
       this.setDisableAll(false)
-      this.selected = undefined
     }
   }
 }

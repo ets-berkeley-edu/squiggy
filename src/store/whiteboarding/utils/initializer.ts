@@ -227,9 +227,9 @@ const $_addListenters = (state: any) => {
 
       // Start off with an empty text field
       const text = fabricator.createIText({
-        fill: state.text.selected.color.color,
+        fill: state.selected.fill,
         fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
-        fontSize: state.text.selected.size,
+        fontSize: state.selected.fontSize,
         left: textPointer.x,
         text: 'TODO: user input here!',
         top: textPointer.y

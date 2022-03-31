@@ -1,5 +1,5 @@
 <script>
-import {mapActions, mapMutations, mapGetters} from 'vuex'
+import {mapActions, mapGetters} from 'vuex'
 
 export default {
   name: 'Whiteboarding',
@@ -13,10 +13,13 @@ export default {
   },
   computed: {
     ...mapGetters('whiteboarding', [
-      'whiteboard',
+      'colors',
       'disableAll',
       'mode',
+      'selected',
+      'textSizeOptions',
       'windowHeight',
+      'whiteboard',
       'windowWidth'
     ])
   },
@@ -29,12 +32,10 @@ export default {
       'init',
       'moveLayer',
       'saveWhiteboardElements',
-      'toggleZoom'
-    ]),
-    ...mapMutations('whiteboarding', [
-      'onWindowResize',
       'setDisableAll',
       'setMode',
+      'updateSelected',
+      'toggleZoom'
     ])
   }
 }

@@ -48,7 +48,7 @@
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker tool="draw" />
+          <ColorPicker :set-fill="setFill" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -64,6 +64,7 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
+    file: undefined,
     menu: false,
     options: {
       'Rect:thin': require('@/assets/whiteboard/shape-rect-thin.png'),
@@ -82,10 +83,20 @@ export default {
       this.setDisableAll(isOpen)
     }
   },
+  created() {
+    this.reset()
+  },
   beforeDestroy() {
+    this.reset()
     this.setDisableAll(false)
   },
   methods: {
+    reset() {
+      this.fill = '#000000'
+    },
+    setFill(value) {
+      this.fill = value
+    },
     setShape(value) {
       console.log(`TODO: set shape to ${value}`)
     }
