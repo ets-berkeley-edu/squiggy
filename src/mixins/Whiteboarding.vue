@@ -15,9 +15,7 @@ export default {
     ...mapGetters('whiteboarding', [
       'whiteboard',
       'disableAll',
-      'fabricElementTemplates',
-      'isReadOnly',
-      'unsavedFabricElement',
+      'mode',
       'windowHeight',
       'windowWidth'
     ])
@@ -37,7 +35,6 @@ export default {
       'onWindowResize',
       'setDisableAll',
       'setMode',
-      'updateUnsavedFabricElement'
     ])
   }
 }

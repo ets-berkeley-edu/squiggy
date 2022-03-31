@@ -11,7 +11,7 @@
         hide-sliders
         show-swatches
         :swatches="swatches"
-        :value="unsavedFabricElement.fill"
+        value="red"
         width="260"
         @input="setFill"
       />
@@ -35,7 +35,7 @@ export default {
   }),
   methods: {
     setFill(value) {
-      this.updateUnsavedFabricElement({key: 'fill', value})
+      console.log(`TODO: set fill to ${value}`)
     }
   }
 }

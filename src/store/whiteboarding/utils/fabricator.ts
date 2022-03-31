@@ -375,7 +375,7 @@ const setCanvasDimensions = (state: any) => {
   })
   // Keep track of whether the canvas can currently be scrolled
   if (maxRight > viewportWidth || maxBottom > viewportHeight) {
-    state.scrollingCanvas = true
+    store.dispatch('whiteboarding/setIsScrollingCanvas', true)
 
     // Add padding when the canvas can be scrolled
     if (maxRight > viewportWidth) {
@@ -385,7 +385,7 @@ const setCanvasDimensions = (state: any) => {
       maxBottom += constants.CANVAS_PADDING
     }
   } else {
-    state.scrollingCanvas = false
+    store.dispatch('whiteboarding/setIsScrollingCanvas', false)
   }
 
   // When the entire whiteboard content should fit within
@@ -489,9 +489,10 @@ export function $_addDebugListenters(fabricObject: any, objectType: string) {
     console.log(`fabric.${objectType}, add debug listenters: ${JSON.stringify(fabricObject)}`)
     // Events listed in FABRIC_JS_DEBUG_EVENTS_EXCLUDE array are ignored when debugging. Developers can silence these
     // debug-event-listenters by setting FABRIC_JS_DEBUG_EVENTS_EXCLUDE equal to '*' in the .env.development.local file.
-    const exclude = process.env.FABRIC_JS_DEBUG_EVENTS_EXCLUDE
+    const exclude = constants.FABRIC_JS_DEBUG_EVENTS_EXCLUDE
     if (exclude !== '*') {
-      const eventNames = constants.FABRIC_EVENTS_PER_TYPE[objectType].filter((eventName: string) => !exclude.includes(eventName))
+      let eventNames = constants.FABRIC_EVENTS_PER_TYPE[objectType]
+      eventNames = _.filter(eventNames, (eventName: string) => !exclude.includes(eventName))
       _.each(eventNames, (eventName: string) => {
         fabricObject.on(eventName, (event: any) => console.log({
           fabric: objectType,

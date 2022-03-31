@@ -14,11 +14,12 @@
       <v-btn
         id="toolbar-add-asset"
         :disabled="disableAll"
+        icon
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="circle-plus" size="2x" />
-        <span class="pl-2">Asset</span>
+        <span class="sr-only">Asset</span>
+        <font-awesome-icon icon="circle-plus" />
       </v-btn>
     </template>
     <v-card>

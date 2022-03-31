@@ -172,16 +172,16 @@ const $_addListenters = (state: any) => {
       // has moved compared to the starting point
       if (state.shapeOptions.selected.type.shape === 'Circle') {
         state.shape.set({
-          width: Math.abs(state.startShapePointer.x - currentShapePointer.x),
           height: Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2
+          radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2,
+          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
         })
       // Set the width and height of the shape based on how much the cursor
       // has moved compared to the starting point
       } else {
         state.shape.set({
-          width: Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          height: Math.abs(state.startShapePointer.y - currentShapePointer.y)
+          height: Math.abs(state.startShapePointer.y - currentShapePointer.y),
+          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
         })
       }
       p.$canvas.requestRenderAll()

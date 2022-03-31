@@ -1,5 +1,11 @@
+import _ from 'lodash'
 
 const FABRIC_OBJECT_EVENTS = ['event:added', 'event:deselected', 'event:dragenter', 'event:dragleave', 'event:dragover', 'event:drop', 'event:modified', 'event:modified', 'event:mousedblclick', 'event:mousedown', 'event:mouseout', 'event:mouseover', 'event:mouseup', 'event:mousewheel', 'event:moved', 'event:moving', 'event:removed', 'event:rotated', 'event:rotating', 'event:scaled', 'event:scaling', 'event:selected', 'event:skewed', 'event:skewing']
+
+const $_getFabricJsDebugEventsExclude = () => {
+  const eventNames = process.env.VUE_APP_FABRIC_JS_DEBUG_EVENTS_EXCLUDE
+  return eventNames === '*' ? eventNames : _.split(eventNames, ',')
+}
 
 export default {
   // Variable that will keep track of the placeholder images to use for assets without a preview image
@@ -65,6 +71,7 @@ export default {
     IText: FABRIC_OBJECT_EVENTS.concat(['event:changed', 'selection:changed', 'editing:entered', 'editing:exited']),
     Object: FABRIC_OBJECT_EVENTS
   },
+  FABRIC_JS_DEBUG_EVENTS_EXCLUDE: $_getFabricJsDebugEventsExclude(),
   FABRIC_MULTIPLE_SELECT_TYPE: 'activeSelection',
   MODE_OPTIONS: ['move', 'draw', 'shape', 'text', 'asset'],
   SHAPE_OPTIONS: [

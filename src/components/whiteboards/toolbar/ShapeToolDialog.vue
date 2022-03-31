@@ -9,18 +9,19 @@
       <v-btn
         id="toolbar-shapes"
         :disabled="disableAll"
+        icon
         v-bind="attrs"
         v-on="on"
       >
         <span class="sr-only">Shapes</span>
-        <font-awesome-icon icon="shapes" size="2x" />
+        <font-awesome-icon icon="shapes" />
       </v-btn>
     </template>
     <v-card>
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Select shape and color</h2>
       </v-card-title>
-      <v-card-text v-if="unsavedFabricElement">
+      <v-card-text>
         <v-container class="pb-0 pt-7 text-body-1">
           <v-row class="pb-2" no-gutters>
             <v-col class="pt-2" cols="3">
@@ -33,7 +34,7 @@
                 :hide-details="true"
                 :items="$_.keys(options)"
                 outlined
-                :value="unsavedFabricElement.shape"
+                value="circle"
                 @input="setShape"
               >
                 <template #selection="{item}">
@@ -76,7 +77,6 @@ export default {
   watch: {
     menu(isOpen) {
       if (isOpen) {
-        this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.shape))
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(isOpen)
@@ -87,7 +87,7 @@ export default {
   },
   methods: {
     setShape(value) {
-      this.updateUnsavedFabricElement({key: 'shape', value})
+      console.log(`TODO: set shape to ${value}`)
     }
   }
 }
