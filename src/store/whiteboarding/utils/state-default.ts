@@ -21,9 +21,9 @@ export default {
   isExportingAsPng: false,
   // Keep track of whether the currently selected elements are in the process of being moved, scaled or rotated.
   isModifyingElement: false,
+  isScrollingCanvas: false,
   mode: 'move',
   modeOptions: constants.MODE_OPTIONS,
-  scrollingCanvas: false,
   // Variable that will keep track of the shape that is being added to the whiteboard canvas
   shape: null,
   // Variable that will keep track of the selected shape, style and draw color
@@ -35,10 +35,8 @@ export default {
     }
   },
   sidebarExpanded: false,
-  sidebarMode: 'online',
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
-  unsavedFabricElement: undefined, // TODO: remove?
   viewport: undefined,
   whiteboard: undefined,
   text: {

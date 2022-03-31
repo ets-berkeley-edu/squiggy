@@ -9,19 +9,20 @@
       <v-btn
         id="toolbar-text"
         :disabled="disableAll"
+        icon
         v-bind="attrs"
         value="text"
         v-on="on"
       >
         <span class="sr-only">Text</span>
-        <font-awesome-icon icon="font" size="2x" />
+        <font-awesome-icon icon="font" />
       </v-btn>
     </template>
     <v-card>
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Select Text Size and Color</h2>
       </v-card-title>
-      <v-card-text v-if="unsavedFabricElement">
+      <v-card-text>
         <v-container class="pb-0 pt-7 text-body-1">
           <v-row class="pb-2" no-gutters>
             <v-col class="pt-2" cols="3">
@@ -37,7 +38,7 @@
                   {text: 'Title', value: 36}
                 ]"
                 :unclearable="true"
-                :value="unsavedFabricElement.fontSize"
+                value="18"
                 @input="setFontSize"
               />
             </v-col>
@@ -58,17 +59,18 @@ export default {
   name: 'TextToolDialog',
   components: {AccessibleSelect, ColorPicker},
   mixins: [Whiteboarding],
-  data: () => ({
-    menu: false
-  }),
-  watch: {
-    menu(isOpen) {
-      if (isOpen) {
-        this.setMode('text')
-        // this.setUnsavedFabricElement(this.$_.cloneDeep(this.fabricElementTemplates.text))
-        this.$putFocusNextTick('menu-header')
+  computed: {
+    menu: {
+      get() {
+        return this.mode === 'text'
+      },
+      set(value) {
+        if (value) {
+          this.setMode('text')
+          this.$putFocusNextTick('menu-header')
+        }
+        this.setDisableAll(value)
       }
-      this.setDisableAll(isOpen)
     }
   },
   beforeDestroy() {
@@ -76,7 +78,7 @@ export default {
   },
   methods: {
     setFontSize(value) {
-      this.updateUnsavedFabricElement({key: 'fontSize', value})
+      console.log(`TODO: set font size to ${value}`)
     }
   }
 }

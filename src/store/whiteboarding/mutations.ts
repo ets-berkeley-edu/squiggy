@@ -132,35 +132,29 @@ export default {
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setDrawMode: (state: any, drawMode: boolean) => p.$canvas.isDrawingMode = drawMode,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
+  setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
   setMode: (state: any, mode: string) => {
-    state.mode = mode
     // Deactivate the currently selected item
     p.$canvas.discardActiveObject().requestRenderAll()
     // Disable drawing mode
     p.$canvas.isDrawingMode = false
     // Prevent the p.$canvas items from being modified unless
     // the whitnableCanvasElements(false, state)
-    if (state.mode === 'move') {
+    if (mode === 'move') {
       fabricator.enableCanvasElements(true)
       // TODO: closePopovers()
-    } else if (state.mode === 'draw') {
+    } else if (mode === 'draw') {
       // Draw mode has been selected
       p.$canvas.isDrawingMode = true
-    } else if (state.mode === 'text') {
-      // Text mode has been selected
+    } else if (mode === 'text') {
       // Change the cursor to text mode
-      // TODO: This doesn't appear to work
       p.$canvas.cursor = 'text'
     }
+    state.mode = mode
   },
-  toggleSidebar: (state: any, sidebarMode: string) => {
-    // Toggle the view mode in the sidebar. If the sidebar was hidden, it will be shown
-    // in the requested mode. If the sidebar was shown in a different mode, it will be switched to
-    // the requested mode. If the sidebar was shown in the requested mode, it will be hidden again.
-    state.sidebarMode = sidebarMode
-    state.sidebarExpanded = state.sidebarExpanded && state.sidebarMode === sidebarMode
-    // Recalculate the size of the whiteboard p.$canvas. `setTimeout`
-    // is required to ensure that the sidebar has collapsed/expanded
+  toggleSidebar: (state: any) => {
+    state.sidebarExpanded = !state.sidebarExpanded
+    // Recalculate the size of the whiteboard p.$canvas. `setTimeout` is required to ensure that the sidebar has collapsed/expanded.
     setTimeout(() => fabricator.setCanvasDimensions(state), 0)
   },
   toggleZoom: (state: any) => {

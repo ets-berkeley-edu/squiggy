@@ -1,43 +1,42 @@
 <template>
-  <v-toolbar
-    class="pt-1"
-    floating
-    prominent
+  <v-app-bar
+    app
+    dense
+    outlined
+    top
   >
-    <div class="pr-4">
-      <v-btn @click="unlock">
-        <font-awesome-icon icon="unlock" size="2x" />
-      </v-btn>
-      <v-btn id="toolbar-pointer" value="pointer">
-        <span class="sr-only">Move and transform</span>
-        <font-awesome-icon icon="arrows-up-down-left-right" size="2x" />
-      </v-btn>
-      <TextToolDialog />
-      <DrawToolDialog />
-      <ShapeToolDialog />
-    </div>
-    <div class="pr-4">
-      <v-btn id="toolbar-fit-to-screen" value="fitToScreen">
-        <span class="sr-only">Fit to screen</span>
-        <font-awesome-icon icon="search-minus" size="2x" />
-      </v-btn>
-      <v-btn id="toolbar-actual-size" value="actualSize">
-        <span class="sr-only">Actual size"</span>
-        <font-awesome-icon icon="search-plus" size="2x" />
-      </v-btn>
-    </div>
-    <div class="pr-4">
-      <AssetToolDialog />
-    </div>
-    <v-btn id="toolbar-export" value="export">
+    <v-btn id="toolbar-pointer" icon>
+      <span class="sr-only">Move and transform</span>
+      <font-awesome-icon icon="arrows-up-down-left-right" />
+    </v-btn>
+    <TextToolDialog />
+    <DrawToolDialog />
+    <ShapeToolDialog />
+    <v-btn id="toolbar-fit-to-screen" icon>
+      <span class="sr-only">Fit to screen</span>
+      <font-awesome-icon icon="search-minus" />
+    </v-btn>
+    <v-btn id="toolbar-actual-size" icon>
+      <span class="sr-only">Actual size"</span>
+      <font-awesome-icon icon="search-plus" />
+    </v-btn>
+    <AssetToolDialog />
+    <v-btn id="toolbar-export" icon>
       <span class="sr-only">Export</span>
-      <font-awesome-icon icon="download" size="2x" />
+      <font-awesome-icon icon="download" />
     </v-btn>
-    <v-btn id="toolbar-settings" value="settings">
+    <v-btn id="toolbar-settings" icon>
       <span class="sr-only">Settings</span>
-      <font-awesome-icon icon="cog" size="2x" />
+      <font-awesome-icon icon="cog" />
     </v-btn>
-  </v-toolbar>
+    <v-btn icon @click="unlock">
+      <font-awesome-icon icon="unlock" />
+    </v-btn>
+    <v-spacer />
+    <div>
+      {{ mode }}
+    </div>
+  </v-app-bar>
 </template>
 
 <script>
@@ -58,6 +57,7 @@ export default {
     TextToolDialog
   },
   data: () => ({
+    collapsed: false,
     selected: undefined
   }),
   methods: {
