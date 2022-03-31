@@ -1,3 +1,6 @@
+
+const FABRIC_OBJECT_EVENTS = ['event:added', 'event:deselected', 'event:dragenter', 'event:dragleave', 'event:dragover', 'event:drop', 'event:modified', 'event:modified', 'event:mousedblclick', 'event:mousedown', 'event:mouseout', 'event:mouseover', 'event:mouseup', 'event:mousewheel', 'event:moved', 'event:moving', 'event:removed', 'event:rotated', 'event:rotating', 'event:scaled', 'event:scaling', 'event:selected', 'event:skewed', 'event:skewing']
+
 export default {
   // Variable that will keep track of the placeholder images to use for assets without a preview image
   ASSET_PLACEHOLDERS: {
@@ -57,6 +60,11 @@ export default {
       label: '<img src="/assets/img/whiteboard-draw-large.png" />'
     }
   ],
+  FABRIC_EVENTS_PER_TYPE: {
+    Canvas: FABRIC_OBJECT_EVENTS.concat(['after:render', 'before:render', 'before:selection:cleared', 'before:transform', 'canvas:cleared', 'drop:before', 'mouse:dblclick', 'mouse:down:before', 'mouse:down', 'mouse:move:before', 'mouse:move', 'mouse:out', 'mouse:over', 'mouse:up:before', 'mouse:up', 'object:added', 'object:modified', 'object:moving', 'object:removed', 'object:rotating', 'object:scaling', 'object:skewing', 'path:created', 'selection:cleared', 'selection:created', 'selection:updated']),
+    IText: FABRIC_OBJECT_EVENTS.concat(['event:changed', 'selection:changed', 'editing:entered', 'editing:exited']),
+    Object: FABRIC_OBJECT_EVENTS
+  },
   FABRIC_MULTIPLE_SELECT_TYPE: 'activeSelection',
   MODE_OPTIONS: ['move', 'draw', 'shape', 'text', 'asset'],
   SHAPE_OPTIONS: [
