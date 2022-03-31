@@ -55,7 +55,7 @@ const $_addSocketListeners = (state: any) => {
   /**
    * One or multiple whiteboard canvas elements were updated by a different user
    */
-  onEvent('update_activity', (elements: any) => {
+  onEvent('update', (elements: any) => {
     // Deactivate the current group if any of the updated elements are in the current group
     $_deactiveActiveGroupIfOverlap(elements)
     // Update the elements
@@ -68,7 +68,7 @@ const $_addSocketListeners = (state: any) => {
   /**
    * A whiteboard canvas element was added by a different user
    */
-  onEvent('add_whiteboard_elements', (elements: any[]) => {
+  onEvent('add', (elements: any[]) => {
     _.each(elements, (element: any) => {
       const callback = (e: any) => {
         // Add the element to the whiteboard canvas and move it to its appropriate index
@@ -85,7 +85,7 @@ const $_addSocketListeners = (state: any) => {
   /**
    * One or multiple whiteboard canvas elements were deleted by a different user
    */
-  onEvent('deleteActivity', (elements: any[]) => {
+  onEvent('delete', (elements: any[]) => {
     // Deactivate the current group if any of the deleted elements are in the current group
     $_deactiveActiveGroupIfOverlap(elements)
     // Delete the elements

@@ -42,7 +42,7 @@ export default {
 
 const $_addListenters = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
-  const setModifyingElement = () => state.isModifyingElement = true
+  const setModifyingElement = () => store.dispatch('whiteboarding/setIsModifyingElement', true)
   p.$canvas.on('object:moving', setModifyingElement)
   p.$canvas.on('object:scaling', setModifyingElement)
   p.$canvas.on('object:rotating', setModifyingElement)
@@ -221,6 +221,7 @@ const $_addListenters = (state: any) => {
         fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
         fontSize: state.text.selected.size,
         left: textPointer.x,
+        text: 'TODO: user input here!',
         top: textPointer.y
       })
       p.$canvas.add(text)

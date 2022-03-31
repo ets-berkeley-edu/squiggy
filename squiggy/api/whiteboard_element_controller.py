@@ -25,12 +25,9 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_whiteboard, feature_flag_whiteboards
-from squiggy.api.api_whiteboard_util import create_whiteboard_elements
-from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
+from squiggy.api.api_util import feature_flag_whiteboards
+from squiggy.api.api_whiteboard_util import create_whiteboard_elements, update_whiteboard_elements
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.models.whiteboard import Whiteboard
-from squiggy.models.whiteboard_element import WhiteboardElement
 
 
 @app.route('/api/whiteboard/elements/create', methods=['POST'])
@@ -49,24 +46,11 @@ def whiteboard_elements_create():
 @app.route('/api/whiteboard/elements/update', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def update_whiteboard_elements():
+def whiteboard_elements_update():
     params = request.get_json()
-    whiteboard_elements = params.get('whiteboardElements', [])
-    whiteboard_id = params.get('whiteboardId')
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
-    if not whiteboard:
-        raise ResourceNotFoundError('Whiteboard not found.')
-    if whiteboard['deletedAt']:
-        raise ResourceNotFoundError('Whiteboard is read-only.')
-    if not len(whiteboard_elements):
-        raise BadRequestError('One or more elements required')
-    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
-        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
-
-    api_json = []
-    for whiteboard_element in whiteboard_elements:
-        api_json.append(WhiteboardElement.update(
-            element=whiteboard_element['element'],
-            whiteboard_element_id=whiteboard_element['id'],
-        ).to_api_json())
-    return tolerant_jsonify(api_json)
+    whiteboard_elements = update_whiteboard_elements(
+        user=current_user,
+        whiteboard_id=params.get('whiteboardId'),
+        whiteboard_elements=params.get('whiteboardElements'),
+    )
+    return tolerant_jsonify([e.to_api_json() for e in whiteboard_elements])
