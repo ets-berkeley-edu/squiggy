@@ -160,7 +160,8 @@ export default {
   toggleZoom: (state: any) => {
     state.fitToScreen = !state.fitToScreen
     fabricator.setCanvasDimensions(state)
-  }
+  },
+  updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties),
 }
 
 /**

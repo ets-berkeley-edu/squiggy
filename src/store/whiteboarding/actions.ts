@@ -174,9 +174,12 @@ export default {
       })
     })
   },
+  setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
+  setMode: ({commit}, mode: string) => commit('setMode', mode),
   toggleZoom: ({commit}) => commit('toggleZoom'),
+  updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
   uploadFiles: ({commit}) => {
     // TODO: Create a new scope for the modal dialog
 

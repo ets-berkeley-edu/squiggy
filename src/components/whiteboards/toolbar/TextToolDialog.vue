@@ -33,17 +33,14 @@
                 :dense="true"
                 :hide-details="true"
                 id-prefix="tool-select-text-size"
-                :items="[
-                  {text: 'Normal', value: 14},
-                  {text: 'Title', value: 36}
-                ]"
+                :items="textSizeOptions"
                 :unclearable="true"
-                value="18"
-                @input="setFontSize"
+                :value="fontSize"
+                @input="value => updateSelected({fontSize: value})"
               />
             </v-col>
           </v-row>
-          <ColorPicker tool="text" />
+          <ColorPicker :set-fill="value => updateSelected({fill: value})" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -59,6 +56,10 @@ export default {
   name: 'TextToolDialog',
   components: {AccessibleSelect, ColorPicker},
   mixins: [Whiteboarding],
+  data: () => ({
+    fill: '',
+    fontSize: 14
+  }),
   computed: {
     menu: {
       get() {
@@ -77,8 +78,11 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
+    setFill(value) {
+      this.fill = value
+    },
     setFontSize(value) {
-      console.log(`TODO: set font size to ${value}`)
+      this.fontSize = value
     }
   }
 }
