@@ -46,11 +46,3 @@ export function restoreWhiteboard(whiteboardId: number) {
 export function updateWhiteboard(title: string, whiteboardId: number) {
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/update`, {whiteboardId, title})
 }
-
-export function updateWhiteboardElement(
-  key: string,
-  uuid: string,
-  value: any,
-) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/element/update`, {key, uuid, value})
-}

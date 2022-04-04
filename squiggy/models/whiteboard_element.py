@@ -23,7 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import uuid
+from uuid import uuid4
 
 from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
@@ -66,10 +66,14 @@ class WhiteboardElement(Base):
 
     @classmethod
     def create(cls, element, whiteboard_id, asset_id=None):
+        uuid = str(uuid4())
         asset_whiteboard_element = cls(
             asset_id=asset_id,
-            element=element,
-            uuid=str(uuid.uuid4()),
+            element={
+                **element,
+                'uuid': uuid,
+            },
+            uuid=uuid,
             whiteboard_id=whiteboard_id,
         )
         db.session.add(asset_whiteboard_element)
@@ -77,14 +81,13 @@ class WhiteboardElement(Base):
         return asset_whiteboard_element
 
     @classmethod
-    def update(cls, element, uuid, whiteboard_id, asset_id=None):
-        whiteboard_element = cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
-        if whiteboard_element:
-            whiteboard_element.asset_id = asset_id
-            whiteboard_element.element = element
-            db.session.add(whiteboard_element)
-            std_commit()
-            return whiteboard_element
+    def update(cls, element, whiteboard_element_id, asset_id=None):
+        whiteboard_element = cls.query.filter_by(id=whiteboard_element_id).first()
+        whiteboard_element.asset_id = asset_id
+        whiteboard_element.element = element
+        db.session.add(whiteboard_element)
+        std_commit()
+        return whiteboard_element
 
     def to_api_json(self):
         return {

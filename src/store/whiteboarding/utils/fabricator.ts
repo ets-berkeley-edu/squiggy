@@ -120,11 +120,17 @@ const deleteActiveElements = (state: any) => {
   $_saveDeleteElements(elements, state)
 }
 
-const deserializeElement = (state: any, element: any, callback: any) => {
+const deserializeElement = (
+  state: any,
+  element: any,
+  uuid: string,
+  callback: any
+) => {
   // Convert a serialized Fabric.js canvas element to a proper Fabric.js canvas element
   // element: The serialized Fabric.js canvas element to deserialize
   // callback: Standard callback function
   element = _.cloneDeep(element)
+  element.uuid = uuid
   // Make the element unseletable when the whiteboard is rendered in read only mode
   if (state.whiteboard.deletedAt) {
     element.selectable = false
@@ -236,13 +242,15 @@ const getActiveElements = (): any[] => {
   return activeElements
 }
 
-const getCanvasElement = (uuid: number) => {
-  _.each(p.$canvas.getObjects(), (element: any) => {
-    if (element.get('uuid') === uuid) {
-      return element
+const getCanvasElement = (uuid: string) => {
+  let element = undefined
+  _.each(p.$canvas.getObjects(), (e: any) => {
+    if (e.get('uuid') === uuid) {
+      element = e
+      return false
     }
   })
-  return null
+  return element
 }
 
 /**
@@ -293,7 +301,7 @@ const paste = (state: any): void => {
         elements.push(e)
         selectPasted()
       }
-      deserializeElement(state, element, callback)
+      deserializeElement(state, element, element.uuid, callback)
     })
   }
 }
