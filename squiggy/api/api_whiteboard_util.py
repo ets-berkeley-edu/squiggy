@@ -23,8 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from flask import current_app as app
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
+from squiggy.lib.util import safe_strip
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 
@@ -39,10 +41,9 @@ def create_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
         raise BadRequestError('One or more whiteboard-elements required')
     if not can_update_whiteboard(user=user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
-    if _has_canvas(whiteboard_elements) and _has_canvas(whiteboard['whiteboardElements']):
-        raise BadRequestError('Whiteboard can have one, and only one, element of type canvas.')
 
     def _create(whiteboard_element):
+        _validate_whiteboard_element(whiteboard_element)
         return WhiteboardElement.create(
             asset_id=whiteboard_element.get('assetId', None),
             element=whiteboard_element['element'],
@@ -63,6 +64,7 @@ def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
 
     def _update(whiteboard_element):
+        _validate_whiteboard_element(whiteboard_element)
         return WhiteboardElement.update(
             asset_id=whiteboard_element.get('assetId', None),
             element=whiteboard_element['element'],
@@ -72,5 +74,9 @@ def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
     return [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
 
 
-def _has_canvas(elements):
-    return 'canvas' in [e.get('type') for e in elements]
+def _validate_whiteboard_element(whiteboard_element):
+    element = whiteboard_element['element']
+    if element['type'] == 'i-text' and not safe_strip(element.get('text')):
+        message = f'Invalid Fabric i-text element: {element}'
+        app.logger.error(message)
+        raise BadRequestError(message)

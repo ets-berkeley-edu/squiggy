@@ -118,8 +118,7 @@ def register_sockets(socketio):
         _handle_socketio_connect()
 
     @socketio.on('update')
-    def update_whiteboard(payload):
-        data = payload[0] if len(payload) else None
+    def update_whiteboard(data):
         whiteboard_elements = []
         if data:
             whiteboard_elements = update_whiteboard_elements(
@@ -130,8 +129,7 @@ def register_sockets(socketio):
         return [e.to_api_json() for e in whiteboard_elements]
 
     @socketio.on('add')
-    def add_whiteboard_elements(payload):
-        data = payload[0] if len(payload) else None
+    def add_whiteboard_elements(data):
         whiteboard_elements = []
         if data:
             create_whiteboard_elements(
@@ -146,8 +144,8 @@ def register_sockets(socketio):
         app.logger.warn(f'TODO: delete {payload}')
 
     @socketio.on('disconnect')
-    def whiteboard_disconnect(payload):
-        app.logger.warn(f'TODO: disconnect {payload}')
+    def whiteboard_disconnect():
+        app.logger.warn('TODO: socketio.on disconnect')
 
 
 def _handle_socketio_connect():

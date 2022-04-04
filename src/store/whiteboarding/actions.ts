@@ -124,6 +124,7 @@ export default {
     })
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
+  resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
     if (state.whiteboard && state.whiteboard.deletedAt) {
       return restoreWhiteboard(state.whiteboard.id).then(function() {

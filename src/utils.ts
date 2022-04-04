@@ -29,11 +29,6 @@ export default {
       }
     }
   },
-  logDebug(data) {
-    if (Vue.prototype.$config.isVueAppDebugMode) {
-      console.log(data)
-    }
-  },
   putFocusNextTick: (id, cssSelector) => {
     const callable = () => {
         let el = document.getElementById(id)

@@ -1,24 +1,23 @@
 import _ from 'lodash'
+import apiUtils from '@/api/api-utils'
 import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/utils/constants'
 import fabricator from '@/store/whiteboarding/utils/fabricator'
-import socket from '@/store/whiteboarding/utils/socket'
 import store from '@/store'
 import Vue from 'vue'
+import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
 
 const p = Vue.prototype
 
 export function initialize(state: any, whiteboard: any) {
-  $_initCanvas(state)
-  $_addModalListeners()
-  $_addViewportListeners(state)
   if (!whiteboard.deletedAt) {
-    // Open a websocket connection for real-time communication with the server (chat + whiteboard changes) when
-    // the whiteboard is rendered in edit mode. The course ID and API domain are passed in as handshake query parameters
-    socket.init(state, whiteboard)
+    $_initSocket(state, whiteboard)
   }
   // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
   fabricator.init(state)
+  $_initCanvas(state)
+  $_addModalListeners()
+  $_addViewportListeners(state)
 }
 
 const $_initCanvas = (state: any) => {
@@ -50,6 +49,27 @@ const $_initCanvas = (state: any) => {
   $_renderWhiteboard(state)
 }
 
+const $_initSocket = (state: any, whiteboard: any) => {
+  Vue.prototype.$socket = io(apiUtils.apiBaseUrl(), {
+    query: {
+      whiteboardId: whiteboard.id
+    }
+  })
+  p.$socket.on('connect', _.noop)
+  p.$socket.on('disconnect', _.noop)
+  p.$socket.on('error', (error: any) => store.dispatch('whiteboarding/log', `ERROR, socket.io: '${error}'`))
+  p.$socket.on('online', (onlineUsers: any[]) => {
+    // When a user has joined or left the whiteboard, update the online status on the list of members
+    if (whiteboard) {
+      for (let i = 0; i < whiteboard.members.length; i++) {
+        const member = whiteboard.members[i]
+        member.online = _.find(onlineUsers, {user_id: member.id}) ? true : false
+      }
+    }
+  })
+  $_addSocketListeners(state)
+}
+
 const $_addListenters = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
   const setModifyingElement = () => store.dispatch('whiteboarding/setIsModifyingElement', true)
@@ -71,10 +91,7 @@ const $_addListenters = (state: any) => {
   // Indicate that the currently selected elements are no longer being modified once moving, scaling or rotating has finished
   p.$canvas.on('object:modified', () => store.dispatch('whiteboarding/setIsModifyingElement', false))
 
-  /**
-   * Draw a box around the currently selected element(s) and use this box
-   * to position the buttons that allow the selected element(s) to be modified
-   */
+  // (1) Draw a box around the currently selected element(s) and (2) position buttons that allow the selected element(s) to be modified.
   p.$canvas.on('after:render', () => store.dispatch('whiteboarding/afterCanvasRender'))
 
   /**
@@ -97,7 +114,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:added', (event: any) => {
     const element = event.target
     // Don't add a new text element until text has been entered
-    if (element.type !== 'i-text' || element.text.trim()) {
+    if (!('text' in element) || element.text.trim()) {
       // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
       if (!element.get('uuid') && !element.get('isHelper')) {
         fabricator.saveNewElement(element, state)
@@ -217,21 +234,20 @@ const $_addListenters = (state: any) => {
       p.$canvas.setActiveObject(finalShape)
     }
   })
-  /**
-   * Add an editable text field to the whiteboard canvas
-   */
-   p.$canvas.on('mouse:down', (event: any) => {
-    if (state.mode === 'text') {
-      // Add the text field to where the user clicked
-      const textPointer = p.$canvas.getPointer(event.e)
 
-      // Start off with an empty text field
+  p.$canvas.on('mouse:down', (event: any) => {
+    if (state.mode === 'text') {
+      const textPointer = p.$canvas.getPointer(event.e)
       const text = fabricator.createIText({
+        backgroundColor: 'red',
         fill: state.selected.fill,
         fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
-        fontSize: state.selected.fontSize,
+        fontSize: state.selected.fontSize || 14,
+        height: 100, // TODO
         left: textPointer.x,
-        text: 'TODO: user input here!',
+        text: 'TODO: Hello World',
+        selectable: true,
+        selected: true,
         top: textPointer.y
       })
       p.$canvas.add(text)
@@ -303,4 +319,109 @@ const $_addViewportListeners = (state: any) => {
       fabricator.paste(state)
     }
   }, false)
+}
+
+
+const $_addSocketListeners = (state: any) => {
+  /**
+   * One or multiple whiteboard canvas elements were updated by a different user
+   */
+   p.$socket.on('update', (elements: any) => {
+    // Deactivate the current group if any of the updated elements are in the current group
+    $_deactiveActiveGroupIfOverlap(elements)
+    // Update the elements
+    _.each(elements, function(element) {
+      $_updateCanvasElement(state, element.uuid, element)
+    })
+    // Recalculate the size of the whiteboard canvas
+    fabricator.setCanvasDimensions(state)
+  })
+  /**
+   * A whiteboard canvas element was added by a different user
+   */
+   p.$socket.on('add', (elements: any[]) => {
+    _.each(elements, (element: any) => {
+      const callback = (e: any) => {
+        // Add the element to the whiteboard canvas and move it to its appropriate index
+        p.$canvas.add(e)
+        element.moveTo(e.get('index'))
+        p.$canvas.requestRenderAll()
+        // Recalculate the size of the whiteboard canvas
+        fabricator.setCanvasDimensions(state)
+      }
+      fabricator.deserializeElement(state, element, callback)
+    })
+  })
+
+  /**
+   * One or multiple whiteboard canvas elements were deleted by a different user
+   */
+   p.$socket.on('delete', (elements: any[]) => {
+    // Deactivate the current group if any of the deleted elements are in the current group
+    $_deactiveActiveGroupIfOverlap(elements)
+    // Delete the elements
+    _.each(elements, function(element) {
+      element = fabricator.getCanvasElement(element.uuid)
+      if (element) {
+        p.$canvas.remove(element)
+      }
+    })
+    // Recalculate the size of the whiteboard canvas
+    fabricator.setCanvasDimensions(state)
+  })
+}
+
+/**
+ * CONCURRENT EDITING
+ * Deactivate the active group if any of the provided elements are a part of the active group
+ * elements: The elements that should be checked for presence in the active group
+ */
+ const $_deactiveActiveGroupIfOverlap = (elements: any[]) => {
+  const selection = p.$canvas.getActiveObject()
+  if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
+    const intersection = _.intersection(_.map(selection.objects, 'uuid'), _.map(elements, 'uuid'))
+    if (intersection.length > 0) {
+      p.$canvas.discardActiveGroup().requestRenderAll()
+    }
+  }
+}
+
+/**
+ * Update the appearance of a Fabric.js canvas element
+ *
+ * @param  {Number}         uuid               The id of the element to update
+ * @param  {Object}         update            The updated values to apply to the canvas element
+ */
+ const $_updateCanvasElement = (state: any, uuid: number, update: any) => {
+  const element: any = fabricator.getCanvasElement(uuid)
+
+  const updateElementProperties = () => {
+    if (element) {
+      // Update all element properties, except for the image source. The image
+      // source is handled separately as this is an asynchronous action
+      _.each(update, function(value, property) {
+        if (property !== 'src' && value !== element.get(property)) {
+          element.set(property, value)
+        }
+      })
+      // When the source element for an asset has changed, update this last and
+      // re-render the element after it has been loaded
+      if (element.type === 'image' && element.getSrc() !== update.src) {
+        element.setSrc(update.src, () => {
+          p.$canvas.requestRenderAll()
+          // Ensure that the correct position is applied
+          fabricator.restoreLayers(state)
+        })
+      } else {
+        fabricator.restoreLayers(state)
+      }
+    }
+  }
+  // If the element is an asset for which the source has changed, we preload
+  // the image to prevent flickering when the image is inserted into the element
+  if (element.type === 'image' && element.getSrc() !== update.src) {
+    fabric.util.loadImage(update.src, updateElementProperties)
+  } else {
+    updateElementProperties()
+  }
 }

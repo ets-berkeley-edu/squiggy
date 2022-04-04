@@ -16,7 +16,7 @@
           [colors.lightBlue.hex, colors.red.hex],
           [colors.green.hex, colors.yellow.hex]
         ]"
-        value="red"
+        :value="colors.black.hex"
         width="260"
         @input="setFill"
       />

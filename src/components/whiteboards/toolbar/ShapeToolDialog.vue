@@ -35,7 +35,7 @@
                 :items="$_.keys(options)"
                 outlined
                 value="circle"
-                @input="setShape"
+                @input="value => updateSelected({shape: value})"
               >
                 <template #selection="{item}">
                   <span id="selected-shape" class="sr-only">{{ item }} shape</span>
@@ -48,7 +48,7 @@
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker :set-fill="setFill" />
+          <ColorPicker :set-fill="value => updateSelected({fill: value})" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -64,7 +64,6 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
-    file: undefined,
     menu: false,
     options: {
       'Rect:thin': require('@/assets/whiteboard/shape-rect-thin.png'),
@@ -84,22 +83,11 @@ export default {
     }
   },
   created() {
-    this.reset()
+    this.resetSelected()
   },
   beforeDestroy() {
-    this.reset()
+    this.resetSelected()
     this.setDisableAll(false)
-  },
-  methods: {
-    reset() {
-      this.fill = '#000000'
-    },
-    setFill(value) {
-      this.fill = value
-    },
-    setShape(value) {
-      console.log(`TODO: set shape to ${value}`)
-    }
   }
 }
 </script>

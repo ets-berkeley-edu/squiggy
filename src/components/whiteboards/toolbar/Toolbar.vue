@@ -1,9 +1,9 @@
 <template>
   <v-app-bar
     app
+    bottom
     dense
     outlined
-    top
   >
     <v-btn id="toolbar-pointer" icon>
       <span class="sr-only">Move and transform</span>
@@ -32,10 +32,6 @@
     <v-btn icon @click="unlock">
       <font-awesome-icon icon="unlock" />
     </v-btn>
-    <v-spacer />
-    <div>
-      {{ mode }}
-    </div>
   </v-app-bar>
 </template>
 

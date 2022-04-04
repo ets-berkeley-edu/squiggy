@@ -15,6 +15,7 @@ export default {
   },
   afterCanvasRender: (state: any) => {
     const selection = p.$canvas.getActiveObject()
+    console.log(`'afterCanvasRender: state.isModifyingElement = ${state.isModifyingElement} AND selection ${JSON.stringify(selection)}`)
     if (selection && !state.isModifyingElement) {
       // Get the bounding rectangle around the currently selected element(s)
       const bound = selection.getBoundingRect()
@@ -24,7 +25,7 @@ export default {
         p.$canvas.contextContainer.strokeRect(bound.left - 10, bound.top - 10, bound.width + 20, bound.height + 20)
       }
       // Position the buttons to modify the selected element(s)
-      const editButtons = document.getElementById('whiteboards-board-editelement')
+      const editButtons = document.getElementById('whiteboard-element-edit')
       if (editButtons) {
         editButtons.style.left = (bound.left - 10) + 'px'
         editButtons.style.top = (bound.top + bound.height + 15) + 'px'
@@ -128,21 +129,25 @@ export default {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
   },
+  resetSelected: (state: any) => state.selected = {},
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setDrawMode: (state: any, drawMode: boolean) => p.$canvas.isDrawingMode = drawMode,
-  setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
+  setIsModifyingElement: (state: any, isModifyingElement: boolean) => {
+    console.log(state, `isModifyingElement = ${isModifyingElement}`)
+    state.isModifyingElement = isModifyingElement
+  },
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
   setMode: (state: any, mode: string) => {
     // Deactivate the currently selected item
     p.$canvas.discardActiveObject().requestRenderAll()
-    // Disable drawing mode
+
     p.$canvas.isDrawingMode = false
-    // Prevent the p.$canvas items from being modified unless
-    // the whitnableCanvasElements(false, state)
+    // Prevent the p.$canvas items from being modified unless the whitnableCanvasElements(false, state)
     if (mode === 'move') {
       fabricator.enableCanvasElements(true)
-      // TODO: closePopovers()
+      // TODO:
+      // closePopovers()
     } else if (mode === 'draw') {
       // Draw mode has been selected
       p.$canvas.isDrawingMode = true
@@ -173,4 +178,4 @@ export default {
  * and using that to construct a predictable cookie name. When a user clicks the button, the UI
  * will disable the button and wait until the cookie is set before re-enabling it again
  */
- const $_createDownloadId = () => new Date().getTime()
+const $_createDownloadId = () => new Date().getTime()

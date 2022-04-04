@@ -33,7 +33,7 @@ from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS
-from squiggy.lib.util import to_int, utc_now
+from squiggy.lib.util import safe_strip, to_int, utc_now
 from squiggy.logger import logger
 from squiggy.models.activity import Activity
 from squiggy.models.canvas import Canvas
@@ -94,7 +94,7 @@ def _canvas_external_tool_url(s, headers):
     pattern = '/external_tools/(\d+)'
     if re.search(pattern, referrer):
         return referrer
-    external_tool_url = (_str_strip(s) or '').replace('api/v1/', '')
+    external_tool_url = (safe_strip(s) or '').replace('api/v1/', '')
     return external_tool_url if re.search(pattern, external_tool_url) else None
 
 
@@ -112,23 +112,23 @@ def _lti_launch_authentication(tool_id):
         raise BadRequestError(f'Missing or invalid tool_id: {tool_id}')
 
     def _alpha_num(s):
-        value = _str_strip(s)
+        value = safe_strip(s)
         return value if value.isalnum() else None
 
     args = request.form
     lti_params = {}
     validation = {
-        'custom_canvas_api_domain': _str_strip,
-        'custom_canvas_course_id': _str_strip,
-        'custom_canvas_user_id': _str_strip,
+        'custom_canvas_api_domain': safe_strip,
+        'custom_canvas_course_id': safe_strip,
+        'custom_canvas_user_id': safe_strip,
         'custom_external_tool_url': _canvas_external_tool_url,
-        'lis_person_name_full': _str_strip,
+        'lis_person_name_full': safe_strip,
         'oauth_consumer_key': _alpha_num,
         'oauth_nonce': _alpha_num,
-        'oauth_signature_method': _str_strip,
-        'oauth_timestamp': _str_strip,
-        'oauth_version': _str_strip,
-        'roles': _str_strip,
+        'oauth_signature_method': safe_strip,
+        'oauth_timestamp': safe_strip,
+        'oauth_version': safe_strip,
+        'roles': safe_strip,
     }
 
     def _fetch(key):
@@ -228,7 +228,3 @@ def _check_course_activity(course):
         return True
     else:
         return False
-
-
-def _str_strip(s):
-    return str(s).strip() if isinstance(s, str) else None

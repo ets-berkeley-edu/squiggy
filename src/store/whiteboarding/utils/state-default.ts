@@ -1,6 +1,7 @@
 export default {
   // Variable that will keep track of the copied element(s)
   clipboard: [],
+  debugLog: '',
   disableAll: true,
   downloadId: undefined,
   exportPngUrl: undefined,
