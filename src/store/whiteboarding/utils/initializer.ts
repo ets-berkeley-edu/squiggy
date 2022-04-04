@@ -116,7 +116,7 @@ const $_addListenters = (state: any) => {
     // Don't add a new text element until text has been entered
     if (!('text' in element) || element.text.trim()) {
       // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
-      if (!element.get('uuid') && !element.get('isHelper')) {
+      if (!element.get('') && !element.get('isHelper')) {
         fabricator.saveNewElement(element, state)
         // Recalculate the size of the whiteboard canvas
         fabricator.setCanvasDimensions(state)
@@ -282,7 +282,7 @@ const $_renderWhiteboard = (state: any) => {
   })
   // Restore the layout of the whiteboard canvas
   _.each(state.whiteboard.whiteboardElements, (element: any) => {
-    fabricator.deserializeElement(state, element.element, (e: any) => {
+    fabricator.deserializeElement(state, element.element, element.uuid, (e: any) => {
       p.$canvas.add(e)
       restore()
     })
@@ -349,7 +349,7 @@ const $_addSocketListeners = (state: any) => {
         // Recalculate the size of the whiteboard canvas
         fabricator.setCanvasDimensions(state)
       }
-      fabricator.deserializeElement(state, element, callback)
+      fabricator.deserializeElement(state, element, element.uuid, callback)
     })
   })
 
@@ -392,7 +392,7 @@ const $_addSocketListeners = (state: any) => {
  * @param  {Number}         uuid               The id of the element to update
  * @param  {Object}         update            The updated values to apply to the canvas element
  */
- const $_updateCanvasElement = (state: any, uuid: number, update: any) => {
+ const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
   const element: any = fabricator.getCanvasElement(uuid)
 
   const updateElementProperties = () => {

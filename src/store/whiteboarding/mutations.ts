@@ -81,13 +81,9 @@ export default {
     initialize(state, whiteboard)
   },
   moveLayer: (state: any, direction: string) => {
-    /**
-     * Send the currently selected element(s) to the back or  bring the
-     * currently selected element(s) to the front
-     *
-     * direction: `front` if the currently selected element(s) should be brought to the front, `back` if the currently selected element(s) should be sent to the back
-     */
-    // Get the selected element(s)
+    // Send the currently selected element(s) to the back or  bring the currently selected element(s) to the front.
+    // direction: `front` if the currently selected element(s) should be brought to the front,
+    // `back` if the currently selected element(s) should be sent to the back
     const elements: any[] = fabricator.getActiveElements()
 
     // Sort the selected elements by their position to ensure that
@@ -120,8 +116,8 @@ export default {
     p.$canvas.requestRenderAll()
     fabricator.updateLayers(state)
 
-    // When only a single item was selected, re-select it
     if (elements.length === 1) {
+      // When only a single item was selected, re-select it
       p.$canvas.setActiveObject(fabricator.getCanvasElement(elements[0].uuid))
     }
   },

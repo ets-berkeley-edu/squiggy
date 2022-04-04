@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
+from uuid import uuid4
 
 from squiggy import std_commit
 from squiggy.lib.util import is_admin, is_teaching
@@ -45,13 +46,13 @@ class TestCreateWhiteboardElement:
         assert response.status_code == expected_status_code
         return json.loads(response.data)
 
-    def test_unauthorized(self, client, fake_auth, mock_whiteboard_elements, mock_whiteboard):
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         # Anonymous
         self._api_create_whiteboard_elements(
             client=client,
             expected_status_code=401,
-            whiteboard_elements=mock_whiteboard_elements,
+            whiteboard_elements=_mock_whiteboard_elements(),
             whiteboard_id=mock_whiteboard['id'],
         )
         # Unauthorized
@@ -59,19 +60,21 @@ class TestCreateWhiteboardElement:
         self._api_create_whiteboard_elements(
             client=client,
             expected_status_code=400,
-            whiteboard_elements=mock_whiteboard_elements,
+            whiteboard_elements=_mock_whiteboard_elements(),
             whiteboard_id=mock_whiteboard['id'],
         )
 
-    def test_authorized(self, client, fake_auth, mock_whiteboard, mock_whiteboard_elements):
+    def test_authorized(self, client, fake_auth, mock_whiteboard):
         """Authorized user can view whiteboard."""
         fake_auth.login(_get_authorized_user_id(mock_whiteboard))
+        whiteboard_elements = _mock_whiteboard_elements()
+
         api_json = self._api_create_whiteboard_elements(
             client=client,
-            whiteboard_elements=mock_whiteboard_elements,
+            whiteboard_elements=whiteboard_elements,
             whiteboard_id=mock_whiteboard['id'],
         )
-        assert len(api_json) == len(mock_whiteboard_elements)
+        assert len(api_json) == len(whiteboard_elements)
 
 
 class TestUpdateWhiteboardElements:
@@ -141,3 +144,31 @@ def _get_unauthorized_user_id(whiteboard):
     course_id = whiteboard['courseId']
     instructors = list(filter(lambda u: not is_admin(u) and not is_teaching(u), Course.find_by_id(course_id).users))
     return instructors[0].id
+
+
+def _mock_whiteboard_elements():
+    uuid_1 = str(uuid4())
+    uuid_2 = str(uuid4())
+    return [
+        {
+            'assetId': 1,
+            'element': {
+                'fill': 'rgb(0,0,0)',
+                'fontSize': 14,
+                'text': '',
+                'type': 'text',
+                'uuid': uuid_1,
+            },
+            'uuid': uuid_1,
+        },
+        {
+            'assetId': 2,
+            'element': {
+                'fill': 'rgb(0,0,0)',
+                'shape': 'Rect:thin',
+                'type': 'shape',
+                'uuid': uuid_2,
+            },
+            'uuid': uuid_2,
+        },
+    ]
