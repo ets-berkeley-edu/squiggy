@@ -35,7 +35,7 @@
                 id-prefix="tool-select-text-size"
                 :items="textSizeOptions"
                 :unclearable="true"
-                :value="fontSize"
+                :value="14"
                 @input="value => updateSelected({fontSize: value})"
               />
             </v-col>
@@ -56,10 +56,6 @@ export default {
   name: 'TextToolDialog',
   components: {AccessibleSelect, ColorPicker},
   mixins: [Whiteboarding],
-  data: () => ({
-    fill: '',
-    fontSize: 14
-  }),
   computed: {
     menu: {
       get() {
@@ -69,6 +65,8 @@ export default {
         if (value) {
           this.setMode('text')
           this.$putFocusNextTick('menu-header')
+        } else {
+          this.resetSelected()
         }
         this.setDisableAll(value)
       }
@@ -76,14 +74,6 @@ export default {
   },
   beforeDestroy() {
     this.setDisableAll(false)
-  },
-  methods: {
-    setFill(value) {
-      this.fill = value
-    },
-    setFontSize(value) {
-      this.fontSize = value
-    }
   }
 }
 </script>

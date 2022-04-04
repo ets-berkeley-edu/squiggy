@@ -70,6 +70,10 @@ def local_now():
     return utc_now().astimezone(pytz.timezone(app.config['TIMEZONE']))
 
 
+def safe_strip(s):
+    return str(s).strip() if isinstance(s, str) else None
+
+
 def to_bool_or_none(arg):
     """
     With the idea of "no decision is a decision" in mind, this util has three possible outcomes: True, False and None.

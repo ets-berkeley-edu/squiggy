@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import constants from '@/store/whiteboarding/utils/constants'
-import socket from './socket'
 import store from '@/store'
 import utils from '@/api/api-utils'
 import Vue from 'vue'
@@ -14,7 +13,7 @@ const p = Vue.prototype
  */
 const addAsset = (asset: any, state: any) => {
   // Switch the toolbar back to move mode
-  store.commit('whiteboarding/setMode', 'move')
+  store.dispatch('whiteboarding/setMode', 'move')
 
   // Default to a placeholder when the asset does not have a preview image
   if (!asset.imageUrl) {
@@ -85,6 +84,24 @@ const calculateGlobalElementPosition = (selection: any, element: any): any => {
   }
 }
 
+const createCanvas = (options: any) => {
+  const canvas = new fabric.Canvas('canvas', options)
+  $_addDebugListenters(canvas, 'Canvas')
+  return canvas
+}
+
+const createIText = (options: any) => {
+  const iText = new fabric.IText('', options)
+  $_addDebugListenters(iText, 'IText')
+  return iText
+}
+
+const createShape = (shapeType: string, options: any) => {
+  const shape = new fabric[shapeType](options)
+  $_addDebugListenters(shape, 'Object')
+  return shape
+}
+
 /**
  * Delete the selected whiteboard element(s)
  */
@@ -92,6 +109,7 @@ const deleteActiveElements = (state: any) => {
   // Get the selected items
   const elements = getActiveElements()
   // Delete the selected items
+  console.log('delete-active-elements')
   _.each(elements, (element: any) => p.$canvas.remove(getCanvasElement(element.uuid)))
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const selection = p.$canvas.getActiveObject()
@@ -131,13 +149,8 @@ const deserializeElement = (state: any, element: any, callback: any) => {
   return fabric[type].fromObject(element, callback)
 }
 
-/**
- * Enable or disable all elements on the whiteboard canvas. When an element is disabled, it will not be possible
- * to select, move or modify it
- *
- * enabled: Whether the elements on the whiteboard canvas should be enabled or disabled
- */
 const enableCanvasElements = (enabled: boolean) => {
+  // Enable or disable elements on the canvas. Disabled elements are read-only.
   p.$canvas.selection = enabled
   _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
 }
@@ -171,6 +184,7 @@ const init = (state: any) => {
         assetId: this.assetId,
         height: this.height,
         index: p.$canvas.getObjects().indexOf(this),
+        text: this.text,
         uuid: this.uuid,
         width: this.width
       }
@@ -196,7 +210,7 @@ const init = (state: any) => {
         // The text element existed before. Notify the server that the element was updated
         saveElementUpdates([element], state)
       }
-      store.commit('whiteboarding/setMode', 'move')
+      store.dispatch('whiteboarding/setMode', 'move')
     }
   })
   // Recalculate the size of the p.$canvas when the window is resized
@@ -284,55 +298,25 @@ const paste = (state: any): void => {
   }
 }
 
-const createCanvas = (options: any) => {
-  const canvas = new fabric.Canvas('canvas', options)
-  $_addDebugListenters(canvas, 'Canvas')
-  return canvas
-}
-
-const createIText = (options: any) => {
-  const iText = new fabric.IText('Hello World', options)
-  $_addDebugListenters(iText, 'IText')
-  return iText
-}
-
-const createShape = (shapeType: string, options: any) => {
-  const shape = new fabric[shapeType](options)
-  $_addDebugListenters(shape, 'Object')
-  return shape
-}
-
-/**
- * Ensure that all elements are ordered as specified by the element's index attribute.
- */
 const restoreLayers = (state: any) => {
-  p.$canvas.getObjects().sort((elementA: any, elementB: any) => {
-    return elementA.index - elementB.index
-  })
+  // Ensure that all elements are ordered as specified by the element's index attribute.
+  p.$canvas.getObjects().sort((elementA: any, elementB: any) => elementA.index - elementB.index)
   p.$canvas.requestRenderAll()
-  // Set the size of the whiteboard canvas
   setCanvasDimensions(state)
 }
 
 const saveElementUpdates = (elements: any[], state: any) => {
-  // Notify the server about the updated elements
   const whiteboardElements = _.map(elements, (element: any) => ({element}))
-  socket.emit('update', {
+  p.$socket.emit('update', {
     userId: p.$currentUser.id,
     whiteboardElements,
     whiteboardId: state.whiteboard.id
   })
-  // Recalculate the size of the whiteboard canvas
   setCanvasDimensions(state)
 }
 
-/**
- * Persist a new element to the server
- * element: The new element to persist to the server
- */
 const saveNewElement = (element: any, state: any) => {
-  // Save the new element
-  socket.emit('add', {
+  p.$socket.emit('add', {
     whiteboardElements: [{
       assetId: undefined,
       element: element.toObject()
@@ -411,11 +395,8 @@ const setCanvasDimensions = (state: any) => {
   }
 }
 
-/**
- * Update the index of all elements to reflect their order in the
- * current whiteboard
- */
 const updateLayers = (state: any): void => {
+  // Update the index of all elements to reflect their order in the current whiteboard.
   const updates: any[] = []
   p.$canvas.forEachObject((element: any) => {
     // Only update the elements for which the stored index no longer
@@ -477,7 +458,7 @@ const $_calculateRotatedLeftTop = (selection: any, element: any): any => {
  */
 const $_saveDeleteElements = (elements: any[], state: any): any => {
   // Notify the server about the deleted elements
-  socket.emit('delete', elements)
+  p.$socket.emit('delete', elements)
   // Update the layer ordering of the remaining elements
   updateLayers(state)
   // Recalculate the size of the whiteboard canvas
@@ -486,21 +467,13 @@ const $_saveDeleteElements = (elements: any[], state: any): any => {
 
 export function $_addDebugListenters(fabricObject: any, objectType: string) {
   if (p.$config.isVueAppDebugMode) {
-    console.log(`fabric.${objectType}, add debug listenters: ${JSON.stringify(fabricObject)}`)
     // Events listed in FABRIC_JS_DEBUG_EVENTS_EXCLUDE array are ignored when debugging. Developers can silence these
     // debug-event-listenters by setting FABRIC_JS_DEBUG_EVENTS_EXCLUDE equal to '*' in the .env.development.local file.
     const exclude = constants.FABRIC_JS_DEBUG_EVENTS_EXCLUDE
     if (exclude !== '*') {
       let eventNames = constants.FABRIC_EVENTS_PER_TYPE[objectType]
       eventNames = _.filter(eventNames, (eventName: string) => !exclude.includes(eventName))
-      _.each(eventNames, (eventName: string) => {
-        fabricObject.on(eventName, (event: any) => console.log({
-          fabric: objectType,
-          eventName,
-          type: _.get(event, 'e.type'),
-          event
-        }))
-      })
+      _.each(eventNames, (eventName: string) => fabricObject.on(eventName, () => console.log(`${objectType}:${eventName}`)))
     }
   }
 }

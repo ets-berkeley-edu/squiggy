@@ -1,6 +1,9 @@
 <template>
   <v-app>
-    <OnlineUsers />
+    <div v-if="!isLoading">
+      <OnlineUsers />
+      <EditActiveFabricObject />
+    </div>
     <Toolbar />
     <v-main id="whiteboard-container" class="whiteboard-container">
       <div id="whiteboard-viewport" class="whiteboard-viewport">
@@ -12,6 +15,7 @@
 
 <script>
 import Context from '@/mixins/Context'
+import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
 import OnlineUsers from '@/components/whiteboards/OnlineUsers'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
@@ -20,7 +24,7 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {OnlineUsers, Toolbar},
+  components: {EditActiveFabricObject, OnlineUsers, Toolbar},
   created() {
     this.$loading()
     this.init(this.$route.params.id).then(() => {
