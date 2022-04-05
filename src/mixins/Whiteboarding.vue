@@ -1,6 +1,5 @@
 <script>
-import constants from '@/store/whiteboarding/utils/constants'
-import Vue from 'vue'
+import constants from '@/store/whiteboarding/constants'
 import {mapActions, mapGetters} from 'vuex'
 
 export default {
@@ -21,6 +20,7 @@ export default {
   },
   computed: {
     ...mapGetters('whiteboarding', [
+      'activeCanvasObject',
       'disableAll',
       'isModifyingElement',
       'mode',
@@ -29,8 +29,7 @@ export default {
       'windowHeight',
       'whiteboard',
       'windowWidth'
-    ]),
-    canvas: () => Vue.prototype.$canvas
+    ])
   },
   methods: {
     ...mapActions('whiteboarding', [

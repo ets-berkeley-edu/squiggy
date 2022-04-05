@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      v-show="canvas && canvas.getActiveObject() && !isModifyingElement"
+      v-show="activeCanvasObject && !isModifyingElement"
       id="whiteboard-element-edit"
       class="whiteboard-element-edit"
     >
