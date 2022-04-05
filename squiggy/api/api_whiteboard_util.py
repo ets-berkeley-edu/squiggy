@@ -65,10 +65,12 @@ def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
 
     def _update(whiteboard_element):
         _validate_whiteboard_element(whiteboard_element, True)
+        element = whiteboard_element['element']
         whiteboard_element = WhiteboardElement.update(
             asset_id=whiteboard_element.get('assetId', None),
-            element=whiteboard_element['element'],
-            whiteboard_element_id=whiteboard_element['id'],
+            element=element,
+            uuid=element['uuid'],
+            whiteboard_id=whiteboard_id,
         )
         if not whiteboard_element:
             raise BadRequestError('Whiteboard element not found')
@@ -80,9 +82,9 @@ def _validate_whiteboard_element(whiteboard_element, is_update=False):
     element = whiteboard_element['element']
     error_message = None
     if element['type'] == 'i-text' and not safe_strip(element.get('text')):
-        error_message = f'Invalid Fabric i-text element: {element}'
+        error_message = f'Invalid Fabric i-text element: {element}. '
     if is_update and 'uuid' not in whiteboard_element['element']:
-        error_message = 'uuid is required when updating existing whiteboard_element'
+        error_message = 'uuid is required when updating existing whiteboard_element. '
     if error_message:
         app.logger.error(error_message)
         raise BadRequestError(error_message)
