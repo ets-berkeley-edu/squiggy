@@ -9,10 +9,10 @@ import {
   enableCanvasElements,
   getActiveElements,
   getCanvasElement,
-  initialize,
+  initFabricCanvas,
   setCanvasDimensions,
   updateLayers
-} from '@/store/whiteboarding/utils'
+} from '@/store/whiteboarding/fabric-utils'
 
 const p = Vue.prototype
 
@@ -76,7 +76,7 @@ const mutations = {
       }
     }
   },
-  deleteActiveElements: ({state}) => deleteActiveElements(state),
+  deleteActiveElements: (state: any) => deleteActiveElements(state),
   exportAsPng: ({state}, event: any) => {
     // Export the whiteboard to a PNG file
     // event: Click event
@@ -120,7 +120,7 @@ const mutations = {
       sidebarExpanded: !whiteboard.deletedAt,
       viewport: document.getElementById('whiteboard-viewport')
     })
-    initialize(state, whiteboard)
+    initFabricCanvas(state, whiteboard)
   },
   moveLayer: (state: any, direction: string) => {
     // Send the currently selected element(s) to the back or  bring the currently selected element(s) to the front.
@@ -169,9 +169,8 @@ const mutations = {
   },
   resetSelected: (state: any) => state.selected = {},
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
-  setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = activeCanvasObject,
+  setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
-  setDrawMode: (state: any, drawMode: boolean) => p.$canvas.isDrawingMode = drawMode,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => {
     console.log(state, `isModifyingElement = ${isModifyingElement}`)
     state.isModifyingElement = isModifyingElement

@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
-from uuid import uuid4
 
 from squiggy import std_commit
 from squiggy.lib.util import is_admin, is_teaching
@@ -147,8 +146,6 @@ def _get_unauthorized_user_id(whiteboard):
 
 
 def _mock_whiteboard_elements():
-    uuid_1 = str(uuid4())
-    uuid_2 = str(uuid4())
     return [
         {
             'assetId': 1,
@@ -157,9 +154,7 @@ def _mock_whiteboard_elements():
                 'fontSize': 14,
                 'text': '',
                 'type': 'text',
-                'uuid': uuid_1,
             },
-            'uuid': uuid_1,
         },
         {
             'assetId': 2,
@@ -167,8 +162,6 @@ def _mock_whiteboard_elements():
                 'fill': 'rgb(0,0,0)',
                 'shape': 'Rect:thin',
                 'type': 'shape',
-                'uuid': uuid_2,
             },
-            'uuid': uuid_2,
         },
     ]

@@ -52,6 +52,21 @@ def create_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
     return [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
 
 
+def delete_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
+    if not len(whiteboard_elements):
+        raise BadRequestError('One or more whiteboard-elements required')
+    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
+        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+
+    for whiteboard_element in whiteboard_elements:
+        WhiteboardElement.delete(uuid=whiteboard_element['element']['uuid'], whiteboard_id=whiteboard_id)
+
+
 def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
@@ -82,9 +97,12 @@ def _validate_whiteboard_element(whiteboard_element, is_update=False):
     element = whiteboard_element['element']
     error_message = None
     if element['type'] == 'i-text' and not safe_strip(element.get('text')):
-        error_message = f'Invalid Fabric i-text element: {element}. '
-    if is_update and 'uuid' not in whiteboard_element['element']:
-        error_message = 'uuid is required when updating existing whiteboard_element. '
+        error_message = f'Invalid Fabric i-text element: {element}.'
+    if is_update:
+        if 'uuid' not in element:
+            error_message = 'uuid is required when updating existing whiteboard_element.'
+    elif element.get('uuid'):
+        error_message = 'A new whiteboard_element cannot have a defined \'uuid\'.'
     if error_message:
         app.logger.error(error_message)
         raise BadRequestError(error_message)
