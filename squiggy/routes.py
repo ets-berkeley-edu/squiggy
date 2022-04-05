@@ -30,7 +30,7 @@ from flask import current_app as app, jsonify, make_response, redirect, request,
 from flask_login import current_user, LoginManager
 from flask_socketio import emit
 from squiggy.api.api_util import start_login_session
-from squiggy.api.api_whiteboard_util import create_whiteboard_elements, update_whiteboard_elements
+from squiggy.api.api_whiteboard_util import create_whiteboard_elements, delete_whiteboard_elements, update_whiteboard_elements
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, to_int
 from squiggy.models.user import User
@@ -114,37 +114,37 @@ def register_routes(app):
 
 def register_sockets(socketio):
     @socketio.on('connect')
-    def whiteboard_connect():
+    def socketio_connect():
         _handle_socketio_connect()
 
     @socketio.on('update')
-    def update_whiteboard(data):
-        whiteboard_elements = []
-        if data:
-            whiteboard_elements = update_whiteboard_elements(
-                user=LoginSession(data.get('userId')),
-                whiteboard_id=data.get('whiteboardId'),
-                whiteboard_elements=data.get('whiteboardElements', []),
-            )
+    def socketio_update(data):
+        whiteboard_elements = update_whiteboard_elements(
+            user=LoginSession(data.get('userId')),
+            whiteboard_id=data.get('whiteboardId'),
+            whiteboard_elements=data.get('whiteboardElements', []),
+        )
         return [e.to_api_json() for e in whiteboard_elements]
 
     @socketio.on('add')
-    def add_whiteboard_elements(data):
-        whiteboard_elements = []
-        if data:
-            create_whiteboard_elements(
-                user=LoginSession(data.get('userId')),
-                whiteboard_id=data.get('whiteboardId'),
-                whiteboard_elements=data.get('whiteboardElements', []),
-            )
+    def socketio_add(data):
+        whiteboard_elements = create_whiteboard_elements(
+            user=LoginSession(data.get('userId')),
+            whiteboard_id=data.get('whiteboardId'),
+            whiteboard_elements=data.get('whiteboardElements', []),
+        )
         return [e.to_api_json() for e in whiteboard_elements]
 
     @socketio.on('delete')
-    def delete_whiteboard_elements(payload):
-        app.logger.warn(f'TODO: delete {payload}')
+    def socketio_delete(data):
+        delete_whiteboard_elements(
+            user=LoginSession(data.get('userId')),
+            whiteboard_id=data.get('whiteboardId'),
+            whiteboard_elements=data.get('whiteboardElements', []),
+        )
 
     @socketio.on('disconnect')
-    def whiteboard_disconnect():
+    def socketio_disconnect():
         app.logger.warn('TODO: socketio.on disconnect')
 
 

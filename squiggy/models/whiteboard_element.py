@@ -81,6 +81,11 @@ class WhiteboardElement(Base):
         return asset_whiteboard_element
 
     @classmethod
+    def delete(cls, uuid, whiteboard_id):
+        db.session.query(cls).filter_by(uuid=uuid, whiteboard_id=whiteboard_id).delete()
+        std_commit()
+
+    @classmethod
     def update(cls, element, uuid, whiteboard_id, asset_id=None):
         whiteboard_element = cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
         whiteboard_element.asset_id = asset_id

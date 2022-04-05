@@ -43,6 +43,7 @@ export default {
   position: absolute;
   right: 0;
   top: 0;
+  z-index: 1000;
 }
 .whiteboard-viewport {
   height: 100vh;
