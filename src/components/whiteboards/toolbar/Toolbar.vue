@@ -6,7 +6,12 @@
     dense
     outlined
   >
-    <v-btn id="toolbar-pointer" icon>
+    <v-btn
+      id="toolbar-move-btn"
+      icon
+      @click="setMode('move')"
+      @keypress.enter="setMode('move')"
+    >
       <span class="sr-only">Move and transform</span>
       <font-awesome-icon icon="arrows-up-down-left-right" />
     </v-btn>

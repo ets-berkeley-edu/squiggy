@@ -52,20 +52,11 @@ export default {
       rgb: 'rgb(189, 129, 0)'
     }
   },
-  DRAW_OPTIONS: [
-    {
-      value: 1,
-      label: '<img src="/assets/img/whiteboard-draw-small.png" />'
-    },
-    {
-      value: 5,
-      label: '<img src="/assets/img/whiteboard-draw-medium.png" />'
-    },
-    {
-      value: 10,
-      label: '<img src="/assets/img/whiteboard-draw-large.png" />'
-    }
-  ],
+  DRAW_OPTIONS: {
+    1: require('@/assets/whiteboard/draw-small.png'),
+    5: require('@/assets/whiteboard/draw-medium.png'),
+    10: require('@/assets/whiteboard/draw-large.png')
+  },
   FABRIC_EVENTS_PER_TYPE: {
     Canvas: FABRIC_OBJECT_EVENTS.concat(['after:render', 'before:render', 'before:selection:cleared', 'before:transform', 'canvas:cleared', 'drop:before', 'mouse:dblclick', 'mouse:down:before', 'mouse:down', 'mouse:move:before', 'mouse:move', 'mouse:out', 'mouse:over', 'mouse:up:before', 'mouse:up', 'object:added', 'object:modified', 'object:moving', 'object:removed', 'object:rotating', 'object:scaling', 'object:skewing', 'path:created', 'selection:cleared', 'selection:created', 'selection:updated']),
     IText: FABRIC_OBJECT_EVENTS.concat(['event:changed', 'selection:changed', 'editing:entered', 'editing:exited']),

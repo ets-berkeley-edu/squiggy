@@ -7,7 +7,7 @@
   >
     <template #activator="{on, attrs}">
       <v-btn
-        id="toolbar-draw"
+        id="toolbar-draw-btn"
         :disabled="disableAll"
         icon
         v-bind="attrs"
@@ -32,23 +32,23 @@
                 id="select-line-width"
                 aria-labelledby="combobox-label"
                 :hide-details="true"
-                :items="$_.keys(options)"
+                :items="$_.keys(drawOptions)"
                 outlined
-                value="2"
-                @input="setLineWidth"
+                value="1"
+                @input="value => updateSelected({lineWidth: value})"
               >
                 <template #selection="{item}">
                   <span id="selected-line-width" class="sr-only">{{ item }} pixel line width</span>
-                  <img aria-labelledby="selected-line-width" :src="options[item]" />
+                  <img aria-labelledby="selected-line-width" :src="drawOptions[item]" />
                 </template>
                 <template slot="item" slot-scope="data">
                   <span :id="`label-line-width-${data.item}`" class="sr-only">{{ data.item }} pixel line width</span>
-                  <img :aria-labelledby="`label-line-width-${data.item}`" :src="options[data.item]" />
+                  <img :aria-labelledby="`label-line-width-${data.item}`" :src="drawOptions[data.item]" />
                 </template>
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker tool="draw" />
+          <ColorPicker :set-fill="value => updateSelected({fill: value})" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -63,29 +63,24 @@ export default {
   name: 'DrawToolDialog',
   components: {ColorPicker},
   mixins: [Whiteboarding],
-  data: () => ({
-    menu: false,
-    options: {
-      1: require('@/assets/whiteboard/draw-small.png'),
-      5: require('@/assets/whiteboard/draw-medium.png'),
-      10: require('@/assets/whiteboard/draw-large.png')
-    }
-  }),
-  watch: {
-    menu(isOpen) {
-      if (isOpen) {
-        this.$putFocusNextTick('menu-header')
+  computed: {
+    menu: {
+      get() {
+        return this.mode === 'draw'
+      },
+      set(value) {
+        if (value) {
+          this.setMode('draw')
+          this.$putFocusNextTick('menu-header')
+        } else {
+          this.resetSelected()
+        }
+        this.setDisableAll(value)
       }
-      this.setDisableAll(isOpen)
     }
   },
   beforeDestroy() {
     this.setDisableAll(false)
-  },
-  methods: {
-    setLineWidth(value) {
-      console.log(`TODO: set lineWidth to ${value}`)
-    }
   }
 }
 </script>

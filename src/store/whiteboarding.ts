@@ -55,24 +55,6 @@ const mutations = {
   addAsset: (state: any, asset: any) => {
     addAsset(asset, state)
   },
-  afterCanvasRender: (state: any) => {
-    const selection = p.$canvas.getActiveObject()
-    if (selection && !state.isModifyingElement) {
-      // Get the bounding rectangle around the currently selected element(s)
-      const bound = selection.getBoundingRect()
-      if (bound) {
-        // Explicitly draw the bounding rectangle
-        p.$canvas.contextContainer.strokeStyle = '#0295DE'
-        p.$canvas.contextContainer.strokeRect(bound.left - 10, bound.top - 10, bound.width + 20, bound.height + 20)
-      }
-      // Position the buttons to modify the selected element(s)
-      const editButtons = document.getElementById('whiteboard-element-edit')
-      if (editButtons) {
-        editButtons.style.left = (bound.left - 10) + 'px'
-        editButtons.style.top = (bound.top + bound.height + 15) + 'px'
-      }
-    }
-  },
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   exportAsPng: ({state}, event: any) => {
     // Export the whiteboard to a PNG file
@@ -183,7 +165,6 @@ const actions = {
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
   },
-  afterCanvasRender: ({commit}) => commit('afterCanvasRender'),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   editWhiteboard: ({commit}) => {
     // Create a new scope for the modal dialog
@@ -246,25 +227,7 @@ const actions = {
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
   },
-  getObjectAttribute: ({state}, {key, uuid}) => {
-    const object = $_findElement(state, uuid)
-    return object && object.get(key)
-  },
   getSelectedAsset: () => $_getSelectedAsset(),
-  getSelectedAssetParams: () => {
-    // Get the parameters required to construct the URL to the asset detail page of the currently selected asset element.
-    const assetId = $_getSelectedAsset()
-    if (assetId) {
-      return {
-        // TODO:
-        // 'api_domain': launchParams.apiDomain,
-        // 'course_id': launchParams.courseId,
-        // 'tool_url': launchParams.toolUrl,
-        assetId: assetId,
-        whiteboard_referral: true
-      }
-    }
-  },
   init: ({commit}, whiteboardId: number) => {
     return getWhiteboard(whiteboardId).then(whiteboard => {
       commit('init', whiteboard)
@@ -369,8 +332,6 @@ const $_alert = _.noop
 const $_createDownloadId = () => new Date().getTime()
 
 const $modal = _.noop
-
-const $_findElement = (state: any, uuid: number) => _.find(state.board.whiteboardElements, ['uuid', uuid])
 
 const $_getSelectedAsset = (): any => {
   // Get the id of the currently selected asset element.

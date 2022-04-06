@@ -234,7 +234,24 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:modified', () => store.dispatch('whiteboarding/setIsModifyingElement', false))
 
   // (1) Draw a box around the currently selected element(s) and (2) position buttons that allow the selected element(s) to be modified.
-  p.$canvas.on('after:render', () => store.dispatch('whiteboarding/afterCanvasRender'))
+  p.$canvas.on('after:render', () => {
+    const selection = p.$canvas.getActiveObject()
+    if (selection && !state.isModifyingElement) {
+      // Get the bounding rectangle around the currently selected element(s)
+      const bound = selection.getBoundingRect()
+      if (bound) {
+        // Explicitly draw the bounding rectangle
+        p.$canvas.contextContainer.strokeStyle = '#0295DE'
+        p.$canvas.contextContainer.strokeRect(bound.left - 10, bound.top - 10, bound.width + 20, bound.height + 20)
+      }
+      // Position the buttons to modify the selected element(s)
+      const editButtons = document.getElementById('whiteboard-element-edit')
+      if (editButtons) {
+        editButtons.style.left = (bound.left - 10) + 'px'
+        editButtons.style.top = (bound.top + bound.height + 15) + 'px'
+      }
+    }
+  })
 
   /**
    * When a new group has been added programmatically added, it needs to be programmatically
@@ -705,7 +722,6 @@ const $_initSocket = (state: any, whiteboard: any) => {
   })
   p.$socket.on('connect', _.noop)
   p.$socket.on('disconnect', _.noop)
-  p.$socket.on('error', (error: any) => store.dispatch('whiteboarding/log', `ERROR, socket.io: '${error}'`))
   p.$socket.on('online', (onlineUsers: any[]) => {
     // When a user has joined or left the whiteboard, update the online status on the list of members
     if (whiteboard) {
