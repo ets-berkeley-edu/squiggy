@@ -125,7 +125,15 @@ export default {
         return this.open
       },
       set(value) {
-        if (!value) {
+        this.resetSearch()
+        this.isComplete = false
+        this.selectedAssetIds = []
+        if (value) {
+          this.search().then(() => {
+            this.isModalLoading = false
+            this.$putFocusNextTick('modal-header')
+          })
+        } else {
           this.onCancel()
         }
       }
@@ -133,21 +141,6 @@ export default {
     disableSave() {
       return this.isModalLoading || !this.$_.size(this.selectedAssetIds)
     }
-  },
-  watch: {
-    dialog(isOpen) {
-      this.resetSearch()
-      this.isComplete = false
-      this.selectedAssetIds = []
-      if (isOpen) {
-        this.$putFocusNextTick('modal-header')
-      }
-    }
-  },
-  created() {
-    this.search().then(() => {
-      this.isModalLoading = false
-    })
   },
   methods: {
     cancel() {
