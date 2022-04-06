@@ -2,6 +2,7 @@
   <v-app-bar
     app
     bottom
+    class="toolbar"
     dense
     outlined
   >
@@ -62,3 +63,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.toolbar {
+  z-index: 1100;
+}
+</style>

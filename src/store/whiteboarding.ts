@@ -1,17 +1,14 @@
 import _ from 'lodash'
 import apiUtils from '@/api/api-utils'
-import FABRIC_MULTIPLE_SELECT_TYPE from '@/store/whiteboarding/constants'
 import Vue from 'vue'
 import {createWhiteboardElements, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   deleteActiveElements,
   enableCanvasElements,
-  getActiveElements,
-  getCanvasElement,
   initFabricCanvas,
-  setCanvasDimensions,
-  updateLayers
+  moveLayer,
+  setCanvasDimensions
 } from '@/store/whiteboarding/fabric-utils'
 
 const p = Vue.prototype
@@ -122,47 +119,7 @@ const mutations = {
     })
     initFabricCanvas(state, whiteboard)
   },
-  moveLayer: (state: any, direction: string) => {
-    // Send the currently selected element(s) to the back or  bring the currently selected element(s) to the front.
-    // direction: `front` if the currently selected element(s) should be brought to the front,
-    // `back` if the currently selected element(s) should be sent to the back
-    const elements: any[] = getActiveElements()
-
-    // Sort the selected elements by their position to ensure that
-    // they are in the same order when moved to the back or front
-    elements.sort((elementA: any, elementB: any) => {
-      if (direction === 'back') {
-        return elementB.index - elementA.index
-      } else {
-        return elementA.index - elementB.index
-      }
-    })
-    // Move the elements to the back or front one by one
-    const selection = p.$canvas.getActiveObject()
-    if (selection.type === FABRIC_MULTIPLE_SELECT_TYPE) {
-      p.$canvas.remove(selection)
-    }
-
-    p.$canvas.discardActiveObject().requestRenderAll()
-    _.each(elements, (e: any) => {
-      const element:any = getCanvasElement(e.uuid)
-      if (element) {
-        if (direction === 'back') {
-          element.sendToBack()
-        } else if (direction === 'front') {
-          element.bringToFront()
-        }
-      }
-    })
-    // Notify the server about the updated layers
-    p.$canvas.requestRenderAll()
-    updateLayers(state)
-
-    if (elements.length === 1) {
-      // When only a single item was selected, re-select it
-      p.$canvas.setActiveObject(getCanvasElement(elements[0].uuid))
-    }
-  },
+  moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth

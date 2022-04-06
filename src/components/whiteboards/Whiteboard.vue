@@ -37,7 +37,6 @@ export default {
 
 <style scoped>
 .whiteboard-container {
-  background-color: aqua;
   bottom: 0;
   left: 0;
   position: absolute;
