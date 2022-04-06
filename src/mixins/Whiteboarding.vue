@@ -16,6 +16,7 @@ export default {
     return {
       colors: constants.COLORS,
       drawOptions: constants.DRAW_OPTIONS,
+      shapeOptions: constants.SHAPE_OPTIONS,
       textSizeOptions: constants.TEXT_SIZE_OPTIONS
     }
   },

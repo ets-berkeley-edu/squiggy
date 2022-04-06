@@ -267,125 +267,43 @@ const $_addListenters = (state: any) => {
   // Recalculate the size of the whiteboard canvas when a selection has been deselected
   p.$canvas.on('selection:cleared', () => setCanvasDimensions(state))
 
-  /**
-   * A new element was added to the whiteboard canvas by the current user
-   */
   p.$canvas.on('object:added', (event: any) => {
+    // A new element was added to the whiteboard canvas by the current user
     const element = event.target
-    // Don't add a new text element until text has been entered
-    if (!('text' in element) || element.text.trim()) {
-      // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
-      if (!element.get('') && !element.get('isHelper')) {
-        $_saveNewElement(element, state)
-        // Recalculate the size of the whiteboard canvas
-        setCanvasDimensions(state)
-      }
-    }
-  })
-
-   p.$canvas.on('mouse:down', (event: any) => {
-    // Only start drawing a shape when the canvas is in shape mode
-    if (state.mode === 'shape') {
-      // Indicate that drawing a shape has started
-      state.isDrawingShape = true
-
-      // Keep track of the point where drawing the shape started
-      state.startShapePointer = p.$canvas.getPointer(event.e)
-
-      // Create the basic shape of the selected type that will
-      // be used as the drawing guide. The originX and originY
-      // of the helper element are set to left and top to make it
-      // easier to map the top left corner of the drawing guide with
-      // the original cursor postion
-      const selected = state.shapeOptions.selected
-      const shapeType = selected.type.shape
-      const fill = selected.type.style === 'fill' ? state.shapeOptions.selected.color.color : 'transparent'
-      state.shape = $_createShape(shapeType, {
-        fill,
-        height: 1,
-        left: state.startShapePointer.x,
-        originX: 'left',
-        originY: 'top',
-        radius: 1,
-        stroke: state.shapeOptions.selected.color.color,
-        strokeWidth: state.shapeOptions.selected.type.style === 'thick' ? 10 : 2,
-        top: state.startShapePointer.y,
-        width: 1
-      })
-      // Indicate that this element is a helper element that should
-      // not be saved back to the server
-      state.shape.set('isHelper', true)
-      p.$canvas.add(state.shape)
-    }
-  })
-
-  p.$canvas.on('mouse:move', (event: any) => {
-    // Only continue drawing the shape when the whiteboard canvas is in shape mode
-    if (state.isDrawingShape) {
-      // Get the current position of the mouse
-      const currentShapePointer = p.$canvas.getPointer(event.e)
-
-      // When the user has moved the cursor to the left of the original
-      // starting point, move the left of the circle to that point so
-      // negative shape drawing can be achieved
-      if (state.startShapePointer.x > currentShapePointer.x) {
-        state.shape.set({left: currentShapePointer.x})
-      }
-      // When the user has moved the cursor above the original starting
-      // point, move the left of the circle to that point so negative
-      // shape drawing can be achieved
-      if (state.startShapePointer.y > currentShapePointer.y) {
-        state.shape.set({top: currentShapePointer.y})
-      }
-
-      // Set the radius and width of the circle based on how much the cursor
-      // has moved compared to the starting point
-      if (state.shapeOptions.selected.type.shape === 'Circle') {
-        state.shape.set({
-          height: Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2,
-          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
-        })
-      // Set the width and height of the shape based on how much the cursor
-      // has moved compared to the starting point
-      } else {
-        state.shape.set({
-          height: Math.abs(state.startShapePointer.y - currentShapePointer.y),
-          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
-        })
-      }
-      p.$canvas.requestRenderAll()
-    }
-  })
-
-  p.$canvas.on('mouse:up', () => {
-    if (state.isDrawingShape) {
-      // Indicate that shape drawing has stopped
-      state.isDrawingShape = false
-      // Switch the toolbar back to move mode
-      state.mode = 'move'
-      // Clone the drawn shape and add the clone to the canvas.
-      // This is caused by a bug in Fabric where it initially uses
-      // the size when drawing started to position the controls. Cloning
-      // ensures that the controls are added in the correct position.
-      // The origin of the element is also set to `center` to make it
-      // inline with the other whiteboard elements
-      const finalShape = fabric.util.object.clone(state.shape)
-      finalShape.left += finalShape.width / 2
-      finalShape.top += finalShape.height / 2
-      finalShape.originX = finalShape.originY = 'center'
-      // Indicate that this is no longer a drawing helper shape and can
-      // therefore be saved back to the server
-      finalShape.set('isHelper', false)
-
-      p.$canvas.add(finalShape)
-      p.$canvas.remove(state.shape)
-      // Select the added shape
-      p.$canvas.setActiveObject(finalShape)
+    const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
+    // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
+    if (!isIncompleteIText && !element.get('uuid') && !element.get('isHelper')) {
+      $_saveNewElement(element, state)
+      setCanvasDimensions(state)
     }
   })
 
   p.$canvas.on('mouse:down', (event: any) => {
+    if (state.mode === 'shape') {
+      store.dispatch('whiteboarding/setIsDrawingShape', true)
+      // Keep track of the point where drawing the shape started
+      store.dispatch('whiteboarding/setStartShapePointer', p.$canvas.getPointer(event.e))
+
+      // Create selected shape to use as the drawing guide. The originX and originY of the helper element are set to
+      // left and top to make it easier to map the top left corner of the drawing guide with the original cursor postion.
+      // We use 'isHelper' to indicate that this element is a helper element that should not be saved back to the server.
+      const shape = $_createShape(state.selected.shape, {
+        fill: state.selected.fill,
+        height: 1,
+        isHelper: true,
+        left: state.startShapePointer.x,
+        originX: 'left',
+        originY: 'top',
+        radius: 1,
+        stroke: state.selected.color,
+        strokeWidth: state.selected.strokeWidth,
+        top: state.startShapePointer.y,
+        width: 1
+      })
+      console.log('Add helper object')
+      // store.dispatch('whiteboarding/setShape', shape)
+      p.$canvas.add(shape)
+    }
     if (state.mode === 'text') {
       const textPointer = p.$canvas.getPointer(event.e)
       const text = $_createIText({
@@ -412,7 +330,75 @@ const $_addListenters = (state: any) => {
       }, 0)
     }
   })
+  p.$canvas.on('mouse:move', (event: any) => {
+    // Only continue drawing the shape when the whiteboard canvas is in shape mode
+    if (state.isDrawingShape) {
+      const shape = $_getHelperObject(state)
+      // Get the current position of the mouse
+      const currentShapePointer = p.$canvas.getPointer(event.e)
 
+      // When the user has moved the cursor to the left of the original
+      // starting point, move the left of the circle to that point so
+      // negative shape drawing can be achieved
+      if (state.startShapePointer.x > currentShapePointer.x) {
+        shape.set({left: currentShapePointer.x})
+      }
+      // When the user has moved the cursor above the original starting
+      // point, move the left of the circle to that point so negative
+      // shape drawing can be achieved
+      if (state.startShapePointer.y > currentShapePointer.y) {
+        shape.set({top: currentShapePointer.y})
+      }
+
+      // Set the radius and width of the circle based on how much the cursor
+      // has moved compared to the starting point
+      if (state.selected.shape === 'Circle') {
+        shape.set({
+          height: Math.abs(state.startShapePointer.x - currentShapePointer.x),
+          radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2,
+          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
+        })
+      // Set the width and height of the shape based on how much the cursor
+      // has moved compared to the starting point
+      } else {
+        shape.set({
+          height: Math.abs(state.startShapePointer.y - currentShapePointer.y),
+          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
+        })
+      }
+      p.$canvas.requestRenderAll()
+    }
+  })
+
+  p.$canvas.on('mouse:up', () => {
+    if (state.isDrawingShape) {
+      const shape = $_getHelperObject(state)
+      // Indicate that shape drawing has stopped
+      store.dispatch('whiteboarding/setIsDrawingShape', false)
+      store.dispatch('whiteboarding/setMode', 'move')
+      // Clone the drawn shape and add the clone to the canvas.
+      // This is caused by a bug in Fabric where it initially uses
+      // the size when drawing started to position the controls. Cloning
+      // ensures that the controls are added in the correct position.
+      // The origin of the element is also set to `center` to make it
+      // inline with the other whiteboard elements
+      if (shape) {
+        shape.left += shape.width / 2
+        shape.top += shape.height / 2
+        shape.originX = shape.originY = 'center'
+        // Indicate that this is no longer a drawing helper shape and can therefore be saved back to the server
+        shape.isHelper = false
+
+        // TODO: why was it done like this in old SuiteC?
+        // p.$canvas.add(finalShape)
+        // p.$canvas.remove(state.shape)
+
+        // Save the added shape and make it active.
+        $_saveNewElement(shape, state)
+        p.$canvas.setActiveObject(shape)
+      }
+    }
+  })
   p.$canvas.on('selection:created', () => store.dispatch('whiteboarding/setActiveCanvasObject', p.$canvas.getActiveObject()))
   p.$canvas.on('selection:cleared', () => store.dispatch('whiteboarding/setActiveCanvasObject', null))
   p.$canvas.on('selection:updated', () => store.dispatch('whiteboarding/setActiveCanvasObject', p.$canvas.getActiveObject()))
@@ -642,6 +628,8 @@ const $_getCanvasElement = (uuid: string) => {
   return element
 }
 
+const $_getHelperObject = (state: any) => state.isDrawingShape ? _.find(p.$canvas.getObjects(), (o: any) => o.isHelper) : null
+
 const $_initCanvas = (state: any) => {
   // Initialize the Fabric.js canvas and load the whiteboard content and online users
   // Ensure that the horizontal and vertical origins of objects are set to center
@@ -681,6 +669,7 @@ const $_initFabricPrototypes = (state: any) => {
         assetId: this.assetId,
         height: this.height,
         index: p.$canvas.getObjects().indexOf(this),
+        isHelper: this.isHelper,
         text: this.text,
         uuid: this.uuid,
         width: this.width

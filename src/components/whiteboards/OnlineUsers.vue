@@ -3,14 +3,12 @@
     absolute
     app
     class="navigation-drawer"
+    :clipped="$vuetify.breakpoint.lgAndUp"
+    :expand-on-hover="true"
+    :mini-variant="true"
     permanent
     :right="true"
   >
-    <!--
-      :mini-variant="true"
-      :clipped="$vuetify.breakpoint.lgAndUp"
-      :expand-on-hover="true"
-    -->
     <v-list>
       <v-list-item class="px-2">
         <v-list-item-avatar>
@@ -28,7 +26,10 @@
     </v-list>
     <div class="pa-2">
       <v-list-item>
-        Foo.
+        mode: {{ mode }}
+      </v-list-item>
+      <v-list-item>
+        selected: {{ selected }}
       </v-list-item>
     </div>
   </v-navigation-drawer>

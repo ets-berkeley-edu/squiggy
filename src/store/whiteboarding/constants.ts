@@ -65,38 +65,14 @@ export default {
   FABRIC_JS_DEBUG_EVENTS_EXCLUDE: $_getFabricJsDebugEventsExclude(),
   FABRIC_MULTIPLE_SELECT_TYPE: 'activeSelection',
   MODE_OPTIONS: ['move', 'draw', 'shape', 'text', 'asset'],
-  SHAPE_OPTIONS: [
-    {
-      shape: 'Rect',
-      style: 'thin',
-      label: '<img src="/assets/img/whiteboard-shape-rect-thin.png" />'
-    },
-    {
-      shape: 'Rect',
-      style: 'thick',
-      label: '<img src="/assets/img/whiteboard-shape-rect-thick.png" />'
-    },
-    {
-      shape: 'Rect',
-      style: 'fill',
-      label: '<img src="/assets/img/whiteboard-shape-rect-fill.png" />'
-    },
-    {
-      shape: 'Circle',
-      style: 'thin',
-      label: '<img src="/assets/img/whiteboard-shape-circle-thin.png" />'
-    },
-    {
-      shape: 'Circle',
-      style: 'thick',
-      label: '<img src="/assets/img/whiteboard-shape-circle-thick.png" />'
-    },
-    {
-      shape: 'Circle',
-      style: 'fill',
-      label: '<img src="/assets/img/whiteboard-shape-circle-fill.png" />'
-    }
-  ],
+  SHAPE_OPTIONS: {
+    'Rect:thin': require('@/assets/whiteboard/shape-rect-thin.png'),
+    'Rect:thick': require('@/assets/whiteboard/shape-rect-thick.png'),
+    'Rect:fill': require('@/assets/whiteboard/shape-rect-fill.png'),
+    'Circle:thin': require('@/assets/whiteboard/shape-circle-thin.png'),
+    'Circle:thick': require('@/assets/whiteboard/shape-circle-thick.png'),
+    'Circle:fill': require('@/assets/whiteboard/shape-circle-fill.png')
+  },
   TEXT_SIZE_OPTIONS: [
     {text: 'Normal', value: 14},
     {text: 'Title', value: 36}

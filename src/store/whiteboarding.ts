@@ -114,6 +114,7 @@ const mutations = {
     console.log(state, `isModifyingElement = ${isModifyingElement}`)
     state.isModifyingElement = isModifyingElement
   },
+  setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
   setMode: (state: any, mode: string) => {
     // Deactivate the currently selected item
@@ -134,6 +135,7 @@ const mutations = {
     }
     state.mode = mode
   },
+  setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   toggleSidebar: (state: any) => {
     state.sidebarExpanded = !state.sidebarExpanded
     // Recalculate the size of the whiteboard p.$canvas. `setTimeout` is required to ensure that the sidebar has collapsed/expanded.
@@ -287,9 +289,11 @@ const actions = {
   },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
+  setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
+  setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   toggleZoom: ({commit}) => commit('toggleZoom'),
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
   uploadFiles: ({commit}) => {
