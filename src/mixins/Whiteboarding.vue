@@ -15,6 +15,7 @@ export default {
   data() {
     return {
       colors: constants.COLORS,
+      drawOptions: constants.DRAW_OPTIONS,
       textSizeOptions: constants.TEXT_SIZE_OPTIONS
     }
   },
@@ -35,8 +36,6 @@ export default {
     ...mapActions('whiteboarding', [
       'add',
       'deleteActiveElements',
-      'getObjectAttribute',
-      'getSelectedAssetParams',
       'init',
       'moveLayer',
       'resetSelected',

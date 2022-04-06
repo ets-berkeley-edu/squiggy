@@ -7,7 +7,7 @@
   >
     <template #activator="{on, attrs}">
       <v-btn
-        id="toolbar-text"
+        id="toolbar-text-btn"
         :disabled="disableAll"
         icon
         v-bind="attrs"
