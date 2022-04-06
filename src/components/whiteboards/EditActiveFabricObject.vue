@@ -19,14 +19,24 @@
         icon
         @click="moveLayer('back')"
       >
-        <span class="sr-only">Move back</span>
+        <span class="sr-only">Move to back</span>
         <font-awesome-icon icon="arrow-down" />
       </v-btn>
-      <v-btn @click="moveLayer('front')">
-        moveLayer('front')
+      <v-btn
+        id="move-layer-front-btn"
+        icon
+        @click="moveLayer('front')"
+      >
+        <span class="sr-only">Bring to front</span>
+        <font-awesome-icon icon="arrow-up" />
       </v-btn>
-      <v-btn @click="deleteActiveElements">
-        Delete
+      <v-btn
+        id="delete-btn"
+        icon
+        @click="deleteActiveElements"
+      >
+        <span class="sr-only">Delete</span>
+        <font-awesome-icon icon="trash" />
       </v-btn>
     </div>
   </div>

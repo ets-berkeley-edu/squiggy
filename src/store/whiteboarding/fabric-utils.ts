@@ -63,8 +63,8 @@ export function addAsset(asset: any, state: any) {
 }
 
 export function deleteActiveElements(state: any) {
-  const elements = getActiveElements()
-  _.each(elements, (element: any) => p.$canvas.remove(getCanvasElement(element.uuid)))
+  const elements = $_getActiveElements()
+  _.each(elements, (element: any) => p.$canvas.remove($_getCanvasElement(element.uuid)))
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
   if (activeObject) {
@@ -82,36 +82,6 @@ export function enableCanvasElements(enabled: boolean) {
   _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
 }
 
-export function getActiveElements() {
-  // Get the currently selected whiteboard elements
-  // return the selected whiteboard elements
-  const activeElements: any[] = []
-  const selection = p.$canvas.getActiveObject()
-  if (_.get(selection, 'type') === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-    _.each(selection.objects, (element: any) => {
-      // When a Fabric.js canvas element is part of a group selection, its properties will be
-      // relative to the group. Therefore, we calculate the actual position of each element in
-      // the group relative to the whiteboard canvas
-      const position = $_calculateGlobalElementPosition(selection, element)
-      activeElements.push(_.assignTo({}, element.toObject(), position))
-    })
-  } else if (p.$canvas.getActiveObject()) {
-    activeElements.push(p.$canvas.getActiveObject().toObject())
-  }
-  return activeElements
-}
-
-export function getCanvasElement(uuid: string) {
-  let element = undefined
-  _.each(p.$canvas.getObjects(), (e: any) => {
-    if (e.get('uuid') === uuid) {
-      element = e
-      return false
-    }
-  })
-  return element
-}
-
 export function initFabricCanvas(state: any, whiteboard: any) {
   if (!whiteboard.deletedAt) {
     $_initSocket(state, whiteboard)
@@ -121,6 +91,41 @@ export function initFabricCanvas(state: any, whiteboard: any) {
   $_initCanvas(state)
   $_addModalListeners()
   $_addViewportListeners(state)
+}
+
+export function moveLayer(direction: string, state: any) {
+  // Send the currently selected element(s) to the back or  bring the currently selected element(s) to the front.
+  // direction: `front` if the currently selected element(s) should be brought to the front,
+  // `back` if the currently selected element(s) should be sent to the back
+  const elements: any[] = $_getActiveElements()
+
+  // Sort the selected elements by their position to ensure that
+  // they are in the same order when moved to the back or front
+  elements.sort((elementA: any, elementB: any) => direction === 'back' ? elementB.index - elementA.index : elementA.index - elementB.index)
+
+  const selection = p.$canvas.getActiveObject()
+  if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+    p.$canvas.remove(selection)
+  }
+
+  p.$canvas.discardActiveObject().requestRenderAll()
+  _.each(elements, (e: any) => {
+    const element:any = $_getCanvasElement(e.uuid)
+    if (element) {
+      if (direction === 'back') {
+        p.$canvas.sendToBack(element)
+      } else if (direction === 'front') {
+        p.$canvas.bringToFront(element)
+      }
+    }
+  })
+  // Notify the server about the updated layers
+  $_updateLayers(state)
+
+  if (elements.length === 1) {
+    // When only a single item was selected, re-select it
+    p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
+  }
 }
 
 export function setCanvasDimensions(state: any) {
@@ -191,29 +196,6 @@ export function setCanvasDimensions(state: any) {
   }
 }
 
-export function updateLayers(state: any) {
-  // Update the index of all elements to reflect their order in the current whiteboard.
-  const updates: any[] = []
-  p.$canvas.forEachObject((element: any) => {
-    // Only update the elements for which the stored index no longer
-    // matches the current index
-    if (element.index !== p.$canvas.getObjects().indexOf(element)) {
-      element.index = p.$canvas.getObjects().indexOf(element)
-      // If the element is part of a group, calculate its global coordinates
-      if (element.group) {
-        const position = $_calculateGlobalElementPosition(element.group, element)
-        updates.push(_.assignTo({}, element.toObject(), position))
-      } else {
-        updates.push(element.toObject())
-      }
-    }
-  })
-  // Notify the server about the updated layers
-  if (updates.length > 1) {
-    $_saveElementUpdates(updates, state)
-  }
-}
-
 /**
  * ---------------------------------------------------------------------------------------
  * Public functions above. Private functions below.
@@ -245,10 +227,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:modified', (event: any) => {
     // Ensure that none of the modified objects are positioned off screen
     $_ensureWithinCanvas(event)
-    // Get the selected whiteboard elements
-    const elements = getActiveElements()
-    // Notify the server about the updates
-    $_saveElementUpdates(elements, state)
+    $_saveElementUpdates($_getActiveElements(), state)
   })
 
   // Indicate that the currently selected elements are no longer being modified once moving, scaling or rotating has finished
@@ -436,52 +415,54 @@ const $_addModalListeners = () => {
 }
 
 const $_addSocketListeners = (state: any) => {
-  /**
-   * One or multiple whiteboard canvas elements were updated by a different user
-   */
-   p.$socket.on('update', (elements: any) => {
-    // Deactivate the current group if any of the updated elements are in the current group
-    $_deactiveActiveGroupIfOverlap(elements)
-    // Update the elements
-    _.each(elements, function(element) {
-      $_updateCanvasElement(state, element.uuid, element)
-    })
-    // Recalculate the size of the whiteboard canvas
-    setCanvasDimensions(state)
-  })
-  /**
-   * A whiteboard canvas element was added by a different user
-   */
-   p.$socket.on('add', (elements: any[]) => {
-    _.each(elements, (element: any) => {
-      const callback = (e: any) => {
-        // Add the element to the whiteboard canvas and move it to its appropriate index
-        p.$canvas.add(e)
-        element.moveTo(e.get('index'))
-        p.$canvas.requestRenderAll()
-        // Recalculate the size of the whiteboard canvas
-        setCanvasDimensions(state)
-      }
-      $_deserializeElement(state, element, element.uuid, callback)
-    })
-  })
-
-  /**
-   * One or multiple whiteboard canvas elements were deleted by a different user
-   */
-   p.$socket.on('delete', (elements: any[]) => {
-    // Deactivate the current group if any of the deleted elements are in the current group
-    $_deactiveActiveGroupIfOverlap(elements)
-    // Delete the elements
-    _.each(elements, function(element) {
-      element = getCanvasElement(element.uuid)
-      if (element) {
-        p.$canvas.remove(element)
-      }
-    })
-    // Recalculate the size of the whiteboard canvas
-    setCanvasDimensions(state)
-  })
+  // One or multiple whiteboard canvas elements were updated by a different user
+  p.$socket.on(
+     'update',
+     (elements: any) => {
+      // Deactivate the current group if any of the updated elements are in the current group
+      $_deactiveActiveGroupIfOverlap(elements)
+      // Update the elements
+      _.each(elements, function(element) {
+        $_updateCanvasElement(state, element.uuid, element)
+      })
+      // Recalculate the size of the whiteboard canvas
+      setCanvasDimensions(state)
+    }
+  )
+  // A whiteboard canvas element was added by a different user
+  p.$socket.on(
+    'add',
+    (elements: any[]) => {
+      _.each(elements, (element: any) => {
+        const callback = (e: any) => {
+          // Add the element to the whiteboard canvas and move it to its appropriate index
+          p.$canvas.add(e)
+          element.moveTo(e.get('index'))
+          p.$canvas.requestRenderAll()
+          // Recalculate the size of the whiteboard canvas
+          setCanvasDimensions(state)
+        }
+        $_deserializeElement(state, element, element.uuid, callback)
+      })
+    }
+  )
+  // One or multiple whiteboard canvas elements were deleted by a different user
+  p.$socket.on(
+    'delete',
+    (elements: any[]) => {
+      // Deactivate the current group if any of the deleted elements are in the current group
+      $_deactiveActiveGroupIfOverlap(elements)
+      // Delete the elements
+      _.each(elements, function(element) {
+        element = $_getCanvasElement(element.uuid)
+        if (element) {
+          p.$canvas.remove(element)
+        }
+      })
+      // Recalculate the size of the whiteboard canvas
+      setCanvasDimensions(state)
+    }
+  )
 }
 
 const $_addViewportListeners = (state: any) => {
@@ -493,7 +474,7 @@ const $_addViewportListeners = (state: any) => {
       event.preventDefault()
     } else if (event.keyCode === 67 && event.metaKey) {
       // Copy the selected elements
-      state.clipboard = getActiveElements()
+      state.clipboard = $_getActiveElements()
     } else if (event.keyCode === 86 && event.metaKey) {
       // listeners.Paste the copied elements
       $_paste(state)
@@ -612,6 +593,36 @@ const $_ensureWithinCanvas = (event: any) => {
   if (bound.top < 0) {
     element.top -= bound.top / p.$canvas.getZoom()
   }
+}
+
+const $_getActiveElements = () => {
+  // Get the currently selected whiteboard elements
+  // return the selected whiteboard elements
+  const activeElements: any[] = []
+  const selection = p.$canvas.getActiveObject()
+  if (_.get(selection, 'type') === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+    _.each(selection.objects, (element: any) => {
+      // When a Fabric.js canvas element is part of a group selection, its properties will be
+      // relative to the group. Therefore, we calculate the actual position of each element in
+      // the group relative to the whiteboard canvas
+      const position = $_calculateGlobalElementPosition(selection, element)
+      activeElements.push(_.assignTo({}, element.toObject(), position))
+    })
+  } else if (p.$canvas.getActiveObject()) {
+    activeElements.push(p.$canvas.getActiveObject().toObject())
+  }
+  return activeElements
+}
+
+const $_getCanvasElement = (uuid: string) => {
+  let element = undefined
+  _.each(p.$canvas.getObjects(), (e: any) => {
+    if (e.get('uuid') === uuid) {
+      element = e
+      return false
+    }
+  })
+  return element
 }
 
 const $_initCanvas = (state: any) => {
@@ -791,43 +802,51 @@ const $_restoreLayers = (state: any) => {
 
 const $_saveDeleteElements = (elements: any[], state: any): any => {
   // Notify the server about the deleted elements
-  p.$socket.emit('delete', {
-    userId: p.$currentUser.id,
-    whiteboardElements: _.map(elements, (element: any) => ({element})),
-    whiteboardId: state.whiteboard.id
-  })
-  // Update the layer ordering of the remaining elements
-  updateLayers(state)
-  // Recalculate the size of the whiteboard canvas
-  setCanvasDimensions(state)
+  p.$socket.emit(
+    'delete',
+    {
+      userId: p.$currentUser.id,
+      whiteboardElements: _.map(elements, (element: any) => ({element})),
+      whiteboardId: state.whiteboard.id
+    },
+    () => {
+      $_updateLayers(state)
+      setCanvasDimensions(state)
+    }
+  )
 }
 
 const $_saveElementUpdates = (elements: any[], state: any) => {
-  p.$socket.emit('update', {
-    userId: p.$currentUser.id,
-    whiteboardElements: _.map(elements, (element: any) => ({element})),
-    whiteboardId: state.whiteboard.id
-  })
-  setCanvasDimensions(state)
+  p.$socket.emit(
+    'update',
+    {
+      userId: p.$currentUser.id,
+      whiteboardElements: _.map(elements, (element: any) => ({element})),
+      whiteboardId: state.whiteboard.id
+    },
+    () => setCanvasDimensions(state)
+  )
 }
 
 const $_saveNewElement = (element: any, state: any) => {
   if (!element.uuid) {
-    p.$socket.emit('add', {
-      whiteboardElements: [{
-        assetId: undefined,
-        element: element.toObject()
-      }],
-      userId: p.$currentUser.id,
-      whiteboardId: state.whiteboard.id
-    }, (whiteboardElements: any[]) => {
-      element.uuid = whiteboardElements[0].element.uuid
-    })
+    p.$socket.emit(
+      'add',
+      {
+        whiteboardElements: [{
+          assetId: undefined,
+          element: element.toObject()
+        }],
+        userId: p.$currentUser.id,
+        whiteboardId: state.whiteboard.id
+      },
+      (whiteboardElements: any[]) => element.uuid = whiteboardElements[0].element.uuid
+    )
   }
 }
 
 const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
-  const element: any = getCanvasElement(uuid)
+  const element: any = $_getCanvasElement(uuid)
 
   const updateElementProperties = () => {
     if (element) {
@@ -858,4 +877,23 @@ const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
   } else {
     updateElementProperties()
   }
+}
+
+const $_updateLayers = (state: any) => {
+  // Update the index of all elements to reflect their order in the current whiteboard.
+  p.$canvas.forEachObject((element: any) => {
+    // Only update the elements for which the stored index no longer matches the current index.
+    const objects = p.$canvas.getObjects()
+    const indexOf = objects.indexOf(element)
+    if (element.index !== indexOf) {
+      element.index = indexOf
+      if (element.group) {
+        // If the element is part of a group, calculate its global coordinates
+        const position = $_calculateGlobalElementPosition(element.group, element)
+        $_saveElementUpdates([_.assignTo({}, element.toObject(), position)], state)
+      } else {
+        $_saveElementUpdates([element.toObject()], state)
+      }
+    }
+  })
 }

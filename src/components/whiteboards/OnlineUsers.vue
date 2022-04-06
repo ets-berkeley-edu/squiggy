@@ -2,6 +2,7 @@
   <v-navigation-drawer
     absolute
     app
+    class="navigation-drawer"
     permanent
     :right="true"
   >
@@ -45,3 +46,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.navigation-drawer {
+  z-index: 1100;
+}
+</style>
