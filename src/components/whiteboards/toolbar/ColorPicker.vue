@@ -16,7 +16,7 @@
           [colors.lightBlue.hex, colors.red.hex],
           [colors.green.hex, colors.yellow.hex]
         ]"
-        :value="colors.black.hex"
+        :value="color"
         width="260"
         @input="setFill"
       />
@@ -31,6 +31,11 @@ export default {
   name: 'ColorPicker',
   mixins: [Whiteboarding],
   props: {
+    color: {
+      default: '#000000',
+      required: false,
+      type: String
+    },
     setFill: {
       required: true,
       type: Function

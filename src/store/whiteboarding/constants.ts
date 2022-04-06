@@ -10,9 +10,9 @@ const $_getFabricJsDebugEventsExclude = () => {
 export default {
   // Variable that will keep track of the placeholder images to use for assets without a preview image
   ASSET_PLACEHOLDERS: {
-    file: '/assets/img/whiteboard_asset_placeholder_file.png',
-    link: '/assets/img/whiteboard_asset_placeholder_link.png',
-    whiteboard: '/assets/img/whiteboard_asset_placeholder_whiteboard.png'
+    file: require('@/assets/whiteboard/images/whiteboard_asset_placeholder_file.png'),
+    link: require('@/assets/whiteboard/images/whiteboard_asset_placeholder_link.png'),
+    whiteboard: require('@/assets/whiteboard/images/whiteboard_asset_placeholder_whiteboard.png')
   },
   // The base width of the canvas
   CANVAS_BASE_WIDTH: 1000,
