@@ -18,7 +18,7 @@ const state = {
   // Variable that will keep track of the copied element(s)
   activeCanvasObject: undefined,
   categories: undefined,
-  clipboard: [],
+  clipboard: undefined,
   debugLog: '',
   disableAll: true,
   downloadId: undefined,
@@ -111,6 +111,7 @@ const mutations = {
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
+  setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
@@ -118,7 +119,6 @@ const mutations = {
   setMode: (state: any, mode: string) => {
     // Deactivate the currently selected item
     p.$canvas.discardActiveObject().requestRenderAll()
-
     p.$canvas.isDrawingMode = false
     // Prevent the p.$canvas items from being modified unless the whitnableCanvasElements(false, state)
     if (mode === 'move') {
@@ -144,7 +144,13 @@ const mutations = {
     state.fitToScreen = !state.fitToScreen
     setCanvasDimensions(state)
   },
-  updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties),
+  updateSelected: (state: any, properties: any) => {
+    if (state.mode === 'draw') {
+      _.assignIn(p.$canvas.pencilBrush, properties)
+    } else {
+      _.assignIn(state.selected, properties)
+    }
+  }
 }
 
 const actions = {
@@ -261,6 +267,7 @@ const actions = {
     commit('setMode', 'move')
   },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
+  setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),

@@ -58,7 +58,7 @@ export function addAsset(asset: any, state: any) {
 }
 
 export function deleteActiveElements(state: any) {
-  const elements = $_getActiveElements()
+  const elements = $_getActiveObjects()
   _.each(elements, (element: any) => p.$canvas.remove($_getCanvasElement(element.uuid)))
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
@@ -92,7 +92,7 @@ export function moveLayer(direction: string, state: any) {
   // Send the currently selected element(s) to the back or  bring the currently selected element(s) to the front.
   // direction: `front` if the currently selected element(s) should be brought to the front,
   // `back` if the currently selected element(s) should be sent to the back
-  const elements: any[] = $_getActiveElements()
+  const elements: any[] = $_getActiveObjects()
 
   // Sort the selected elements by their position to ensure that
   // they are in the same order when moved to the back or front
@@ -222,7 +222,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:modified', (event: any) => {
     // Ensure that none of the modified objects are positioned off screen
     $_ensureWithinCanvas(event)
-    $_saveElementUpdates($_getActiveElements(), state)
+    $_saveElementUpdates($_getActiveObjects(), state)
   })
 
   // Indicate that the currently selected elements are no longer being modified once moving, scaling or rotating has finished
@@ -282,7 +282,7 @@ const $_addListenters = (state: any) => {
       // Create selected shape to use as the drawing guide. The originX and originY of the helper element are set to
       // left and top to make it easier to map the top left corner of the drawing guide with the original cursor postion.
       // We use 'isHelper' to indicate that this element is a helper element that should not be saved back to the server.
-      const shape = $_createShape(state.selected.shape, {
+      const shape = new fabric[state.selected.shape]({
         fill: state.selected.fill,
         height: 1,
         isHelper: true,
@@ -295,12 +295,12 @@ const $_addListenters = (state: any) => {
         top: state.startShapePointer.y,
         width: 1
       })
+      $_addDebugListenters(shape, 'Object')
       p.$canvas.add(shape)
     }
     if (state.mode === 'text') {
       const textPointer = p.$canvas.getPointer(event.e)
-      const text = $_createIText({
-        backgroundColor: 'red',
+      const iText = new fabric.IText('', {
         fill: state.selected.fill,
         fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
         fontSize: state.selected.fontSize || 14,
@@ -311,22 +311,23 @@ const $_addListenters = (state: any) => {
         selected: true,
         top: textPointer.y
       })
-      p.$canvas.add(text)
+      $_addDebugListenters(iText, 'IText')
+      p.$canvas.add(iText)
 
       // Put the editable text field in edit mode straight away
       setTimeout(function() {
-        p.$canvas.setActiveObject(text)
-        text.enterEditing()
+        p.$canvas.setActiveObject(iText)
+        iText.enterEditing()
         // The textarea needs to be put in edit mode manually
         // @see https://github.com/kangax/fabric.js/issues/1740
-        text.hiddenTextarea.focus()
+        iText.hiddenTextarea.focus()
       }, 0)
     }
   })
   p.$canvas.on('mouse:move', (event: any) => {
     // Only continue drawing the shape when the whiteboard canvas is in shape mode
     if (state.isDrawingShape) {
-      const shape = $_getHelperObject(state)
+      const shape = $_getHelperObject()
       // Get the current position of the mouse
       const currentShapePointer = p.$canvas.getPointer(event.e)
 
@@ -365,7 +366,7 @@ const $_addListenters = (state: any) => {
 
   p.$canvas.on('mouse:up', () => {
     if (state.isDrawingShape) {
-      const shape = $_getHelperObject(state)
+      const shape = $_getHelperObject()
       // Indicate that shape drawing has stopped
       store.dispatch('whiteboarding/setIsDrawingShape', false)
       store.dispatch('whiteboarding/setMode', 'move')
@@ -404,10 +405,6 @@ const $_addModalListeners = () => {
   //     state.mode = 'move'
   //   }
   // })
-  // // Change the drawing color when a new color has been selected in the color picker
-  // state.$watch('draw.selected.color', () => p.$canvas.freeDrawingBrush.color = state.draw.selected.color.color, true)
-  // // Change the drawing line width when a new line width has been selected in the width picker
-  // state.$watch('draw.selected.lineWidth', () => p.$canvas.freeDrawingBrush.width = parseInt(state.draw.selected.lineWidth, 10), true)
 }
 
 const $_addSocketListeners = (state: any) => {
@@ -461,18 +458,28 @@ const $_addSocketListeners = (state: any) => {
   )
 }
 
+
 const $_addViewportListeners = (state: any) => {
   // Detect keydown events in the whiteboard to respond to keyboard shortcuts
-  state.viewport.addEventListener('keydown', (event: any) => {
-    // Remove the selected elements when the delete or backspace key is pressed
+  document.addEventListener('keydown', (event: any) => {
     if (event.keyCode === 8 || event.keyCode === 46) {
+      // Delete or backspace
       deleteActiveElements(state)
       event.preventDefault()
     } else if (event.keyCode === 67 && event.metaKey) {
-      // Copy the selected elements
-      state.clipboard = $_getActiveElements()
-    } else if (event.keyCode === 86 && event.metaKey) {
-      // listeners.Paste the copied elements
+      // Copy
+      const activeObjects = p.$canvas.getActiveObjects()
+      const clones: any[] = []
+      _.each(activeObjects, (object: any, index: number) => {
+        object.clone((clone: any) => {
+          clones.push(clone)
+          if (index === activeObjects.length - 1) {
+            store.dispatch('whiteboarding/setClipboard', clones)
+          }
+        })
+      })
+    } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
+      // Paste
       $_paste(state)
     }
   }, false)
@@ -508,24 +515,6 @@ const $_calculateGlobalElementPosition = (selection: any, element: any): any => 
   const left = (-Math.sin(groupAngle) * element.getTop() * selection.get('scaleY') + Math.cos(groupAngle) * element.getLeft() * selection.get('scaleX'))
   const top = (Math.cos(groupAngle) * element.getTop() * selection.get('scaleY') + Math.sin(groupAngle) * element.getLeft() * selection.get('scaleX'))
   return {left, top}
-}
-
-const $_createCanvas = (options: any) => {
-  const canvas = new fabric.Canvas('canvas', options)
-  $_addDebugListenters(canvas, 'Canvas')
-  return canvas
-}
-
-const $_createIText = (options: any) => {
-  const iText = new fabric.IText('', options)
-  $_addDebugListenters(iText, 'IText')
-  return iText
-}
-
-const $_createShape = (shapeType: string, options: any) => {
-  const shape = new fabric[shapeType](options)
-  $_addDebugListenters(shape, 'Object')
-  return shape
 }
 
 const $_deactiveActiveGroupIfOverlap = (elements: any[]) => {
@@ -594,7 +583,7 @@ const $_ensureWithinCanvas = (event: any) => {
   }
 }
 
-const $_getActiveElements = () => {
+const $_getActiveObjects = () => {
   // Get the currently selected whiteboard elements
   // return the selected whiteboard elements
   const activeElements: any[] = []
@@ -624,7 +613,7 @@ const $_getCanvasElement = (uuid: string) => {
   return element
 }
 
-const $_getHelperObject = (state: any) => state.isDrawingShape ? _.find(p.$canvas.getObjects(), (o: any) => o.isHelper) : null
+const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
 const $_initCanvas = (state: any) => {
   // Initialize the Fabric.js canvas and load the whiteboard content and online users
@@ -632,11 +621,12 @@ const $_initCanvas = (state: any) => {
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
   // Set the selection style for the whiteboard
   // Set the style of the multi-select helper
-  Vue.prototype.$canvas = $_createCanvas({
+  p.$canvas = new fabric.Canvas('canvas', {
     selectionColor: 'transparent',
     selectionBorderColor: '#0295DE',
     selectionLineWidth: 2
   })
+  $_addDebugListenters(p.$canvas, 'Canvas')
   // Make the border dashed
   // @see http://fabricjs.com/fabric-intro-part-4/
   p.$canvas.selectionDashArray = [10, 5]
@@ -649,7 +639,7 @@ const $_initCanvas = (state: any) => {
   fabric.Object.prototype.transparentCorners = false
   fabric.Object.prototype.rotatingPointOffset = 30
   // Set the pencil brush as the drawing brush
-  p.$canvas.freeDrawingBrush = new fabric.PencilBrush(p.$canvas)
+  p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
   // Render the whiteboard
   $_addListenters(state)
   $_renderWhiteboard(state)
@@ -723,7 +713,7 @@ const $_paste = (state: any): void => {
   const elements: any[] = []
 
   // Activate the pasted element(s)
-  const selectPasted = _.after(state.clipboard.length, function() {
+  const selectPasted = _.after(state.clipboard.length, () => {
     // When only a single element was pasted, simply select it
     if (elements.length === 1) {
       p.$canvas.setActiveObject(elements[0])
@@ -738,6 +728,7 @@ const $_paste = (state: any): void => {
     p.$canvas.requestRenderAll()
     // Set the size of the whiteboard canvas
     setCanvasDimensions(state)
+    store.dispatch('whiteboarding/setClipboard', undefined)
   })
 
   if (state.clipboard.length > 0) {
@@ -752,19 +743,21 @@ const $_paste = (state: any): void => {
     // the index and unique id from the element and alter the position
     // to ensure its visibility
     _.each(state.clipboard, (element: any) => {
-      delete element.index
-      delete element.uuid
-      element.left += 25
-      element.top += 25
-      // Add the element to the whiteboard canvas
-      const callback = (e: any) => {
-        p.$canvas.add(e)
-        p.$canvas.requestRenderAll()
-        // Keep track of the added elements to allow them to be selected
-        elements.push(e)
-        selectPasted()
-      }
-      $_deserializeElement(state, element, element.uuid, callback)
+      element.clone((clone: any) => {
+        delete clone.index
+        delete clone.uuid
+        clone.left += 25
+        clone.top += 25
+        // Add the element to the whiteboard canvas
+        const callback = (e: any) => {
+          p.$canvas.add(e)
+          p.$canvas.requestRenderAll()
+          // Keep track of the added elements to allow them to be selected
+          elements.push(e)
+          selectPasted()
+        }
+        $_deserializeElement(state, clone, clone.uuid, callback)
+      })
     })
   }
 }

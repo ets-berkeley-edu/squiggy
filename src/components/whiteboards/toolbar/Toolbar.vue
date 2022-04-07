@@ -18,12 +18,12 @@
     <TextToolDialog />
     <DrawToolDialog />
     <ShapeToolDialog />
-    <v-btn id="toolbar-fit-to-screen" icon>
+    <v-btn id="toolbar-fit-to-screen" icon @click="toggleZoom">
       <span class="sr-only">Fit to screen</span>
       <font-awesome-icon icon="search-minus" />
     </v-btn>
-    <v-btn id="toolbar-actual-size" icon>
-      <span class="sr-only">Actual size"</span>
+    <v-btn id="toolbar-actual-size" icon @click="toggleZoom">
+      <span class="sr-only">Actual size</span>
       <font-awesome-icon icon="search-plus" />
     </v-btn>
     <AssetToolDialog />
