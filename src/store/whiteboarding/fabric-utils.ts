@@ -697,14 +697,9 @@ const $_initSocket = (state: any, whiteboard: any) => {
   })
   p.$socket.on('connect', _.noop)
   p.$socket.on('disconnect', _.noop)
-  p.$socket.on('online', (onlineUsers: any[]) => {
+  p.$socket.on('online', (users: any[]) => {
     // When a user has joined or left the whiteboard, update the online status on the list of members
-    if (whiteboard) {
-      for (let i = 0; i < whiteboard.members.length; i++) {
-        const member = whiteboard.members[i]
-        member.online = _.find(onlineUsers, {user_id: member.id}) ? true : false
-      }
-    }
+    _.each(whiteboard.members, (member: any) => member.online = !!_.find(users, {user_id: member.id}))
   })
   $_addSocketListeners(state)
 }

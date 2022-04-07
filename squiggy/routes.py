@@ -115,7 +115,10 @@ def register_routes(app):
 def register_sockets(socketio):
     @socketio.on('connect')
     def socketio_connect():
-        _handle_socketio_connect()
+        if current_user.is_authenticated:
+            emit('my response', {'message': '{0} has joined'.format(current_user.name)}, broadcast=True)
+        else:
+            return False  # not allowed here
 
     @socketio.on('update')
     def socketio_update(data):
@@ -146,13 +149,6 @@ def register_sockets(socketio):
     @socketio.on('disconnect')
     def socketio_disconnect():
         app.logger.warn('TODO: socketio.on disconnect')
-
-
-def _handle_socketio_connect():
-    if current_user.is_authenticated:
-        emit('my response', {'message': '{0} has joined'.format(current_user.name)}, broadcast=True)
-    else:
-        return False  # not allowed here
 
 
 def _user_loader(user_id=None):

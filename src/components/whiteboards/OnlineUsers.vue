@@ -3,20 +3,19 @@
     absolute
     app
     class="navigation-drawer"
-    :clipped="$vuetify.breakpoint.lgAndUp"
     :expand-on-hover="true"
-    :mini-variant="true"
+    :mini-variant.sync="isMiniVariant"
     permanent
     :right="true"
   >
+    <h2 :class="{'sr-only': isMiniVariant}">N collaborators</h2>
     <v-list>
       <v-list-item class="px-2">
         <v-list-item-avatar>
-          <v-img src="https://randomuser.me/api/portraits/women/85.jpg"></v-img>
+          <Avatar id="current-user-avatar" :user="$currentUser" />
         </v-list-item-avatar>
       </v-list-item>
-
-      <v-list-item link>
+      <v-list-item>
         <v-list-item-content>
           <v-list-item-title v-if="activeObject">
             {{ activeObject }}
@@ -24,24 +23,21 @@
         </v-list-item-content>
       </v-list-item>
     </v-list>
-    <div class="pa-2">
-      <v-list-item>
-        mode: {{ mode }}
-      </v-list-item>
-      <v-list-item>
-        selected: {{ selected }}
-      </v-list-item>
-    </div>
   </v-navigation-drawer>
 </template>
 
 <script>
+import Avatar from '@/components/user/Avatar'
 import Vue from 'vue'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'OnlineUsers',
   mixins: [Whiteboarding],
+  components: {Avatar},
+  data: () => ({
+    isMiniVariant: true
+  }),
   computed: {
     activeObject: () => Vue.prototype.$canvas && Vue.prototype.$canvas.getActiveObject()
   }
