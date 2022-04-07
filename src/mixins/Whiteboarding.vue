@@ -41,7 +41,6 @@ export default {
       'init',
       'moveLayer',
       'resetSelected',
-      'saveWhiteboardElements',
       'setDisableAll',
       'setMode',
       'updateSelected',

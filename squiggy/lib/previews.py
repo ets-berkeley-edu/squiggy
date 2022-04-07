@@ -26,15 +26,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import base64
 import hashlib
 import hmac
-import re
 
 from flask import current_app as app
 from squiggy.lib import http
 from squiggy.lib.util import to_int, utc_now
 from squiggy.logger import logger
-
-
-S3_PREVIEW_URL_PATTERN = re.compile(r'^https://suitec-preview-images-\w+\.s3.*\.amazonaws\.com')
 
 
 def generate_previews(asset_id, asset_url):

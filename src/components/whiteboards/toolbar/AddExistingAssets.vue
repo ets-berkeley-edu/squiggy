@@ -1,11 +1,28 @@
 <template>
-  <v-dialog v-model="dialog" fullscreen scrollable>
-    <v-card>
+  <v-dialog
+    v-model="dialog"
+    fullscreen
+    hide-overlay
+    scrollable
+    transition="dialog-bottom-transition"
+  >
+    <template #activator="{on, attrs}">
+      <v-btn
+        id="toolbar-add-existing-assets"
+        :disabled="disableAll"
+        v-bind="attrs"
+        v-on="on"
+      >
+        <font-awesome-icon icon="bars" />
+        <span class="pl-2">Use existing</span>
+      </v-btn>
+    </template>
+    <v-card class="active-card">
       <v-card-title class="pb-1">
         <h2 id="modal-header" class="title">Add Asset(s)</h2>
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text v-if="!isModalLoading" style="height: 60vh;">
+      <v-card-text v-if="isDialogReady">
         <AssetsHeader
           :hide-manage-assets-button="true"
           put-focus-on-load="basic-search-input"
@@ -35,7 +52,7 @@
           </div>
         </v-card>
       </v-card-text>
-      <v-card-actions class="pt-5">
+      <v-card-actions v-if="isDialogReady" class="pt-5">
         <v-spacer></v-spacer>
         <div class="pb-3 pr-2">
           <v-btn
@@ -85,90 +102,80 @@ export default {
   name: 'AddExistingAssets',
   components: {AssetCard, AssetsHeader, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils, Whiteboarding],
-  props: {
-    afterSave: {
-      required: true,
-      type: Function
-    },
-    onCancel: {
-      required: true,
-      type: Function
-    },
-    open: {
-      required: true,
-      type: Boolean
-    }
-  },
   data: () => ({
+    dialog: false,
     isComplete: false,
-    isModalLoading: true,
+    isDialogReady: false,
     isSaving: false,
     selectedAssetIds: []
   }),
   computed: {
     assetGrid() {
-      if (this.isModalLoading) {
-        return this.getSkeletons(20)
-      } else if (this.isComplete) {
-        return this.assets
-      } else {
-        let skeletonCount = 10
-        if (this.totalAssetCount && (this.totalAssetCount - this.assets.length) < skeletonCount) {
-          skeletonCount = Math.max(0, this.totalAssetCount - this.assets.length)
-        }
-        this.nextPage()
-        return (this.assets || []).concat(this.getSkeletons(skeletonCount))
-      }
-    },
-    dialog: {
-      get() {
-        return this.open
-      },
-      set(value) {
-        this.resetSearch()
-        this.isComplete = false
-        this.selectedAssetIds = []
-        if (value) {
-          this.search().then(() => {
-            this.isModalLoading = false
-            this.$putFocusNextTick('modal-header')
-          })
+      if (this.isDialogReady) {
+        if (this.isComplete) {
+          return this.assets
         } else {
-          this.onCancel()
+          let skeletonCount = 10
+          if (this.totalAssetCount && (this.totalAssetCount - this.assets.length) < skeletonCount) {
+            skeletonCount = Math.max(0, this.totalAssetCount - this.assets.length)
+          }
+          this.nextPage()
+          return (this.assets || []).concat(this.getSkeletons(skeletonCount))
         }
+      } else {
+        return this.getSkeletons(20)
       }
     },
     disableSave() {
-      return this.isModalLoading || !this.$_.size(this.selectedAssetIds)
+      return !this.isDialogReady || !this.$_.size(this.selectedAssetIds)
+    }
+  },
+  watch: {
+    dialog(value) {
+      this.resetSearch()
+      this.isComplete = false
+      this.selectedAssetIds = []
+      if (value) {
+        this.search().then(() => {
+          this.isDialogReady = true
+          this.$putFocusNextTick('modal-header')
+        })
+      } else {
+        this.cancel()
+      }
     }
   },
   methods: {
     cancel() {
+      this.$announcer.polite('Canceled.')
+      this.reset()
       this.dialog = false
-      this.onCancel()
+      this.isDialogReady = false
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     infiniteHandler($state) {
-      if (this.$_.size(this.assets) < this.totalAssetCount) {
-        this.nextPage().then(() => {
-          $state.loaded()
-        })
-      } else {
+      this.isComplete = this.$_.size(this.assets) >= this.totalAssetCount
+      if (this.isComplete) {
         $state.complete()
+      } else {
+        this.nextPage().then(() => $state.loaded())
       }
+    },
+    reset() {
+      this.isSaving = false
+      this.dialog = false
+      this.selectedAssetIds = []
     },
     save() {
       if (this.selectedAssetIds.length) {
         this.isSaving = true
-        const whiteboardElements = this.$_.map(this.selectedAssetIds, assetId => ({
-          assetId,
-          element: {},
-          whiteboardId: this.whiteboard.id
-        }))
-        this.saveWhiteboardElements(whiteboardElements).then(() => {
-          this.$announcer.polite('Assets added')
-          this.isSaving = false
-          this.dialog = false
+        this.selectedAssetIds.forEach((assetId, index) => {
+          const asset = this.$_.find(this.assets, ['id', assetId])
+          this.addAsset(asset)
+          if (index === this.selectedAssetIds.length - 1) {
+            this.$announcer.polite('Assets added')
+            this.reset()
+          }
         })
       }
     }
@@ -177,6 +184,13 @@ export default {
 </script>
 
 <style scoped>
+.active-card {
+  height:100%;
+  left:0;
+  position:fixed;
+  top:0;
+  width:100%;
+}
 .asset-checkbox-label {
   max-width: 240px;
 }

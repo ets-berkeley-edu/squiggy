@@ -33,7 +33,7 @@ import smart_open
 from squiggy.logger import logger
 
 
-S3_PREVIEW_URL_PATTERN = re.compile('^https://suitec-preview-images-\w+\.s3.*\.amazonaws\.com')
+S3_PREVIEW_URL_PATTERN = '^https://suitec-preview-images-\w+\.s3.*\.amazonaws\.com'
 
 
 def get_s3_signed_url(url):
@@ -81,7 +81,7 @@ def stream_object(s3_url):
 
 
 def is_s3_preview_url(url):
-    return url and S3_PREVIEW_URL_PATTERN.match(url)
+    return url and re.compile(S3_PREVIEW_URL_PATTERN).match(url)
 
 
 def _get_s3_client():
