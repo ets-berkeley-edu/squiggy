@@ -13,23 +13,17 @@ export function addAsset(asset: any, state: any) {
   store.dispatch('whiteboarding/setMode', 'move')
 
   // Default to a placeholder when the asset does not have a preview image
-  const assetType = asset.assetType
-  if (!asset.imageUrl) {
-    if (assetType === 'file' && asset.mime.indexOf('image/') !== -1) {
-      asset.imageUrl = asset.downloadUrl
-    } else {
-      asset.imageUrl = constants.ASSET_PLACEHOLDERS[assetType]
+  let imageUrl = asset.imageUrl
+  if (imageUrl) {
+    const regex = new RegExp(p.$config.s3PreviewUurlPattern)
+    if (imageUrl.match(regex)) {
+      imageUrl = `${apiUtils.apiBaseUrl()}/api/asset/${asset.id}/download`
     }
+  } else {
+    const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1
+    imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
   }
-
-  if (_.startsWith(asset.imageUrl, 's3://')) {
-    // Assets stored in S3 must be pulled from SuiteC route
-    asset.imageUrl = `${apiUtils.apiBaseUrl()}/assets/${asset.id}/download`
-  }
-
   // Add the asset to the center of the whiteboard canvas
-  const connector = _.includes(asset.imageUrl, '?') ? '&' : '?'
-  const imageUrl = asset.imageUrl + connector + 'track=false'
   fabric.Image.fromURL(imageUrl, (element: any) => {
     // This will exclude the toolbar and sidebar, if expanded.
     // Calculate the center point of the whiteboard canvas.

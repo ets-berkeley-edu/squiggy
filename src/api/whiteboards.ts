@@ -1,13 +1,6 @@
 import axios from 'axios'
 import utils from '@/api/api-utils'
 
-export function createWhiteboardElements(whiteboardElements: any[], whiteboardId: number) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/elements/create`, {
-    whiteboardElements,
-    whiteboardId,
-  })
-}
-
 export function createWhiteboard(title: string, userIds: number[]) {
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/create`, {title, userIds})
 }

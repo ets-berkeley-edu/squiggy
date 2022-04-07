@@ -2,7 +2,7 @@ import _ from 'lodash'
 import apiUtils from '@/api/api-utils'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
-import {createWhiteboardElements, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
+import {getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   deleteActiveElements,
@@ -112,10 +112,7 @@ const mutations = {
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
-  setIsModifyingElement: (state: any, isModifyingElement: boolean) => {
-    console.log(state, `isModifyingElement = ${isModifyingElement}`)
-    state.isModifyingElement = isModifyingElement
-  },
+  setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
   setMode: (state: any, mode: string) => {
@@ -262,18 +259,6 @@ const actions = {
     // })
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
-  },
-  saveWhiteboardElements: ({commit, state}: any, whiteboardElements: any[]) => {
-    return new Promise<void>(resolve => {
-      commit('setDisableAll', true)
-      return createWhiteboardElements(whiteboardElements, state.whiteboard.id)
-      .then(data => _.get(data, 'element'))
-      .then(data => {
-        _.each(data, whiteboardElement => commit('add', whiteboardElement))
-        commit('setDisableAll', false)
-        return resolve()
-      })
-    })
   },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),

@@ -20,26 +20,13 @@
       </template>
       <v-card>
         <v-card-text>
-          <h2 id="modal-header" class="sr-only">Choose the type of asset you want to upload</h2>
-          <v-btn
-            id="toolbar-add-existing-assets"
-            @click="openAddExisting"
-            @keypress.enter="openAddExisting"
-          >
-            <font-awesome-icon icon="bars" />
-            <span class="pl-2">Use existing</span>
-          </v-btn>
-
+          <h2 class="sr-only">Choose asset(s) to upload</h2>
+          <AddExistingAssets />
           <UploadNewAsset />
           <AddLinkAsset />
         </v-card-text>
       </v-card>
     </v-menu>
-    <AddExistingAssets
-      :after-save="afterAddExistingAssets"
-      :on-cancel="onCancelAddExisting"
-      :open="isOpenAddExisting"
-    />
   </div>
 </template>
 
@@ -54,24 +41,7 @@ export default {
   mixins: [Whiteboarding],
   components: {AddExistingAssets, AddLinkAsset, UploadNewAsset},
   data: () => ({
-    isOpenAddExisting: false,
     menu: false
-  }),
-  methods: {
-    afterAddExistingAssets() {
-      this.menu = false
-      this.isOpenAddExisting = false
-    },
-    onCancelAddExisting() {
-      this.isOpenAddExisting = false
-      this.menu = true
-      this.$announcer.polite('Canceled.')
-    },
-    openAddExisting() {
-      this.menu = false
-      this.isOpenAddExisting = true
-      this.$announcer.polite('Open Add Existing Assets menu.')
-    }
-  }
+  })
 }
 </script>

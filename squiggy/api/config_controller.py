@@ -28,6 +28,7 @@ import json
 from flask import current_app as app, request
 from squiggy import __version__ as version
 from squiggy.api.api_util import assets_type_enums
+from squiggy.lib.aws import S3_PREVIEW_URL_PATTERN
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import assets_sort_by_options
 
@@ -44,6 +45,7 @@ def app_config():
         'canvasBaseUrl': app.config['CANVAS_BASE_URL'],
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],
         'orderByOptions': assets_sort_by_options,
+        's3PreviewUurlPattern': S3_PREVIEW_URL_PATTERN,
         'squiggyEnv': app.config['SQUIGGY_ENV'],
         'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],
