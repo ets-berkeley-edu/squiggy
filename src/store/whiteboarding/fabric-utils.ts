@@ -13,11 +13,12 @@ export function addAsset(asset: any, state: any) {
   store.dispatch('whiteboarding/setMode', 'move')
 
   // Default to a placeholder when the asset does not have a preview image
+  const assetType = asset.assetType
   if (!asset.imageUrl) {
-    if (asset.type === 'file' && asset.mime.indexOf('image/') !== -1) {
+    if (assetType === 'file' && asset.mime.indexOf('image/') !== -1) {
       asset.imageUrl = asset.downloadUrl
     } else {
-      asset.imageUrl = constants.ASSET_PLACEHOLDERS[asset.type]
+      asset.imageUrl = constants.ASSET_PLACEHOLDERS[assetType]
     }
   }
 
@@ -311,7 +312,7 @@ const $_addListenters = (state: any) => {
         fontSize: state.selected.fontSize || 14,
         height: 100, // TODO
         left: textPointer.x,
-        text: 'TODO: Hello World',
+        text: '',
         selectable: true,
         selected: true,
         top: textPointer.y
