@@ -48,7 +48,7 @@
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker :set-fill="setColor" />
+          <ColorPicker :color="color" :set-fill="setColor" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -64,6 +64,7 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
+    color: '#000000',
     shapeStyle: 'Rect:thin'
   }),
   computed: {
@@ -72,36 +73,39 @@ export default {
         return this.mode === 'shape'
       },
       set(value) {
-        this.resetSelected()
         if (value) {
           this.setMode('shape')
-          this.setShapeStyle(this.shapeStyle)
           this.setColor(this.colors.black.hex)
+          this.setShapeStyle(this.shapeStyle)
           this.$putFocusNextTick('menu-header')
+        } else {
+          this.resetSelected()
         }
         this.setDisableAll(value)
       }
     }
   },
   beforeDestroy() {
+    this.resetSelected()
     this.setDisableAll(false)
   },
   methods: {
-    getFill() {
-      return this.selected.style === 'fill' ? this.selected.color : 'transparent'
-    },
     setColor(value) {
+      this.color = value
       this.updateSelected({
-        fill: this.getFill(),
-        stroke: value,
+        color: this.color,
+        fill: this.selected.style === 'fill' ? this.color : 'transparent',
+        stroke: this.color,
       })
     },
     setShapeStyle(value) {
       const [shape, style] = value.split(':')
       this.updateSelected({
-        fill: this.getFill(),
+        color: this.color,
+        fill: style === 'fill' ? this.color : 'transparent',
         shape,
         style,
+        stroke: this.color,
         strokeWidth: style === 'thick' ? 10 : 2
       })
     }

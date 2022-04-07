@@ -272,7 +272,7 @@ const $_addListenters = (state: any) => {
     const element = event.target
     const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
     // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
-    if (!isIncompleteIText && !element.get('uuid') && !element.get('isHelper')) {
+    if (!isIncompleteIText && !element.get('uuid') && !element.isHelper) {
       $_saveNewElement(element, state)
       setCanvasDimensions(state)
     }
@@ -300,8 +300,6 @@ const $_addListenters = (state: any) => {
         top: state.startShapePointer.y,
         width: 1
       })
-      console.log('Add helper object')
-      // store.dispatch('whiteboarding/setShape', shape)
       p.$canvas.add(shape)
     }
     if (state.mode === 'text') {
@@ -565,22 +563,25 @@ const $_deserializeElement = (
   }
   // Extract the type from the serialized element
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
+  let object = undefined
   if (element.type === 'image') {
     // In order to avoid cross-domain errors when loading images from different domains,
     // the source of the element needs to be temporarily cleared and set manually once
     // the element has been created
     element.realSrc = element.src
     element.src = ''
-    callback = (e: any) => {
+    fabric[type].fromObject(element, (e: any) => {
       e.setSrc(e.get('realSrc'), () => callback(e))
-    }
+    })
   // TODO: Why the special treatment for 'async'?
   // } else if (fabric[type].async) {
   //   fabric[type].fromObject(element, callback)
   // } else {
   //   fabric[type].fromObject(element)
+  } else {
+    object = fabric[type].fromObject(element, callback)
   }
-  return fabric[type].fromObject(element, callback)
+  return object
 }
 
 const $_ensureWithinCanvas = (event: any) => {
@@ -735,7 +736,7 @@ const $_paste = (state: any): void => {
     // for those elements and select them
     } else {
       const selection = new fabric.ActiveSelection(elements)
-      selection.set('isHelper', true)
+      selection.isHelper = true
       $_addDebugListenters(selection, 'Object')
       p.$canvas.setActiveObject(selection)
     }

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import apiUtils from '@/api/api-utils'
 import Vue from 'vue'
+import {getCategories} from '@/api/categories'
 import {createWhiteboardElements, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
@@ -16,6 +17,7 @@ const p = Vue.prototype
 const state = {
   // Variable that will keep track of the copied element(s)
   activeCanvasObject: undefined,
+  categories: undefined,
   clipboard: [],
   debugLog: '',
   disableAll: true,
@@ -39,6 +41,7 @@ const state = {
 
 const getters = {
   activeCanvasObject: (state: any): any => state.activeCanvasObject,
+  categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   mode: (state: any): string => state.mode,
@@ -52,9 +55,7 @@ const getters = {
 
 const mutations = {
   add: (state: any, whiteboardElement: any) => state.whiteboard.whiteboardElements.push(whiteboardElement),
-  addAsset: (state: any, asset: any) => {
-    addAsset(asset, state)
-  },
+  addAsset: (state: any, asset: any) => addAsset(asset, state),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   exportAsPng: ({state}, event: any) => {
     // Export the whiteboard to a PNG file
@@ -109,6 +110,7 @@ const mutations = {
   resetSelected: (state: any) => state.selected = {},
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
+  setCategories: (state: any, categories: any[]) => state.categories = categories,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => {
     console.log(state, `isModifyingElement = ${isModifyingElement}`)
@@ -149,24 +151,7 @@ const mutations = {
 }
 
 const actions = {
-  addLink: ({commit, state}) => {
-    // Launch the modal that allows for a new link to be added
-    // Create a new scope for the modal dialog
-    const scope = state.$new(true)
-    scope.closeModal = function(asset) {
-      if (asset) {
-        commit('addAsset', asset)
-      }
-      this.$hide()
-    }
-    // Open the add link modal dialog
-    _.noop({
-      scope: scope,
-      template: '/app/whiteboards/addlinkmodal/addlinkmodal.html'
-    })
-    // Switch the toolbar back to move mode. This will also close the add asset popover
-    commit('setMode', 'move')
-  },
+  addAsset: ({commit}, asset: any) => commit('addAsset', asset),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   editWhiteboard: ({commit}) => {
     // Create a new scope for the modal dialog
@@ -232,7 +217,10 @@ const actions = {
   getSelectedAsset: () => $_getSelectedAsset(),
   init: ({commit}, whiteboardId: number) => {
     return getWhiteboard(whiteboardId).then(whiteboard => {
-      commit('init', whiteboard)
+      getCategories(false).then(categories => {
+        commit('setCategories', categories)
+        commit('init', whiteboard)
+      })
     })
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),

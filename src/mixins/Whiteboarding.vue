@@ -23,6 +23,7 @@ export default {
   computed: {
     ...mapGetters('whiteboarding', [
       'activeCanvasObject',
+      'categories',
       'disableAll',
       'isModifyingElement',
       'mode',
@@ -35,7 +36,7 @@ export default {
   },
   methods: {
     ...mapActions('whiteboarding', [
-      'add',
+      'addAsset',
       'deleteActiveElements',
       'init',
       'moveLayer',
