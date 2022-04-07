@@ -29,15 +29,8 @@
             <font-awesome-icon icon="bars" />
             <span class="pl-2">Use existing</span>
           </v-btn>
-          <v-btn
-            id="toolbar-upload-new-asset"
-            @click="openAddExisting"
-            @keypress.enter="uploadFiles"
-          >
-            <!-- Use uploadFiles() function imported from old SuiteC -->
-            <font-awesome-icon icon="laptop" />
-            <span class="pl-2">Upload New</span>
-          </v-btn>
+
+          <UploadNewAsset />
           <AddLinkAsset />
         </v-card-text>
       </v-card>
@@ -54,11 +47,12 @@
 import AddExistingAssets from '@/components/whiteboards/toolbar/AddExistingAssets'
 import AddLinkAsset from '@/components/whiteboards/toolbar/AddLinkAsset'
 import Whiteboarding from '@/mixins/Whiteboarding'
+import UploadNewAsset from '@/components/whiteboards/toolbar/UploadNewAsset'
 
 export default {
   name: 'AssetToolDialog',
   mixins: [Whiteboarding],
-  components: {AddExistingAssets, AddLinkAsset},
+  components: {AddExistingAssets, AddLinkAsset, UploadNewAsset},
   data: () => ({
     isOpenAddExisting: false,
     menu: false
