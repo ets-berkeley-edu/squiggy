@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <div v-if="!isLoading">
-      <OnlineUsers />
+      <OnlineUsers v-if="sessions" />
       <EditActiveFabricObject />
     </div>
     <Toolbar />
