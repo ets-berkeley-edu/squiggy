@@ -23,13 +23,13 @@ export default {
   computed: {
     ...mapGetters('whiteboarding', [
       'activeCanvasObject',
+      'activeCollaborators',
       'categories',
       'disableAll',
       'isModifyingElement',
       'mode',
       'selected',
       'selectedAsset',
-      'sessions',
       'windowHeight',
       'whiteboard',
       'windowWidth'

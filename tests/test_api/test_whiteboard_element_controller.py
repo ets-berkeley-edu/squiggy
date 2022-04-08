@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
+from uuid import uuid4
 
 from squiggy import std_commit
 from squiggy.lib.util import is_admin, is_teaching
@@ -37,6 +38,7 @@ class TestCreateWhiteboardElement:
         response = client.post(
             '/api/whiteboard/elements/create',
             data=json.dumps({
+                'socketId': str(uuid4()),
                 'whiteboardElements': whiteboard_elements,
                 'whiteboardId': whiteboard_id,
             }),
@@ -83,6 +85,7 @@ class TestUpdateWhiteboardElements:
         response = client.post(
             '/api/whiteboard/elements/update',
             data=json.dumps({
+                'socketId': str(uuid4()),
                 'whiteboardElements': whiteboard_elements,
                 'whiteboardId': whiteboard_id,
             }),

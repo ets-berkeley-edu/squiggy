@@ -79,7 +79,8 @@ export function enableCanvasElements(enabled: boolean) {
 
 export function initFabricCanvas(state: any, whiteboard: any) {
   if (!whiteboard.deletedAt) {
-    $_initSocket(state, whiteboard)
+    $_initSocket(whiteboard)
+    $_addSocketListeners(state)
   }
   // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
   $_initFabricPrototypes(state)
@@ -408,19 +409,23 @@ const $_addModalListeners = () => {
 }
 
 const $_addSocketListeners = (state: any) => {
-  // User sessions
-  p.$socket.on('disconnect', () => {
-    console.log('socket.on: disconnect')
-    store.dispatch('whiteboarding/leave', p.$currentUser)
-  })
-  p.$socket.on('join', (session: any) => {
-    console.log('socket.on: join')
-    store.dispatch('whiteboarding/join', session)
-  })
-  p.$socket.on('leave', (session: any) => {
-    console.log('socket.on: leave')
-    store.dispatch('whiteboarding/leave', session)
-  })
+
+  const onWindowClose = (event: any) => {
+    if (p.$socket && p.$socket.connected) {
+      p.$socket.emit('leave', $_getUserSession(state))
+      p.$socket.disconnect()
+    }
+    if (event) {
+      event.preventDefault()
+    }
+  }
+  window.onbeforeunload = onWindowClose
+  window.onunload = onWindowClose
+
+  p.$socket.on('connect', () => p.$socket.emit('join', $_getUserSession(state)))
+  p.$socket.on('join', (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators))
+  p.$socket.on('leave', (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators))
+
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on(
      'update',
@@ -628,6 +633,14 @@ const $_getCanvasElement = (uuid: string) => {
 
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
+const $_getUserSession = (state: any) => {
+  return _.assignIn(p.$currentUser, {
+    socketId: p.$socket.id,
+    userId: p.$currentUser.id,
+    whiteboardId: state.whiteboard.id
+  })
+}
+
 const $_initCanvas = (state: any) => {
   // Initialize the Fabric.js canvas and load the whiteboard content and online users
   // Ensure that the horizontal and vertical origins of objects are set to center
@@ -702,22 +715,12 @@ const $_initFabricPrototypes = (state: any) => {
   window.addEventListener('resize', () => setCanvasDimensions(state))
 }
 
-const $_initSocket = (state: any, whiteboard: any) => {
+const $_initSocket = (whiteboard: any) => {
   Vue.prototype.$socket = io(apiUtils.apiBaseUrl(), {
     query: {
       whiteboardId: whiteboard.id
     }
   })
-  const currentUser = _.assignIn(p.$currentUser, {
-    socketId: state.socketId,
-    userId: p.$currentUser.id,
-    whiteboardId: state.whiteboard.id
-  })
-  store.dispatch('whiteboarding/setSocketId', Vue.prototype.$socket.id)
-  store.dispatch('whiteboarding/addSession', currentUser)
-  p.$socket.emit('join', currentUser)
-
-  $_addSocketListeners(state)
 }
 
 const $_paste = (state: any): void => {
@@ -810,6 +813,7 @@ const $_saveDeleteElements = (elements: any[], state: any): any => {
   p.$socket.emit(
     'delete',
     {
+      socketId: p.$socket.id,
       userId: p.$currentUser.id,
       whiteboardElements: _.map(elements, (element: any) => ({element})),
       whiteboardId: state.whiteboard.id
@@ -825,6 +829,7 @@ const $_saveElementUpdates = (elements: any[], state: any) => {
   p.$socket.emit(
     'update',
     {
+      socketId: p.$socket.id,
       userId: p.$currentUser.id,
       whiteboardElements: _.map(elements, (element: any) => ({element})),
       whiteboardId: state.whiteboard.id
@@ -838,11 +843,12 @@ const $_saveNewElement = (element: any, state: any) => {
     p.$socket.emit(
       'add',
       {
+        socketId: p.$socket.id,
+        userId: p.$currentUser.id,
         whiteboardElements: [{
           assetId: undefined,
           element: element.toObject()
         }],
-        userId: p.$currentUser.id,
         whiteboardId: state.whiteboard.id
       },
       (whiteboardElements: any[]) => element.uuid = whiteboardElements[0].element.uuid

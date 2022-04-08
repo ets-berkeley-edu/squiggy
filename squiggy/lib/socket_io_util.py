@@ -29,9 +29,10 @@ from flask_socketio import SocketIO
 def initialize_socket_io(app):
     debug_socketio = app.config['SOCKET_IO_DEBUG_MODE']
     socket_logger = app.logger if debug_socketio else False
+    vue_localhost_base_url = app.config['VUE_LOCALHOST_BASE_URL']
     socketio = SocketIO(
         app,
-        cors_allowed_origins='*',
+        cors_allowed_origins=[vue_localhost_base_url] if vue_localhost_base_url else [],
         engineio_logger=socket_logger,
         logger=socket_logger,
     )

@@ -54,17 +54,20 @@ export default {
 .user-avatar-large {
   border-radius: 75px;
   height: 150px;
+  max-width: 150px;
   width: 150px;
 }
 .user-avatar-medium {
   border-radius: 50px;
   height: 100px;
+  max-width: 100px;
   width: 100px;
 }
 .user-avatar-small {
   border: 1px;
   border-radius: 15px;
   height: 30px;
+  max-width: 30px;
   padding: 2px 0 2px 0;
   width: 30px;
 }

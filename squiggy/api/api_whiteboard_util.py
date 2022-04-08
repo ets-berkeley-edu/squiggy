@@ -24,15 +24,16 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
-from flask_socketio import join_room, leave_room, send
+from flask_socketio import join_room, leave_room
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.util import safe_strip
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
+from squiggy.models.whiteboard_session import WhiteboardSession
 
 
-def create_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
+def create_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
@@ -50,10 +51,12 @@ def create_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
             element=whiteboard_element['element'],
             whiteboard_id=whiteboard_id,
         )
-    return [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
+    results = [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
+    WhiteboardSession.update_updated_at(socket_id=socket_id)
+    return results
 
 
-def delete_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
+def delete_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
@@ -66,25 +69,37 @@ def delete_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
 
     for whiteboard_element in whiteboard_elements:
         WhiteboardElement.delete(uuid=whiteboard_element['element']['uuid'], whiteboard_id=whiteboard_id)
+    WhiteboardSession.update_updated_at(socket_id=socket_id)
 
 
-def join_whiteboard(user, whiteboard_id):
+def join_whiteboard(socket_id, user, whiteboard_id):
     whiteboard = Whiteboard.query.filter_by(id=whiteboard_id).first()
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     join_room(whiteboard)
-    send(f'{user.user_id} has entered the room.', to=whiteboard)
+    # Delete stale sessions
+    WhiteboardSession.delete_stale_records(older_than_minutes=30)
+    for session in WhiteboardSession.find(user_id=user.user_id, whiteboard_id=whiteboard_id):
+        WhiteboardSession.delete(session.socket_id)
+    # Create
+    WhiteboardSession.create(
+        socket_id=socket_id,
+        user_id=user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
+    return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard.id)
 
 
-def leave_whiteboard(user, whiteboard_id):
+def leave_whiteboard(socket_id, user, whiteboard_id):
     whiteboard = Whiteboard.query.filter_by(id=whiteboard_id).first()
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     leave_room(whiteboard)
-    send(f'{user.user_id} has left the room.', to=whiteboard)
+    WhiteboardSession.delete(socket_id)
+    return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard.id)
 
 
-def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
+def update_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
@@ -107,7 +122,9 @@ def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
         if not whiteboard_element:
             raise BadRequestError('Whiteboard element not found')
         return whiteboard_element
-    return [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
+    results = [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
+    WhiteboardSession.update_updated_at(socket_id=socket_id)
+    return results
 
 
 def _validate_whiteboard_element(whiteboard_element, is_update=False):

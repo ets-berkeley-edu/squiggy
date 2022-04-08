@@ -49,7 +49,7 @@ def get_whiteboard(whiteboard_id):
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         socket_id = request.args.get('socketId')
         if socket_id:
-            WhiteboardSession.upsert(
+            WhiteboardSession.create(
                 socket_id=socket_id,
                 user_id=current_user.get_id(),
                 whiteboard_id=whiteboard_id,

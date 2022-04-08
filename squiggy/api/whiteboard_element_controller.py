@@ -36,6 +36,7 @@ from squiggy.lib.http import tolerant_jsonify
 def whiteboard_elements_create():
     params = request.get_json()
     whiteboard_elements = create_whiteboard_elements(
+        socket_id=params.get('socketId'),
         user=current_user,
         whiteboard_id=params.get('whiteboardId'),
         whiteboard_elements=params.get('whiteboardElements'),
@@ -49,6 +50,7 @@ def whiteboard_elements_create():
 def whiteboard_elements_update():
     params = request.get_json()
     whiteboard_elements = update_whiteboard_elements(
+        socket_id=params.get('socketId'),
         user=current_user,
         whiteboard_id=params.get('whiteboardId'),
         whiteboard_elements=params.get('whiteboardElements'),
