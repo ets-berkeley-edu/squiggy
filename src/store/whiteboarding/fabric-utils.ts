@@ -408,6 +408,19 @@ const $_addModalListeners = () => {
 }
 
 const $_addSocketListeners = (state: any) => {
+  // User sessions
+  p.$socket.on('disconnect', () => {
+    console.log('socket.on: disconnect')
+    store.dispatch('whiteboarding/leave', p.$currentUser)
+  })
+  p.$socket.on('join', (session: any) => {
+    console.log('socket.on: join')
+    store.dispatch('whiteboarding/join', session)
+  })
+  p.$socket.on('leave', (session: any) => {
+    console.log('socket.on: leave')
+    store.dispatch('whiteboarding/leave', session)
+  })
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on(
      'update',
@@ -695,12 +708,15 @@ const $_initSocket = (state: any, whiteboard: any) => {
       whiteboardId: whiteboard.id
     }
   })
-  p.$socket.on('connect', _.noop)
-  p.$socket.on('disconnect', _.noop)
-  p.$socket.on('online', (users: any[]) => {
-    // When a user has joined or left the whiteboard, update the online status on the list of members
-    _.each(whiteboard.members, (member: any) => member.online = !!_.find(users, {user_id: member.id}))
+  const currentUser = _.assignIn(p.$currentUser, {
+    socketId: state.socketId,
+    userId: p.$currentUser.id,
+    whiteboardId: state.whiteboard.id
   })
+  store.dispatch('whiteboarding/setSocketId', Vue.prototype.$socket.id)
+  store.dispatch('whiteboarding/addSession', currentUser)
+  p.$socket.emit('join', currentUser)
+
   $_addSocketListeners(state)
 }
 

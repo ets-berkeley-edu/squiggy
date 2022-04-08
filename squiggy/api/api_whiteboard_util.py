@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
+from flask_socketio import join_room, leave_room, send
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.util import safe_strip
@@ -65,6 +66,22 @@ def delete_whiteboard_elements(user, whiteboard_id, whiteboard_elements):
 
     for whiteboard_element in whiteboard_elements:
         WhiteboardElement.delete(uuid=whiteboard_element['element']['uuid'], whiteboard_id=whiteboard_id)
+
+
+def join_whiteboard(user, whiteboard_id):
+    whiteboard = Whiteboard.query.filter_by(id=whiteboard_id).first()
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    join_room(whiteboard)
+    send(f'{user.user_id} has entered the room.', to=whiteboard)
+
+
+def leave_whiteboard(user, whiteboard_id):
+    whiteboard = Whiteboard.query.filter_by(id=whiteboard_id).first()
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    leave_room(whiteboard)
+    send(f'{user.user_id} has left the room.', to=whiteboard)
 
 
 def update_whiteboard_elements(user, whiteboard_id, whiteboard_elements):

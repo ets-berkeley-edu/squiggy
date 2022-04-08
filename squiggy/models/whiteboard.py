@@ -30,6 +30,7 @@ from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
 from squiggy.models.whiteboard_element import WhiteboardElement
+from squiggy.models.whiteboard_session import WhiteboardSession
 from squiggy.models.whiteboard_user import whiteboard_user_table
 
 
@@ -80,7 +81,8 @@ class Whiteboard(Base):
         whiteboards = cls.get_whiteboards(include_deleted=include_deleted, whiteboard_id=whiteboard_id)
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
         if whiteboard:
-            whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard['id'])]
+            whiteboard['sessions'] = [s.to_api_json() for s in WhiteboardSession.find_by_whiteboard_id(whiteboard_id)]
+            whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
         return whiteboard
 
     @classmethod
@@ -253,6 +255,7 @@ class Whiteboard(Base):
             'id': self.id,
             'courseId': self.course_id,
             'imageUrl': self.image_url,
+            'sessions': [s.to_api_json() for s in WhiteboardSession.find_by_whiteboard_id(self.id)],
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [u.to_api_json() for u in self.users],
