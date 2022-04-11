@@ -23,9 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer, text
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat, utc_now
+from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
 
 
@@ -47,27 +47,41 @@ class WhiteboardSession(Base):
         self.whiteboard_id = whiteboard_id
 
     @classmethod
-    def find_by_whiteboard_id(cls, whiteboard_id):
-        return cls.query.filter_by(whiteboard_id=whiteboard_id).all()
-
-    @classmethod
-    def upsert(cls, socket_id, user_id, whiteboard_id):
-        whiteboard_session = cls.query.filter_by(
-            socket_id=socket_id,
+    def create(cls, socket_id, user_id, whiteboard_id):
+        whiteboard_session = cls(
+            socket_id=str(socket_id),
             user_id=user_id,
             whiteboard_id=whiteboard_id,
-        ).first()
-        if whiteboard_session:
-            whiteboard_session.updated_at = utc_now()
-        else:
-            whiteboard_session = cls(
-                socket_id=socket_id,
-                user_id=user_id,
-                whiteboard_id=whiteboard_id,
-            )
+        )
         db.session.add(whiteboard_session)
         std_commit()
         return whiteboard_session
+
+    @classmethod
+    def delete(cls, socket_id):
+        session = cls.query.filter_by(socket_id=str(socket_id))
+        if session:
+            session.delete()
+            std_commit()
+
+    @classmethod
+    def delete_stale_records(cls, older_than_minutes=30):
+        db.session.execute(text(f"SELECT socket_id FROM whiteboard_sessions WHERE updated_at < (now() - INTERVAL '{older_than_minutes} minutes')"))
+
+    @classmethod
+    def find(cls, whiteboard_id, user_id=None):
+        if user_id:
+            filter_by = cls.query.filter_by(user_id=user_id, whiteboard_id=whiteboard_id)
+        else:
+            filter_by = cls.query.filter_by(whiteboard_id=whiteboard_id)
+        return filter_by.all()
+
+    @classmethod
+    def update_updated_at(cls, socket_id):
+        db.session.execute(
+            text('UPDATE whiteboard_sessions SET updated_at = now() WHERE socket_id = :socket_id'),
+            {'socket_id': socket_id},
+        )
 
     def to_api_json(self):
         return {

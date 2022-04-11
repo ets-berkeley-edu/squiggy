@@ -124,7 +124,7 @@ class TestGetWhiteboards:
         )
         Whiteboard.delete(whiteboard['id'])
         # Session
-        WhiteboardSession.upsert(
+        WhiteboardSession.create(
             socket_id=str('%032x' % random.getrandbits(128)),
             user_id=user.id,
             whiteboard_id=mock_whiteboard['id'],
@@ -136,8 +136,8 @@ class TestGetWhiteboards:
         whiteboards = api_json['results']
         assert len(whiteboards) == api_json['total']
         assert next((w for w in whiteboards if w['deletedAt']), None)
-        whiteboard_with_session = next((w for w in whiteboards if len(w['sessions'])), None)
-        assert len(whiteboard_with_session['sessions']) == 1
+        whiteboard_with_session = next((w for w in whiteboards if len(w['activeCollaborators'])), None)
+        assert len(whiteboard_with_session['activeCollaborators']) == 1
 
 
 class TestExportAsAsset:

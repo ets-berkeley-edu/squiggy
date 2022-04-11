@@ -17,6 +17,7 @@ const p = Vue.prototype
 const state = {
   // Variable that will keep track of the copied element(s)
   activeCanvasObject: undefined,
+  activeCollaborators: undefined,
   categories: undefined,
   clipboard: undefined,
   debugLog: '',
@@ -32,9 +33,7 @@ const state = {
   isScrollingCanvas: false,
   mode: 'move',
   selected: {},
-  sessions: undefined,
   sidebarExpanded: false,
-  socketId: undefined,
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
   viewport: undefined,
@@ -43,13 +42,13 @@ const state = {
 
 const getters = {
   activeCanvasObject: (state: any): any => state.activeCanvasObject,
+  activeCollaborators: (state: any): any[] => state.activeCollaborators,
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
   selectedAsset: () => null,
-  sessions: (state: any): any[] => state.sessions,
   whiteboard: (state: any): any => state.whiteboard,
   windowHeight: (state: any): number => state.windowHeight,
   windowWidth: (state: any): number => state.windowWidth,
@@ -96,25 +95,14 @@ const mutations = {
   },
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
+      activeCollaborators: whiteboard.activeCollaborators,
       downloadId: $_createDownloadId(),
       exportPngUrl: `${apiUtils.apiBaseUrl()}/whiteboards/${whiteboard.id}/export/png?downloadId=${state.downloadId}`,
-      sessions: whiteboard.sessions,
       sidebarExpanded: !whiteboard.deletedAt,
       viewport: document.getElementById('whiteboard-viewport'),
       whiteboard: whiteboard
     })
     initFabricCanvas(state, whiteboard)
-  },
-  join: (state: any, user: any) => {
-    let sessions = _.concat(state.sessions, [user])
-    sessions = _.uniqWith(sessions, (s1: any, s2: any) => s1.userId === s2.userId)
-    state.sessions = _.sortBy(sessions, ['canvasFullName', 'userId'])
-  },
-  leave: (state: any, user: any) => {
-    const index = state.sessions.findIndex((session: any) => session.userId === user.id)
-    if (index > -1) {
-      state.sessions.splice(index, 1)
-    }
   },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onWindowResize: (state: any) => {
@@ -124,6 +112,7 @@ const mutations = {
   resetSelected: (state: any) => state.selected = {},
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
+  setActiveCollaborators: (state: any, activeCollaborators: any[]) => state.activeCollaborators = activeCollaborators,
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
@@ -148,7 +137,6 @@ const mutations = {
     }
     state.mode = mode
   },
-  setSocketId: (state: any, socketId: string) => state.socketId = socketId,
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   toggleSidebar: (state: any) => {
     state.sidebarExpanded = !state.sidebarExpanded
@@ -170,10 +158,6 @@ const mutations = {
 
 const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
-  addSession: ({commit}, user: any) => {
-    commit('leave', user)
-    commit('join', user)
-  },
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   editWhiteboard: ({commit}) => {
     // Create a new scope for the modal dialog
@@ -245,8 +229,6 @@ const actions = {
       })
     })
   },
-  join: ({commit}, user: any) => commit('join', user),
-  leave: ({commit}, user: any) => commit('leave', user),
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
@@ -288,13 +270,13 @@ const actions = {
     commit('setMode', 'move')
   },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
+  setActiveCollaborators: ({commit}, activeCollaborators: any[]) => commit('setActiveCollaborators', activeCollaborators),
   setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
-  setSocketId: ({commit}, socketId: string) => commit('setSocketId', socketId),
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   toggleZoom: ({commit}) => commit('toggleZoom'),
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),

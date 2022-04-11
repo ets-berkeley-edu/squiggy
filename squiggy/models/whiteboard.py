@@ -29,6 +29,7 @@ from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
+from squiggy.models.user import User
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 from squiggy.models.whiteboard_user import whiteboard_user_table
@@ -81,7 +82,10 @@ class Whiteboard(Base):
         whiteboards = cls.get_whiteboards(include_deleted=include_deleted, whiteboard_id=whiteboard_id)
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
         if whiteboard:
-            whiteboard['sessions'] = [s.to_api_json() for s in WhiteboardSession.find_by_whiteboard_id(whiteboard_id)]
+            whiteboard['activeCollaborators'] = _get_active_collaborators(
+                users=whiteboard['users'],
+                whiteboard_id=whiteboard_id,
+            )
             whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
         return whiteboard
 
@@ -112,6 +116,12 @@ class Whiteboard(Base):
         if whiteboard:
             whiteboard.deleted_at = utc_now()
             std_commit()
+
+    @classmethod
+    def get_active_collaborators(cls, whiteboard_id):
+        whiteboard = cls.query.filter_by(id=whiteboard_id).first()
+        users = [u.to_api_json() for u in whiteboard.users]
+        return _get_active_collaborators(users=users, whiteboard_id=whiteboard.id)
 
     @classmethod
     def get_whiteboards(
@@ -169,6 +179,7 @@ class Whiteboard(Base):
             whiteboard_id = row['id']
             whiteboard = whiteboards_by_id.get(whiteboard_id) or {
                 'id': whiteboard_id,
+                'activeCollaborators': [],
                 'courseId': row['course_id'],
                 'createdAt': isoformat(row['created_at']),
                 'deletedAt': isoformat(row['deleted_at']),
@@ -176,7 +187,6 @@ class Whiteboard(Base):
                 'thumbnailUrl': row['thumbnail_url'],
                 'title': row['title'],
                 'updatedAt': isoformat(row['updated_at']),
-                'sessions': [],
                 'users': [],
             }
             user_id = row['user_id']
@@ -195,7 +205,7 @@ class Whiteboard(Base):
         sql = 'SELECT * FROM whiteboard_sessions WHERE whiteboard_id = ANY(:whiteboard_ids) ORDER BY created_at'
         for row in db.session.execute(sql, {'whiteboard_ids': list(whiteboards_by_id.keys())}):
             whiteboard_id = row['whiteboard_id']
-            whiteboards_by_id[whiteboard_id]['sessions'].append({
+            whiteboards_by_id[whiteboard_id]['activeCollaborators'].append({
                 'createdAt': isoformat(row['created_at']),
                 'socketId': row['socket_id'],
                 'updatedAt': isoformat(row['updated_at']),
@@ -251,11 +261,13 @@ class Whiteboard(Base):
         return whiteboard
 
     def to_api_json(self):
+        users = [u.to_api_json() for u in self.users]
+        active_collaborators = _get_active_collaborators(users=users, whiteboard_id=self.id)
         return {
             'id': self.id,
+            'activeCollaborators': active_collaborators,
             'courseId': self.course_id,
             'imageUrl': self.image_url,
-            'sessions': [s.to_api_json() for s in WhiteboardSession.find_by_whiteboard_id(self.id)],
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [u.to_api_json() for u in self.users],
@@ -264,3 +276,19 @@ class Whiteboard(Base):
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def _get_active_collaborators(users, whiteboard_id):
+    users_by_id = {}
+    for session in WhiteboardSession.find(whiteboard_id):
+        user_id = session.user_id
+        if user_id in users_by_id:
+            users_by_id[user_id]['sockets'].append(session.socket_id)
+        else:
+            user = next(filter(lambda user: user['id'] == user_id, users), None) or User.find_by_id(user_id)
+            if user:
+                users_by_id[user_id] = {
+                    **user,
+                    'sockets': [session.socket_id],
+                }
+    return list(users_by_id.values())
