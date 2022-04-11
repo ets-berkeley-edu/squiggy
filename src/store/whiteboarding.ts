@@ -46,6 +46,7 @@ const getters = {
   activeCollaborators: (state: any): any[] => state.activeCollaborators,
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll,
+  fitToScreen: (state: any): boolean => state.fitToScreen,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
@@ -127,6 +128,7 @@ const mutations = {
     // Prevent the p.$canvas items from being modified unless the whitnableCanvasElements(false, state)
     if (mode === 'move') {
       enableCanvasElements(true)
+      state.disableAll = false
       // TODO:
       // closePopovers()
     } else if (mode === 'draw') {

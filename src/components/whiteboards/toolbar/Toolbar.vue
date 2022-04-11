@@ -1,44 +1,78 @@
 <template>
-  <v-app-bar
-    app
-    bottom
-    class="toolbar"
-    dense
-    outlined
+  <v-card
+    class="mx-auto transparent"
+    elevation="0"
+    style="margin-top: -64px;"
+    max-width="700px"
   >
-    <v-btn
-      id="toolbar-move-btn"
-      icon
-      @click="setMode('move')"
-      @keypress.enter="setMode('move')"
+    <v-toolbar
+      bottom
+      color="transparent"
+      dense
+      elevation="0"
     >
-      <span class="sr-only">Move and transform</span>
-      <font-awesome-icon icon="arrows-up-down-left-right" />
-    </v-btn>
-    <TextToolDialog />
-    <DrawToolDialog />
-    <ShapeToolDialog />
-    <v-btn id="toolbar-fit-to-screen" icon @click="toggleZoom">
-      <span class="sr-only">Fit to screen</span>
-      <font-awesome-icon icon="search-minus" />
-    </v-btn>
-    <v-btn id="toolbar-actual-size" icon @click="toggleZoom">
-      <span class="sr-only">Actual size</span>
-      <font-awesome-icon icon="search-plus" />
-    </v-btn>
-    <AssetToolDialog />
-    <v-btn id="toolbar-export" icon>
-      <span class="sr-only">Export</span>
-      <font-awesome-icon icon="download" />
-    </v-btn>
-    <v-btn id="toolbar-settings" icon>
-      <span class="sr-only">Settings</span>
-      <font-awesome-icon icon="cog" />
-    </v-btn>
-    <v-btn icon @click="unlock">
-      <font-awesome-icon icon="unlock" />
-    </v-btn>
-  </v-app-bar>
+      <v-btn-toggle
+        v-model="modeProxy"
+        active-class="primary"
+        rounded
+      >
+        <v-btn
+          id="toolbar-move-btn"
+          class="pr-2"
+          icon
+          value="move"
+          width="55px"
+        >
+          <span class="sr-only">Move and transform</span>
+          <font-awesome-icon
+            :color="mode === 'move' ? 'white' : 'grey'"
+            icon="arrows-up-down-left-right"
+            size="2x"
+          />
+        </v-btn>
+        <TextToolDialog />
+        <DrawToolDialog />
+        <ShapeToolDialog />
+      </v-btn-toggle>
+      <v-btn
+        id="toolbar-fit-to-screen"
+        class="mx-2"
+        color="white"
+        dense
+        elevation="1"
+        height="48px"
+        rounded
+        @click="toggleZoom"
+      >
+        <span class="sr-only">{{ fitToScreen ? 'Actual size' : 'Fit to screen' }}</span>
+        <font-awesome-icon color="grey" :icon="fitToScreen ? 'search-plus' : 'search-minus'" size="2x" />
+      </v-btn>
+      <AssetToolDialog />
+      <v-btn
+        id="toolbar-export"
+        class="mx-2"
+        color="white"
+        dense
+        elevation="1"
+        height="48px"
+        rounded
+      >
+        <span class="sr-only">Export</span>
+        <font-awesome-icon color="grey" icon="download" size="2x" />
+      </v-btn>
+      <v-btn
+        id="toolbar-settings"
+        color="white"
+        dense
+        elevation="1"
+        height="48px"
+        rounded
+      >
+        <span class="sr-only">Settings</span>
+        <font-awesome-icon color="grey" icon="cog" size="2x" />
+      </v-btn>
+    </v-toolbar>
+  </v-card>
 </template>
 
 <script>
@@ -58,14 +92,20 @@ export default {
     ShapeToolDialog,
     TextToolDialog
   },
-  data: () => ({
-    collapsed: false
-  }),
-  methods: {
-    unlock() {
-      this.setDisableAll(false)
+  computed: {
+    modeProxy: {
+      get() {
+        return this.mode
+      },
+      set(value) {
+        console.log('setMode: ' + value)
+        this.setMode(value)
+      }
     }
-  }
+  },
+  data: () => ({
+    toggle: 2
+  })
 }
 </script>
 

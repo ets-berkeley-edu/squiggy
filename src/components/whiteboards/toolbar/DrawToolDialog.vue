@@ -10,11 +10,12 @@
         id="toolbar-draw-btn"
         :disabled="disableAll"
         icon
+        value="draw"
         v-bind="attrs"
         v-on="on"
       >
         <span class="sr-only">Draw</span>
-        <font-awesome-icon icon="paintbrush" />
+        <font-awesome-icon :color="mode === 'draw' ? 'white' : 'grey'" icon="paintbrush" size="2x" />
       </v-btn>
     </template>
     <v-card>

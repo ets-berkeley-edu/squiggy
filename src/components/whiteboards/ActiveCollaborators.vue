@@ -1,12 +1,9 @@
 <template>
   <v-navigation-drawer
-    absolute
     app
     class="navigation-drawer"
     :expand-on-hover="true"
-    floating
     :mini-variant.sync="isMiniVariant"
-    permanent
     :right="true"
   >
     <div v-if="isMiniVariant" class="pt-5 text-center">

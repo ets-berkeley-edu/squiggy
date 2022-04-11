@@ -10,12 +10,12 @@
         id="toolbar-text-btn"
         :disabled="disableAll"
         icon
-        v-bind="attrs"
         value="text"
+        v-bind="attrs"
         v-on="on"
       >
         <span class="sr-only">Text</span>
-        <font-awesome-icon icon="font" />
+        <font-awesome-icon :color="mode === 'text' ? 'white' : 'grey'" icon="font" size="2x" />
       </v-btn>
     </template>
     <v-card>
