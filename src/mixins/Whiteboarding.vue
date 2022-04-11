@@ -28,6 +28,7 @@ export default {
       'activeCollaborators',
       'categories',
       'disableAll',
+      'fitToScreen',
       'isModifyingElement',
       'mode',
       'selected',

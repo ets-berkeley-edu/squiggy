@@ -8,13 +8,16 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-shapes"
+        class="pl-2"
         :disabled="disableAll"
         icon
+        width="55px"
+        value="shape"
         v-bind="attrs"
         v-on="on"
       >
         <span class="sr-only">Shapes</span>
-        <font-awesome-icon icon="shapes" />
+        <font-awesome-icon :color="mode === 'shape' ? 'white' : 'grey'" icon="shapes" size="2x" />
       </v-btn>
     </template>
     <v-card>

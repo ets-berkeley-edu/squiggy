@@ -4,11 +4,11 @@
       <ActiveCollaborators v-if="activeCollaborators" />
       <EditActiveFabricObject />
     </div>
-    <Toolbar />
     <v-main id="whiteboard-container" class="whiteboard-container">
       <div id="whiteboard-viewport" class="whiteboard-viewport">
         <canvas id="canvas"></canvas>
       </div>
+      <Toolbar />
     </v-main>
   </v-app>
 </template>
