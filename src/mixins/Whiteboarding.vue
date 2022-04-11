@@ -1,5 +1,7 @@
 <script>
+import _ from 'lodash'
 import constants from '@/store/whiteboarding/constants'
+import Vue from 'vue'
 import {mapActions, mapGetters} from 'vuex'
 
 export default {
@@ -47,7 +49,8 @@ export default {
       'setMode',
       'updateSelected',
       'toggleZoom'
-    ])
+    ]),
+    updateFreeDrawingBrush: properties => _.assignIn(Vue.prototype.$canvas.freeDrawingBrush, properties)
   }
 }
 </script>

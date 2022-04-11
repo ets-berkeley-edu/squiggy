@@ -35,7 +35,7 @@
                 :items="$_.keys(drawOptions)"
                 outlined
                 value="1"
-                @input="value => updateSelected({width: parseInt(value, 10)})"
+                @input="value => updateFreeDrawingBrush({width: parseInt(value, 10)})"
               >
                 <template #selection="{item}">
                   <span id="selected-line-width" class="sr-only">{{ item }} pixel line width</span>
@@ -48,7 +48,7 @@
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker :set-fill="value => updateSelected({color: value})" />
+          <ColorPicker :set-fill="value => updateFreeDrawingBrush({color: value})" />
         </v-container>
       </v-card-text>
     </v-card>
@@ -72,15 +72,12 @@ export default {
         if (value) {
           this.setMode('draw')
           this.$putFocusNextTick('menu-header')
-        } else {
-          this.resetSelected()
         }
         this.setDisableAll(value)
       }
     }
   },
   beforeDestroy() {
-    this.resetSelected()
     this.setDisableAll(false)
   }
 }

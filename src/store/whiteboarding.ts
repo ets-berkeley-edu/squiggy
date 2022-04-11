@@ -148,13 +148,7 @@ const mutations = {
     state.fitToScreen = !state.fitToScreen
     setCanvasDimensions(state)
   },
-  updateSelected: (state: any, properties: any) => {
-    if (state.mode === 'draw') {
-      _.assignIn(p.$canvas.pencilBrush, properties)
-    } else {
-      _.assignIn(state.selected, properties)
-    }
-  }
+  updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties)
 }
 
 const actions = {
