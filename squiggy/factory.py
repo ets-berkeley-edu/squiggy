@@ -31,7 +31,8 @@ from squiggy.configs import load_configs
 from squiggy.lib.canvas_poller import launch_pollers
 from squiggy.lib.socket_io_util import create_mock_socket, initialize_socket_io
 from squiggy.logger import initialize_app_logger
-from squiggy.routes import register_routes, register_sockets
+from squiggy.routes import register_routes
+from squiggy.sockets import register_sockets
 
 
 def create_app():

@@ -25,12 +25,26 @@ export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
   components: {ActiveCollaborators, EditActiveFabricObject, Toolbar},
+  data: () => ({
+    pingJob: undefined
+  }),
   created() {
     this.$loading()
     this.init(this.$route.params.id).then(() => {
       this.setDisableAll(false)
+      clearTimeout(this.pingJob)
+      this.pingJob = setTimeout(this.keepSocketAlive, 60000)
       this.$ready()
     })
+  },
+  destroyed() {
+    clearTimeout(this.pingJob)
+  },
+  methods: {
+    keepSocketAlive() {
+      this.ping()
+      this.pingJob = setTimeout(this.keepSocketAlive, 60000)
+    }
   }
 }
 </script>

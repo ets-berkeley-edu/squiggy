@@ -41,6 +41,7 @@ export default {
       'deleteActiveElements',
       'init',
       'moveLayer',
+      'ping',
       'resetSelected',
       'setDisableAll',
       'setMode',
