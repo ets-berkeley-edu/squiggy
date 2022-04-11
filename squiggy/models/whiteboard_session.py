@@ -59,9 +59,9 @@ class WhiteboardSession(Base):
 
     @classmethod
     def delete(cls, socket_id):
-        session = cls.query.filter_by(socket_id=str(socket_id))
-        if session:
-            session.delete()
+        whiteboard_session = cls.query.filter_by(socket_id=str(socket_id)).first()
+        if whiteboard_session:
+            db.session.delete(whiteboard_session)
             std_commit()
 
     @classmethod
@@ -75,6 +75,10 @@ class WhiteboardSession(Base):
         else:
             filter_by = cls.query.filter_by(whiteboard_id=whiteboard_id)
         return filter_by.all()
+
+    @classmethod
+    def find_by_socket_id(cls, socket_id):
+        return cls.query.filter_by(socket_id=str(socket_id)).first()
 
     @classmethod
     def update_updated_at(cls, socket_id):

@@ -124,6 +124,10 @@ export function moveLayer(direction: string, state: any) {
   }
 }
 
+export function ping(state: any) {
+  p.$socket.emit('ping', $_getUserSession(state), (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators))
+}
+
 export function setCanvasDimensions(state: any) {
   // Set the width and height of the whiteboard canvas. The width of the visible
   // canvas will be the same for all users, and the canvas will be zoomed to accommodate

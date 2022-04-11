@@ -285,7 +285,7 @@ def _get_active_collaborators(users, whiteboard_id):
         if user_id in users_by_id:
             users_by_id[user_id]['sockets'].append(session.socket_id)
         else:
-            user = next(filter(lambda user: user['id'] == user_id, users), None) or User.find_by_id(user_id)
+            user = next(filter(lambda user: user['id'] == user_id, users), None) or User.find_by_id(user_id).to_api_json()
             if user:
                 users_by_id[user_id] = {
                     **user,

@@ -9,6 +9,7 @@ import {
   enableCanvasElements,
   initFabricCanvas,
   moveLayer,
+  ping,
   setCanvasDimensions
 } from '@/store/whiteboarding/fabric-utils'
 
@@ -230,6 +231,7 @@ const actions = {
     })
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
+  ping: ({state}) => ping(state),
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
     if (state.whiteboard && state.whiteboard.deletedAt) {

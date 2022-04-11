@@ -52,7 +52,11 @@ def create_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elemen
             whiteboard_id=whiteboard_id,
         )
     results = [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
-    WhiteboardSession.update_updated_at(socket_id=socket_id)
+    update_updated_at(
+        socket_id=socket_id,
+        user_id=user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
     return results
 
 
@@ -69,7 +73,11 @@ def delete_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elemen
 
     for whiteboard_element in whiteboard_elements:
         WhiteboardElement.delete(uuid=whiteboard_element['element']['uuid'], whiteboard_id=whiteboard_id)
-    WhiteboardSession.update_updated_at(socket_id=socket_id)
+    update_updated_at(
+        socket_id=socket_id,
+        user_id=user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
 
 
 def join_whiteboard(socket_id, user, whiteboard_id):
@@ -78,16 +86,15 @@ def join_whiteboard(socket_id, user, whiteboard_id):
         raise ResourceNotFoundError('Whiteboard not found.')
     join_room(whiteboard)
     # Delete stale sessions
-    WhiteboardSession.delete_stale_records(older_than_minutes=30)
+    WhiteboardSession.delete_stale_records(older_than_minutes=10)
     for session in WhiteboardSession.find(user_id=user.user_id, whiteboard_id=whiteboard_id):
         WhiteboardSession.delete(session.socket_id)
     # Create
-    WhiteboardSession.create(
+    return update_updated_at(
         socket_id=socket_id,
         user_id=user.user_id,
         whiteboard_id=whiteboard_id,
     )
-    return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard.id)
 
 
 def leave_whiteboard(socket_id, user, whiteboard_id):
@@ -97,6 +104,18 @@ def leave_whiteboard(socket_id, user, whiteboard_id):
     leave_room(whiteboard)
     WhiteboardSession.delete(socket_id)
     return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard.id)
+
+
+def update_updated_at(socket_id, user_id, whiteboard_id):
+    if WhiteboardSession.find_by_socket_id(socket_id=socket_id):
+        WhiteboardSession.update_updated_at(socket_id=socket_id)
+    else:
+        WhiteboardSession.create(
+            socket_id=socket_id,
+            user_id=user_id,
+            whiteboard_id=whiteboard_id,
+        )
+    return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id)
 
 
 def update_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
@@ -123,7 +142,11 @@ def update_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elemen
             raise BadRequestError('Whiteboard element not found')
         return whiteboard_element
     results = [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
-    WhiteboardSession.update_updated_at(socket_id=socket_id)
+    update_updated_at(
+        socket_id=socket_id,
+        user_id=user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
     return results
 
 

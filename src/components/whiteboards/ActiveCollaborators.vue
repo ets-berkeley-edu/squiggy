@@ -4,6 +4,7 @@
     app
     class="navigation-drawer"
     :expand-on-hover="true"
+    floating
     :mini-variant.sync="isMiniVariant"
     permanent
     :right="true"
