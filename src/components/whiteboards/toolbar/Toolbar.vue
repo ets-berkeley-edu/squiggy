@@ -30,9 +30,9 @@
             size="2x"
           />
         </v-btn>
-        <TextToolDialog />
-        <DrawToolDialog />
-        <ShapeToolDialog />
+        <TextTool />
+        <PencilBrushTool />
+        <ShapeTool />
       </v-btn-toggle>
       <v-btn
         id="toolbar-fit-to-screen"
@@ -47,33 +47,33 @@
         <span class="sr-only">{{ fitToScreen ? 'Actual size' : 'Fit to screen' }}</span>
         <font-awesome-icon color="grey" :icon="fitToScreen ? 'search-plus' : 'search-minus'" size="2x" />
       </v-btn>
-      <AssetToolDialog />
-      <ExportToolDialog />
-      <EditWhiteboardDialog />
+      <AssetTool />
+      <ExportTool />
+      <EditWhiteboardTool />
     </v-toolbar>
   </v-card>
 </template>
 
 <script>
-import AssetToolDialog from '@/components/whiteboards/toolbar/AssetToolDialog'
+import AssetTool from '@/components/whiteboards/toolbar/AssetTool'
 import Context from '@/mixins/Context'
-import DrawToolDialog from '@/components/whiteboards/toolbar/DrawToolDialog'
-import EditWhiteboardDialog from '@/components/whiteboards/toolbar/EditWhiteboardDialog'
-import ExportToolDialog from '@/components/whiteboards/toolbar/ExportToolDialog'
-import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
-import ShapeToolDialog from '@/components/whiteboards/toolbar/ShapeToolDialog'
+import EditWhiteboardTool from '@/components/whiteboards/toolbar/EditWhiteboardTool'
+import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
+import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
+import TextTool from '@/components/whiteboards/toolbar/TextTool'
+import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Toolbar',
   mixins: [Context, Whiteboarding],
   components: {
-    AssetToolDialog,
-    DrawToolDialog,
-    ExportToolDialog,
-    EditWhiteboardDialog,
-    ShapeToolDialog,
-    TextToolDialog
+    AssetTool,
+    ExportTool,
+    EditWhiteboardTool,
+    PencilBrushTool,
+    ShapeTool,
+    TextTool
   },
   computed: {
     modeProxy: {

@@ -80,12 +80,12 @@ export function enableCanvasElements(enabled: boolean) {
 export function initFabricCanvas(state: any, whiteboard: any) {
   if (!whiteboard.deletedAt) {
     $_initSocket(whiteboard)
+    p.$socket.emit('join', $_getUserSession(state))
     $_addSocketListeners(state)
   }
   // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
   $_initFabricPrototypes(state)
   $_initCanvas(state)
-  $_addModalListeners()
   $_addViewportListeners(state)
 }
 
@@ -122,6 +122,18 @@ export function moveLayer(direction: string, state: any) {
     // When only a single item was selected, re-select it
     p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
   }
+}
+
+export function onWhiteboardUpdate(state: any, whiteboard: any) {
+  _.assignIn(state.whiteboard, whiteboard)
+  document.title = `${whiteboard.title} | SuiteC`
+  p.$socket.emit('update_whiteboard', {
+    ...$_getUserSession(state),
+    ...{
+      title: whiteboard.title,
+      users: whiteboard.users
+    }
+  })
 }
 
 export function ping(state: any) {
@@ -403,17 +415,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('selection:updated', () => store.dispatch('whiteboarding/setActiveCanvasObject', p.$canvas.getActiveObject()))
 }
 
-const $_addModalListeners = () => {
-  // TODO: Set the toolbar back to move mode when the asset and export tooltips are hidden.
-  // state.$on('tooltip.hide', function(ev, $tooltip) {
-  //   if ((state.mode === 'asset' && $tooltip.$id === 'whiteboards-board-asset-trigger') || (state.mode === 'export' && $tooltip.$id === 'whiteboards-board-export-trigger')) {
-  //     state.mode = 'move'
-  //   }
-  // })
-}
-
 const $_addSocketListeners = (state: any) => {
-
   const onWindowClose = (event: any) => {
     if (p.$socket && p.$socket.connected) {
       p.$socket.emit('leave', $_getUserSession(state))
@@ -426,83 +428,105 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('connect', () => p.$socket.emit('join', $_getUserSession(state)))
-  p.$socket.on('join', (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators))
-  p.$socket.on('leave', (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators))
+  p.$socket.on('join', (data: any) => {
+    if (data.socketId !== p.$socket.id) {
+      store.dispatch('whiteboarding/setActiveCollaborators', data.activeCollaborators)
+    }
+  })
+  p.$socket.on('leave', (data: any) => {
+    if (data.socketId !== p.$socket.id) {
+      store.dispatch('whiteboarding/setActiveCollaborators', data.activeCollaborators)
+    }
+  })
 
   // One or multiple whiteboard canvas elements were updated by a different user
+  p.$socket.on('update_whiteboard', (data: any) => {
+    if (data.socketId !== p.$socket.id) {
+      _.assignIn(state.whiteboard, data.whiteboard)
+    }
+  })
+  // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on(
-     'update',
-     (elements: any) => {
-      // Deactivate the current group if any of the updated elements are in the current group
-      $_deactiveActiveGroupIfOverlap(elements)
-      // Update the elements
-      _.each(elements, function(element) {
-        $_updateCanvasElement(state, element.uuid, element)
-      })
-      // Recalculate the size of the whiteboard canvas
-      setCanvasDimensions(state)
+    'update_whiteboard_elements',
+    (data: any) => {
+      if (data.socketId !== p.$socket.id) {
+        const elements = data.whiteboardElements
+        // Deactivate the current group if any of the updated elements are in the current group
+        $_deactiveActiveGroupIfOverlap(elements)
+        // Update the elements
+        _.each(elements, (element: any) => {
+          $_updateCanvasElement(state, element.uuid, element)
+        })
+        // Recalculate the size of the whiteboard canvas
+        setCanvasDimensions(state)
+      }
     }
   )
   // A whiteboard canvas element was added by a different user
   p.$socket.on(
     'add',
-    (elements: any[]) => {
-      _.each(elements, (element: any) => {
-        const callback = (e: any) => {
-          // Add the element to the whiteboard canvas and move it to its appropriate index
-          p.$canvas.add(e)
-          element.moveTo(e.get('index'))
-          p.$canvas.requestRenderAll()
-          // Recalculate the size of the whiteboard canvas
-          setCanvasDimensions(state)
-        }
-        $_deserializeElement(state, element, element.uuid, callback)
-      })
+    (data: any) => {
+      if (data.socketId !== p.$socket.id) {
+        _.each(data.whiteboardElements, (element: any) => {
+          const callback = (e: any) => {
+            // Add the element to the whiteboard canvas and move it to its appropriate index
+            p.$canvas.add(e)
+            element.moveTo(e.get('index'))
+            p.$canvas.requestRenderAll()
+            // Recalculate the size of the whiteboard canvas
+            setCanvasDimensions(state)
+          }
+          $_deserializeElement(state, element, element.uuid, callback)
+        })
+      }
     }
   )
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on(
     'delete',
-    (elements: any[]) => {
-      // Deactivate the current group if any of the deleted elements are in the current group
-      $_deactiveActiveGroupIfOverlap(elements)
-      // Delete the elements
-      _.each(elements, function(element) {
-        element = $_getCanvasElement(element.uuid)
-        if (element) {
-          p.$canvas.remove(element)
-        }
-      })
-      // Recalculate the size of the whiteboard canvas
-      setCanvasDimensions(state)
+    (data: any) => {
+      if (data.socketId !== p.$socket.id) {
+        // Deactivate the current group if any of the deleted elements are in the current group
+        const elements = data.whiteboardElements
+        $_deactiveActiveGroupIfOverlap(elements)
+        // Delete the elements
+        _.each(elements, function(element) {
+          element = $_getCanvasElement(element.uuid)
+          if (element) {
+            p.$canvas.remove(element)
+          }
+        })
+        // Recalculate the size of the whiteboard canvas
+        setCanvasDimensions(state)
+      }
     }
   )
 }
 
-
 const $_addViewportListeners = (state: any) => {
   // Detect keydown events in the whiteboard to respond to keyboard shortcuts
   document.addEventListener('keydown', (event: any) => {
-    if (event.keyCode === 8 || event.keyCode === 46) {
-      // Delete or backspace
-      deleteActiveElements(state)
-      event.preventDefault()
-    } else if (event.keyCode === 67 && event.metaKey) {
-      // Copy
-      const activeObjects = p.$canvas.getActiveObjects()
-      const clones: any[] = []
-      _.each(activeObjects, (object: any, index: number) => {
-        object.clone((clone: any) => {
-          clones.push(clone)
-          if (index === activeObjects.length - 1) {
-            store.dispatch('whiteboarding/setClipboard', clones)
-          }
+    if (!state.disableAll) {
+      if (event.keyCode === 8 || event.keyCode === 46) {
+        // Delete or backspace
+        deleteActiveElements(state)
+        event.preventDefault()
+      } else if (event.keyCode === 67 && event.metaKey) {
+        // Copy
+        const activeObjects = p.$canvas.getActiveObjects()
+        const clones: any[] = []
+        _.each(activeObjects, (object: any, index: number) => {
+          object.clone((clone: any) => {
+            clones.push(clone)
+            if (index === activeObjects.length - 1) {
+              store.dispatch('whiteboarding/setClipboard', clones)
+            }
+          })
         })
-      })
-    } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
-      // Paste
-      $_paste(state)
+      } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
+        // Paste
+        $_paste(state)
+      }
     }
   }, false)
 }
@@ -831,7 +855,7 @@ const $_saveDeleteElements = (elements: any[], state: any): any => {
 
 const $_saveElementUpdates = (elements: any[], state: any) => {
   p.$socket.emit(
-    'update',
+    'update_whiteboard_elements',
     {
       socketId: p.$socket.id,
       userId: p.$currentUser.id,

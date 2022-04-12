@@ -118,6 +118,28 @@ def update_updated_at(socket_id, user_id, whiteboard_id):
     return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id)
 
 
+def update_whiteboard(socket_id, title, user, users, whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
+    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
+        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+
+    whiteboard = Whiteboard.update(
+        title=title,
+        users=users,
+        whiteboard_id=whiteboard_id,
+    )
+    update_updated_at(
+        socket_id=socket_id,
+        user_id=user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
+    return whiteboard.to_api_json()
+
+
 def update_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:

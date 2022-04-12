@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="menu"
-    :close-on-content-click="false"
+    width="800"
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -21,8 +21,10 @@
     <v-card>
       <v-card-text>
         <EditWhiteboard
+          class="pt-10"
           :whiteboard="whiteboard"
           :on-cancel="cancel"
+          :on-ready="() => $announcer.polite('The edit Whiteboard dialog is ready.')"
           :after-save="afterSave"
         />
       </v-card-text>
@@ -35,7 +37,7 @@ import EditWhiteboard from '@/components/whiteboards/EditWhiteboard'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'EditWhiteboardDialog',
+  name: 'EditWhiteboardTool',
   mixins: [Whiteboarding],
   components: {EditWhiteboard},
   data: () => ({
@@ -44,6 +46,7 @@ export default {
   watch: {
     menu(value) {
       if (value) {
+        this.setMode('move')
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(value)
@@ -58,7 +61,7 @@ export default {
       this.menu = false
     },
     afterSave(whiteboard) {
-      this.afterWhiteboardUpdate(whiteboard)
+      this.onWhiteboardUpdate(whiteboard)
       this.menu = false
     }
   }

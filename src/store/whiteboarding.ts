@@ -9,6 +9,7 @@ import {
   enableCanvasElements,
   initFabricCanvas,
   moveLayer,
+  onWhiteboardUpdate,
   ping,
   setCanvasDimensions
 } from '@/store/whiteboarding/fabric-utils'
@@ -107,6 +108,7 @@ const mutations = {
     initFabricCanvas(state, whiteboard)
   },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
+  onWhiteboardUpdate: (state: any, whiteboard: any) => onWhiteboardUpdate(state, whiteboard),
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
@@ -155,37 +157,8 @@ const mutations = {
 
 const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
+  onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
-  editWhiteboard: ({commit}) => {
-    // Create a new scope for the modal dialog
-    // const scope = state.$new(true)
-    // scope.whiteboard = state.whiteboard
-    // scope.closeModal = function(updatedWhiteboard) {
-    //   if (updatedWhiteboard) {
-    //     if (updatedWhiteboard.notFound) {
-    //       // TODO: If an edit has removed the user's access, refresh the whiteboard list and close this whiteboard
-    //       // if ($window.opener) {
-    //       //   $window.opener.refreshWhiteboardList()
-    //       // }
-    //       // $window.close()
-    //       _.noop()
-    //     } else {
-    //       state.whiteboard = updatedWhiteboard
-    //       // TODO: Set the title of the window to the new title of the whiteboard
-    //       // $rootScope.header = state.whiteboard.title
-    //     }
-    //   }
-    //   // this.$hide()
-    // }
-    // TODO: Open the edit whiteboard modal dialog
-    // $modal({
-    //   'scope': scope,
-    //   'template': '/app/whiteboards/edit/edit.html'
-    // })
-    // Switch the toolbar back to move mode. This will
-    // also close any open popovers
-    commit('setMode', 'move')
-  },
   exportasassetmodal: () => {},
   exportAsAsset: ({commit, state}) => {
     // Launch the modal that allows the current user to export the current whiteboard to the asset library
@@ -219,10 +192,13 @@ const actions = {
   },
   getSelectedAsset: () => $_getSelectedAsset(),
   init: ({commit}, whiteboardId: number) => {
-    return getWhiteboard(whiteboardId).then(whiteboard => {
-      getCategories(false).then(categories => {
-        commit('setCategories', categories)
-        commit('init', whiteboard)
+    return new Promise(resolve => {
+      getWhiteboard(whiteboardId).then(whiteboard => {
+        getCategories(false).then(categories => {
+          commit('setCategories', categories)
+          commit('init', whiteboard)
+          resolve(whiteboard)
+        })
       })
     })
   },

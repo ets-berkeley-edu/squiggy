@@ -49,7 +49,7 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 import UploadNewAsset from '@/components/whiteboards/toolbar/assets/UploadNewAsset'
 
 export default {
-  name: 'AssetToolDialog',
+  name: 'AssetTool',
   mixins: [Whiteboarding],
   components: {AddExistingAssets, AddLinkAsset, UploadNewAsset},
   data: () => ({

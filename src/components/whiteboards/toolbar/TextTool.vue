@@ -53,7 +53,7 @@ import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'TextToolDialog',
+  name: 'TextTool',
   components: {AccessibleSelect, ColorPicker},
   mixins: [Whiteboarding],
   computed: {

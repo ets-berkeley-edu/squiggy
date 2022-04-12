@@ -63,7 +63,7 @@ import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'ShapeToolDialog',
+  name: 'ShapeTool',
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({

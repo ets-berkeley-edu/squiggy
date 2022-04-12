@@ -37,7 +37,7 @@
           v-model="selectedUsers"
           chips
           color="blue-grey lighten-2"
-          :disabled="isUpdating"
+          :disabled="isSaving"
           filled
           item-text="name"
           item-value="id"
@@ -82,11 +82,19 @@
             <v-btn
               id="save-btn"
               color="primary"
-              :disabled="disableSave || isSaving"
+              :disabled="disableSave"
               @click="save"
               @keypress.enter="save"
             >
-              Create Whiteboard
+              <font-awesome-icon
+                v-if="isSaving"
+                class="mr-2"
+                icon="spinner"
+                :spin="true"
+              />
+              <span v-if="isSaving">Saving...</span>
+              <span v-if="!isSaving && whiteboard">Update</span>
+              <span v-if="!isSaving && !whiteboard">Create</span>
             </v-btn>
           </div>
           <div>
@@ -126,6 +134,10 @@ export default {
       required: true,
       type: Function
     },
+    onReady: {
+      required: true,
+      type: Function
+    },
     whiteboard: {
       default: undefined,
       required: false,
@@ -134,25 +146,22 @@ export default {
   },
   data: () => ({
     isSaving: false,
-    isUpdating: false,
     selectedUsers: undefined,
     title: undefined,
     users: undefined
   }),
   computed: {
     disableSave() {
-      return !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUsers)
-    }
-  },
-  watch: {
-    isUpdating(val) {
-      if (val) {
-        setTimeout(() => (this.isUpdating = false), 3000)
-      }
+      return this.isSaving || !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUsers)
     }
   },
   created() {
-    this.selectedUsers = this.whiteboard ? this.whiteboard.users : [this.$currentUser.id]
+    if (this.whiteboard) {
+      this.selectedUsers = this.whiteboard.users
+      this.title = this.whiteboard.title
+    } else {
+      this.selectedUsers = [this.$currentUser.id]
+    }
     getUsers().then(this.init)
   },
   methods: {
@@ -184,7 +193,7 @@ export default {
         this.users.concat(userList)
       })
       this.users = this.users.concat(usersOther)
-      this.$ready(`${this.whiteboard ? 'Update' : 'Create'} Whiteboard'`)
+      this.onReady()
     },
     remove(user) {
       const index = this.selectedUsers.indexOf(user.id)
@@ -200,7 +209,11 @@ export default {
         this.afterSave(whiteboard)
       }
       if (this.whiteboard) {
-        updateWhiteboard(this.title, this.selectedUsers, this.whiteboard.id).then(done)
+        updateWhiteboard(
+          this.title,
+          this.$_.map(this.selectedUsers, 'id'),
+          this.whiteboard.id
+        ).then(done)
       } else {
         createWhiteboard(this.title, this.selectedUsers).then(done)
       }
