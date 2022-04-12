@@ -48,29 +48,8 @@
         <font-awesome-icon color="grey" :icon="fitToScreen ? 'search-plus' : 'search-minus'" size="2x" />
       </v-btn>
       <AssetToolDialog />
-      <v-btn
-        id="toolbar-export"
-        class="mx-2"
-        color="white"
-        dense
-        elevation="1"
-        height="48px"
-        rounded
-      >
-        <span class="sr-only">Export</span>
-        <font-awesome-icon color="grey" icon="download" size="2x" />
-      </v-btn>
-      <v-btn
-        id="toolbar-settings"
-        color="white"
-        dense
-        elevation="1"
-        height="48px"
-        rounded
-      >
-        <span class="sr-only">Settings</span>
-        <font-awesome-icon color="grey" icon="cog" size="2x" />
-      </v-btn>
+      <ExportToolDialog />
+      <SettingsToolDialog />
     </v-toolbar>
   </v-card>
 </template>
@@ -79,7 +58,9 @@
 import AssetToolDialog from '@/components/whiteboards/toolbar/AssetToolDialog'
 import Context from '@/mixins/Context'
 import DrawToolDialog from '@/components/whiteboards/toolbar/DrawToolDialog'
+import ExportToolDialog from '@/components/whiteboards/toolbar/ExportToolDialog'
 import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
+import SettingsToolDialog from '@/components/whiteboards/toolbar/SettingsToolDialog'
 import ShapeToolDialog from '@/components/whiteboards/toolbar/ShapeToolDialog'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
@@ -89,6 +70,8 @@ export default {
   components: {
     AssetToolDialog,
     DrawToolDialog,
+    ExportToolDialog,
+    SettingsToolDialog,
     ShapeToolDialog,
     TextToolDialog
   },
