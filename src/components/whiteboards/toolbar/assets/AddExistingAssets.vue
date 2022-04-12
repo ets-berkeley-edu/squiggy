@@ -8,14 +8,13 @@
       <v-btn
         id="toolbar-add-existing-assets"
         class="justify-start w-100"
-        color="primary"
         :disabled="disableAll"
         text
         v-bind="attrs"
         v-on="on"
       >
         <font-awesome-icon icon="bars" size="2x" />
-        <span class="pl-2">Use existing</span>
+        <span class="pl-3">Use existing</span>
       </v-btn>
     </template>
     <v-card class="active-card">

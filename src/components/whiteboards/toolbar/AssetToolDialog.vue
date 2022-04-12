@@ -43,10 +43,10 @@
 </template>
 
 <script>
-import AddExistingAssets from '@/components/whiteboards/toolbar/AddExistingAssets'
-import AddLinkAsset from '@/components/whiteboards/toolbar/AddLinkAsset'
+import AddExistingAssets from '@/components/whiteboards/toolbar/assets/AddExistingAssets'
+import AddLinkAsset from '@/components/whiteboards/toolbar/assets/AddLinkAsset'
 import Whiteboarding from '@/mixins/Whiteboarding'
-import UploadNewAsset from '@/components/whiteboards/toolbar/UploadNewAsset'
+import UploadNewAsset from '@/components/whiteboards/toolbar/assets/UploadNewAsset'
 
 export default {
   name: 'AssetToolDialog',

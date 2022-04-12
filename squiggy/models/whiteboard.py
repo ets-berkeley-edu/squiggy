@@ -253,9 +253,10 @@ class Whiteboard(Base):
         return whiteboard
 
     @classmethod
-    def update(cls, whiteboard_id, title):
+    def update(cls, title, users, whiteboard_id):
         whiteboard = cls.find_by_id(whiteboard_id)
         whiteboard.title = title
+        whiteboard.users = users
         db.session.add(whiteboard)
         std_commit()
         return whiteboard

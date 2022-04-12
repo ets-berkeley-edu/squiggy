@@ -49,7 +49,7 @@
       </v-btn>
       <AssetToolDialog />
       <ExportToolDialog />
-      <SettingsToolDialog />
+      <EditWhiteboardDialog />
     </v-toolbar>
   </v-card>
 </template>
@@ -58,9 +58,9 @@
 import AssetToolDialog from '@/components/whiteboards/toolbar/AssetToolDialog'
 import Context from '@/mixins/Context'
 import DrawToolDialog from '@/components/whiteboards/toolbar/DrawToolDialog'
+import EditWhiteboardDialog from '@/components/whiteboards/toolbar/EditWhiteboardDialog'
 import ExportToolDialog from '@/components/whiteboards/toolbar/ExportToolDialog'
 import TextToolDialog from '@/components/whiteboards/toolbar/TextToolDialog'
-import SettingsToolDialog from '@/components/whiteboards/toolbar/SettingsToolDialog'
 import ShapeToolDialog from '@/components/whiteboards/toolbar/ShapeToolDialog'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
@@ -71,7 +71,7 @@ export default {
     AssetToolDialog,
     DrawToolDialog,
     ExportToolDialog,
-    SettingsToolDialog,
+    EditWhiteboardDialog,
     ShapeToolDialog,
     TextToolDialog
   },

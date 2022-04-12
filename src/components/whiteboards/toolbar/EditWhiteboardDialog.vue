@@ -1,9 +1,7 @@
 <template>
-  <v-menu
+  <v-dialog
     v-model="menu"
     :close-on-content-click="false"
-    offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -21,31 +19,25 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-title class="sr-only">
-        <h2 id="menu-header" class="sr-only">Export whiteboard to Asset Library</h2>
-      </v-card-title>
       <v-card-text>
-        <v-container class="pb-0 pt-7 text-body-1">
-          <v-row class="pb-2" no-gutters>
-            <v-col class="pt-2" cols="3">
-              <label>Foo</label>
-            </v-col>
-            <v-col cols="9">
-              TODO
-            </v-col>
-          </v-row>
-        </v-container>
+        <EditWhiteboard
+          :whiteboard="whiteboard"
+          :on-cancel="cancel"
+          :after-save="afterSave"
+        />
       </v-card-text>
     </v-card>
-  </v-menu>
+  </v-dialog>
 </template>
 
 <script>
+import EditWhiteboard from '@/components/whiteboards/EditWhiteboard'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'SettingsToolDialog',
+  name: 'EditWhiteboardDialog',
   mixins: [Whiteboarding],
+  components: {EditWhiteboard},
   data: () => ({
     menu: false
   }),
@@ -59,6 +51,16 @@ export default {
   },
   beforeDestroy() {
     this.setDisableAll(false)
+  },
+  methods: {
+    cancel() {
+      this.$announcer.polite('Canceled')
+      this.menu = false
+    },
+    afterSave(whiteboard) {
+      this.afterWhiteboardUpdate(whiteboard)
+      this.menu = false
+    }
   }
 }
 </script>
