@@ -44,6 +44,7 @@ export default {
       'deleteActiveElements',
       'init',
       'moveLayer',
+      'onWhiteboardUpdate',
       'ping',
       'resetSelected',
       'setDisableAll',

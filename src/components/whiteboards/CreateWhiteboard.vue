@@ -4,6 +4,7 @@
     <EditWhiteboard
       v-if="!isLoading"
       :on-cancel="cancel"
+      :on-ready="() => $ready('Create Whiteboard')"
       :after-save="() => go('/whiteboards')"
     />
   </div>

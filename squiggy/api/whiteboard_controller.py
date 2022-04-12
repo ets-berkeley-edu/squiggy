@@ -208,4 +208,4 @@ def update_whiteboard():
         title=title,
         users=User.find_by_ids(user_ids),
     )
-    return tolerant_jsonify(whiteboard.to_api_json(user_id=current_user.get_id()))
+    return tolerant_jsonify(whiteboard.to_api_json())

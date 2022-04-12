@@ -30,11 +30,11 @@ export default {
   }),
   created() {
     this.$loading()
-    this.init(this.$route.params.id).then(() => {
+    this.init(this.$route.params.id).then(whiteboard => {
       this.setDisableAll(false)
       clearTimeout(this.pingJob)
       this.pingJob = setTimeout(this.keepSocketAlive, 60000)
-      this.$ready()
+      this.$ready(`Whiteboard: ${whiteboard.title}`)
     })
   },
   destroyed() {

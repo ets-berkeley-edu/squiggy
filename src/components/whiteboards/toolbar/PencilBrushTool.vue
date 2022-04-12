@@ -61,7 +61,7 @@ import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'DrawToolDialog',
+  name: 'PencilBrushTool',
   components: {ColorPicker},
   mixins: [Whiteboarding],
   computed: {

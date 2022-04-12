@@ -45,7 +45,7 @@
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'ExportToolDialog',
+  name: 'ExportTool',
   mixins: [Whiteboarding],
   data: () => ({
     menu: false

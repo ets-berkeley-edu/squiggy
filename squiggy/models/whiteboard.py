@@ -254,7 +254,7 @@ class Whiteboard(Base):
 
     @classmethod
     def update(cls, title, users, whiteboard_id):
-        whiteboard = cls.find_by_id(whiteboard_id)
+        whiteboard = cls.query.filter_by(id=whiteboard_id).first()
         whiteboard.title = title
         whiteboard.users = users
         db.session.add(whiteboard)
