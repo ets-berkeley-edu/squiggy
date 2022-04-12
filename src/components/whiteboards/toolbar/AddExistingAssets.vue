@@ -1,25 +1,26 @@
 <template>
   <v-dialog
     v-model="dialog"
-    fullscreen
-    hide-overlay
     scrollable
     transition="dialog-bottom-transition"
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-add-existing-assets"
+        class="justify-start w-100"
+        color="primary"
         :disabled="disableAll"
+        text
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="bars" />
+        <font-awesome-icon icon="bars" size="2x" />
         <span class="pl-2">Use existing</span>
       </v-btn>
     </template>
     <v-card class="active-card">
       <v-card-title class="pb-1">
-        <h2 id="modal-header" class="title">Add Asset(s)</h2>
+        <h2 id="modal-header" class="title">Select Asset(s)</h2>
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text v-if="isDialogReady">

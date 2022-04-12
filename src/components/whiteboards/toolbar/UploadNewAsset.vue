@@ -1,18 +1,19 @@
 <template>
-  <v-menu
+  <v-dialog
     v-model="menu"
     :close-on-content-click="false"
-    offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-upload-new-asset"
+        class="justify-start w-100"
+        color="primary"
         :disabled="disableAll"
+        text
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="laptop" />
+        <font-awesome-icon icon="laptop" size="2x" />
         <span class="pl-2">Upload New</span>
       </v-btn>
     </template>
@@ -143,7 +144,7 @@
         </v-form>
       </v-card-text>
     </v-card>
-  </v-menu>
+  </v-dialog>
 </template>
 
 <script>

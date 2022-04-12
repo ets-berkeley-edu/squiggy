@@ -1,14 +1,14 @@
 <template>
   <v-menu
     v-model="menu"
-    :close-on-content-click="false"
+    close-on-content-click
     offset-y
     top
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-add-asset"
-        color="white"
+        :color="menu ? 'primary' : 'white'"
         dense
         :disabled="disableAll"
         height="48px"
@@ -16,17 +16,28 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon :color="menu ? 'black' : 'grey'" icon="circle-plus" size="2x" />
+        <font-awesome-icon :color="menu ? 'white' : 'grey'" icon="circle-plus" size="2x" />
         <span class="pl-2">Asset</span>
       </v-btn>
     </template>
     <v-card>
-      <v-card-text>
-        <h2 class="sr-only">Choose asset(s) to upload</h2>
-        <AddExistingAssets />
-        <UploadNewAsset />
-        <AddLinkAsset />
-      </v-card-text>
+      <v-list>
+        <v-list-item>
+          <v-list-item-action class="mr-0 w-100">
+            <AddExistingAssets />
+          </v-list-item-action>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-action class="mr-0 w-100">
+            <UploadNewAsset />
+          </v-list-item-action>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-action class="mr-0 w-100">
+            <AddLinkAsset />
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
     </v-card>
   </v-menu>
 </template>
@@ -42,7 +53,8 @@ export default {
   mixins: [Whiteboarding],
   components: {AddExistingAssets, AddLinkAsset, UploadNewAsset},
   data: () => ({
-    menu: false
+    menu: false,
+    toggle: false
   })
 }
 </script>

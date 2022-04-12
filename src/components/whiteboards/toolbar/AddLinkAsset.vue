@@ -1,18 +1,19 @@
 <template>
-  <v-menu
+  <v-dialog
     v-model="menu"
     :close-on-content-click="false"
-    offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-asset-add-link"
+        class="justify-start w-100"
+        color="primary"
         :disabled="disableAll"
+        text
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="chain" />
+        <font-awesome-icon icon="chain" size="2x" />
         <span class="pl-2">Add Link</span>
       </v-btn>
     </template>
@@ -128,7 +129,7 @@
         </v-container>
       </v-card-text>
     </v-card>
-  </v-menu>
+  </v-dialog>
 </template>
 
 <script>
@@ -152,6 +153,7 @@ export default {
   }),
   methods: {
     onClickCancel() {
+      this.menu = false
       this.$announcer.polite('Canceled')
     },
     onClickSave() {
