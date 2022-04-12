@@ -1,0 +1,210 @@
+<template>
+  <v-container fluid>
+    <v-row no-gutters>
+      <v-col>
+        <PageTitle :text="whiteboard ? 'Update whiteboard' : 'Create a new whiteboard'" />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col class="pt-5" cols="2">
+        <label class="float-right" for="whiteboard-title-input">
+          Title
+          <font-awesome-icon
+            aria-label="Icon indicates required field"
+            class="deep-orange--text icon-denotes-required"
+            icon="asterisk"
+            size="xs"
+          />
+        </label>
+      </v-col>
+      <v-col cols="10">
+        <v-text-field
+          id="whiteboard-title-input"
+          v-model="title"
+          maxlength="255"
+          outlined
+          required
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col class="pt-5" cols="2">
+        <label class="float-right" for="whiteboard-description-textarea">Collaborators</label>
+      </v-col>
+      <v-col cols="10">
+        <v-autocomplete
+          id="selectedUsers-select"
+          v-model="selectedUsers"
+          chips
+          color="blue-grey lighten-2"
+          :disabled="isUpdating"
+          filled
+          item-text="name"
+          item-value="id"
+          :items="users"
+          multiple
+        >
+          <template #selection="data">
+            <v-chip
+              v-bind="data.attrs"
+              :input-value="data.selected"
+              close
+              @click="data.select"
+              @click:close="remove(data.item)"
+            >
+              <v-avatar left>
+                <v-img :src="data.item.avatar"></v-img>
+              </v-avatar>
+              {{ data.item.name }}
+            </v-chip>
+          </template>
+          <template #item="data">
+            <template v-if="typeof data.item !== 'object'">
+              <v-list-item-content v-text="data.item"></v-list-item-content>
+            </template>
+            <template v-else>
+              <v-list-item-avatar>
+                <img :aria-label="`Photo of ${data.item.name}`" :src="data.item.avatar" />
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title v-html="data.item.name"></v-list-item-title>
+                <v-list-item-subtitle v-html="data.item.group"></v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
+          </template>
+        </v-autocomplete>
+      </v-col>
+    </v-row>
+    <v-row no-gutters>
+      <v-col>
+        <div class="d-flex justify-end pt-5 w-100">
+          <div class="pr-2">
+            <v-btn
+              id="save-btn"
+              color="primary"
+              :disabled="disableSave || isSaving"
+              @click="save"
+              @keypress.enter="save"
+            >
+              Create Whiteboard
+            </v-btn>
+          </div>
+          <div>
+            <v-btn
+              id="cancel-btn"
+              :disabled="isSaving"
+              text
+              @click="onCancel"
+              @keypress.enter="cancel"
+            >
+              Cancel
+            </v-btn>
+          </div>
+        </div>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import Context from '@/mixins/Context'
+import PageTitle from '@/components/util/PageTitle'
+import Utils from '@/mixins/Utils'
+import {createWhiteboard, updateWhiteboard} from '@/api/whiteboards'
+import {getUsers} from '@/api/users'
+
+export default {
+  name: 'EditWhiteboard',
+  components: {PageTitle},
+  mixins: [Context, Utils],
+  props: {
+    afterSave: {
+      required: true,
+      type: Function
+    },
+    onCancel: {
+      required: true,
+      type: Function
+    },
+    whiteboard: {
+      default: undefined,
+      required: false,
+      type: Object
+    }
+  },
+  data: () => ({
+    isSaving: false,
+    isUpdating: false,
+    selectedUsers: undefined,
+    title: undefined,
+    users: undefined
+  }),
+  computed: {
+    disableSave() {
+      return !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUsers)
+    }
+  },
+  watch: {
+    isUpdating(val) {
+      if (val) {
+        setTimeout(() => (this.isUpdating = false), 3000)
+      }
+    }
+  },
+  created() {
+    this.selectedUsers = this.whiteboard ? this.whiteboard.users : [this.$currentUser.id]
+    getUsers().then(this.init)
+  },
+  methods: {
+    init(data) {
+      const usersBySection = {}
+      const usersOther = []
+      const getUserJson = u => ({
+        avatar: u.canvasImage,
+        id: u.id,
+        name: u.canvasFullName
+      })
+      this.$_.each(data, user => {
+        const sections = user.canvasCourseSections
+        const userJson = getUserJson(user)
+        if (this.$_.size(sections)) {
+          this.$_.each(sections, section => {
+            if (!usersBySection[section]) {
+              usersBySection[section] = []
+            }
+            usersBySection[section] = userJson
+          })
+        } else {
+          usersOther.push(userJson)
+        }
+      })
+      this.users = []
+      this.$_.each(usersBySection, (userList, section) => {
+        this.users.push({header: section})
+        this.users.concat(userList)
+      })
+      this.users = this.users.concat(usersOther)
+      this.$ready(`${this.whiteboard ? 'Update' : 'Create'} Whiteboard'`)
+    },
+    remove(user) {
+      const index = this.selectedUsers.indexOf(user.id)
+      if (index >= 0) {
+        this.selectedUsers.splice(index, 1)
+      }
+    },
+    save() {
+      this.isSaving = true
+      const done = whiteboard => {
+        this.$announcer.polite(`Whiteboard ${this.whiteboard ? 'updated' : 'created'}.`)
+        this.isSaving = false
+        this.afterSave(whiteboard)
+      }
+      if (this.whiteboard) {
+        updateWhiteboard(this.title, this.selectedUsers, this.whiteboard.id).then(done)
+      } else {
+        createWhiteboard(this.title, this.selectedUsers).then(done)
+      }
+    }
+  }
+}
+</script>

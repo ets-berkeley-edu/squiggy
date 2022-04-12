@@ -15,6 +15,7 @@ import BookmarkletStep1 from '@/components/bookmarklet/BookmarkletStep1.vue'
 import BookmarkletStep2 from '@/components/bookmarklet/BookmarkletStep2.vue'
 import BookmarkletStep3 from '@/components/bookmarklet/BookmarkletStep3.vue'
 import BookmarkletStep4 from '@/components/bookmarklet/BookmarkletStep4.vue'
+import CreateWhiteboard from '@/components/whiteboards/CreateWhiteboard.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
 import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
@@ -26,7 +27,6 @@ import Router from 'vue-router'
 import Squiggy from '@/components/Squiggy.vue'
 import store from '@/store'
 import Vue from 'vue'
-import WhiteboardCreate from '@/components/whiteboards/WhiteboardCreate.vue'
 import Whiteboard from '@/components/whiteboards/Whiteboard.vue'
 import Whiteboards from '@/components/whiteboards/Whiteboards.vue'
 
@@ -154,7 +154,7 @@ const router = new Router({
         },
         {
           path: '/whiteboard/create',
-          component: WhiteboardCreate,
+          component: CreateWhiteboard,
           meta: {
             title: 'Create Whiteboard'
           }

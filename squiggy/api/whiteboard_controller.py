@@ -165,9 +165,6 @@ def create_whiteboard():
     params = request.get_json() or request.form
     title = params.get('title')
     user_ids = params.get('userIds')
-    if not title or not user_ids:
-        raise BadRequestError('Title is required.')
-
     whiteboard = Whiteboard.create(
         course_id=current_user.course.id,
         title=title,
@@ -197,6 +194,7 @@ def update_whiteboard():
     params = request.get_json()
     whiteboard_id = params.get('whiteboardId')
     title = params.get('title')
+    user_ids = params.get('userIds')
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
@@ -205,5 +203,9 @@ def update_whiteboard():
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
 
-    whiteboard = Whiteboard.update(whiteboard_id=whiteboard_id, title=title)
+    whiteboard = Whiteboard.update(
+        whiteboard_id=whiteboard_id,
+        title=title,
+        users=User.find_by_ids(user_ids),
+    )
     return tolerant_jsonify(whiteboard.to_api_json(user_id=current_user.get_id()))
