@@ -184,7 +184,7 @@ export default {
             }
             usersBySection[section] = userJson
           })
-        } else {
+        } else if (user.canvasCourseRole) {
           usersOther.push(userJson)
         }
       })
