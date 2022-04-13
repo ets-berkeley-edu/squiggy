@@ -1,3 +1,4 @@
+
 <template>
   <div v-if="!isLoading">
     <BackToAssetLibrary anchor="assets-container" />
@@ -195,28 +196,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.file-upload-box {
-  background-color: #F7F7F7;
-  border: 1px solid #E0E0E0;
-  border-radius: 4px;
-  display: table;
-  height: 280px;
-  margin-bottom: 10px;
-  padding-left: 10%;
-  padding-right: 10%;
-  padding-top: 40px;
-  text-align: center;
-  width: 100%;
-}
-.file-upload-box-text {
-  font-size: 20px;
-  line-height: 24px;
-  margin: 10px;
-}
-.file-upload-box-icon {
-  color: #747474;
-  font-size: 48px;
-}
-</style>

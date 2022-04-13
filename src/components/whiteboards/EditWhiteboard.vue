@@ -35,15 +35,22 @@
         </v-col>
         <v-col cols="10">
           <v-autocomplete
-            id="selectedUserIds-select"
+            id="whiteboard-users-select"
             v-model="selectedUserIds"
             chips
+            clearable
             color="blue-grey lighten-2"
             :disabled="isSaving"
+            :error="!selectedUserIds.length"
             filled
+            hide-selected
             item-text="name"
             item-value="id"
             :items="users"
+            :menu-props="{
+              closeOnClick: true,
+              closeOnContentClick: true
+            }"
             multiple
           >
             <template #selection="data">
@@ -73,6 +80,11 @@
                   <v-list-item-subtitle v-html="data.item.group"></v-list-item-subtitle>
                 </v-list-item-content>
               </template>
+            </template>
+            <template #no-data>
+              <div class="grey--text pl-5 py-2">
+                {{ selectedUserIds.length ? 'No more eligible users.' : 'No eligible users.' }}
+              </div>
             </template>
           </v-autocomplete>
         </v-col>
@@ -150,7 +162,7 @@ export default {
   data: () => ({
     isInputValid: false,
     isSaving: false,
-    selectedUserIds: undefined,
+    selectedUserIds: [],
     title: undefined,
     titleRules: [
       v => !!v || 'Please enter a title',
