@@ -88,6 +88,10 @@ export default {
       }
     }
   },
+  created() {
+    // Initialize values in the Vuex store.
+    this.setShapeStyle(this.shapeStyle)
+  },
   beforeDestroy() {
     this.resetSelected()
     this.setDisableAll(false)

@@ -28,6 +28,7 @@ from squiggy.api.api_whiteboard_util import create_whiteboard_elements, delete_w
     join_whiteboard, leave_whiteboard, update_updated_at, update_whiteboard, update_whiteboard_elements
 from squiggy.lib.login_session import LoginSession
 from squiggy.models.user import User
+from squiggy.models.whiteboard import Whiteboard
 
 
 def register_sockets(socketio):
@@ -45,6 +46,7 @@ def register_sockets(socketio):
         emit(
             'join',
             {
+                'activeCollaborators': Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id),
                 'socketId': socket_id,
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,
@@ -64,6 +66,7 @@ def register_sockets(socketio):
         emit(
             'leave',
             {
+                'activeCollaborators': Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id),
                 'socketId': socket_id,
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,

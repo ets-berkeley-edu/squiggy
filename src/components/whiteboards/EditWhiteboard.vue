@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-row no-gutters>
-      <v-col>
+      <v-col class="pb-3">
         <PageTitle :text="whiteboard ? 'Update whiteboard' : 'Create a new whiteboard'" />
       </v-col>
     </v-row>
@@ -21,6 +21,7 @@
         <v-text-field
           id="whiteboard-title-input"
           v-model="title"
+          hide-details
           maxlength="255"
           outlined
           required
@@ -33,8 +34,8 @@
       </v-col>
       <v-col cols="10">
         <v-autocomplete
-          id="selectedUsers-select"
-          v-model="selectedUsers"
+          id="selectedUserIds-select"
+          v-model="selectedUserIds"
           chips
           color="blue-grey lighten-2"
           :disabled="isSaving"
@@ -77,7 +78,7 @@
     </v-row>
     <v-row no-gutters>
       <v-col>
-        <div class="d-flex justify-end pt-5 w-100">
+        <div class="d-flex justify-end pt-3 w-100">
           <div class="pr-2">
             <v-btn
               id="save-btn"
@@ -146,21 +147,21 @@ export default {
   },
   data: () => ({
     isSaving: false,
-    selectedUsers: undefined,
+    selectedUserIds: undefined,
     title: undefined,
     users: undefined
   }),
   computed: {
     disableSave() {
-      return this.isSaving || !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUsers)
+      return this.isSaving || !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUserIds)
     }
   },
   created() {
     if (this.whiteboard) {
-      this.selectedUsers = this.whiteboard.users
+      this.selectedUserIds = this.$_.map(this.whiteboard.users, 'id')
       this.title = this.whiteboard.title
     } else {
-      this.selectedUsers = [this.$currentUser.id]
+      this.selectedUserIds = [this.$currentUser.id]
     }
     getUsers().then(this.init)
   },
@@ -196,9 +197,9 @@ export default {
       this.onReady()
     },
     remove(user) {
-      const index = this.selectedUsers.indexOf(user.id)
+      const index = this.selectedUserIds.indexOf(user.id)
       if (index >= 0) {
-        this.selectedUsers.splice(index, 1)
+        this.selectedUserIds.splice(index, 1)
       }
     },
     save() {
@@ -211,11 +212,11 @@ export default {
       if (this.whiteboard) {
         updateWhiteboard(
           this.title,
-          this.$_.map(this.selectedUsers, 'id'),
+          this.$_.map(this.selectedUserIds, 'id'),
           this.whiteboard.id
         ).then(done)
       } else {
-        createWhiteboard(this.title, this.selectedUsers).then(done)
+        createWhiteboard(this.title, this.selectedUserIds).then(done)
       }
     }
   }

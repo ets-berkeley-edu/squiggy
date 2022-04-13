@@ -102,6 +102,13 @@ export default {
   name: 'AddExistingAssets',
   components: {AssetCard, AssetsHeader, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils, Whiteboarding],
+  props: {
+    watchDialog: {
+      default: () => {},
+      required: false,
+      type: Function
+    }
+  },
   data: () => ({
     dialog: false,
     isComplete: false,
@@ -143,6 +150,7 @@ export default {
       } else {
         this.cancel()
       }
+      this.watchDialog(value)
     }
   },
   methods: {
@@ -189,7 +197,6 @@ export default {
   left:0;
   position:fixed;
   top:0;
-  width:100%;
 }
 .asset-checkbox-label {
   max-width: 240px;

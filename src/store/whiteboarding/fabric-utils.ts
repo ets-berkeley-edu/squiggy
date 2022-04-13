@@ -79,8 +79,7 @@ export function enableCanvasElements(enabled: boolean) {
 
 export function initFabricCanvas(state: any, whiteboard: any) {
   if (!whiteboard.deletedAt) {
-    $_initSocket(whiteboard)
-    p.$socket.emit('join', $_getUserSession(state))
+    $_initSocket(state, whiteboard)
     $_addSocketListeners(state)
   }
   // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
@@ -137,7 +136,11 @@ export function onWhiteboardUpdate(state: any, whiteboard: any) {
 }
 
 export function ping(state: any) {
-  p.$socket.emit('ping', $_getUserSession(state), (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators))
+  p.$socket.emit(
+    'ping',
+    $_getUserSession(state),
+    (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators),
+  )
 }
 
 export function setCanvasDimensions(state: any) {
@@ -429,19 +432,19 @@ const $_addSocketListeners = (state: any) => {
   window.onunload = onWindowClose
 
   p.$socket.on('join', (data: any) => {
-    if (data.socketId !== p.$socket.id) {
+    if ($_isSocketCallbackRelevant(data, state)) {
       store.dispatch('whiteboarding/setActiveCollaborators', data.activeCollaborators)
     }
   })
   p.$socket.on('leave', (data: any) => {
-    if (data.socketId !== p.$socket.id) {
+    if ($_isSocketCallbackRelevant(data, state)) {
       store.dispatch('whiteboarding/setActiveCollaborators', data.activeCollaborators)
     }
   })
 
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('update_whiteboard', (data: any) => {
-    if (data.socketId !== p.$socket.id) {
+    if ($_isSocketCallbackRelevant(data, state)) {
       _.assignIn(state.whiteboard, data.whiteboard)
     }
   })
@@ -449,7 +452,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on(
     'update_whiteboard_elements',
     (data: any) => {
-      if (data.socketId !== p.$socket.id) {
+      if ($_isSocketCallbackRelevant(data, state)) {
         const elements = data.whiteboardElements
         // Deactivate the current group if any of the updated elements are in the current group
         $_deactiveActiveGroupIfOverlap(elements)
@@ -466,7 +469,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on(
     'add',
     (data: any) => {
-      if (data.socketId !== p.$socket.id) {
+      if ($_isSocketCallbackRelevant(data, state)) {
         _.each(data.whiteboardElements, (element: any) => {
           const callback = (e: any) => {
             // Add the element to the whiteboard canvas and move it to its appropriate index
@@ -485,7 +488,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on(
     'delete',
     (data: any) => {
-      if (data.socketId !== p.$socket.id) {
+      if ($_isSocketCallbackRelevant(data, state)) {
         // Deactivate the current group if any of the deleted elements are in the current group
         const elements = data.whiteboardElements
         $_deactiveActiveGroupIfOverlap(elements)
@@ -505,30 +508,33 @@ const $_addSocketListeners = (state: any) => {
 
 const $_addViewportListeners = (state: any) => {
   // Detect keydown events in the whiteboard to respond to keyboard shortcuts
-  document.addEventListener('keydown', (event: any) => {
-    if (!state.disableAll) {
-      if (event.keyCode === 8 || event.keyCode === 46) {
-        // Delete or backspace
-        deleteActiveElements(state)
-        event.preventDefault()
-      } else if (event.keyCode === 67 && event.metaKey) {
-        // Copy
-        const activeObjects = p.$canvas.getActiveObjects()
-        const clones: any[] = []
-        _.each(activeObjects, (object: any, index: number) => {
-          object.clone((clone: any) => {
-            clones.push(clone)
-            if (index === activeObjects.length - 1) {
-              store.dispatch('whiteboarding/setClipboard', clones)
-            }
+  const element = document.getElementById('whiteboard-viewport')
+  if (element) {
+    element.addEventListener('keydown', (event: any) => {
+      if (!state.disableAll) {
+        if (event.keyCode === 8 || event.keyCode === 46) {
+          // Delete or backspace
+          deleteActiveElements(state)
+          event.preventDefault()
+        } else if (event.keyCode === 67 && event.metaKey) {
+          // Copy
+          const activeObjects = p.$canvas.getActiveObjects()
+          const clones: any[] = []
+          _.each(activeObjects, (object: any, index: number) => {
+            object.clone((clone: any) => {
+              clones.push(clone)
+              if (index === activeObjects.length - 1) {
+                store.dispatch('whiteboarding/setClipboard', clones)
+              }
+            })
           })
-        })
-      } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
-        // Paste
-        $_paste(state)
+        } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
+          // Paste
+          $_paste(state)
+        }
       }
-    }
-  }, false)
+    }, false)
+  }
 }
 
 const $_calculateGlobalElementPosition = (selection: any, element: any): any => {
@@ -662,11 +668,11 @@ const $_getCanvasElement = (uuid: string) => {
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
 const $_getUserSession = (state: any) => {
-  return _.assignIn(p.$currentUser, {
+  return {
     socketId: p.$socket.id,
     userId: p.$currentUser.id,
     whiteboardId: state.whiteboard.id
-  })
+  }
 }
 
 const $_initCanvas = (state: any) => {
@@ -743,13 +749,16 @@ const $_initFabricPrototypes = (state: any) => {
   window.addEventListener('resize', () => setCanvasDimensions(state))
 }
 
-const $_initSocket = (whiteboard: any) => {
+const $_initSocket = (state: any, whiteboard: any) => {
   Vue.prototype.$socket = io(apiUtils.apiBaseUrl(), {
     query: {
       whiteboardId: whiteboard.id
     }
   })
+  p.$socket.on('connect', () => p.$socket.emit('join', $_getUserSession(state)))
 }
+
+const $_isSocketCallbackRelevant = (data: any, state: any) => (data.socketId !== p.$socket.id && data.whiteboardId === state.whiteboard.id)
 
 const $_paste = (state: any): void => {
   const elements: any[] = []

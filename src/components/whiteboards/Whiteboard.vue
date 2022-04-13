@@ -1,11 +1,12 @@
 <template>
   <v-app>
     <div v-if="!isLoading">
-      <ActiveCollaborators v-if="activeCollaborators" />
+      <ActiveCollaborators />
       <EditActiveFabricObject />
     </div>
     <v-main id="whiteboard-container" class="whiteboard-container">
-      <div id="whiteboard-viewport" class="whiteboard-viewport">
+      <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
+      <div id="whiteboard-viewport" class="whiteboard-viewport" tabindex="0">
         <canvas id="canvas"></canvas>
       </div>
       <Toolbar />

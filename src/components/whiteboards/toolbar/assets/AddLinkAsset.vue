@@ -1,13 +1,13 @@
 <template>
   <v-dialog
-    v-model="menu"
+    v-model="dialog"
     :close-on-content-click="false"
+    width="500"
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-asset-add-link"
         class="justify-start w-100"
-        color="primary"
         :disabled="disableAll"
         text
         v-bind="attrs"
@@ -18,10 +18,10 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-text class="pt-8">
+      <v-card-text class="pl-8 pt-8">
         <v-container fluid>
           <v-row>
-            <v-col cols="2">
+            <v-col class="pt-5" cols="2">
               <h2 id="modal-header" class="sr-only">Choose the type of asset you want to upload</h2>
               <label class="float-right" for="asset-url-input">
                 URL
@@ -44,7 +44,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="2">
+            <v-col class="pt-5" cols="2">
               <label class="float-right" for="asset-title-input">
                 Title
                 <font-awesome-icon
@@ -66,7 +66,7 @@
             </v-col>
           </v-row>
           <v-row v-if="categories.length">
-            <v-col cols="2">
+            <v-col class="pt-5" cols="2">
               <label class="float-right" for="asset-category-select">Category</label>
             </v-col>
             <v-col cols="10">
@@ -82,7 +82,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="2">
+            <v-col class="pt-5" cols="2">
               <label class="float-right" for="asset-description-textarea">Description</label>
             </v-col>
             <v-col cols="10">
@@ -101,7 +101,7 @@
           </v-row>
           <v-row no-gutters>
             <v-col class="d-flex justify-end pt-5">
-              <div>
+              <div class="pr-1">
                 <v-btn
                   id="save-btn"
                   color="primary"
@@ -141,6 +141,13 @@ export default {
   name: 'AddLinkAsset',
   mixins: [Whiteboarding],
   components: {AccessibleSelect},
+  props: {
+    watchDialog: {
+      default: () => {},
+      required: false,
+      type: Function
+    }
+  },
   data: () => ({
     asset: {
       categoryId: undefined,
@@ -149,11 +156,16 @@ export default {
       url: undefined
     },
     isSaving: false,
-    menu: false
+    dialog: false
   }),
+  watch: {
+    dialog(value) {
+      this.watchDialog(value)
+    }
+  },
   methods: {
     onClickCancel() {
-      this.menu = false
+      this.dialog = false
       this.$announcer.polite('Canceled')
     },
     onClickSave() {
@@ -173,7 +185,7 @@ export default {
             title: undefined,
             url: undefined
           }
-          this.menu = false
+          this.dialog = false
           this.isSaving = false
         })
       })
