@@ -116,7 +116,10 @@ const mutations = {
   resetSelected: (state: any) => state.selected = {},
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
-  setActiveCollaborators: (state: any, activeCollaborators: any[]) => state.activeCollaborators = activeCollaborators,
+  setActiveCollaborators: (state: any, activeCollaborators: any[]) => {
+    console.log(`activeCollaborators: ${activeCollaborators}`)
+    state.activeCollaborators = activeCollaborators
+  },
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,

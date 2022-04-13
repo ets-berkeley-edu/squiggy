@@ -24,17 +24,17 @@
       <v-list>
         <v-list-item>
           <v-list-item-action class="mr-0 w-100">
-            <AddExistingAssets />
+            <AddExistingAssets :watch-dialog="watchChildDialog" />
           </v-list-item-action>
         </v-list-item>
         <v-list-item>
           <v-list-item-action class="mr-0 w-100">
-            <UploadNewAsset />
+            <UploadNewAsset :watch-dialog="watchChildDialog" />
           </v-list-item-action>
         </v-list-item>
         <v-list-item>
           <v-list-item-action class="mr-0 w-100">
-            <AddLinkAsset />
+            <AddLinkAsset :watch-dialog="watchChildDialog" />
           </v-list-item-action>
         </v-list-item>
       </v-list>
@@ -55,6 +55,14 @@ export default {
   data: () => ({
     menu: false,
     toggle: false
-  })
+  }),
+  methods: {
+    watchChildDialog(isOpen) {
+      if (isOpen) {
+        // If secondary dialog is opening then close this menu.
+        this.menu = false
+      }
+    }
+  }
 }
 </script>

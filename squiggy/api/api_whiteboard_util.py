@@ -103,7 +103,6 @@ def leave_whiteboard(socket_id, user, whiteboard_id):
         raise ResourceNotFoundError('Whiteboard not found.')
     leave_room(whiteboard)
     WhiteboardSession.delete(socket_id)
-    return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard.id)
 
 
 def update_updated_at(socket_id, user_id, whiteboard_id):

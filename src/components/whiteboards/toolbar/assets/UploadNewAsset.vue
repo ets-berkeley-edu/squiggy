@@ -1,13 +1,12 @@
 <template>
   <v-dialog
-    v-model="menu"
+    v-model="dialog"
     :close-on-content-click="false"
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-upload-new-asset"
         class="justify-start w-100"
-        color="primary"
         :disabled="disableAll"
         text
         v-bind="attrs"
@@ -159,6 +158,13 @@ export default {
   name: 'UploadNewAsset',
   components: {AccessibleSelect, Alert},
   mixins: [Context, Utils, Whiteboarding],
+  props: {
+    watchDialog: {
+      default: () => {},
+      required: false,
+      type: Function
+    }
+  },
   data() {
     return {
       alert: undefined,
@@ -167,13 +173,18 @@ export default {
       file: undefined,
       fileAssetValid: false,
       isSaving: false,
-      menu: false,
+      dialog: false,
       title: '',
       titleRules: [
         v => !!this.$_.trim(v) || 'Please enter a title',
         v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
       ],
       uploading: false
+    }
+  },
+  watch: {
+    dialog(value) {
+      this.watchDialog(value)
     }
   },
   methods: {
@@ -204,7 +215,7 @@ export default {
         createFileAsset(this.categoryId, this.description, this.title, this.file).then(asset => {
           this.addAsset(asset).then(() => {
             this.$announcer.polite('File uploaded. Asset created.')
-            this.menu = false
+            this.dialog = false
             this.isSaving = false
           })
         })
