@@ -1,118 +1,120 @@
 <template>
-  <v-container fluid>
-    <v-row no-gutters>
-      <v-col class="pb-3">
-        <PageTitle :text="whiteboard ? 'Update whiteboard' : 'Create a new whiteboard'" />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col class="pt-5" cols="2">
-        <label class="float-right" for="whiteboard-title-input">
-          Title
-          <font-awesome-icon
-            aria-label="Icon indicates required field"
-            class="deep-orange--text icon-denotes-required"
-            icon="asterisk"
-            size="xs"
+  <v-form v-model="isInputValid" @submit="save">
+    <v-container fluid>
+      <v-row no-gutters>
+        <v-col class="pb-3">
+          <PageTitle :text="whiteboard ? 'Update whiteboard' : 'Create a new whiteboard'" />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col class="pt-5" cols="2">
+          <label class="float-right" for="whiteboard-title-input">
+            Title
+            <font-awesome-icon
+              aria-label="Icon indicates required field"
+              class="deep-orange--text icon-denotes-required"
+              icon="asterisk"
+              size="xs"
+            />
+          </label>
+        </v-col>
+        <v-col cols="10">
+          <v-text-field
+            id="whiteboard-title-input"
+            v-model="title"
+            outlined
+            required
+            :rules="titleRules"
+            @keydown.enter="submit"
           />
-        </label>
-      </v-col>
-      <v-col cols="10">
-        <v-text-field
-          id="whiteboard-title-input"
-          v-model="title"
-          hide-details
-          maxlength="255"
-          outlined
-          required
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col class="pt-5" cols="2">
-        <label class="float-right" for="whiteboard-description-textarea">Collaborators</label>
-      </v-col>
-      <v-col cols="10">
-        <v-autocomplete
-          id="selectedUserIds-select"
-          v-model="selectedUserIds"
-          chips
-          color="blue-grey lighten-2"
-          :disabled="isSaving"
-          filled
-          item-text="name"
-          item-value="id"
-          :items="users"
-          multiple
-        >
-          <template #selection="data">
-            <v-chip
-              v-bind="data.attrs"
-              :input-value="data.selected"
-              close
-              @click="data.select"
-              @click:close="remove(data.item)"
-            >
-              <v-avatar left>
-                <v-img :src="data.item.avatar"></v-img>
-              </v-avatar>
-              {{ data.item.name }}
-            </v-chip>
-          </template>
-          <template #item="data">
-            <template v-if="typeof data.item !== 'object'">
-              <v-list-item-content v-text="data.item"></v-list-item-content>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col class="pt-5" cols="2">
+          <label class="float-right" for="whiteboard-description-textarea">Collaborators</label>
+        </v-col>
+        <v-col cols="10">
+          <v-autocomplete
+            id="selectedUserIds-select"
+            v-model="selectedUserIds"
+            chips
+            color="blue-grey lighten-2"
+            :disabled="isSaving"
+            filled
+            item-text="name"
+            item-value="id"
+            :items="users"
+            multiple
+          >
+            <template #selection="data">
+              <v-chip
+                v-bind="data.attrs"
+                :input-value="data.selected"
+                close
+                @click="data.select"
+                @click:close="remove(data.item)"
+              >
+                <v-avatar left>
+                  <v-img :src="data.item.avatar"></v-img>
+                </v-avatar>
+                {{ data.item.name }}
+              </v-chip>
             </template>
-            <template v-else>
-              <v-list-item-avatar>
-                <img :aria-label="`Photo of ${data.item.name}`" :src="data.item.avatar" />
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title v-html="data.item.name"></v-list-item-title>
-                <v-list-item-subtitle v-html="data.item.group"></v-list-item-subtitle>
-              </v-list-item-content>
+            <template #item="data">
+              <template v-if="typeof data.item !== 'object'">
+                <v-list-item-content v-text="data.item"></v-list-item-content>
+              </template>
+              <template v-else>
+                <v-list-item-avatar>
+                  <img :aria-label="`Photo of ${data.item.name}`" :src="data.item.avatar" />
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title v-html="data.item.name"></v-list-item-title>
+                  <v-list-item-subtitle v-html="data.item.group"></v-list-item-subtitle>
+                </v-list-item-content>
+              </template>
             </template>
-          </template>
-        </v-autocomplete>
-      </v-col>
-    </v-row>
-    <v-row no-gutters>
-      <v-col>
-        <div class="d-flex justify-end pt-3 w-100">
-          <div class="pr-2">
-            <v-btn
-              id="save-btn"
-              color="primary"
-              :disabled="disableSave"
-              @click="save"
-              @keypress.enter="save"
-            >
-              <font-awesome-icon
-                v-if="isSaving"
-                class="mr-2"
-                icon="spinner"
-                :spin="true"
-              />
-              <span v-if="isSaving">Saving...</span>
-              <span v-if="!isSaving && whiteboard">Update</span>
-              <span v-if="!isSaving && !whiteboard">Create</span>
-            </v-btn>
+          </v-autocomplete>
+        </v-col>
+      </v-row>
+      <v-row no-gutters>
+        <v-col>
+          <div class="d-flex justify-end pt-3 w-100">
+            <div class="pr-2">
+              <v-btn
+                id="save-btn"
+                color="primary"
+                :disabled="disableSave"
+                @click="save"
+                @keypress.enter="save"
+              >
+                <font-awesome-icon
+                  v-if="isSaving"
+                  class="mr-2"
+                  icon="spinner"
+                  :spin="true"
+                />
+                <span v-if="isSaving">Saving...</span>
+                <span v-if="!isSaving && whiteboard">Update</span>
+                <span v-if="!isSaving && !whiteboard">Create</span>
+              </v-btn>
+            </div>
+            <div>
+              <v-btn
+                id="cancel-btn"
+                :disabled="isSaving"
+                text
+                @click="onCancel"
+                @keypress.enter="cancel"
+              >
+                Cancel
+              </v-btn>
+            </div>
           </div>
-          <div>
-            <v-btn
-              id="cancel-btn"
-              :disabled="isSaving"
-              text
-              @click="onCancel"
-              @keypress.enter="cancel"
-            >
-              Cancel
-            </v-btn>
-          </div>
-        </div>
-      </v-col>
-    </v-row>
-  </v-container>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-form>
 </template>
 
 <script>
@@ -146,14 +148,19 @@ export default {
     }
   },
   data: () => ({
+    isInputValid: false,
     isSaving: false,
     selectedUserIds: undefined,
     title: undefined,
+    titleRules: [
+      v => !!v || 'Please enter a title',
+      v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
+    ],
     users: undefined
   }),
   computed: {
     disableSave() {
-      return this.isSaving || !this.$_.trim(this.title || '') || !this.$_.size(this.selectedUserIds)
+      return this.isSaving || !this.$_.trim(this.title || '') || this.$_.size(this.title) > 255 || !this.$_.size(this.selectedUserIds)
     }
   },
   created() {
