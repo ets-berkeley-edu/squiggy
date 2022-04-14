@@ -79,8 +79,11 @@ def can_view_asset(asset, user):
 
 def can_update_whiteboard(user, whiteboard):
     user_id = _get_user_id(user)
-    user_ids = [user['id'] for user in whiteboard['users']]
-    return user.course.id == whiteboard['courseId'] and (is_teaching(user) or is_admin(user) or user_id in user_ids)
+    if user_id:
+        user_ids = [user['id'] for user in whiteboard['users']]
+        return user.course.id == whiteboard['courseId'] and (is_teaching(user) or is_admin(user) or user_id in user_ids)
+    else:
+        return False
 
 
 def can_view_whiteboard(whiteboard, user):

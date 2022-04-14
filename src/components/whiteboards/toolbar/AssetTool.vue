@@ -10,7 +10,6 @@
         id="toolbar-add-asset"
         :color="menu ? 'primary' : 'white'"
         dense
-        :disabled="disableAll"
         height="48px"
         rounded
         v-bind="attrs"

@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask_socketio import emit
-from squiggy.api.api_whiteboard_util import create_whiteboard_elements, delete_whiteboard_elements, \
+from squiggy.api.whiteboard_socket_handler import create_whiteboard_elements, delete_whiteboard_elements, \
     join_whiteboard, leave_whiteboard, update_updated_at, update_whiteboard, update_whiteboard_elements
 from squiggy.lib.login_session import LoginSession
 from squiggy.models.user import User
@@ -39,8 +39,8 @@ def register_sockets(socketio):
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         join_whiteboard(
+            current_user=LoginSession(user_id),
             socket_id=data.get('socketId'),
-            user=LoginSession(user_id),
             whiteboard_id=whiteboard_id,
         )
         emit(
@@ -59,8 +59,8 @@ def register_sockets(socketio):
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         leave_whiteboard(
+            current_user=LoginSession(user_id),
             socket_id=data.get('socketId'),
-            user=LoginSession(user_id),
             whiteboard_id=whiteboard_id,
         )
         emit(
@@ -80,8 +80,8 @@ def register_sockets(socketio):
         users = User.find_by_ids(data.get('userIds'))
         whiteboard_id = data.get('whiteboardId')
         update_whiteboard(
+            current_user=LoginSession(data.get('userId')),
             socket_id=socket_id,
-            user=LoginSession(data.get('userId')),
             whiteboard_id=whiteboard_id,
             title=title,
             users=users,
@@ -102,8 +102,8 @@ def register_sockets(socketio):
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         whiteboard_elements = update_whiteboard_elements(
+            current_user=LoginSession(user_id),
             socket_id=socket_id,
-            user=LoginSession(user_id),
             whiteboard_id=whiteboard_id,
             whiteboard_elements=data.get('whiteboardElements', []),
         )
@@ -122,8 +122,8 @@ def register_sockets(socketio):
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         whiteboard_elements = create_whiteboard_elements(
+            current_user=LoginSession(user_id),
             socket_id=socket_id,
-            user=LoginSession(user_id),
             whiteboard_id=whiteboard_id,
             whiteboard_elements=data.get('whiteboardElements', []),
         )
@@ -143,8 +143,8 @@ def register_sockets(socketio):
         whiteboard_elements = data.get('whiteboardElements', [])
         whiteboard_id = data.get('whiteboardId')
         delete_whiteboard_elements(
+            current_user=LoginSession(data.get('userId')),
             socket_id=data.get('socketId'),
-            user=LoginSession(data.get('userId')),
             whiteboard_id=whiteboard_id,
             whiteboard_elements=whiteboard_elements,
         )
@@ -166,6 +166,5 @@ def register_sockets(socketio):
         )
 
     @socketio.on('disconnect')
-    def socketio_disconnect(data):
-        print(data)
+    def socketio_disconnect():
         pass

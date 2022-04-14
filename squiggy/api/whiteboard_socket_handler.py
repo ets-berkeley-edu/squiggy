@@ -24,25 +24,24 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
-from flask_socketio import join_room, leave_room
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
-from squiggy.lib.util import safe_strip
+from squiggy.lib.util import is_student, safe_strip
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
-def create_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+def create_whiteboard_elements(current_user, socket_id, whiteboard_elements, whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if whiteboard['deletedAt']:
         raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
         raise BadRequestError('One or more whiteboard-elements required')
-    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
-        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
 
     def _create(whiteboard_element):
         _validate_whiteboard_element(whiteboard_element)
@@ -53,14 +52,14 @@ def create_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elemen
         )
     results = [_create(whiteboard_element) for whiteboard_element in whiteboard_elements]
     update_updated_at(
+        current_user=current_user,
         socket_id=socket_id,
-        user_id=user.user_id,
         whiteboard_id=whiteboard_id,
     )
     return results
 
 
-def delete_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
+def delete_whiteboard_elements(current_user, socket_id, whiteboard_elements, whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
@@ -68,63 +67,64 @@ def delete_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elemen
         raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
         raise BadRequestError('One or more whiteboard-elements required')
-    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
-        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
 
     for whiteboard_element in whiteboard_elements:
         WhiteboardElement.delete(uuid=whiteboard_element['element']['uuid'], whiteboard_id=whiteboard_id)
     update_updated_at(
+        current_user=current_user,
         socket_id=socket_id,
-        user_id=user.user_id,
         whiteboard_id=whiteboard_id,
     )
 
 
-def join_whiteboard(socket_id, user, whiteboard_id):
+def join_whiteboard(current_user, socket_id, whiteboard_id):
     whiteboard = Whiteboard.query.filter_by(id=whiteboard_id).first()
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
-    join_room(whiteboard)
     # Delete stale sessions
     WhiteboardSession.delete_stale_records(older_than_minutes=10)
-    for session in WhiteboardSession.find(user_id=user.user_id, whiteboard_id=whiteboard_id):
+    for session in WhiteboardSession.find(user_id=current_user.user_id, whiteboard_id=whiteboard_id):
         WhiteboardSession.delete(session.socket_id)
     # Create
     return update_updated_at(
+        current_user=current_user,
         socket_id=socket_id,
-        user_id=user.user_id,
         whiteboard_id=whiteboard_id,
     )
 
 
-def leave_whiteboard(socket_id, user, whiteboard_id):
+def leave_whiteboard(current_user, socket_id, whiteboard_id):
     whiteboard = Whiteboard.query.filter_by(id=whiteboard_id).first()
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
-    leave_room(whiteboard)
     WhiteboardSession.delete(socket_id)
 
 
-def update_updated_at(socket_id, user_id, whiteboard_id):
-    if WhiteboardSession.find_by_socket_id(socket_id=socket_id):
-        WhiteboardSession.update_updated_at(socket_id=socket_id)
-    else:
-        WhiteboardSession.create(
-            socket_id=socket_id,
-            user_id=user_id,
-            whiteboard_id=whiteboard_id,
-        )
+def update_updated_at(current_user, socket_id, whiteboard_id):
+    if is_student(current_user):
+        if WhiteboardSession.find_by_socket_id(socket_id=socket_id):
+            WhiteboardSession.update_updated_at(socket_id=socket_id)
+        else:
+            WhiteboardSession.create(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
     return Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id)
 
 
-def update_whiteboard(socket_id, title, user, users, whiteboard_id):
+def update_whiteboard(current_user, socket_id, title, users, whiteboard_id):
     whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if whiteboard['deletedAt']:
         raise ResourceNotFoundError('Whiteboard is read-only.')
-    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
-        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
 
     whiteboard = Whiteboard.update(
         title=title,
@@ -132,23 +132,23 @@ def update_whiteboard(socket_id, title, user, users, whiteboard_id):
         whiteboard_id=whiteboard_id,
     )
     update_updated_at(
+        current_user=current_user,
         socket_id=socket_id,
-        user_id=user.user_id,
         whiteboard_id=whiteboard_id,
     )
     return whiteboard.to_api_json()
 
 
-def update_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elements):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+def update_whiteboard_elements(current_user, socket_id, whiteboard_elements, whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(current_user, whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if whiteboard['deletedAt']:
         raise ResourceNotFoundError('Whiteboard is read-only.')
     if not len(whiteboard_elements):
         raise BadRequestError('One or more elements required')
-    if not can_update_whiteboard(user=user, whiteboard=whiteboard):
-        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
 
     def _update(whiteboard_element):
         _validate_whiteboard_element(whiteboard_element, True)
@@ -164,8 +164,8 @@ def update_whiteboard_elements(socket_id, user, whiteboard_id, whiteboard_elemen
         return whiteboard_element
     results = [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
     update_updated_at(
+        current_user=current_user,
         socket_id=socket_id,
-        user_id=user.user_id,
         whiteboard_id=whiteboard_id,
     )
     return results

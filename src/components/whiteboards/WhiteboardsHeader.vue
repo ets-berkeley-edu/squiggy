@@ -26,165 +26,167 @@
     >
       <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
     </v-alert>
-    <v-expand-transition>
-      <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
-        <v-text-field
-          id="basic-search-input"
-          :value="keywords"
-          clearable
-          :disabled="isBusy"
-          label="Search"
-          solo
-          type="search"
-          @click:append-outer="fetch"
-          @input="setKeywords"
-          @keypress.enter="fetch"
-        >
-          <template #append>
-            <v-btn
-              id="search-whiteboards-btn"
-              class="ml-2"
-              :disabled="isLoading || isBusy"
-              icon
-              @click="reset(!expanded)"
-            >
-              <font-awesome-icon icon="caret-down" />
-              <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
-            </v-btn>
-          </template>
-          <template #append-outer>
-            <v-btn
-              id="search-btn"
-              class="mb-2"
-              :disabled="isLoading || isBusy"
-              icon
-              @click="fetch"
-              @keypress.enter="fetch"
-            >
-              <font-awesome-icon
-                class="mb-3"
-                icon="search"
-                size="lg"
-              />
-              <span class="sr-only">Search whiteboards</span>
-            </v-btn>
-          </template>
-        </v-text-field>
-      </div>
-    </v-expand-transition>
-    <v-expand-transition>
-      <v-card v-if="expanded" class="pr-16">
-        <v-container fluid>
-          <v-row class="mb-4" no-gutters>
-            <v-col class="pr-3 pt-4 text-right" cols="1">
-              Search
-            </v-col>
-            <v-col>
-              <v-text-field
-                id="adv-search-keywords-input"
-                clearable
+    <div v-if="totalWhiteboardCount && !$currentUser.isObserver && !$currentUser.isStudent">
+      <v-expand-transition>
+        <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
+          <v-text-field
+            id="basic-search-input"
+            :value="keywords"
+            clearable
+            :disabled="isBusy"
+            label="Search"
+            solo
+            type="search"
+            @click:append-outer="fetch"
+            @input="setKeywords"
+            @keypress.enter="fetch"
+          >
+            <template #append>
+              <v-btn
+                id="search-whiteboards-btn"
+                class="ml-2"
                 :disabled="isLoading || isBusy"
-                height="50"
-                :hide-details="true"
-                placeholder="Keyword"
-                solo
-                type="search"
-                :value="keywords"
-                @input="setKeywords"
+                icon
+                @click="reset(!expanded)"
+              >
+                <font-awesome-icon icon="caret-down" />
+                <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
+              </v-btn>
+            </template>
+            <template #append-outer>
+              <v-btn
+                id="search-btn"
+                class="mb-2"
+                :disabled="isLoading || isBusy"
+                icon
+                @click="fetch"
                 @keypress.enter="fetch"
-              />
-            </v-col>
-          </v-row>
-          <v-row class="mb-4" no-gutters>
-            <v-col class="pr-3 pt-2 text-right" cols="1">Filter by</v-col>
-            <v-col>
-              <v-row no-gutters>
-                <v-col class="w-100">
-                  <AccessibleSelect
-                    :key="keyForSelectReset"
+              >
+                <font-awesome-icon
+                  class="mb-3"
+                  icon="search"
+                  size="lg"
+                />
+                <span class="sr-only">Search whiteboards</span>
+              </v-btn>
+            </template>
+          </v-text-field>
+        </div>
+      </v-expand-transition>
+      <v-expand-transition>
+        <v-card v-if="expanded" class="pr-16">
+          <v-container fluid>
+            <v-row class="mb-4" no-gutters>
+              <v-col class="pr-3 pt-4 text-right" cols="1">
+                Search
+              </v-col>
+              <v-col>
+                <v-text-field
+                  id="adv-search-keywords-input"
+                  clearable
+                  :disabled="isLoading || isBusy"
+                  height="50"
+                  :hide-details="true"
+                  placeholder="Keyword"
+                  solo
+                  type="search"
+                  :value="keywords"
+                  @input="setKeywords"
+                  @keypress.enter="fetch"
+                />
+              </v-col>
+            </v-row>
+            <v-row class="mb-4" no-gutters>
+              <v-col class="pr-3 pt-2 text-right" cols="1">Filter by</v-col>
+              <v-col>
+                <v-row no-gutters>
+                  <v-col class="w-100">
+                    <AccessibleSelect
+                      :key="keyForSelectReset"
+                      :disabled="isBusy"
+                      id-prefix="adv-search-user"
+                      :hide-details="true"
+                      :items="users"
+                      item-text="canvasFullName"
+                      item-value="id"
+                      label="Collaborator"
+                      :value="userId"
+                      @input="setUserId"
+                    />
+                  </v-col>
+                </v-row>
+              </v-col>
+              <v-col class="pr-3 pt-2 text-right" cols="1">
+                Sort by
+              </v-col>
+              <v-col>
+                <AccessibleSelect
+                  :key="keyForSelectReset"
+                  :disabled="isBusy"
+                  :hide-details="true"
+                  id-prefix="adv-search-order-by"
+                  :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
+                  :unclearable="true"
+                  :value="orderBy"
+                  @input="setOrderBy"
+                />
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col cols="1"></v-col>
+              <v-col cols="5">
+                <v-checkbox
+                  id="include-deleted-checkbox"
+                  class="ma-0 pa-0"
+                  label="Include deleted"
+                  :value="includeDeleted"
+                  @change="value => setIncludeDeleted(value)"
+                />
+              </v-col>
+              <v-col class="d-flex justify-end pt-2" cols="6">
+                <div class="pr-2">
+                  <v-btn
+                    id="adv-search-btn"
+                    class="text-capitalize"
+                    color="primary"
+                    :disabled="isBusy || (!$_.trim(keywords) && !expanded)"
+                    elevation="1"
+                    medium
+                    @click="fetch"
+                  >
+                    Search
+                  </v-btn>
+                </div>
+                <div>
+                  <v-btn
+                    id="cancel-adv-search-btn"
+                    class="text-capitalize"
                     :disabled="isBusy"
-                    id-prefix="adv-search-user"
-                    :hide-details="true"
-                    :items="users"
-                    item-text="canvasFullName"
-                    item-value="id"
-                    label="Collaborator"
-                    :value="userId"
-                    @input="setUserId"
-                  />
-                </v-col>
-              </v-row>
-            </v-col>
-            <v-col class="pr-3 pt-2 text-right" cols="1">
-              Sort by
-            </v-col>
-            <v-col>
-              <AccessibleSelect
-                :key="keyForSelectReset"
-                :disabled="isBusy"
-                :hide-details="true"
-                id-prefix="adv-search-order-by"
-                :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
-                :unclearable="true"
-                :value="orderBy"
-                @input="setOrderBy"
-              />
-            </v-col>
-          </v-row>
-          <v-row no-gutters>
-            <v-col cols="1"></v-col>
-            <v-col cols="5">
-              <v-checkbox
-                id="include-deleted-checkbox"
-                class="ma-0 pa-0"
-                label="Include deleted"
-                :value="includeDeleted"
-                @change="value => setIncludeDeleted(value)"
-              />
-            </v-col>
-            <v-col class="d-flex justify-end pt-2" cols="6">
-              <div class="pr-2">
-                <v-btn
-                  id="adv-search-btn"
-                  class="text-capitalize"
-                  color="primary"
-                  :disabled="isBusy || (!$_.trim(keywords) && !expanded)"
-                  elevation="1"
-                  medium
-                  @click="fetch"
-                >
-                  Search
-                </v-btn>
-              </div>
-              <div>
-                <v-btn
-                  id="cancel-adv-search-btn"
-                  class="text-capitalize"
-                  :disabled="isBusy"
-                  elevation="1"
-                  medium
-                  @click="reset(false)"
-                >
-                  Cancel
-                </v-btn>
-              </div>
-              <div v-if="isDirty" class="pl-2">
-                <v-btn
-                  id="reset-adv-search-btn"
-                  class="text-capitalize"
-                  :disabled="isBusy"
-                  medium
-                  text
-                  @click="reset(true, true)"
-                >
-                  Reset
-                </v-btn>
-              </div>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card>
-    </v-expand-transition>
+                    elevation="1"
+                    medium
+                    @click="reset(false)"
+                  >
+                    Cancel
+                  </v-btn>
+                </div>
+                <div v-if="isDirty" class="pl-2">
+                  <v-btn
+                    id="reset-adv-search-btn"
+                    class="text-capitalize"
+                    :disabled="isBusy"
+                    medium
+                    text
+                    @click="reset(true, true)"
+                  >
+                    Reset
+                  </v-btn>
+                </div>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card>
+      </v-expand-transition>
+    </div>
     <Alert
       v-if="alert"
       id="assert-library-alert"
