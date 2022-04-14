@@ -107,35 +107,35 @@ _test_canvas = [
 
 _test_users = [
     {
-        'canvas_user_id': '9876543',
+        'canvas_user_id': 9876543,
         'canvas_course_role': 'Teacher',
         'canvas_enrollment_state': 'active',
         'canvas_full_name': 'Oliver Heyer',
         'canvas_email': 'oheyer@berkeley.edu',
     },
     {
-        'canvas_user_id': '654321',
+        'canvas_user_id': 654321,
         'canvas_course_role': 'Teacher',
         'canvas_enrollment_state': 'active',
         'canvas_full_name': 'Christa Päffgen',
         'canvas_email': 'nico@berkeley.edu',
     },
     {
-        'canvas_user_id': '321098',
+        'canvas_user_id': 321098,
         'canvas_course_role': 'Administrator',
         'canvas_enrollment_state': 'active',
         'canvas_full_name': 'Edie Sedgwick',
         'canvas_email': 'factory_girl@berkeley.edu',
     },
     {
-        'canvas_user_id': '321099',
+        'canvas_user_id': 321099,
         'canvas_course_role': 'Administrator',
         'canvas_enrollment_state': 'inactive',
         'canvas_full_name': 'Jane Holzer',
         'canvas_email': 'baby_jane@berkeley.edu',
     },
     {
-        'canvas_user_id': '8765432',
+        'canvas_user_id': 8765432,
         'canvas_course_role': 'Student',
         'canvas_enrollment_state': 'invited',
         'canvas_full_name': 'Anne-sophie is Da Best',
@@ -176,7 +176,7 @@ def load():
     users = _create_users(courses)
     assets = _create_assets(courses, users)
     _create_asset_activities(assets, users)
-    whiteboards = _create_whiteboards(courses, users)
+    whiteboards = _create_whiteboards(courses[0])
     _create_whiteboard_activities(users[0], whiteboards[0])
     _create_activity_types(courses)
     return db
@@ -293,14 +293,14 @@ def _create_activity_types(courses):
     std_commit(allow_test_environment=True)
 
 
-def _create_whiteboards(courses, users):
-    course_id = courses[0].id
+def _create_whiteboards(course):
+    student = next((u for u in course.users if u.canvas_course_role == 'Student'), None)
     whiteboards = []
     for w in _test_whiteboards:
         whiteboard = Whiteboard.create(
-            course_id=course_id,
+            course_id=course.id,
             title=w['title'],
-            users=[users[0]],
+            users=[student],
         )
         whiteboards.append(whiteboard)
     std_commit(allow_test_environment=True)

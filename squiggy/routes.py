@@ -52,7 +52,6 @@ def register_routes(app):
     import squiggy.api.status_controller
     import squiggy.api.user_controller
     import squiggy.api.whiteboard_controller
-    import squiggy.api.whiteboard_element_controller
 
     # Register error handlers.
     import squiggy.api.error_handlers

@@ -45,7 +45,7 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 @feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id, include_deleted=True)
+    whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id)
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         socket_id = request.args.get('socketId')
         if socket_id:
@@ -63,7 +63,7 @@ def get_whiteboard(whiteboard_id):
 @feature_flag_whiteboards
 @login_required
 def export_as_asset(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    whiteboard = _find_whiteboard(whiteboard_id)
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
         if whiteboard_elements:
@@ -98,7 +98,7 @@ def export_as_asset(whiteboard_id):
 @feature_flag_whiteboards
 @login_required
 def export_as_png(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    whiteboard = _find_whiteboard(whiteboard_id)
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         # TODO?
         #   // If a downloadId parameter was provided, we set a cookie with it. This allows the UI to detect
@@ -125,7 +125,7 @@ def export_as_png(whiteboard_id):
 @feature_flag_whiteboards
 @login_required
 def restore_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id=whiteboard_id)
+    whiteboard = _find_whiteboard(whiteboard_id)
     if whiteboard and can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         restored = Whiteboard.restore(whiteboard_id)
         return tolerant_jsonify(restored.to_api_json())
@@ -138,14 +138,15 @@ def restore_whiteboard(whiteboard_id):
 @login_required
 def get_whiteboards():
     params = request.get_json()
-    include_deleted = params.get('includeDeleted', False)
+    include_deleted = params.get('includeDeleted', False) if current_user.is_admin else False
     keywords = params.get('keywords')
     limit = params.get('limit')
     offset = params.get('offset')
     order_by = params.get('orderBy') or 'recent'
     user_id = params.get('userId')
-    whiteboards = Whiteboard.get_whiteboards(
+    summary = Whiteboard.get_whiteboards(
         course_id=current_user.course.id,
+        current_user=current_user,
         include_deleted=include_deleted,
         keywords=keywords,
         limit=limit,
@@ -153,7 +154,7 @@ def get_whiteboards():
         order_by=order_by,
         user_id=user_id,
     )
-    return tolerant_jsonify(whiteboards)
+    return tolerant_jsonify(summary)
 
 
 @app.route('/api/whiteboard/create', methods=['POST'])
@@ -177,7 +178,7 @@ def create_whiteboard():
 @feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+    whiteboard = _find_whiteboard(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
@@ -195,7 +196,7 @@ def update_whiteboard():
     whiteboard_id = params.get('whiteboardId')
     title = params.get('title')
     user_ids = params.get('userIds')
-    whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+    whiteboard = _find_whiteboard(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if whiteboard['deletedAt']:
@@ -209,3 +210,7 @@ def update_whiteboard():
         users=User.find_by_ids(user_ids),
     )
     return tolerant_jsonify(whiteboard.to_api_json())
+
+
+def _find_whiteboard(whiteboard_id):
+    return Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)

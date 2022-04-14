@@ -78,8 +78,12 @@ class Whiteboard(Base):
         """
 
     @classmethod
-    def find_by_id(cls, whiteboard_id, include_deleted=True):
-        whiteboards = cls.get_whiteboards(include_deleted=include_deleted, whiteboard_id=whiteboard_id)
+    def find_by_id(cls, current_user, whiteboard_id, include_deleted=True):
+        whiteboards = cls.get_whiteboards(
+            current_user=current_user,
+            include_deleted=include_deleted,
+            whiteboard_id=whiteboard_id,
+        )
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
         if whiteboard:
             whiteboard['activeCollaborators'] = _get_active_collaborators(
@@ -126,6 +130,7 @@ class Whiteboard(Base):
     @classmethod
     def get_whiteboards(
             cls,
+            current_user,
             course_id=None,
             include_deleted=False,
             keywords=None,
@@ -135,6 +140,10 @@ class Whiteboard(Base):
             user_id=None,
             whiteboard_id=None,
     ):
+        whiteboard_users_join = 'LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id'
+        if current_user.is_student or current_user.is_observer:
+            whiteboard_users_join += ' AND wu.user_id = :current_user_id'
+
         where_clause = 'WHERE TRUE'
         if course_id:
             where_clause += ' AND w.course_id = :course_id'
@@ -156,7 +165,7 @@ class Whiteboard(Base):
                 w.*, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name,
                 u.canvas_image, u.canvas_user_id, u.id AS user_id
             FROM whiteboards w
-            LEFT JOIN whiteboard_users wu ON w.id = wu.whiteboard_id
+            {whiteboard_users_join}
             LEFT JOIN users u ON wu.user_id = u.id
             LEFT JOIN activities act ON
                 act.object_type = 'whiteboard'
@@ -168,6 +177,7 @@ class Whiteboard(Base):
         """
         params = {
             'course_id': course_id,
+            'current_user_id': current_user.user_id,
             'keywords': ('%' + re.sub(r'\s+', '%', keywords.strip()) + '%') if keywords else None,
             'limit': limit,
             'offset': offset,
@@ -201,11 +211,25 @@ class Whiteboard(Base):
                     'canvasUserId': row['canvas_user_id'],
                 })
             whiteboards_by_id[whiteboard_id] = whiteboard
-        # Get sessions
-        sql = 'SELECT * FROM whiteboard_sessions WHERE whiteboard_id = ANY(:whiteboard_ids) ORDER BY created_at'
+
+        # Get the number of online users for each whiteboard in the result set, excluding admin users who are not members.
+        # We do this in a separate query because joins with `subquery: false` above would interfere with paging.
+        # A user with multiple sessions in the same whiteboard counts as a single online user.
+        sql = """
+            SELECT
+              s.created_at, s.socket_id, s.updated_at, s.user_id, s.whiteboard_id, COUNT(DISTINCT s.user_id)::int AS online_count
+            FROM whiteboard_sessions s
+            LEFT JOIN whiteboard_users u
+              ON u.whiteboard_id = s.whiteboard_id AND u.user_id = s.user_id
+            WHERE u.whiteboard_id = ANY(:whiteboard_ids)
+            GROUP BY s.created_at, s.socket_id, s.updated_at, s.user_id, s.whiteboard_id
+            ORDER BY s.whiteboard_id DESC
+        """
         for row in db.session.execute(sql, {'whiteboard_ids': list(whiteboards_by_id.keys())}):
             whiteboard_id = row['whiteboard_id']
-            whiteboards_by_id[whiteboard_id]['activeCollaborators'].append({
+            whiteboard = whiteboards_by_id[whiteboard_id]
+            whiteboard['onlineCount'] = row['online_count']
+            whiteboard['activeCollaborators'].append({
                 'createdAt': isoformat(row['created_at']),
                 'socketId': row['socket_id'],
                 'updatedAt': isoformat(row['updated_at']),

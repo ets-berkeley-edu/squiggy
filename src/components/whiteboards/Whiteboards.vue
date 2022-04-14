@@ -9,41 +9,6 @@
         class="whiteboard-card ma-3"
       />
     </v-card>
-    <!--
-    <div
-      data-infinite-scroll="getWhiteboards()"
-      data-infinite-scroll-ready="list.ready"
-      data-infinite-scroll-distance="400" data-infinite-scroll-container="window">
-      <ul>
-        <li class="list-inline col-xs-6 col-sm-4 col-md-3" data-ng-repeat="whiteboard in whiteboards">
-          <div class="col-list-item-container">
-            <a target="_blank" data-ng-href="{{generateWhiteboardURL(whiteboard)}}">
-              <div class="col-list-item-tile">
-                <img class="img-responsive" data-ng-src="{{whiteboard.thumbnail_url}}" data-ng-if="whiteboard.thumbnail_url">
-                <div class="text-center col-list-item-thumbnail-default" data-ng-if="!whiteboard.thumbnail_url">
-                  <i class="fa fa-calendar-o"></i>
-                </div>
-                <div class="col-list-item-metadata" data-ng-class="{'col-list-item-metadata-deleted': whiteboard.deleted_at}">
-                  <span class="col-threedots">{{whiteboard.title}}</span>
-                  <small class="col-threedots" data-ng-if="!whiteboard.deleted_at">{{whiteboard.online_count}} online</small>
-                  <small class="col-threedots" data-ng-if="whiteboard.deleted_at">Deleted</small>
-                </div>
-              </div>
-            </a>
-          </div>
-        </li>
-      </ul>
-    </div>
-
-    <div class="alert alert-info whiteboards-list-alert" data-ng-if="hasRequested && whiteboards.length === 0">
-      <span data-ng-if="!isSearch">
-        You don't have any whiteboards yet. <strong><a data-ng-href="/whiteboards/create">Create your first whiteboard</a></strong>
-      </span>
-      <span data-ng-if="isSearch">
-        No matching whiteboards were found.
-      </span>
-    </div>
-    -->
   </div>
 </template>
 

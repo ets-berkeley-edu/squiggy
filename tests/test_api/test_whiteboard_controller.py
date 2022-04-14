@@ -24,10 +24,12 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
-import random
+from random import randint
 
 from flask import current_app as app
 from squiggy import std_commit
+from squiggy.api.whiteboard_socket_handler import join_whiteboard
+from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -112,32 +114,44 @@ class TestGetWhiteboards:
             fake_auth.login(authorized_user_id)
             self._api_get_whiteboards(client, expected_status_code=401)
 
-    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+    def test_authorized(self, client, fake_auth):
         """Get all whiteboards."""
-        user = User.find_by_id(authorized_user_id)
-        # Include deleted
-        deleted_title = 'Delete me'
-        whiteboard = Whiteboard.create(
-            course_id=mock_whiteboard['courseId'],
-            title=deleted_title,
-            users=[user],
-        )
-        Whiteboard.delete(whiteboard['id'])
-        # Session
-        WhiteboardSession.create(
-            socket_id=str('%032x' % random.getrandbits(128)),
-            user_id=user.id,
-            whiteboard_id=mock_whiteboard['id'],
-        )
-        std_commit(allow_test_environment=True)
-        # Test
-        fake_auth.login(user.id)
-        api_json = self._api_get_whiteboards(client=client, include_deleted=True)
-        whiteboards = api_json['results']
-        assert len(whiteboards) == api_json['total']
-        assert next((w for w in whiteboards if w['deletedAt']), None)
-        whiteboard_with_session = next((w for w in whiteboards if len(w['activeCollaborators'])), None)
-        assert len(whiteboard_with_session['activeCollaborators']) == 1
+        course = Course.find_by_canvas_course_id(canvas_api_domain='bcourses.berkeley.edu', canvas_course_id=1502870)
+        student = User.find_by_canvas_user_id(8765432)
+        assert student
+        whiteboard = Whiteboard.create(course_id=course.id, title='CyberCulture', users=[student])
+        # Deleted whiteboard
+        deleted_whiteboard = Whiteboard.create(course_id=course.id, title='Deleted', users=[student])
+        Whiteboard.delete(deleted_whiteboard['id'])
+
+        for canvas_course_role in ['Administrator', 'Student', 'Teacher']:
+            user = next((u for u in course.users if u.canvas_course_role == canvas_course_role), None)
+            assert user
+            fake_auth.login(user.id)
+            # Simulate a visit to /whiteboard page
+            join_whiteboard(
+                current_user=LoginSession(user.id),
+                socket_id=str(randint(1, 9999999)),
+                whiteboard_id=whiteboard['id'],
+            )
+            std_commit(allow_test_environment=True)
+
+            api_json = self._api_get_whiteboards(client=client, include_deleted=True)
+            whiteboards = api_json['results']
+            assert len(whiteboards) == api_json['total']
+
+            whiteboard_sessions = WhiteboardSession.find(whiteboard['id'])
+            my_whiteboard_session = next((s for s in whiteboard_sessions if s.user_id == user.id), None)
+            if canvas_course_role == 'Student':
+                assert my_whiteboard_session
+            else:
+                assert not my_whiteboard_session
+
+            whiteboards_deleted = next((w for w in whiteboards if w['deletedAt']), [])
+            if canvas_course_role == 'Administrator':
+                assert len(whiteboards_deleted)
+            else:
+                assert len(whiteboards_deleted) == 0
 
 
 class TestExportAsAsset:
