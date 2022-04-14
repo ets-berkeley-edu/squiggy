@@ -56,7 +56,7 @@ def get_whiteboard(whiteboard_id):
             )
         return tolerant_jsonify(whiteboard)
     else:
-        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+        raise ResourceNotFoundError('Not found')
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
@@ -91,7 +91,7 @@ def export_as_asset(whiteboard_id):
         else:
             raise BadRequestError('An empty whiteboard cannot be exported')
     else:
-        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+        raise ResourceNotFoundError('Not found')
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/png')
@@ -118,7 +118,7 @@ def export_as_png(whiteboard_id):
             },
         )
     else:
-        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+        raise ResourceNotFoundError('Not found')
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/restore')
@@ -130,7 +130,7 @@ def restore_whiteboard(whiteboard_id):
         restored = Whiteboard.restore(whiteboard_id)
         return tolerant_jsonify(restored.to_api_json())
     else:
-        raise ResourceNotFoundError(f'No asset found with id: {whiteboard_id}')
+        raise ResourceNotFoundError('Not found')
 
 
 @app.route('/api/whiteboards', methods=['POST'])
@@ -180,7 +180,7 @@ def create_whiteboard():
 def delete_whiteboard(whiteboard_id):
     whiteboard = _find_whiteboard(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
-        raise ResourceNotFoundError('Whiteboard not found.')
+        raise ResourceNotFoundError('Not found')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
     whiteboard_id = whiteboard['id']
@@ -198,7 +198,7 @@ def update_whiteboard():
     user_ids = params.get('userIds')
     whiteboard = _find_whiteboard(whiteboard_id) if whiteboard_id else None
     if not whiteboard:
-        raise ResourceNotFoundError('Whiteboard not found.')
+        raise ResourceNotFoundError('Not found')
     if whiteboard['deletedAt']:
         raise ResourceNotFoundError('Whiteboard is read-only.')
     if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):

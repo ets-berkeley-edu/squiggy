@@ -29,7 +29,6 @@ from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
-from squiggy.models.user import User
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 from squiggy.models.whiteboard_user import whiteboard_user_table
@@ -80,16 +79,13 @@ class Whiteboard(Base):
     @classmethod
     def find_by_id(cls, current_user, whiteboard_id, include_deleted=True):
         whiteboards = cls.get_whiteboards(
+            course_id=current_user.course.id,
             current_user=current_user,
             include_deleted=include_deleted,
             whiteboard_id=whiteboard_id,
         )
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
         if whiteboard:
-            whiteboard['activeCollaborators'] = _get_active_collaborators(
-                users=whiteboard['users'],
-                whiteboard_id=whiteboard_id,
-            )
             whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
         return whiteboard
 
@@ -112,6 +108,7 @@ class Whiteboard(Base):
         std_commit()
         for element in (elements or []):
             element = WhiteboardElement.create(element=element, whiteboard_id=whiteboard.id)
+        std_commit()
         return whiteboard.to_api_json()
 
     @classmethod
@@ -122,16 +119,10 @@ class Whiteboard(Base):
             std_commit()
 
     @classmethod
-    def get_active_collaborators(cls, whiteboard_id):
-        whiteboard = cls.query.filter_by(id=whiteboard_id).first()
-        users = [u.to_api_json() for u in whiteboard.users]
-        return _get_active_collaborators(users=users, whiteboard_id=whiteboard.id)
-
-    @classmethod
     def get_whiteboards(
             cls,
+            course_id,
             current_user,
-            course_id=None,
             include_deleted=False,
             keywords=None,
             limit=20,
@@ -140,41 +131,6 @@ class Whiteboard(Base):
             user_id=None,
             whiteboard_id=None,
     ):
-        whiteboard_users_join = 'LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id'
-        if current_user.is_student or current_user.is_observer:
-            whiteboard_users_join += ' AND wu.user_id = :current_user_id'
-
-        where_clause = 'WHERE TRUE'
-        if course_id:
-            where_clause += ' AND w.course_id = :course_id'
-        if not include_deleted:
-            where_clause += ' AND w.deleted_at IS NULL'
-        if keywords:
-            where_clause += ' AND (w.title ILIKE :keywords)'
-        if user_id:
-            where_clause += ' AND u.id = :user_id'
-        if whiteboard_id:
-            where_clause += ' AND w.id = :whiteboard_id'
-
-        order_by_clause = {
-            'recent': 'w.id DESC',
-        }.get(order_by)
-
-        sql = f"""
-            SELECT
-                w.*, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name,
-                u.canvas_image, u.canvas_user_id, u.id AS user_id
-            FROM whiteboards w
-            {whiteboard_users_join}
-            LEFT JOIN users u ON wu.user_id = u.id
-            LEFT JOIN activities act ON
-                act.object_type = 'whiteboard'
-                AND w.id = act.object_id
-                AND act.course_id = :course_id
-            {where_clause}
-            ORDER BY {order_by_clause}, u.canvas_full_name
-            LIMIT :limit OFFSET :offset
-        """
         params = {
             'course_id': course_id,
             'current_user_id': current_user.user_id,
@@ -184,12 +140,45 @@ class Whiteboard(Base):
             'user_id': user_id,
             'whiteboard_id': whiteboard_id,
         }
+        where_clause = 'WHERE w.course_id = :course_id'
+        if not include_deleted:
+            where_clause += ' AND w.deleted_at IS NULL'
+        if keywords:
+            where_clause += ' AND (w.title ILIKE :keywords)'
+        if user_id:
+            where_clause += ' AND u.id = :user_id'
+        if whiteboard_id:
+            where_clause += ' AND w.id = :whiteboard_id'
+        if current_user.is_student or current_user.is_observer:
+            sql = 'SELECT whiteboard_id FROM whiteboard_users WHERE user_id = :current_user_id'
+            params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
+            where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
+
+        order_by_clause = {
+            'recent': 'w.id DESC',
+        }.get(order_by)
+
+        sql = f"""
+            SELECT
+                w.*, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name,
+                u.canvas_image, u.canvas_user_id, u.id AS user_id, s.socket_id
+            FROM whiteboards w
+            LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id
+            LEFT JOIN whiteboard_sessions s ON s.user_id = wu.user_id
+            LEFT JOIN users u ON wu.user_id = u.id
+            LEFT JOIN activities act ON
+                act.object_type = 'whiteboard'
+                AND w.id = act.object_id
+                AND act.course_id = :course_id
+            {where_clause}
+            ORDER BY {order_by_clause}, u.canvas_full_name
+            LIMIT :limit OFFSET :offset
+        """
         whiteboards_by_id = {}
         for row in list(db.session.execute(sql, params)):
-            whiteboard_id = row['id']
+            whiteboard_id = int(row['id'])
             whiteboard = whiteboards_by_id.get(whiteboard_id) or {
                 'id': whiteboard_id,
-                'activeCollaborators': [],
                 'courseId': row['course_id'],
                 'createdAt': isoformat(row['created_at']),
                 'deletedAt': isoformat(row['deleted_at']),
@@ -201,15 +190,21 @@ class Whiteboard(Base):
             }
             user_id = row['user_id']
             if user_id:
-                whiteboard['users'].append({
-                    'id': user_id,
-                    'canvasCourseRole': row['canvas_course_role'],
-                    'canvasCourseSections': row['canvas_course_sections'],
-                    'canvasEnrollmentState': row['canvas_enrollment_state'],
-                    'canvasFullName': row['canvas_full_name'],
-                    'canvasImage': row['canvas_image'],
-                    'canvasUserId': row['canvas_user_id'],
-                })
+                is_online = bool(row['socket_id'])
+                match = next((u for u in whiteboard['users'] if u['id'] == user_id), None)
+                if match and is_online:
+                    match['isOnline'] = True
+                else:
+                    whiteboard['users'].append({
+                        'id': user_id,
+                        'canvasCourseRole': row['canvas_course_role'],
+                        'canvasCourseSections': row['canvas_course_sections'],
+                        'canvasEnrollmentState': row['canvas_enrollment_state'],
+                        'canvasFullName': row['canvas_full_name'],
+                        'canvasImage': row['canvas_image'],
+                        'canvasUserId': row['canvas_user_id'],
+                        'isOnline': is_online,
+                    })
             whiteboards_by_id[whiteboard_id] = whiteboard
 
         # Get the number of online users for each whiteboard in the result set, excluding admin users who are not members.
@@ -229,12 +224,10 @@ class Whiteboard(Base):
             whiteboard_id = row['whiteboard_id']
             whiteboard = whiteboards_by_id[whiteboard_id]
             whiteboard['onlineCount'] = row['online_count']
-            whiteboard['activeCollaborators'].append({
-                'createdAt': isoformat(row['created_at']),
-                'socketId': row['socket_id'],
-                'updatedAt': isoformat(row['updated_at']),
-                'userId': row['user_id'],
-            })
+            user_id = row['user_id']
+            user = next((user for user in whiteboard['users'] if user['id'] == user_id), None)
+            if user:
+                user['isOnline'] = True
         return {
             'offset': offset,
             'results': list(whiteboards_by_id.values()),
@@ -286,34 +279,23 @@ class Whiteboard(Base):
         return whiteboard
 
     def to_api_json(self):
-        users = [u.to_api_json() for u in self.users]
-        active_collaborators = _get_active_collaborators(users=users, whiteboard_id=self.id)
+        user_ids_online = [session.user_id for session in WhiteboardSession.find(self.id)]
+
+        def _user_api_json(user):
+            return {
+                **user.to_api_json(),
+                'isOnline': user.id in user_ids_online,
+            }
+
         return {
             'id': self.id,
-            'activeCollaborators': active_collaborators,
             'courseId': self.course_id,
             'imageUrl': self.image_url,
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
-            'users': [u.to_api_json() for u in self.users],
+            'users': [_user_api_json(user) for user in self.users],
             'whiteboardElements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
             'createdAt': isoformat(self.created_at),
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }
-
-
-def _get_active_collaborators(users, whiteboard_id):
-    users_by_id = {}
-    for session in WhiteboardSession.find(whiteboard_id):
-        user_id = session.user_id
-        if user_id in users_by_id:
-            users_by_id[user_id]['sockets'].append(session.socket_id)
-        else:
-            user = next(filter(lambda user: user['id'] == user_id, users), None) or User.find_by_id(user_id).to_api_json()
-            if user:
-                users_by_id[user_id] = {
-                    **user,
-                    'sockets': [session.socket_id],
-                }
-    return list(users_by_id.values())

@@ -116,16 +116,38 @@ class TestGetWhiteboards:
 
     def test_authorized(self, client, fake_auth):
         """Get all whiteboards."""
-        course = Course.find_by_canvas_course_id(canvas_api_domain='bcourses.berkeley.edu', canvas_course_id=1502870)
-        student = User.find_by_canvas_user_id(8765432)
-        assert student
-        whiteboard = Whiteboard.create(course_id=course.id, title='CyberCulture', users=[student])
-        # Deleted whiteboard
-        deleted_whiteboard = Whiteboard.create(course_id=course.id, title='Deleted', users=[student])
-        Whiteboard.delete(deleted_whiteboard['id'])
+        course = Course.find_by_canvas_course_id(
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=1502870,
+        )
+        student = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='Born to Collaborate',
+            canvas_user_id=987654321,
+            course_id=course.id,
+        )
+        whiteboard = Whiteboard.create(
+            course_id=course.id,
+            title='CyberCulture',
+            users=[student],
+        )
+        assert student.id in [user['id'] for user in whiteboard['users']]
 
-        for canvas_course_role in ['Administrator', 'Student', 'Teacher']:
-            user = next((u for u in course.users if u.canvas_course_role == canvas_course_role), None)
+        # Deleted whiteboard
+        deleted_whiteboard = Whiteboard.create(
+            course_id=course.id,
+            title='Deleted',
+            users=[student],
+        )
+        Whiteboard.delete(deleted_whiteboard['id'])
+        std_commit(allow_test_environment=True)
+
+        for user in [
+            _get_sample_user(canvas_course_role='Administrator', course=course),
+            student,
+            _get_sample_user(canvas_course_role='Teacher', course=course),
+        ]:
             assert user
             fake_auth.login(user.id)
             # Simulate a visit to /whiteboard page
@@ -142,13 +164,13 @@ class TestGetWhiteboards:
 
             whiteboard_sessions = WhiteboardSession.find(whiteboard['id'])
             my_whiteboard_session = next((s for s in whiteboard_sessions if s.user_id == user.id), None)
-            if canvas_course_role == 'Student':
+            if user.canvas_course_role == 'Student':
                 assert my_whiteboard_session
             else:
                 assert not my_whiteboard_session
 
             whiteboards_deleted = next((w for w in whiteboards if w['deletedAt']), [])
-            if canvas_course_role == 'Administrator':
+            if user.canvas_course_role == 'Administrator':
                 assert len(whiteboards_deleted)
             else:
                 assert len(whiteboards_deleted) == 0
@@ -292,3 +314,6 @@ class TestRestoreWhiteboard:
 #         std_commit(allow_test_environment=True)
 #         response = client.get(f'/api/whiteboard/{whiteboard_id}')
 #         assert response.status_code == 404
+
+def _get_sample_user(canvas_course_role, course):
+    return next((u for u in course.users if u.canvas_course_role == canvas_course_role), None)

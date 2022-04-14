@@ -46,7 +46,6 @@ def register_sockets(socketio):
         emit(
             'join',
             {
-                'activeCollaborators': Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id),
                 'socketId': socket_id,
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,
@@ -66,9 +65,9 @@ def register_sockets(socketio):
         emit(
             'leave',
             {
-                'activeCollaborators': Whiteboard.get_active_collaborators(whiteboard_id=whiteboard_id),
                 'socketId': socket_id,
                 'userId': user_id,
+                'users': Whiteboard.find_by_id(whiteboard_id)['users'],
                 'whiteboardId': whiteboard_id,
             },
         )

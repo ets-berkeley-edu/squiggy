@@ -19,7 +19,6 @@ const p = Vue.prototype
 const state = {
   // Variable that will keep track of the copied element(s)
   activeCanvasObject: undefined,
-  activeCollaborators: undefined,
   categories: undefined,
   clipboard: undefined,
   debugLog: '',
@@ -44,7 +43,6 @@ const state = {
 
 const getters = {
   activeCanvasObject: (state: any): any => state.activeCanvasObject,
-  activeCollaborators: (state: any): any[] => state.activeCollaborators,
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll,
   fitToScreen: (state: any): boolean => state.fitToScreen,
@@ -52,6 +50,7 @@ const getters = {
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
   selectedAsset: () => null,
+  usersOnline: (state: any): any => _.filter(state.whiteboard.users, (user: any) => user.isOnline),
   whiteboard: (state: any): any => state.whiteboard,
   windowHeight: (state: any): number => state.windowHeight,
   windowWidth: (state: any): number => state.windowWidth,
@@ -98,7 +97,6 @@ const mutations = {
   },
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
-      activeCollaborators: whiteboard.activeCollaborators,
       downloadId: $_createDownloadId(),
       exportPngUrl: `${apiUtils.apiBaseUrl()}/whiteboards/${whiteboard.id}/export/png?downloadId=${state.downloadId}`,
       sidebarExpanded: !whiteboard.deletedAt,
@@ -116,10 +114,6 @@ const mutations = {
   resetSelected: (state: any) => state.selected = {},
   restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
-  setActiveCollaborators: (state: any, activeCollaborators: any[]) => {
-    console.log(`activeCollaborators: ${activeCollaborators}`)
-    state.activeCollaborators = activeCollaborators
-  },
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
@@ -146,6 +140,7 @@ const mutations = {
     state.mode = mode
   },
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
+  setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
   toggleSidebar: (state: any) => {
     state.sidebarExpanded = !state.sidebarExpanded
     // Recalculate the size of the whiteboard p.$canvas. `setTimeout` is required to ensure that the sidebar has collapsed/expanded.
@@ -247,7 +242,6 @@ const actions = {
     commit('setMode', 'move')
   },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
-  setActiveCollaborators: ({commit}, activeCollaborators: any[]) => commit('setActiveCollaborators', activeCollaborators),
   setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
@@ -255,6 +249,7 @@ const actions = {
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
+  setUsers: ({commit}, users: any[]) => commit('setUsers', users),
   toggleZoom: ({commit}) => commit('toggleZoom'),
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
   uploadFiles: ({commit}) => {
