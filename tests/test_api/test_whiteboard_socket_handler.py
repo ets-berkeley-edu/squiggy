@@ -28,7 +28,7 @@ from random import randint
 import pytest
 from squiggy import std_commit
 from squiggy.api.whiteboard_socket_handler import create_whiteboard_elements, update_whiteboard_elements
-from squiggy.lib.errors import BadRequestError
+from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.course import Course
@@ -48,7 +48,7 @@ class TestWhiteboardElement:
 
     def test_unauthorized(self, mock_whiteboard):
         """Denies unauthorized user."""
-        with pytest.raises(BadRequestError):
+        with pytest.raises(ResourceNotFoundError):
             create_whiteboard_elements(
                 current_user=_get_unauthorized_user(mock_whiteboard),
                 socket_id=_get_mock_socket_id(),

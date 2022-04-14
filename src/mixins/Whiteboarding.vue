@@ -25,7 +25,6 @@ export default {
   computed: {
     ...mapGetters('whiteboarding', [
       'activeCanvasObject',
-      'activeCollaborators',
       'categories',
       'disableAll',
       'fitToScreen',
@@ -33,6 +32,7 @@ export default {
       'mode',
       'selected',
       'selectedAsset',
+      'usersOnline',
       'windowHeight',
       'whiteboard',
       'windowWidth'

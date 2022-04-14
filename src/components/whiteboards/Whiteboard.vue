@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <div v-if="!isLoading">
-      <ActiveCollaborators />
+      <Users />
       <EditActiveFabricObject />
     </div>
     <v-main id="whiteboard-container" class="whiteboard-container">
@@ -15,17 +15,17 @@
 </template>
 
 <script>
-import ActiveCollaborators from '@/components/whiteboards/ActiveCollaborators'
 import Context from '@/mixins/Context'
 import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
+import Users from '@/components/whiteboards/sidebar/Users'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {ActiveCollaborators, EditActiveFabricObject, Toolbar},
+  components: {EditActiveFabricObject, Toolbar, Users},
   data: () => ({
     pingJob: undefined
   }),

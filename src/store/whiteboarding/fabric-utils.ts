@@ -139,7 +139,7 @@ export function ping(state: any) {
   p.$socket.emit(
     'ping',
     $_getUserSession(state),
-    (activeCollaborators: any[]) => store.dispatch('whiteboarding/setActiveCollaborators', activeCollaborators),
+    (users: any[]) => store.dispatch('whiteboarding/setUsers', users),
   )
 }
 
@@ -433,12 +433,12 @@ const $_addSocketListeners = (state: any) => {
 
   p.$socket.on('join', (data: any) => {
     if ($_isSocketCallbackRelevant(data, state)) {
-      store.dispatch('whiteboarding/setActiveCollaborators', data.activeCollaborators)
+      store.dispatch('whiteboarding/setUsers', data.users)
     }
   })
   p.$socket.on('leave', (data: any) => {
     if ($_isSocketCallbackRelevant(data, state)) {
-      store.dispatch('whiteboarding/setActiveCollaborators', data.activeCollaborators)
+      store.dispatch('whiteboarding/setUsers', data.users)
     }
   })
 
