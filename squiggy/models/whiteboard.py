@@ -154,9 +154,11 @@ class Whiteboard(Base):
             params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
             where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
 
+        default_order_by = 'w.id DESC'
         order_by_clause = {
-            'recent': 'w.id DESC',
-        }.get(order_by)
+            'collaborator': 'u.canvas_full_name, u.canvas_user_id',
+            'recent': default_order_by,
+        }.get(order_by) or default_order_by
 
         sql = f"""
             SELECT

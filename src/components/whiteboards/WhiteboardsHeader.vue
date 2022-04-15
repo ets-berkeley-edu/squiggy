@@ -17,7 +17,7 @@
       </div>
     </div>
     <v-alert
-      v-if="!$_.isNil(totalWhiteboardCount) && !totalWhiteboardCount"
+      v-if="hasLoaded && !hasWhiteboards"
       role="alert"
       outlined
       text
@@ -26,7 +26,7 @@
     >
       <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
     </v-alert>
-    <div v-if="totalWhiteboardCount && !$currentUser.isObserver && !$currentUser.isStudent">
+    <div v-if="hasWhiteboards && !$currentUser.isObserver && !$currentUser.isStudent">
       <v-expand-transition>
         <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
           <v-text-field
@@ -38,6 +38,7 @@
             solo
             type="search"
             @click:append-outer="fetch"
+            @click:clear="onClickClearSearchInput"
             @input="setKeywords"
             @keypress.enter="fetch"
           >
@@ -125,7 +126,16 @@
                   :disabled="isBusy"
                   :hide-details="true"
                   id-prefix="adv-search-order-by"
-                  :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
+                  :items="[
+                    {
+                      text: 'Most recent',
+                      value: 'recent'
+                    },
+                    {
+                      text: 'Collaborator',
+                      value: 'collaborator'
+                    }
+                  ]"
                   :unclearable="true"
                   :value="orderBy"
                   @input="setOrderBy"
@@ -294,6 +304,8 @@ export default {
   data: () => ({
     alert: undefined,
     alertType: undefined,
+    hasLoaded: false,
+    hasWhiteboards: undefined,
     keyForSelectReset: new Date().getTime()
   }),
   watch: {
@@ -307,12 +319,14 @@ export default {
     }
   },
   created() {
-    this.init().then(() => {
+    this.init().then(data => {
+      this.hasWhiteboards = !!data.length
       this.setExpanded(this.orderBy !== this.orderByDefault && !!this.userId)
       if (this.putFocusOnLoad) {
         this.$putFocusNextTick(this.putFocusOnLoad)
       }
       this.setBusy(false)
+      this.hasLoaded = true
     })
   },
   methods: {
@@ -321,7 +335,7 @@ export default {
       this.alertType = null
     },
     fetch() {
-      if (this.keywords || this.orderBy || this.userId) {
+      if (this.$_.trim(this.keywords) || this.orderBy || this.userId) {
         this.setBusy(true)
         this.resetOffset()
         this.$announcer.polite('Searching')
@@ -336,6 +350,12 @@ export default {
           }
         })
       }
+    },
+    onClickClearSearchInput() {
+      this.setKeywords(undefined)
+      this.setOrderBy('recent')
+      this.setUserId(undefined)
+      this.fetch()
     },
     reset(expand, fetchAgain) {
       this.setOrderBy(this.orderByDefault)

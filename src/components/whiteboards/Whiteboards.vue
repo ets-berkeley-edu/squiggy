@@ -113,7 +113,7 @@ export default {
       this.scheduleRefreshJob()
     },
     runRefresh() {
-      if (!this.isBusy) {
+      if (!this.isBusy || !this.$_.trim(this.keywords) || !this.orderBy || !this.userId) {
         this.refresh().then(() => {
           this.scheduleRefreshJob()
         })
