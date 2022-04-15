@@ -43,10 +43,10 @@
             :disabled="isSaving"
             :error="!selectedUserIds.length"
             filled
-            hide-selected
-            item-text="name"
+            item-text="canvasFullName"
             item-value="id"
             :items="users"
+            :loading="isFetchingUsers"
             :menu-props="{
               closeOnClick: true,
               closeOnContentClick: true
@@ -62,9 +62,9 @@
                 @click:close="remove(data.item)"
               >
                 <v-avatar left>
-                  <v-img :src="data.item.avatar"></v-img>
+                  <v-img :src="data.item.canvasImage"></v-img>
                 </v-avatar>
-                {{ data.item.name }}
+                {{ data.item.canvasFullName }}
               </v-chip>
             </template>
             <template #item="data">
@@ -73,10 +73,10 @@
               </template>
               <template v-else>
                 <v-list-item-avatar>
-                  <img :aria-label="`Photo of ${data.item.name}`" :src="data.item.avatar" />
+                  <img :aria-label="`Photo of ${data.item.canvasFullName}`" :src="data.item.canvasImage" />
                 </v-list-item-avatar>
                 <v-list-item-content>
-                  <v-list-item-title v-html="data.item.name"></v-list-item-title>
+                  <v-list-item-title v-html="data.item.canvasFullName"></v-list-item-title>
                   <v-list-item-subtitle v-html="data.item.group"></v-list-item-subtitle>
                 </v-list-item-content>
               </template>
@@ -134,7 +134,7 @@ import Context from '@/mixins/Context'
 import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 import {createWhiteboard, updateWhiteboard} from '@/api/whiteboards'
-import {getUsers} from '@/api/users'
+import {getStudentsBySection} from '@/api/users'
 
 export default {
   name: 'EditWhiteboard',
@@ -160,6 +160,7 @@ export default {
     }
   },
   data: () => ({
+    isFetchingUsers: true,
     isInputValid: false,
     isSaving: false,
     selectedUserIds: [],
@@ -182,38 +183,17 @@ export default {
     } else {
       this.selectedUserIds = [this.$currentUser.id]
     }
-    getUsers().then(this.init)
+    getStudentsBySection().then(this.init)
   },
   methods: {
-    init(data) {
-      const usersBySection = {}
-      const usersOther = []
-      const getUserJson = u => ({
-        avatar: u.canvasImage,
-        id: u.id,
-        name: u.canvasFullName
-      })
-      this.$_.each(data, user => {
-        const sections = user.canvasCourseSections
-        const userJson = getUserJson(user)
-        if (this.$_.size(sections)) {
-          this.$_.each(sections, section => {
-            if (!usersBySection[section]) {
-              usersBySection[section] = []
-            }
-            usersBySection[section] = userJson
-          })
-        } else if (user.canvasCourseRole) {
-          usersOther.push(userJson)
-        }
-      })
-      this.users = []
-      this.$_.each(usersBySection, (userList, section) => {
-        this.users.push({header: section})
-        this.users.concat(userList)
-      })
-      this.users = this.users.concat(usersOther)
-      this.onReady()
+    init(users) {
+      this.users = users
+      const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
+      if (addCurrentUser) {
+        this.users.push(this.$currentUser)
+        this.users = this.$_.sortBy(this.users, ['canvasFullName', 'id'])
+      }
+      this.isFetchingUsers = false
     },
     remove(user) {
       const index = this.selectedUserIds.indexOf(user.id)

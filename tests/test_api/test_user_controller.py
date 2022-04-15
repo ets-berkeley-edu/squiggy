@@ -101,6 +101,32 @@ class TestGetUsers:
             assert user['canvasEnrollmentState'] == 'active' or user['canvasEnrollmentState'] == 'invited'
 
 
+class TestStudentsBySection:
+
+    @classmethod
+    def _api_get_students_by_section(cls, client, expected_status_code=200):
+        response = client.get('/api/users/students_by_section')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_get_students_by_section(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_get_students_by_section(client, expected_status_code=401)
+
+    def test_authorized(self, client, fake_auth, authorized_user_id):
+        """Authorized user can get /students_by_section."""
+        fake_auth.login(authorized_user_id)
+        api_json = self._api_get_students_by_section(client)
+        assert len(api_json) > 1
+        assert 'header' in api_json[0]
+        assert 'canvasFullName' in api_json[1]
+
+
 class TestGetLeaderboard:
     """User API."""
 

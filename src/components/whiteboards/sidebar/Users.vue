@@ -34,7 +34,7 @@
         </v-list-item-content>
       </v-list-item>
       <v-divider class="mx-2" />
-      <v-list-item v-for="user in $_.filter(whiteboard.users, user => !user.isOnline)" :key="user.id">
+      <v-list-item v-for="user in usersOffline" :key="user.id">
         <v-list-item-avatar :class="{'pr-3': isMiniVariant}">
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
@@ -57,7 +57,15 @@ export default {
   components: {Avatar},
   data: () => ({
     isMiniVariant: true
-  })
+  }),
+  computed: {
+    usersOffline() {
+      return this.$_.filter(this.whiteboard.users, user => !user.isOnline)
+    },
+    usersOnline() {
+      return this.$_.filter(this.whiteboard.users, user => user.isOnline)
+    }
+  }
 }
 </script>
 

@@ -50,7 +50,6 @@ const getters = {
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
   selectedAsset: () => null,
-  usersOnline: (state: any): any => _.filter(state.whiteboard.users, (user: any) => user.isOnline),
   whiteboard: (state: any): any => state.whiteboard,
   windowHeight: (state: any): number => state.windowHeight,
   windowWidth: (state: any): number => state.windowWidth,
