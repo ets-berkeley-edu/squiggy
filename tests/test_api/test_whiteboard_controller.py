@@ -158,7 +158,11 @@ class TestGetWhiteboards:
             )
             std_commit(allow_test_environment=True)
 
-            api_json = self._api_get_whiteboards(client=client, include_deleted=True)
+            api_json = self._api_get_whiteboards(
+                client=client,
+                include_deleted=True,
+                order_by='collaborator',
+            )
             whiteboards = api_json['results']
             assert len(whiteboards) == api_json['total']
 

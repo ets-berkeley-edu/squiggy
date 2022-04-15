@@ -108,10 +108,10 @@ const mutations = {
 
 const actions = {
   init({commit}) {
-    return new Promise<void>(resolve => {
+    return new Promise(resolve => {
       getUsers().then(data => {
         commit('setUsers', data)
-        resolve()
+        resolve(data)
       })
     })
   },
