@@ -32,7 +32,6 @@ export default {
       'mode',
       'selected',
       'selectedAsset',
-      'usersOnline',
       'windowHeight',
       'whiteboard',
       'windowWidth'

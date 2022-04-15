@@ -46,7 +46,7 @@
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-header>
-          <h2 class="primary--text text-no-wrap">Canvas Course {{ $currentUser.course.canvasCourseId }}</h2>
+          <h2 class="primary--text text-no-wrap">Canvas Course {{ $currentUser.course.id }}</h2>
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <CourseSummary :course="$currentUser.course" />
