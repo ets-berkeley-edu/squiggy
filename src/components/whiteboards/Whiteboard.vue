@@ -35,7 +35,7 @@ export default {
       this.setDisableAll(false)
       clearTimeout(this.pingJob)
       this.pingJob = setTimeout(this.keepSocketAlive, 60000)
-      this.$ready(`Whiteboard: ${whiteboard.title}`)
+      this.$ready(whiteboard.title)
     })
   },
   destroyed() {

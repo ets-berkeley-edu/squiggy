@@ -89,6 +89,22 @@
           </v-autocomplete>
         </v-col>
       </v-row>
+      <v-row v-if="whiteboard && !$currentUser.isAdmin && !$currentUser.isTeaching && !$_.includes(selectedUserIds, $currentUser.id)" no-gutters>
+        <v-col>
+          <v-alert
+            aria-live="assertive"
+            dense
+            :icon="false"
+            role="alert"
+            type="warning"
+          >
+            <font-awesome-icon icon="exclamation-triangle" class="pr-2" />
+            <span class="font-weight-bold">Warning!</span>
+            If you remove yourself from the list of collaborators then this
+            window will close and you will lose access to this whiteboard.
+          </v-alert>
+        </v-col>
+      </v-row>
       <v-row no-gutters>
         <v-col>
           <div class="d-flex justify-end pt-3 w-100">
@@ -153,6 +169,10 @@ export default {
       required: true,
       type: Function
     },
+    reset: {
+      required: false,
+      type: Boolean
+    },
     whiteboard: {
       default: undefined,
       required: false,
@@ -173,33 +193,52 @@ export default {
   }),
   computed: {
     disableSave() {
-      return this.isSaving || !this.$_.trim(this.title || '') || this.$_.size(this.title) > 255 || !this.$_.size(this.selectedUserIds)
+      return this.isSaving
+        || !this.$_.trim(this.title || '')
+        || this.$_.size(this.title) > 255
+        || (!this.whiteboard && !this.$_.size(this.selectedUserIds))
+    }
+  },
+  watch: {
+    reset(value) {
+      if (value) {
+        this.resetData()
+      }
     }
   },
   created() {
-    if (this.whiteboard) {
-      this.selectedUserIds = this.$_.map(this.whiteboard.users, 'id')
-      this.title = this.whiteboard.title
-    } else {
-      this.selectedUserIds = [this.$currentUser.id]
-    }
-    getStudentsBySection().then(this.init)
+    this.init()
   },
   methods: {
-    init(users) {
-      this.users = users
-      const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
-      if (addCurrentUser) {
-        this.users.push(this.$currentUser)
-        this.users = this.$_.sortBy(this.users, ['canvasFullName', 'id'])
-      }
-      this.isFetchingUsers = false
+    init() {
+      this.resetData()
+      getStudentsBySection().then(users => {
+        this.users = users
+        const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
+        if (addCurrentUser) {
+          this.users.push(this.$currentUser)
+          this.users = this.$_.sortBy(this.users, ['canvasFullName', 'id'])
+        }
+        this.isFetchingUsers = false
+      })
     },
     remove(user) {
       const index = this.selectedUserIds.indexOf(user.id)
       if (index >= 0) {
         this.selectedUserIds.splice(index, 1)
       }
+    },
+    resetData() {
+      if (this.whiteboard) {
+        this.selectedUserIds = this.$_.map(this.whiteboard.users, 'id')
+        this.title = this.whiteboard.title
+      } else {
+        this.selectedUserIds = [this.$currentUser.id]
+        this.title = undefined
+      }
+      this.isFetchingUsers = true
+      this.isInputValid = false
+      this.isSaving = false
     },
     save() {
       this.isSaving = true
@@ -211,7 +250,7 @@ export default {
       if (this.whiteboard) {
         updateWhiteboard(
           this.title,
-          this.$_.map(this.selectedUserIds, 'id'),
+          this.selectedUserIds,
           this.whiteboard.id
         ).then(done)
       } else {

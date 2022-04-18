@@ -22,10 +22,11 @@
       <v-card-text>
         <EditWhiteboard
           class="pt-10"
-          :whiteboard="whiteboard"
+          :after-save="afterSave"
           :on-cancel="cancel"
           :on-ready="() => $announcer.polite('The edit Whiteboard dialog is ready.')"
-          :after-save="afterSave"
+          :reset="menu"
+          :whiteboard="whiteboard"
         />
       </v-card-text>
     </v-card>
