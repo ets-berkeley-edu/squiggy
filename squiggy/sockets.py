@@ -159,8 +159,8 @@ def register_sockets(socketio):
     @socketio.on('ping')
     def socketio_ping(data):
         return update_updated_at(
+            current_user=LoginSession(data.get('userId')),
             socket_id=data.get('socketId'),
-            user_id=data.get('userId'),
             whiteboard_id=data.get('whiteboardId'),
         )
 
