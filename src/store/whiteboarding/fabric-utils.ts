@@ -51,6 +51,7 @@ export function addAsset(asset: any, state: any) {
     // Add the new element to the canvas
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
+    $_saveNewElement(asset.id, element, state)
   })
 }
 
@@ -291,7 +292,7 @@ const $_addListenters = (state: any) => {
     const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
     // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
     if (!isIncompleteIText && !element.get('uuid') && !element.isHelper) {
-      $_saveNewElement(element, state)
+      $_saveNewElement(element.assetId, element, state)
       setCanvasDimensions(state)
     }
   })
@@ -411,7 +412,7 @@ const $_addListenters = (state: any) => {
         // p.$canvas.remove(state.shape)
 
         // Save the added shape and make it active.
-        $_saveNewElement(shape, state)
+        $_saveNewElement(NaN, shape, state)
         p.$canvas.setActiveObject(shape)
       }
     }
@@ -740,7 +741,7 @@ const $_initFabricPrototypes = (state: any) => {
         p.$canvas.remove(element)
       } else if (!element.get('uuid')) {
         // The text element did not exist before. Notify the server that the element was added
-        $_saveNewElement(element, state)
+        $_saveNewElement(NaN, element, state)
       } else {
         // The text element existed before. Notify the server that the element was updated
         $_saveElementUpdates([element], state)
@@ -878,7 +879,7 @@ const $_saveElementUpdates = (elements: any[], state: any) => {
   )
 }
 
-const $_saveNewElement = (element: any, state: any) => {
+const $_saveNewElement = (assetId: number, element: any, state: any) => {
   if (!element.uuid) {
     p.$socket.emit(
       'add',
@@ -886,7 +887,7 @@ const $_saveNewElement = (element: any, state: any) => {
         socketId: p.$socket.id,
         userId: p.$currentUser.id,
         whiteboardElements: [{
-          assetId: undefined,
+          assetId,
           element: element.toObject()
         }],
         whiteboardId: state.whiteboard.id

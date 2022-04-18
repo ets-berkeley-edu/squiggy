@@ -217,6 +217,7 @@ export default {
             this.$announcer.polite('File uploaded. Asset created.')
             this.dialog = false
             this.isSaving = false
+            this.uploading = false
           })
         })
       }
