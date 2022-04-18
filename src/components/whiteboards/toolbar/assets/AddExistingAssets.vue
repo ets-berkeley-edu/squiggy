@@ -22,13 +22,18 @@
         <h2 id="modal-header" class="title">Select Asset(s)</h2>
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text v-if="isDialogReady">
+      <v-card-text>
         <AssetsHeader
+          v-if="totalAssetCount > 1"
           :hide-manage-assets-button="true"
           put-focus-on-load="basic-search-input"
         />
         <v-card class="d-flex flex-wrap" flat tile>
-          <div v-for="(asset, index) in assetGrid" :key="index">
+          <div
+            v-for="(asset, index) in assetGrid"
+            :key="index"
+            class="mt-4"
+          >
             <AssetCard
               :asset="asset"
               class="asset-card"
@@ -193,10 +198,9 @@ export default {
 
 <style scoped>
 .active-card {
-  height:100%;
-  left:0;
-  position:fixed;
-  top:0;
+  left: 0;
+  position: fixed;
+  top: 0;
 }
 .asset-checkbox-label {
   max-width: 240px;

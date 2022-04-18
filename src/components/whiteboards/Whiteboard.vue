@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <div v-if="!isLoading">
-      <Users />
+      <Users v-if="!hideSidebar" />
       <EditActiveFabricObject />
     </div>
     <v-main id="whiteboard-container" class="whiteboard-container">

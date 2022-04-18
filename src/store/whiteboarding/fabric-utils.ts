@@ -13,12 +13,9 @@ export function addAsset(asset: any, state: any) {
   store.dispatch('whiteboarding/setMode', 'move')
 
   // Default to a placeholder when the asset does not have a preview image
-  let imageUrl = asset.imageUrl
-  if (imageUrl) {
-    const regex = new RegExp(p.$config.s3PreviewUurlPattern)
-    if (imageUrl.match(regex)) {
-      imageUrl = `${apiUtils.apiBaseUrl()}/api/asset/${asset.id}/download`
-    }
+  let imageUrl: any = undefined
+  if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
+    imageUrl = asset.imageUrl
   } else {
     const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1
     imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]

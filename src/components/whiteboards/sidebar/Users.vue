@@ -29,7 +29,7 @@
         <v-list-item-content v-if="isMiniVariant" class="pl-1">
           &mdash;
         </v-list-item-content>
-        <v-list-item-content v-if="!isMiniVariant" class="pl-2">
+        <v-list-item-content v-if="!isMiniVariant" class="pl-2 my-3">
           <span class="font-weight-bold red--text">No one is active.</span>
         </v-list-item-content>
       </v-list-item>
