@@ -133,6 +133,12 @@ export function onWhiteboardUpdate(state: any, whiteboard: any) {
       users: whiteboard.users
     }
   })
+  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+    const userIds = _.map(whiteboard.users, 'id')
+    if (!_.includes(userIds, p.$currentUser.id)) {
+      window.close()
+    }
+  }
 }
 
 export function ping(state: any) {
