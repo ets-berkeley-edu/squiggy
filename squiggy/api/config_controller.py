@@ -45,7 +45,7 @@ def app_config():
         'canvasBaseUrl': app.config['CANVAS_BASE_URL'],
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],
         'orderByOptions': assets_sort_by_options,
-        's3PreviewUurlPattern': S3_PREVIEW_URL_PATTERN,
+        's3PreviewUrlPattern': S3_PREVIEW_URL_PATTERN,
         'squiggyEnv': app.config['SQUIGGY_ENV'],
         'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],

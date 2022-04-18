@@ -57,6 +57,7 @@ export default {
   }),
   methods: {
     watchChildDialog(isOpen) {
+      this.setHideSidebar(isOpen)
       if (isOpen) {
         // If secondary dialog is opening then close this menu.
         this.menu = false

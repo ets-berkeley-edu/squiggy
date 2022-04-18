@@ -28,6 +28,7 @@ export default {
       'categories',
       'disableAll',
       'fitToScreen',
+      'hideSidebar',
       'isModifyingElement',
       'mode',
       'selected',
@@ -47,6 +48,7 @@ export default {
       'ping',
       'resetSelected',
       'setDisableAll',
+      'setHideSidebar',
       'setMode',
       'updateSelected',
       'toggleZoom'
