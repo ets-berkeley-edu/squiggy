@@ -64,7 +64,7 @@ def create_whiteboard_elements(current_user, socket_id, whiteboard_elements, whi
 
 def delete_whiteboard_elements(current_user, socket_id, whiteboard_elements, whiteboard_id):
     if _is_allowed(current_user):
-        whiteboard = Whiteboard.find_by_id(whiteboard_id) if whiteboard_id else None
+        whiteboard = Whiteboard.find_by_id(current_user, whiteboard_id) if whiteboard_id else None
         if not whiteboard:
             raise ResourceNotFoundError('Whiteboard not found.')
         if whiteboard['deletedAt']:
@@ -75,7 +75,8 @@ def delete_whiteboard_elements(current_user, socket_id, whiteboard_elements, whi
             raise BadRequestError('Unauthorized')
 
         for whiteboard_element in whiteboard_elements:
-            WhiteboardElement.delete(uuid=whiteboard_element['element']['uuid'], whiteboard_id=whiteboard_id)
+            uuid = whiteboard_element['element']['uuid']
+            WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
         update_updated_at(
             current_user=current_user,
             socket_id=socket_id,

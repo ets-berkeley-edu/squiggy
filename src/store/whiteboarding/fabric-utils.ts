@@ -435,77 +435,60 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('join', (data: any) => {
-    if ($_isSocketCallbackRelevant(data, state)) {
-      store.dispatch('whiteboarding/setUsers', data.users)
-    }
-  })
-  p.$socket.on('leave', (data: any) => {
-    if ($_isSocketCallbackRelevant(data, state)) {
-      store.dispatch('whiteboarding/setUsers', data.users)
-    }
-  })
+  p.$socket.on('join', (data: any) => store.dispatch('whiteboarding/setUsers', data.users))
 
-  // One or multiple whiteboard canvas elements were updated by a different user
-  p.$socket.on('update_whiteboard', (data: any) => {
-    if ($_isSocketCallbackRelevant(data, state)) {
-      _.assignIn(state.whiteboard, data.whiteboard)
-    }
-  })
+  p.$socket.on('leave', (data: any) => store.dispatch('whiteboarding/setUsers', data.users))
+
+  p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
+
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on(
     'update_whiteboard_elements',
     (data: any) => {
-      if ($_isSocketCallbackRelevant(data, state)) {
-        const elements = data.whiteboardElements
-        // Deactivate the current group if any of the updated elements are in the current group
-        $_deactiveActiveGroupIfOverlap(elements)
-        // Update the elements
-        _.each(elements, (element: any) => {
-          $_updateCanvasElement(state, element.uuid, element)
-        })
-        // Recalculate the size of the whiteboard canvas
-        setCanvasDimensions(state)
-      }
+      const elements = data.whiteboardElements
+      // Deactivate the current group if any of the updated elements are in the current group
+      $_deactiveActiveGroupIfOverlap(elements)
+      // Update the elements
+      _.each(elements, (element: any) => {
+        $_updateCanvasElement(state, element.uuid, element)
+      })
+      // Recalculate the size of the whiteboard canvas
+      setCanvasDimensions(state)
     }
   )
   // A whiteboard canvas element was added by a different user
   p.$socket.on(
     'add',
     (data: any) => {
-      if ($_isSocketCallbackRelevant(data, state)) {
-        _.each(data.whiteboardElements, (element: any) => {
-          const callback = (e: any) => {
-            // Add the element to the whiteboard canvas and move it to its appropriate index
-            p.$canvas.add(e)
-            element.moveTo(e.get('index'))
-            p.$canvas.requestRenderAll()
-            // Recalculate the size of the whiteboard canvas
-            setCanvasDimensions(state)
-          }
-          $_deserializeElement(state, element, element.uuid, callback)
-        })
-      }
+      _.each(data.whiteboardElements, (element: any) => {
+        const callback = (e: any) => {
+          // Add the element to the whiteboard canvas and move it to its appropriate index
+          p.$canvas.add(e)
+          element.moveTo(e.get('index'))
+          p.$canvas.requestRenderAll()
+          // Recalculate the size of the whiteboard canvas
+          setCanvasDimensions(state)
+        }
+        $_deserializeElement(state, element, element.uuid, callback)
+      })
     }
   )
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on(
     'delete',
     (data: any) => {
-      if ($_isSocketCallbackRelevant(data, state)) {
-        // Deactivate the current group if any of the deleted elements are in the current group
-        const elements = data.whiteboardElements
-        $_deactiveActiveGroupIfOverlap(elements)
-        // Delete the elements
-        _.each(elements, function(element) {
-          element = $_getCanvasElement(element.uuid)
-          if (element) {
-            p.$canvas.remove(element)
-          }
-        })
-        // Recalculate the size of the whiteboard canvas
-        setCanvasDimensions(state)
-      }
+      // Deactivate the current group if any of the deleted elements are in the current group
+      const elements = data.whiteboardElements
+      $_deactiveActiveGroupIfOverlap(elements)
+      // Delete the elements
+      _.each(elements, function(element) {
+        element = $_getCanvasElement(element.uuid)
+        if (element) {
+          p.$canvas.remove(element)
+        }
+      })
+      // Recalculate the size of the whiteboard canvas
+      setCanvasDimensions(state)
     }
   )
 }
@@ -761,8 +744,6 @@ const $_initSocket = (state: any, whiteboard: any) => {
   })
   p.$socket.on('connect', () => p.$socket.emit('join', $_getUserSession(state)))
 }
-
-const $_isSocketCallbackRelevant = (data: any, state: any) => (data.socketId !== p.$socket.id && data.whiteboardId === state.whiteboard.id)
 
 const $_paste = (state: any): void => {
   const elements: any[] = []

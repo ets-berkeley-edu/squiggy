@@ -44,12 +44,14 @@ def register_sockets(socketio):
             whiteboard_id=whiteboard_id,
         )
         emit(
-            'join',
-            {
+            args={
                 'socketId': socket_id,
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,
             },
+            event='join',
+            include_self=False,
+            skip_sid=socket_id,
         )
 
     @socketio.on('leave')
@@ -63,13 +65,15 @@ def register_sockets(socketio):
             whiteboard_id=whiteboard_id,
         )
         emit(
-            'leave',
-            {
+            args={
                 'socketId': socket_id,
                 'userId': user_id,
                 'users': Whiteboard.find_by_id(whiteboard_id)['users'],
                 'whiteboardId': whiteboard_id,
             },
+            event='leave',
+            include_self=False,
+            skip_sid=socket_id,
         )
 
     @socketio.on('update_whiteboard')
@@ -86,13 +90,15 @@ def register_sockets(socketio):
             users=users,
         )
         emit(
-            'update_whiteboard',
-            {
+            args={
                 'socketId': socket_id,
                 'title': title,
                 'users': [user.to_api_json() for user in users],
                 'whiteboardId': whiteboard_id,
             },
+            event='update_whiteboard',
+            include_self=False,
+            skip_sid=socket_id,
         )
 
     @socketio.on('update_whiteboard_elements')
@@ -107,12 +113,14 @@ def register_sockets(socketio):
             whiteboard_elements=data.get('whiteboardElements', []),
         )
         emit(
-            'update_whiteboard',
-            {
+            args={
                 'socketId': socket_id,
                 'whiteboardElements': [e.to_api_json() for e in whiteboard_elements],
                 'whiteboardId': whiteboard_id,
             },
+            event='update_whiteboard',
+            include_self=False,
+            skip_sid=socket_id,
         )
 
     @socketio.on('add')
@@ -127,12 +135,14 @@ def register_sockets(socketio):
             whiteboard_elements=data.get('whiteboardElements', []),
         )
         emit(
-            'add',
-            {
+            args={
                 'socketId': socket_id,
                 'whiteboardElements': [e.to_api_json() for e in whiteboard_elements],
                 'whiteboardId': whiteboard_id,
             },
+            event='add',
+            include_self=False,
+            skip_sid=socket_id,
         )
         return whiteboard_elements
 
@@ -148,12 +158,14 @@ def register_sockets(socketio):
             whiteboard_elements=whiteboard_elements,
         )
         emit(
-            'delete',
-            {
+            args={
                 'socketId': socket_id,
                 'whiteboardElementUids': [e['element']['uuid'] for e in whiteboard_elements],
                 'whiteboardId': whiteboard_id,
             },
+            event='delete',
+            include_self=False,
+            skip_sid=socket_id,
         )
 
     @socketio.on('ping')
