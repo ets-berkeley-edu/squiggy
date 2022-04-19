@@ -51,13 +51,16 @@ export function addAsset(asset: any, state: any) {
     // Add the new element to the canvas
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
-    $_saveNewElement(asset.id, element, state)
+    $_broadcastAdd(asset.id, element, state)
   })
 }
 
 export function deleteActiveElements(state: any) {
   const elements = $_getActiveObjects()
-  _.each(elements, (element: any) => p.$canvas.remove($_getCanvasElement(element.uuid)))
+  _.each(elements, (element: any) => {
+    p.$canvas.remove($_getCanvasElement(element.uuid))
+    $_broadcastDelete(element, state)
+  })
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
   if (activeObject) {
@@ -66,7 +69,6 @@ export function deleteActiveElements(state: any) {
       p.$canvas.discardActiveObject().requestRenderAll()
     }
   }
-  $_saveDeleteElements(elements, state)
 }
 
 export function enableCanvasElements(enabled: boolean) {
@@ -125,11 +127,10 @@ export function onWhiteboardUpdate(state: any, whiteboard: any) {
   _.assignIn(state.whiteboard, whiteboard)
   document.title = `${whiteboard.title} | SuiteC`
   p.$socket.emit('update_whiteboard', {
-    ...$_getUserSession(state),
-    ...{
-      title: whiteboard.title,
-      users: whiteboard.users
-    }
+    title: whiteboard.title,
+    userId: p.$currentUser.id,
+    users: whiteboard.users,
+    whiteboardId: state.whiteboard.id
   })
   if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
     const userIds = _.map(whiteboard.users, 'id')
@@ -142,7 +143,10 @@ export function onWhiteboardUpdate(state: any, whiteboard: any) {
 export function ping(state: any) {
   p.$socket.emit(
     'ping',
-    $_getUserSession(state),
+    {
+      userId: p.$currentUser.id,
+      whiteboardId: state.whiteboard.id
+    },
     (users: any[]) => store.dispatch('whiteboarding/setUsers', users),
   )
 }
@@ -246,7 +250,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:modified', (event: any) => {
     // Ensure that none of the modified objects are positioned off screen
     $_ensureWithinCanvas(event)
-    $_saveElementUpdates($_getActiveObjects(), state)
+    $_broadcastUpdate($_getActiveObjects(), state)
   })
 
   // Indicate that the currently selected elements are no longer being modified once moving, scaling or rotating has finished
@@ -292,7 +296,7 @@ const $_addListenters = (state: any) => {
     const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
     // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
     if (!isIncompleteIText && !element.get('uuid') && !element.isHelper) {
-      $_saveNewElement(element.assetId, element, state)
+      $_broadcastAdd(element.assetId, element, state)
       setCanvasDimensions(state)
     }
   })
@@ -412,7 +416,7 @@ const $_addListenters = (state: any) => {
         // p.$canvas.remove(state.shape)
 
         // Save the added shape and make it active.
-        $_saveNewElement(NaN, shape, state)
+        $_broadcastAdd(NaN, shape, state)
         p.$canvas.setActiveObject(shape)
       }
     }
@@ -425,7 +429,10 @@ const $_addListenters = (state: any) => {
 const $_addSocketListeners = (state: any) => {
   const onWindowClose = (event: any) => {
     if (p.$socket && p.$socket.connected) {
-      p.$socket.emit('leave', $_getUserSession(state))
+      p.$socket.emit('leave', {
+        userId: p.$currentUser.id,
+        whiteboardId: state.whiteboard.id
+      })
       p.$socket.disconnect()
     }
     if (event) {
@@ -442,9 +449,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
 
   // One or multiple whiteboard canvas elements were updated by a different user
-  p.$socket.on(
-    'update_whiteboard_elements',
-    (data: any) => {
+  p.$socket.on('update_whiteboard_elements', (data: any) => {
       const elements = data.whiteboardElements
       // Deactivate the current group if any of the updated elements are in the current group
       $_deactiveActiveGroupIfOverlap(elements)
@@ -457,40 +462,33 @@ const $_addSocketListeners = (state: any) => {
     }
   )
   // A whiteboard canvas element was added by a different user
-  p.$socket.on(
-    'add',
-    (data: any) => {
-      _.each(data.whiteboardElements, (element: any) => {
-        const callback = (e: any) => {
-          // Add the element to the whiteboard canvas and move it to its appropriate index
-          p.$canvas.add(e)
-          element.moveTo(e.get('index'))
-          p.$canvas.requestRenderAll()
-          // Recalculate the size of the whiteboard canvas
-          setCanvasDimensions(state)
-        }
-        $_deserializeElement(state, element, element.uuid, callback)
-      })
+  p.$socket.on('add_whiteboard_element', (data: any) => {
+    if (data.whiteboardId === state.whiteboardId) {
+      const element = data.element
+      const callback = (e: any) => {
+        // Add the element to the whiteboard canvas and move it to its appropriate index
+        p.$canvas.add(e)
+        element.moveTo(e.get('index'))
+        p.$canvas.requestRenderAll()
+        // Recalculate the size of the whiteboard canvas
+        setCanvasDimensions(state)
+      }
+      $_deserializeElement(state, element, element.uuid, callback)
     }
-  )
+  })
   // One or multiple whiteboard canvas elements were deleted by a different user
-  p.$socket.on(
-    'delete',
-    (data: any) => {
-      // Deactivate the current group if any of the deleted elements are in the current group
-      const elements = data.whiteboardElements
-      $_deactiveActiveGroupIfOverlap(elements)
-      // Delete the elements
-      _.each(elements, function(element) {
-        element = $_getCanvasElement(element.uuid)
-        if (element) {
-          p.$canvas.remove(element)
-        }
-      })
-      // Recalculate the size of the whiteboard canvas
-      setCanvasDimensions(state)
+  p.$socket.on('delete_whiteboard_element', (data: any) => {
+    if (data.whiteboardId === state.whiteboardId) {
+      const element = $_getCanvasElement(data.uuid)
+      if (element) {
+        // Deactivate the current group if any of the deleted elements are in the current group
+        $_deactiveActiveGroupIfOverlap([element])
+        p.$canvas.remove(element)
+        // Recalculate the size of the whiteboard canvas
+        setCanvasDimensions(state)
+      }
     }
-  )
+  })
 }
 
 const $_addViewportListeners = (state: any) => {
@@ -654,14 +652,6 @@ const $_getCanvasElement = (uuid: string) => {
 
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
-const $_getUserSession = (state: any) => {
-  return {
-    socketId: p.$socket.id,
-    userId: p.$currentUser.id,
-    whiteboardId: state.whiteboard.id
-  }
-}
-
 const $_initCanvas = (state: any) => {
   // Initialize the Fabric.js canvas and load the whiteboard content and online users
   // Ensure that the horizontal and vertical origins of objects are set to center
@@ -719,15 +709,15 @@ const $_initFabricPrototypes = (state: any) => {
       const text = element.text.trim()
       if (!text) {
         if (element.get('uuid')) {
-          $_saveDeleteElements(state, [element])
+          $_broadcastDelete(element, state)
         }
         p.$canvas.remove(element)
       } else if (!element.get('uuid')) {
         // The text element did not exist before. Notify the server that the element was added
-        $_saveNewElement(NaN, element, state)
+        $_broadcastAdd(NaN, element, state)
       } else {
         // The text element existed before. Notify the server that the element was updated
-        $_saveElementUpdates([element], state)
+        $_broadcastUpdate([element], state)
       }
       store.dispatch('whiteboarding/setMode', 'move')
     }
@@ -742,7 +732,12 @@ const $_initSocket = (state: any, whiteboard: any) => {
       whiteboardId: whiteboard.id
     }
   })
-  p.$socket.on('connect', () => p.$socket.emit('join', $_getUserSession(state)))
+  p.$socket.on('connect', () => {
+    p.$socket.emit('join', {
+      userId: p.$currentUser.id,
+      whiteboardId: state.whiteboard.id
+    })
+  })
 }
 
 const $_paste = (state: any): void => {
@@ -830,14 +825,12 @@ const $_restoreLayers = (state: any) => {
   setCanvasDimensions(state)
 }
 
-const $_saveDeleteElements = (elements: any[], state: any): any => {
-  // Notify the server about the deleted elements
+const $_broadcastDelete = (element: any, state: any): any => {
   p.$socket.emit(
-    'delete',
+    'delete_whiteboard_element',
     {
-      socketId: p.$socket.id,
       userId: p.$currentUser.id,
-      whiteboardElements: _.map(elements, (element: any) => ({element})),
+      whiteboardElement: {element},
       whiteboardId: state.whiteboard.id
     },
     () => {
@@ -847,11 +840,10 @@ const $_saveDeleteElements = (elements: any[], state: any): any => {
   )
 }
 
-const $_saveElementUpdates = (elements: any[], state: any) => {
+const $_broadcastUpdate = (elements: any[], state: any) => {
   p.$socket.emit(
     'update_whiteboard_elements',
     {
-      socketId: p.$socket.id,
       userId: p.$currentUser.id,
       whiteboardElements: _.map(elements, (element: any) => ({element})),
       whiteboardId: state.whiteboard.id
@@ -860,20 +852,19 @@ const $_saveElementUpdates = (elements: any[], state: any) => {
   )
 }
 
-const $_saveNewElement = (assetId: number, element: any, state: any) => {
+const $_broadcastAdd = (assetId: number, element: any, state: any) => {
   if (!element.uuid) {
     p.$socket.emit(
-      'add',
+      'add_whiteboard_element',
       {
-        socketId: p.$socket.id,
         userId: p.$currentUser.id,
-        whiteboardElements: [{
+        whiteboardElement: {
           assetId,
           element: element.toObject()
-        }],
+        },
         whiteboardId: state.whiteboard.id
       },
-      (whiteboardElements: any[]) => element.uuid = whiteboardElements[0].element.uuid
+      (whiteboardElement: any) => element.uuid = whiteboardElement.element.uuid
     )
   }
 }
@@ -923,9 +914,9 @@ const $_updateLayers = (state: any) => {
       if (element.group) {
         // If the element is part of a group, calculate its global coordinates
         const position = $_calculateGlobalElementPosition(element.group, element)
-        $_saveElementUpdates([_.assignTo({}, element.toObject(), position)], state)
+        $_broadcastUpdate([_.assignTo({}, element.toObject(), position)], state)
       } else {
-        $_saveElementUpdates([element.toObject()], state)
+        $_broadcastUpdate([element.toObject()], state)
       }
     }
   })

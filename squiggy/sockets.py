@@ -23,8 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from flask import request
 from flask_socketio import emit
-from squiggy.api.whiteboard_socket_handler import create_whiteboard_elements, delete_whiteboard_elements, \
+from squiggy.api.whiteboard_socket_handler import create_whiteboard_element, delete_whiteboard_element, \
     join_whiteboard, leave_whiteboard, update_updated_at, update_whiteboard, update_whiteboard_elements
 from squiggy.lib.login_session import LoginSession
 from squiggy.models.user import User
@@ -35,17 +36,16 @@ def register_sockets(socketio):
 
     @socketio.on('join')
     def socketio_join(data):
-        socket_id = data.get('socketId')
+        socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         join_whiteboard(
             current_user=LoginSession(user_id),
-            socket_id=data.get('socketId'),
+            socket_id=socket_id,
             whiteboard_id=whiteboard_id,
         )
         emit(
             args={
-                'socketId': socket_id,
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,
             },
@@ -56,19 +56,19 @@ def register_sockets(socketio):
 
     @socketio.on('leave')
     def socketio_leave(data):
-        socket_id = data.get('socketId')
+        socket_id = request.sid
         user_id = data.get('userId')
+        current_user = LoginSession(user_id)
         whiteboard_id = data.get('whiteboardId')
         leave_whiteboard(
-            current_user=LoginSession(user_id),
-            socket_id=data.get('socketId'),
+            current_user=current_user,
+            socket_id=request.sid,
             whiteboard_id=whiteboard_id,
         )
         emit(
             args={
-                'socketId': socket_id,
                 'userId': user_id,
-                'users': Whiteboard.find_by_id(whiteboard_id)['users'],
+                'users': Whiteboard.find_by_id(current_user, whiteboard_id)['users'],
                 'whiteboardId': whiteboard_id,
             },
             event='leave',
@@ -78,7 +78,7 @@ def register_sockets(socketio):
 
     @socketio.on('update_whiteboard')
     def socketio_update_whiteboard(data):
-        socket_id = data.get('socketId')
+        socket_id = request.sid
         title = data.get('title')
         users = User.find_by_ids(data.get('userIds'))
         whiteboard_id = data.get('whiteboardId')
@@ -91,7 +91,6 @@ def register_sockets(socketio):
         )
         emit(
             args={
-                'socketId': socket_id,
                 'title': title,
                 'users': [user.to_api_json() for user in users],
                 'whiteboardId': whiteboard_id,
@@ -103,7 +102,7 @@ def register_sockets(socketio):
 
     @socketio.on('update_whiteboard_elements')
     def socketio_update_whiteboard_elements(data):
-        socket_id = data.get('socketId')
+        socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         whiteboard_elements = update_whiteboard_elements(
@@ -114,7 +113,6 @@ def register_sockets(socketio):
         )
         emit(
             args={
-                'socketId': socket_id,
                 'whiteboardElements': [e.to_api_json() for e in whiteboard_elements],
                 'whiteboardId': whiteboard_id,
             },
@@ -123,47 +121,45 @@ def register_sockets(socketio):
             skip_sid=socket_id,
         )
 
-    @socketio.on('add')
+    @socketio.on('add_whiteboard_element')
     def socketio_add(data):
-        socket_id = data.get('socketId')
+        socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
-        whiteboard_elements = create_whiteboard_elements(
+        whiteboard_element = create_whiteboard_element(
             current_user=LoginSession(user_id),
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
-            whiteboard_elements=data.get('whiteboardElements', []),
-        )
+            whiteboard_element=data['whiteboardElement'],
+        ).to_api_json()
         emit(
             args={
-                'socketId': socket_id,
-                'whiteboardElements': [e.to_api_json() for e in whiteboard_elements],
+                'whiteboardElement': whiteboard_element,
                 'whiteboardId': whiteboard_id,
             },
-            event='add',
+            event='add_whiteboard_element',
             include_self=False,
             skip_sid=socket_id,
         )
-        return whiteboard_elements
+        return whiteboard_element
 
-    @socketio.on('delete')
+    @socketio.on('delete_whiteboard_element')
     def socketio_delete(data):
-        socket_id = data.get('socketId')
-        whiteboard_elements = data.get('whiteboardElements', [])
+        socket_id = request.sid
+        whiteboard_element = data.get('whiteboardElement')
         whiteboard_id = data.get('whiteboardId')
-        delete_whiteboard_elements(
+        delete_whiteboard_element(
             current_user=LoginSession(data.get('userId')),
-            socket_id=data.get('socketId'),
+            socket_id=socket_id,
             whiteboard_id=whiteboard_id,
-            whiteboard_elements=whiteboard_elements,
+            whiteboard_element=whiteboard_element,
         )
         emit(
             args={
-                'socketId': socket_id,
-                'whiteboardElementUids': [e['element']['uuid'] for e in whiteboard_elements],
+                'uuid': whiteboard_element['element']['uuid'],
                 'whiteboardId': whiteboard_id,
             },
-            event='delete',
+            event='delete_whiteboard_element',
             include_self=False,
             skip_sid=socket_id,
         )
@@ -172,7 +168,7 @@ def register_sockets(socketio):
     def socketio_ping(data):
         return update_updated_at(
             current_user=LoginSession(data.get('userId')),
-            socket_id=data.get('socketId'),
+            socket_id=request.sid,
             whiteboard_id=data.get('whiteboardId'),
         )
 

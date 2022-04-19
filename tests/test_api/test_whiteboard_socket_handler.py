@@ -27,7 +27,7 @@ from random import randint
 
 import pytest
 from squiggy import std_commit
-from squiggy.api.whiteboard_socket_handler import create_whiteboard_elements, update_whiteboard_elements
+from squiggy.api.whiteboard_socket_handler import create_whiteboard_element, update_whiteboard_elements
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, is_teaching
@@ -39,34 +39,37 @@ class TestWhiteboardElement:
     def test_anonymous(self, mock_whiteboard):
         """Denies anonymous user."""
         with pytest.raises(BadRequestError):
-            create_whiteboard_elements(
+            create_whiteboard_element(
                 current_user=LoginSession(user_id=None),
                 socket_id=_get_mock_socket_id(),
-                whiteboard_elements=_mock_whiteboard_elements(),
+                whiteboard_element=_mock_whiteboard_element(),
                 whiteboard_id=mock_whiteboard['id'],
             )
 
     def test_unauthorized(self, mock_whiteboard):
         """Denies unauthorized user."""
         with pytest.raises(ResourceNotFoundError):
-            create_whiteboard_elements(
+            create_whiteboard_element(
                 current_user=_get_unauthorized_user(mock_whiteboard),
                 socket_id=_get_mock_socket_id(),
-                whiteboard_elements=_mock_whiteboard_elements(),
+                whiteboard_element=_mock_whiteboard_element(),
                 whiteboard_id=mock_whiteboard['id'],
             )
 
     def test_authorized(self, mock_whiteboard):
         """Authorized creates whiteboard elements."""
-        whiteboard_elements = _mock_whiteboard_elements()
+        whiteboard_element = _mock_whiteboard_element()
 
-        api_json = create_whiteboard_elements(
+        api_json = create_whiteboard_element(
             current_user=_get_authorized_user(mock_whiteboard),
             socket_id=_get_mock_socket_id(),
-            whiteboard_elements=whiteboard_elements,
+            whiteboard_element=whiteboard_element,
             whiteboard_id=mock_whiteboard['id'],
         )
-        assert len(api_json) == len(whiteboard_elements)
+        assert api_json['assetId'] == whiteboard_element['assetId']
+        assert api_json['element']['fill'] == whiteboard_element['element']['fill']
+        assert api_json['element']['fontSize'] == whiteboard_element['element']['fontSize']
+        assert api_json['element']['type'] == whiteboard_element['element']['type']
 
 
 class TestUpdateWhiteboardElements:
@@ -128,23 +131,13 @@ def _get_unauthorized_user(whiteboard):
     return LoginSession(user_id=not_teaching[0].id)
 
 
-def _mock_whiteboard_elements():
-    return [
-        {
-            'assetId': 1,
-            'element': {
-                'fill': 'rgb(0,0,0)',
-                'fontSize': 14,
-                'text': '',
-                'type': 'text',
-            },
+def _mock_whiteboard_element():
+    return {
+        'assetId': 1,
+        'element': {
+            'fill': 'rgb(0,0,0)',
+            'fontSize': 14,
+            'text': '',
+            'type': 'text',
         },
-        {
-            'assetId': 2,
-            'element': {
-                'fill': 'rgb(0,0,0)',
-                'shape': 'Rect:thin',
-                'type': 'shape',
-            },
-        },
-    ]
+    }
