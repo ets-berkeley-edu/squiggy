@@ -6,13 +6,14 @@
       class="whiteboard-element-edit"
     >
       <v-btn
-        v-if="selectedAsset"
-        class="btn btn-default"
-        text
-        title="Open original asset"
+        v-if="$_.get(activeCanvasObject, 'assetId')"
+        id="open-asset-btn"
+        icon
         target="_blank"
+        :to="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${activeCanvasObject.assetId}`"
       >
-        <i class="fa fa-external-link"><span class="sr-only">Open original asset</span></i>
+        <span class="sr-only">Open original asset</span>
+        <font-awesome-icon icon="arrow-up-right-from-square" />
       </v-btn>
       <v-btn
         id="move-layer-back-btn"
@@ -56,7 +57,7 @@ export default {
   display: inline-block;
   position: absolute;
   text-align: left;
-  width: 140px;
+  width: 180px;
   z-index: 1100;
 }
 .whiteboard-element-edit .btn-default {
