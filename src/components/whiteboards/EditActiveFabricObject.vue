@@ -39,6 +39,9 @@
         <span class="sr-only">Delete</span>
         <font-awesome-icon icon="trash" />
       </v-btn>
+      <div v-if="activeCanvasObject && $config.isVueAppDebugMode" class="pl-2 grey--text">
+        UUID: <span class="font-italic">{{ activeCanvasObject.toObject().uuid }}</span>
+      </div>
     </div>
   </div>
 </template>
