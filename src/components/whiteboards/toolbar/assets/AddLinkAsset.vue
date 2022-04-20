@@ -8,7 +8,6 @@
       <v-btn
         id="toolbar-asset-add-link"
         class="justify-start w-100"
-        :disabled="disableAll"
         text
         v-bind="attrs"
         v-on="on"

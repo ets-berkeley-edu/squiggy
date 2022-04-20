@@ -18,7 +18,7 @@ export function addAsset(asset: any, state: any) {
   if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
     imageUrl = asset.imageUrl
   } else {
-    const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1
+    const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1 && _.startsWith(asset.downloadUrl, 'http')
     imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
   }
   // Add the asset to the center of the whiteboard canvas

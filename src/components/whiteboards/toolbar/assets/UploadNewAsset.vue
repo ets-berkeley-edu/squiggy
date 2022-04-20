@@ -2,12 +2,12 @@
   <v-dialog
     v-model="dialog"
     :close-on-content-click="false"
+    width="800"
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-upload-new-asset"
         class="justify-start w-100"
-        :disabled="disableAll"
         text
         v-bind="attrs"
         v-on="on"
@@ -18,7 +18,9 @@
     </template>
     <v-card>
       <v-card-text class="pt-8">
-        <h2>Upload a File</h2>
+        <div class="pb-4">
+          <h2>Upload a File</h2>
+        </div>
         <div
           v-if="!uploading && !file"
           v-cloak
@@ -73,7 +75,7 @@
                   />
                 </label>
               </v-col>
-              <v-col cols="6">
+              <v-col cols="10">
                 <v-text-field
                   id="asset-title-input"
                   v-model="title"
@@ -89,7 +91,7 @@
               <v-col class="pt-5 text-right" cols="2">
                 <label for="asset-category">Category</label>
               </v-col>
-              <v-col cols="6">
+              <v-col cols="10">
                 <AccessibleSelect
                   id-prefix="asset-category"
                   :items="categories"
@@ -105,7 +107,7 @@
               <v-col class="pt-5 text-right" cols="2">
                 <label for="asset-description-textarea">Description</label>
               </v-col>
-              <v-col cols="6">
+              <v-col cols="10">
                 <div class="d-flex flex-column flex-column-reverse">
                   <div class="caption">Add some more context to your file. You can use plain text or #keywords</div>
                   <div>
@@ -120,22 +122,20 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col class="text-right" cols="8">
-                <div class="d-flex">
-                  <div class="pr-2">
-                    <v-btn
-                      id="upload-file-btn"
-                      color="primary"
-                      :disabled="!file || !fileAssetValid"
-                      elevation="1"
-                      @click="upload"
-                    >
-                      Upload file
-                    </v-btn>
-                  </div>
-                  <div>
-                    <v-btn id="upload-file-cancel-btn" elevation="1" @click="go('/assets')">Cancel</v-btn>
-                  </div>
+              <v-col class="d-flex justify-end pt-5" cols="12">
+                <div class="pr-2">
+                  <v-btn
+                    id="upload-file-btn"
+                    color="primary"
+                    :disabled="!file || !fileAssetValid"
+                    elevation="1"
+                    @click="upload"
+                  >
+                    Upload file
+                  </v-btn>
+                </div>
+                <div>
+                  <v-btn id="upload-file-cancel-btn" elevation="1" @click="go('/assets')">Cancel</v-btn>
                 </div>
               </v-col>
             </v-row>
