@@ -55,6 +55,15 @@ export default {
     menu: false,
     toggle: false
   }),
+  watch: {
+    menu(value) {
+      if (value) {
+        this.setMode('move')
+        this.$putFocusNextTick('menu-header')
+      }
+      this.setDisableAll(value)
+    }
+  },
   methods: {
     watchChildDialog(isOpen) {
       this.setHideSidebar(isOpen)
