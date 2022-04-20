@@ -29,6 +29,7 @@ export default {
       'disableAll',
       'fitToScreen',
       'hideSidebar',
+      'isExportingAsPng',
       'isModifyingElement',
       'mode',
       'selected',
@@ -42,6 +43,7 @@ export default {
     ...mapActions('whiteboarding', [
       'addAsset',
       'deleteActiveElements',
+      'exportAsPng',
       'init',
       'moveLayer',
       'onWhiteboardUpdate',

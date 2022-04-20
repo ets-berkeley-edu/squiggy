@@ -8,6 +8,7 @@
         id="toolbar-settings"
         color="white"
         dense
+        :disabled="disableAll"
         elevation="1"
         height="48px"
         rounded
