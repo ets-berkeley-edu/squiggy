@@ -27,37 +27,10 @@ from flask import current_app as app
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.util import is_student, safe_strip
+from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
-
-
-def create_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
-    if _is_allowed(current_user):
-        whiteboard = _get_whiteboard(current_user, whiteboard_id)
-        if not whiteboard:
-            raise ResourceNotFoundError('Whiteboard not found.')
-        if whiteboard['deletedAt']:
-            raise ResourceNotFoundError('Whiteboard is read-only.')
-        if not whiteboard_element:
-            raise BadRequestError('Whiteboard element required')
-        if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
-            raise BadRequestError('Unauthorized')
-
-        _validate_whiteboard_element(whiteboard_element)
-        result = WhiteboardElement.create(
-            asset_id=whiteboard_element.get('assetId', None),
-            element=whiteboard_element['element'],
-            whiteboard_id=whiteboard_id,
-        ).to_api_json()
-        update_updated_at(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-        )
-        return result
-    else:
-        raise BadRequestError('Unauthorized')
 
 
 def delete_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
@@ -73,6 +46,15 @@ def delete_whiteboard_element(current_user, socket_id, whiteboard_element, white
             raise BadRequestError('Unauthorized')
 
         uuid = whiteboard_element['element']['uuid']
+        whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
+        if not whiteboard_element:
+            raise ResourceNotFoundError('Whiteboard element not found.')
+        # Delete
+        if whiteboard_element.asset_id:
+            AssetWhiteboardElement.delete(
+                asset_id=whiteboard_element.asset_id,
+                uuid=whiteboard_element.uuid,
+            )
         WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
         update_updated_at(
             current_user=current_user,
@@ -156,39 +138,88 @@ def update_whiteboard(current_user, socket_id, title, users, whiteboard_id):
         raise BadRequestError('Unauthorized')
 
 
-def update_whiteboard_elements(current_user, socket_id, whiteboard_elements, whiteboard_id):
+def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
     if _is_allowed(current_user):
-        whiteboard = Whiteboard.find_by_id(current_user, whiteboard_id) if whiteboard_id else None
-        if not whiteboard:
-            raise ResourceNotFoundError('Whiteboard not found.')
-        if whiteboard['deletedAt']:
-            raise ResourceNotFoundError('Whiteboard is read-only.')
-        if not len(whiteboard_elements):
-            raise BadRequestError('One or more elements required')
-        if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
-            raise BadRequestError('Unauthorized')
-
-        def _update(whiteboard_element):
-            _validate_whiteboard_element(whiteboard_element, True)
-            element = whiteboard_element['element']
-            whiteboard_element = WhiteboardElement.update(
-                asset_id=whiteboard_element.get('assetId', None),
-                element=element,
-                uuid=element['uuid'],
+        element = whiteboard_element['element']
+        if WhiteboardElement.get_id_per_uuid(element['uuid']):
+            whiteboard_element = _update_whiteboard_element(
+                current_user=current_user,
+                socket_id=socket_id,
+                whiteboard_element=whiteboard_element,
                 whiteboard_id=whiteboard_id,
             )
-            if not whiteboard_element:
-                raise BadRequestError('Whiteboard element not found')
-            return whiteboard_element
-        results = [_update(whiteboard_element) for whiteboard_element in whiteboard_elements]
-        update_updated_at(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-        )
-        return results
+        else:
+            whiteboard_element = _create_whiteboard_element(
+                current_user=current_user,
+                socket_id=socket_id,
+                whiteboard_element=whiteboard_element,
+                whiteboard_id=whiteboard_id,
+            )
+        return whiteboard_element
     else:
         raise BadRequestError('Unauthorized')
+
+
+def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
+    whiteboard = Whiteboard.find_by_id(current_user, whiteboard_id) if whiteboard_id else None
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
+    if not whiteboard_element:
+        raise BadRequestError('Element required')
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
+
+    _validate_whiteboard_element(whiteboard_element, True)
+
+    element = whiteboard_element['element']
+    result = WhiteboardElement.update(
+        asset_id=whiteboard_element.get('assetId'),
+        element=element,
+        uuid=element['uuid'],
+        whiteboard_id=whiteboard_id,
+    )
+    update_updated_at(
+        current_user=current_user,
+        socket_id=socket_id,
+        whiteboard_id=whiteboard_id,
+    )
+    return result
+
+
+def _create_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
+    whiteboard = _get_whiteboard(current_user, whiteboard_id)
+    if not whiteboard:
+        raise ResourceNotFoundError('Whiteboard not found.')
+    if whiteboard['deletedAt']:
+        raise ResourceNotFoundError('Whiteboard is read-only.')
+    if not whiteboard_element:
+        raise BadRequestError('Whiteboard element required')
+    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
+
+    _validate_whiteboard_element(whiteboard_element)
+    asset_id = whiteboard_element.get('assetId')
+    element = whiteboard_element['element']
+    whiteboard_element = WhiteboardElement.create(
+        asset_id=asset_id,
+        element=element,
+        whiteboard_id=whiteboard_id,
+    )
+    if asset_id:
+        AssetWhiteboardElement.create(
+            asset_id=asset_id,
+            element=element,
+            element_asset_id=element.get('assetId'),
+            uuid=element['uuid'],
+        )
+    update_updated_at(
+        current_user=current_user,
+        socket_id=socket_id,
+        whiteboard_id=whiteboard_id,
+    )
+    return whiteboard_element.to_api_json()
 
 
 def _get_whiteboard(current_user, whiteboard_id):
@@ -210,8 +241,6 @@ def _validate_whiteboard_element(whiteboard_element, is_update=False):
     if is_update:
         if 'uuid' not in element:
             error_message = 'uuid is required when updating existing whiteboard_element.'
-    elif element.get('uuid'):
-        error_message = 'A new whiteboard_element cannot have a defined \'uuid\'.'
     if error_message:
         app.logger.error(error_message)
         raise BadRequestError(error_message)

@@ -21,6 +21,7 @@
     "lodash": "4.17.21",
     "moment-timezone": "0.5.34",
     "socket.io-client": "4.4.1",
+    "uuid": "^8.3.2",
     "vue": "2.6.14",
     "vue-fabric-wrapper": "0.3.71",
     "vue-infinite-loading": "2.4.5",

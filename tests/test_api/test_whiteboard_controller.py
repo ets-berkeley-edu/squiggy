@@ -25,6 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 from random import randint
+from uuid import uuid4
 
 from flask import current_app as app
 from squiggy import std_commit
@@ -216,7 +217,12 @@ class TestExportAsAsset:
     def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
         """Authorized user can export whiteboard as asset."""
         fake_auth.login(authorized_user_id)
-        WhiteboardElement.create(element={}, whiteboard_id=mock_whiteboard['id'])
+        WhiteboardElement.create(
+            element={
+                'fontSize': 14,
+                'uuid': str(uuid4()),
+            },
+            whiteboard_id=mock_whiteboard['id'])
         std_commit(allow_test_environment=True)
         api_json = self._api_export(client, whiteboard_id=mock_whiteboard['id'])
         assert 'id' in api_json

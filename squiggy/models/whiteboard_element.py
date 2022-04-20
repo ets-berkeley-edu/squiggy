@@ -23,10 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from uuid import uuid4
-
 from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
@@ -61,24 +60,30 @@ class WhiteboardElement(Base):
         self.whiteboard_id = whiteboard_id
 
     @classmethod
+    def find_by_uuid(cls, uuid, whiteboard_id):
+        return cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
+
+    @classmethod
     def find_by_whiteboard_id(cls, whiteboard_id):
         return cls.query.filter_by(whiteboard_id=whiteboard_id).all()
 
     @classmethod
+    def get_id_per_uuid(cls, uuid):
+        query = text('SELECT id FROM whiteboard_elements WHERE uuid = :uuid')
+        result = db.session.execute(query, {'uuid': uuid}).first()
+        return result and result['id']
+
+    @classmethod
     def create(cls, element, whiteboard_id, asset_id=None):
-        uuid = str(uuid4())
-        asset_whiteboard_element = cls(
+        whiteboard_element = cls(
             asset_id=asset_id,
-            element={
-                **element,
-                'uuid': uuid,
-            },
-            uuid=uuid,
+            element=element,
+            uuid=element['uuid'],
             whiteboard_id=whiteboard_id,
         )
-        db.session.add(asset_whiteboard_element)
+        db.session.add(whiteboard_element)
         std_commit()
-        return asset_whiteboard_element
+        return whiteboard_element
 
     @classmethod
     def delete(cls, uuid, whiteboard_id):

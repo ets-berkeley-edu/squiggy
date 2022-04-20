@@ -24,22 +24,23 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from random import randint
+from uuid import uuid4
 
 import pytest
 from squiggy import std_commit
-from squiggy.api.whiteboard_socket_handler import create_whiteboard_element, update_whiteboard_elements
+from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.course import Course
 
 
-class TestWhiteboardElement:
+class TestCreateWhiteboardElement:
 
     def test_anonymous(self, mock_whiteboard):
         """Denies anonymous user."""
         with pytest.raises(BadRequestError):
-            create_whiteboard_element(
+            upsert_whiteboard_element(
                 current_user=LoginSession(user_id=None),
                 socket_id=_get_mock_socket_id(),
                 whiteboard_element=_mock_whiteboard_element(),
@@ -49,7 +50,7 @@ class TestWhiteboardElement:
     def test_unauthorized(self, mock_whiteboard):
         """Denies unauthorized user."""
         with pytest.raises(ResourceNotFoundError):
-            create_whiteboard_element(
+            upsert_whiteboard_element(
                 current_user=_get_unauthorized_user(mock_whiteboard),
                 socket_id=_get_mock_socket_id(),
                 whiteboard_element=_mock_whiteboard_element(),
@@ -60,7 +61,7 @@ class TestWhiteboardElement:
         """Authorized creates whiteboard elements."""
         whiteboard_element = _mock_whiteboard_element()
 
-        api_json = create_whiteboard_element(
+        api_json = upsert_whiteboard_element(
             current_user=_get_authorized_user(mock_whiteboard),
             socket_id=_get_mock_socket_id(),
             whiteboard_element=whiteboard_element,
@@ -77,22 +78,26 @@ class TestUpdateWhiteboardElements:
     def test_anonymous(self, mock_whiteboard):
         """Denies anonymous user."""
         with pytest.raises(BadRequestError):
-            update_whiteboard_elements(
-                current_user=LoginSession(user_id=None),
-                socket_id=_get_mock_socket_id(),
-                whiteboard_elements=mock_whiteboard['whiteboardElements'],
-                whiteboard_id=mock_whiteboard['id'],
-            )
+            current_user = LoginSession(user_id=None)
+            for whiteboard_element in mock_whiteboard['whiteboardElements']:
+                upsert_whiteboard_element(
+                    current_user=current_user,
+                    socket_id=_get_mock_socket_id(),
+                    whiteboard_element=whiteboard_element,
+                    whiteboard_id=mock_whiteboard['id'],
+                )
 
     def test_unauthorized(self, mock_whiteboard):
         """Denies unauthorized user."""
         with pytest.raises(BadRequestError):
-            update_whiteboard_elements(
-                current_user=LoginSession(user_id=None),
-                socket_id=_get_mock_socket_id(),
-                whiteboard_elements=mock_whiteboard['whiteboardElements'],
-                whiteboard_id=mock_whiteboard['id'],
-            )
+            current_user = LoginSession(user_id=None)
+            for whiteboard_element in mock_whiteboard['whiteboardElements']:
+                upsert_whiteboard_element(
+                    current_user=current_user,
+                    socket_id=_get_mock_socket_id(),
+                    whiteboard_element=whiteboard_element,
+                    whiteboard_id=mock_whiteboard['id'],
+                )
 
     def test_authorized(self, mock_whiteboard):
         """Authorized user can update whiteboard elements."""
@@ -101,13 +106,18 @@ class TestUpdateWhiteboardElements:
         updated_fill = 'rgb(128,255,128)'
         whiteboard_element['element']['fill'] = updated_fill
 
-        results = update_whiteboard_elements(
-            current_user=_get_authorized_user(mock_whiteboard),
-            socket_id=_get_mock_socket_id(),
-            whiteboard_elements=whiteboard_elements,
-            whiteboard_id=mock_whiteboard['id'],
-        )
-        std_commit(allow_test_environment=True)
+        current_user = _get_authorized_user(mock_whiteboard)
+        results = []
+        for whiteboard_element in mock_whiteboard['whiteboardElements']:
+            results.append(
+                upsert_whiteboard_element(
+                    current_user=current_user,
+                    socket_id=_get_mock_socket_id(),
+                    whiteboard_element=whiteboard_element,
+                    whiteboard_id=mock_whiteboard['id'],
+                ),
+            )
+            std_commit(allow_test_environment=True)
 
         assert len(results) == len(whiteboard_elements)
         updated_whiteboard_element = next((result for result in results if result.id == whiteboard_element['id']), None)
@@ -139,5 +149,6 @@ def _mock_whiteboard_element():
             'fontSize': 14,
             'text': '',
             'type': 'text',
+            'uuid': str(uuid4()),
         },
     }

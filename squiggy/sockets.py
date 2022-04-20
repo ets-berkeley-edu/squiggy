@@ -24,15 +24,18 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import request
-from flask_socketio import emit
-from squiggy.api.whiteboard_socket_handler import create_whiteboard_element, delete_whiteboard_element, \
-    join_whiteboard, leave_whiteboard, update_updated_at, update_whiteboard, update_whiteboard_elements
+from flask_socketio import emit, join_room, leave_room
+from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, join_whiteboard, \
+    leave_whiteboard, update_updated_at, update_whiteboard, upsert_whiteboard_element
 from squiggy.lib.login_session import LoginSession
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 
 
 def register_sockets(socketio):
+
+    def _get_room(whiteboard_id):
+        return f'whiteboard-{whiteboard_id}'
 
     @socketio.on('join')
     def socketio_join(data):
@@ -44,14 +47,18 @@ def register_sockets(socketio):
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
         )
+        room = _get_room(whiteboard_id)
+        join_room(room, sid=socket_id)
         emit(
             args={
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,
             },
+            broadcast=True,
             event='join',
             include_self=False,
             skip_sid=socket_id,
+            to=room,
         )
 
     @socketio.on('leave')
@@ -65,6 +72,8 @@ def register_sockets(socketio):
             socket_id=request.sid,
             whiteboard_id=whiteboard_id,
         )
+        room = _get_room(whiteboard_id)
+        leave_room(room, sid=socket_id)
         emit(
             args={
                 'userId': user_id,
@@ -74,6 +83,7 @@ def register_sockets(socketio):
             event='leave',
             include_self=False,
             skip_sid=socket_id,
+            to=room,
         )
 
     @socketio.on('update_whiteboard')
@@ -98,50 +108,30 @@ def register_sockets(socketio):
             event='update_whiteboard',
             include_self=False,
             skip_sid=socket_id,
+            to=_get_room(whiteboard_id),
         )
 
-    @socketio.on('update_whiteboard_elements')
-    def socketio_update_whiteboard_elements(data):
+    @socketio.on('upsert_whiteboard_element')
+    def socketio_upsert_whiteboard_element(data):
         socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
-        whiteboard_elements = update_whiteboard_elements(
+        whiteboard_element = upsert_whiteboard_element(
             current_user=LoginSession(user_id),
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
-            whiteboard_elements=data.get('whiteboardElements', []),
+            whiteboard_element=data.get('whiteboardElement'),
         )
-        emit(
-            args={
-                'whiteboardElements': [e.to_api_json() for e in whiteboard_elements],
-                'whiteboardId': whiteboard_id,
-            },
-            event='update_whiteboard',
-            include_self=False,
-            skip_sid=socket_id,
-        )
-
-    @socketio.on('add_whiteboard_element')
-    def socketio_add(data):
-        socket_id = request.sid
-        user_id = data.get('userId')
-        whiteboard_id = data.get('whiteboardId')
-        whiteboard_element = create_whiteboard_element(
-            current_user=LoginSession(user_id),
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-            whiteboard_element=data['whiteboardElement'],
-        ).to_api_json()
         emit(
             args={
                 'whiteboardElement': whiteboard_element,
                 'whiteboardId': whiteboard_id,
             },
-            event='add_whiteboard_element',
+            event='upsert_whiteboard_element',
             include_self=False,
             skip_sid=socket_id,
+            to=_get_room(whiteboard_id),
         )
-        return whiteboard_element
 
     @socketio.on('delete_whiteboard_element')
     def socketio_delete(data):
@@ -162,6 +152,7 @@ def register_sockets(socketio):
             event='delete_whiteboard_element',
             include_self=False,
             skip_sid=socket_id,
+            to=_get_room(whiteboard_id),
         )
 
     @socketio.on('ping')

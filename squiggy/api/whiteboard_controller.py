@@ -86,7 +86,14 @@ def export_as_asset(whiteboard_id):
                 users=[User.find_by_id(current_user.get_id())],
                 visible=True,
             )
-            AssetWhiteboardElement.create(asset_id=asset.id, whiteboard_elements=whiteboard_elements)
+            for whiteboard_element in whiteboard_elements:
+                element = whiteboard_element.element
+                AssetWhiteboardElement.create(
+                    asset_id=asset.id,
+                    element=element,
+                    element_asset_id=element.get('assetId'),
+                    uuid=element['uuid'],
+                )
             return tolerant_jsonify(Asset.find_by_id(asset_id=asset.id).to_api_json())
         else:
             raise BadRequestError('An empty whiteboard cannot be exported')
