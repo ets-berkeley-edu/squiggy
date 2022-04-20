@@ -1,4 +1,6 @@
 import _ from 'lodash'
+import axios from 'axios'
+import moment from 'moment-timezone'
 import apiUtils from '@/api/api-utils'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
@@ -24,7 +26,6 @@ const state = {
   debugLog: '',
   disableAll: true,
   downloadId: undefined,
-  exportPngUrl: undefined,
   fitToScreen: true,
   hideSidebar: false,
   // Variable that will keep track of whether a shape is currently being drawn
@@ -48,6 +49,7 @@ const getters = {
   disableAll: (state: any): boolean => state.disableAll,
   fitToScreen: (state: any): boolean => state.fitToScreen,
   hideSidebar: (state: any): boolean => state.hideSidebar,
+  isExportingAsPng: (state: any): boolean => state.isExportingAsPng,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
@@ -61,45 +63,29 @@ const mutations = {
   add: (state: any, whiteboardElement: any) => state.whiteboard.whiteboardElements.push(whiteboardElement),
   addAsset: (state: any, asset: any) => addAsset(asset, state),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
-  exportAsPng: ({state}, event: any) => {
-    // Export the whiteboard to a PNG file
-    // event: Click event
-    // Return true if whiteboard export is initiated
-    if (state.isExportingAsPng || p.$canvas.getObjects().length === 0) {
-      event.preventDefault()
-      return false
-    }
-    // Indicate that the server is generating the PNG file
+  exportAsPng: (state: any) => {
     state.isExportingAsPng = true
-
-    // TODO:
-    const $cookies = {
-      get: _.noop,
-      remove: _.noop
+    const done = function() {
+      state.isExportingAsPng = false
     }
-    // Once the user has started receiving the PNG file, a cookie will be set. As long
-    // as that cookie isn't set, the "Download as image" button should be disabled
-    const cookieName = 'whiteboard.' + state.downloadId + '.png'
-    const stopWatching = state.$watch(function() {
-      return $cookies.get(cookieName)
-    }, function(newValue) {
-      if (newValue) {
-        // The file started downloading, the "Download as image" button can now be enabled
-        state.isExportingAsPng = false
-        // Remove the cookie as it's no longer required
-        $cookies.remove(cookieName)
-        // Generate a new download id for the next time the user clicks the download image button
-        state.downloadId = new Date().getTime()
-        state.exportPngUrl = `${apiUtils.apiBaseUrl()}/whiteboards/${state.whiteboard.id}/export/png?downloadId=${state.downloadId}`
-        // Remove the watch as it's no longer required
-        stopWatching()
+    return axios.post(
+      `${apiUtils.apiBaseUrl()}/whiteboards/${state.whiteboard.id}/export/png`,
+      {
+        downloadId: $_createDownloadId()
       }
-    })
+    ).then(
+      (response: any) => {
+        const download = require('js-file-download')
+        const now = moment().format('YYYY-MM-DD_HH-mm-ss')
+        download(response.data, `${state.whiteboard.title}-${now}.csv`)
+        done()
+      },
+      done
+    )
   },
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
       downloadId: $_createDownloadId(),
-      exportPngUrl: `${apiUtils.apiBaseUrl()}/whiteboards/${whiteboard.id}/export/png?downloadId=${state.downloadId}`,
       sidebarExpanded: !whiteboard.deletedAt,
       viewport: document.getElementById('whiteboard-viewport'),
       whiteboard: whiteboard
@@ -159,7 +145,6 @@ const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
   onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
-  exportasassetmodal: () => {},
   exportAsAsset: ({commit, state}) => {
     // Launch the modal that allows the current user to export the current whiteboard to the asset library
     // Create a new scope for the modal dialog
@@ -190,6 +175,7 @@ const actions = {
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
   },
+  exportAsPng: ({commit}) => commit('exportAsPng'),
   getSelectedAsset: () => $_getSelectedAsset(),
   init: ({commit}, whiteboardId: number) => {
     return new Promise(resolve => {
@@ -254,23 +240,7 @@ const actions = {
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   setUsers: ({commit}, users: any[]) => commit('setUsers', users),
   toggleZoom: ({commit}) => commit('toggleZoom'),
-  updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
-  uploadFiles: ({commit}) => {
-    // TODO: Create a new scope for the modal dialog
-
-    // scope.closeModal = function(assets) {
-    //   _.each(assets, addAsset)
-    //   this.$hide()
-    // }
-    // // Open the add link modal dialog
-    // $modal({
-    //   'scope': scope,
-    //   'template': '/app/whiteboards/uploadmodal/uploadmodal.html'
-    // })
-    // Switch the toolbar back to move mode. This will
-    // also close the add asset popover
-    commit('setMode', 'move')
-  }
+  updateSelected: ({commit}, properties: any) => commit('updateSelected', properties)
 }
 
 export default {

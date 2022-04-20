@@ -10,6 +10,7 @@
         id="toolbar-add-asset"
         :color="menu ? 'primary' : 'white'"
         dense
+        :disabled="disableAll"
         height="48px"
         rounded
         v-bind="attrs"
@@ -68,7 +69,6 @@ export default {
     watchChildDialog(isOpen) {
       this.setHideSidebar(isOpen)
       if (isOpen) {
-        // If secondary dialog is opening then close this menu.
         this.menu = false
       }
     }

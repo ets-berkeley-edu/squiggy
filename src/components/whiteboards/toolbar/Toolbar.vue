@@ -19,6 +19,7 @@
         <v-btn
           id="toolbar-move-btn"
           class="pr-2"
+          :disabled="disableAll"
           icon
           value="move"
           width="55px"
