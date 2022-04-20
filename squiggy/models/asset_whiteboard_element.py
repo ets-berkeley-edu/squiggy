@@ -51,15 +51,26 @@ class AssetWhiteboardElement(Base):
         self.uuid = uuid
 
     @classmethod
-    def create(cls, asset_id, whiteboard_elements):
-        for whiteboard_element in whiteboard_elements:
-            asset_whiteboard_element = cls(
+    def create(
+            cls,
+            asset_id,
+            element,
+            element_asset_id,
+            uuid,
+    ):
+        db.session.add(
+            cls(
                 asset_id=asset_id,
-                element=whiteboard_element.element,
-                element_asset_id=whiteboard_element.asset_id,
-                uuid=whiteboard_element.uuid,
-            )
-            db.session.add(asset_whiteboard_element)
+                element=element,
+                element_asset_id=element_asset_id,
+                uuid=uuid,
+            ),
+        )
+        std_commit()
+
+    @classmethod
+    def delete(cls, asset_id, uuid):
+        db.session.query(cls).filter_by(asset_id=asset_id, uuid=uuid).delete()
         std_commit()
 
     @classmethod

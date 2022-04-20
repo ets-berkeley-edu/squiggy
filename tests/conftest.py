@@ -27,6 +27,7 @@ from datetime import datetime
 import json
 import os
 from random import randint, randrange
+from uuid import uuid4
 
 from moto import mock_sts  # noqa
 import pytest  # noqa
@@ -236,6 +237,7 @@ def mock_whiteboard(app, db_session):
             {
                 'height': 600,
                 'type': 'canvas',
+                'uuid': str(uuid4()),
                 'width': 800,
             },
             {
@@ -243,6 +245,7 @@ def mock_whiteboard(app, db_session):
                 'fontSize': 14,
                 'text': '',
                 'type': 'text',
+                'uuid': str(uuid4()),
             },
         ],
         title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',

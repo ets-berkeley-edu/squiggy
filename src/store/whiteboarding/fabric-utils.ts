@@ -5,6 +5,7 @@ import store from '@/store'
 import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
+import {v4 as uuidv4} from 'uuid'
 
 const p = Vue.prototype
 
@@ -22,6 +23,10 @@ export function addAsset(asset: any, state: any) {
   }
   // Add the asset to the center of the whiteboard canvas
   fabric.Image.fromURL(imageUrl, (element: any) => {
+    // SuiteC-specific attributes
+    element.assetId = asset.id
+    element.uuid = uuidv4()
+
     // This will exclude the toolbar and sidebar, if expanded.
     // Calculate the center point of the whiteboard canvas.
     const zoomLevel = p.$canvas.getZoom()
@@ -45,13 +50,10 @@ export function addAsset(asset: any, state: any) {
     element.left = canvasCenter.x
     element.top = canvasCenter.y
 
-    // Add the asset id to the element
-    element.assetId = asset.id
-
     // Add the new element to the canvas
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
-    $_broadcastAdd(asset.id, element, state)
+    $_broadcastUpsert(asset.id, element, state)
   })
 }
 
@@ -250,7 +252,7 @@ const $_addListenters = (state: any) => {
   p.$canvas.on('object:modified', (event: any) => {
     // Ensure that none of the modified objects are positioned off screen
     $_ensureWithinCanvas(event)
-    $_broadcastUpdate($_getActiveObjects(), state)
+    _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state))
   })
 
   // Indicate that the currently selected elements are no longer being modified once moving, scaling or rotating has finished
@@ -295,8 +297,8 @@ const $_addListenters = (state: any) => {
     const element = event.target
     const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
     // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
-    if (!isIncompleteIText && !element.get('uuid') && !element.isHelper) {
-      $_broadcastAdd(element.assetId, element, state)
+    if (!isIncompleteIText && !element.isHelper) {
+      $_broadcastUpsert(element.assetId, element, state)
       setCanvasDimensions(state)
     }
   })
@@ -321,6 +323,7 @@ const $_addListenters = (state: any) => {
         stroke: state.selected.color,
         strokeWidth: state.selected.strokeWidth,
         top: state.startShapePointer.y,
+        uuid: uuidv4(),
         width: 1
       })
       $_addDebugListenters(shape, 'Object')
@@ -337,7 +340,8 @@ const $_addListenters = (state: any) => {
         text: '',
         selectable: true,
         selected: true,
-        top: textPointer.y
+        top: textPointer.y,
+        uuid: uuidv4()
       })
       $_addDebugListenters(iText, 'IText')
       p.$canvas.add(iText)
@@ -416,7 +420,7 @@ const $_addListenters = (state: any) => {
         // p.$canvas.remove(state.shape)
 
         // Save the added shape and make it active.
-        $_broadcastAdd(NaN, shape, state)
+        $_broadcastUpsert(NaN, shape, state)
         p.$canvas.setActiveObject(shape)
       }
     }
@@ -449,40 +453,37 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
 
   // One or multiple whiteboard canvas elements were updated by a different user
-  p.$socket.on('update_whiteboard_elements', (data: any) => {
-      const elements = data.whiteboardElements
-      // Deactivate the current group if any of the updated elements are in the current group
-      $_deactiveActiveGroupIfOverlap(elements)
-      // Update the elements
-      _.each(elements, (element: any) => {
+  p.$socket.on('upsert_whiteboard_element', (data: any) => {
+      const element = data.whiteboardElement
+      const uuid = element.uuid
+      const existing = $_getCanvasElement(uuid)
+      if (existing) {
+        // Deactivate the current group if any of the updated elements are in the current group
+        $_deactiveActiveGroupIfOverlap(element)
+        // Update the elements
         $_updateCanvasElement(state, element.uuid, element)
-      })
-      // Recalculate the size of the whiteboard canvas
-      setCanvasDimensions(state)
-    }
-  )
-  // A whiteboard canvas element was added by a different user
-  p.$socket.on('add_whiteboard_element', (data: any) => {
-    if (data.whiteboardId === state.whiteboardId) {
-      const element = data.element
-      const callback = (e: any) => {
-        // Add the element to the whiteboard canvas and move it to its appropriate index
-        p.$canvas.add(e)
-        element.moveTo(e.get('index'))
-        p.$canvas.requestRenderAll()
         // Recalculate the size of the whiteboard canvas
         setCanvasDimensions(state)
+      } else {
+        const callback = (e: any) => {
+          // Add the element to the whiteboard canvas and move it to its appropriate index
+          p.$canvas.add(e)
+          element.moveTo(e.get('index'))
+          p.$canvas.requestRenderAll()
+          // Recalculate the size of the whiteboard canvas
+          setCanvasDimensions(state)
+        }
+        $_deserializeElement(state, element, element.uuid, callback)
       }
-      $_deserializeElement(state, element, element.uuid, callback)
     }
-  })
+  )
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on('delete_whiteboard_element', (data: any) => {
     if (data.whiteboardId === state.whiteboardId) {
       const element = $_getCanvasElement(data.uuid)
       if (element) {
         // Deactivate the current group if any of the deleted elements are in the current group
-        $_deactiveActiveGroupIfOverlap([element])
+        $_deactiveActiveGroupIfOverlap(element)
         p.$canvas.remove(element)
         // Recalculate the size of the whiteboard canvas
         setCanvasDimensions(state)
@@ -554,13 +555,13 @@ const $_calculateGlobalElementPosition = (selection: any, element: any): any => 
   return {left, top}
 }
 
-const $_deactiveActiveGroupIfOverlap = (elements: any[]) => {
+const $_deactiveActiveGroupIfOverlap = (element: any) => {
   // CONCURRENT EDITING
   // Deactivate the active group if any of the provided elements are a part of the active group
   // elements: The elements that should be checked for presence in the active group
   const selection = p.$canvas.getActiveObject()
   if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-    const intersection = _.intersection(_.map(selection.objects, 'uuid'), _.map(elements, 'uuid'))
+    const intersection = _.intersection(_.map(selection.objects, 'uuid'), [element.uuid])
     if (intersection.length > 0) {
       p.$canvas.discardActiveGroup().requestRenderAll()
     }
@@ -712,12 +713,12 @@ const $_initFabricPrototypes = (state: any) => {
           $_broadcastDelete(element, state)
         }
         p.$canvas.remove(element)
-      } else if (!element.get('uuid')) {
-        // The text element did not exist before. Notify the server that the element was added
-        $_broadcastAdd(NaN, element, state)
+      // } else if (!element.get('uuid')) {
+      //   // The text element did not exist before. Notify the server that the element was added
+      //   $_broadcastAdd(NaN, element, state)
       } else {
         // The text element existed before. Notify the server that the element was updated
-        $_broadcastUpdate([element], state)
+        $_broadcastUpsert(NaN, element, state)
       }
       store.dispatch('whiteboarding/setMode', 'move')
     }
@@ -776,7 +777,7 @@ const $_paste = (state: any): void => {
     _.each(state.clipboard, (element: any) => {
       element.clone((clone: any) => {
         delete clone.index
-        delete clone.uuid
+        clone.uuid = uuidv4()
         clone.left += 25
         clone.top += 25
         // Add the element to the whiteboard canvas
@@ -840,33 +841,19 @@ const $_broadcastDelete = (element: any, state: any): any => {
   )
 }
 
-const $_broadcastUpdate = (elements: any[], state: any) => {
+const $_broadcastUpsert = (assetId: number, element: any, state: any) => {
   p.$socket.emit(
-    'update_whiteboard_elements',
+    'upsert_whiteboard_element',
     {
       userId: p.$currentUser.id,
-      whiteboardElements: _.map(elements, (element: any) => ({element})),
+      whiteboardElement: {
+        assetId,
+        element
+      },
       whiteboardId: state.whiteboard.id
     },
     () => setCanvasDimensions(state)
   )
-}
-
-const $_broadcastAdd = (assetId: number, element: any, state: any) => {
-  if (!element.uuid) {
-    p.$socket.emit(
-      'add_whiteboard_element',
-      {
-        userId: p.$currentUser.id,
-        whiteboardElement: {
-          assetId,
-          element: element.toObject()
-        },
-        whiteboardId: state.whiteboard.id
-      },
-      (whiteboardElement: any) => element.uuid = whiteboardElement.element.uuid
-    )
-  }
 }
 
 const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
@@ -914,9 +901,11 @@ const $_updateLayers = (state: any) => {
       if (element.group) {
         // If the element is part of a group, calculate its global coordinates
         const position = $_calculateGlobalElementPosition(element.group, element)
-        $_broadcastUpdate([_.assignTo({}, element.toObject(), position)], state)
+        const e = _.assignTo({}, element.toObject(), position)
+        $_broadcastUpsert(e.assetId, e, state)
       } else {
-        $_broadcastUpdate([element.toObject()], state)
+        const e = element.toObject()
+        $_broadcastUpsert(e.assetId, e, state)
       }
     }
   })

@@ -39,9 +39,6 @@
         <span class="sr-only">Delete</span>
         <font-awesome-icon icon="trash" />
       </v-btn>
-      <div v-if="activeCanvasObject && $config.isVueAppDebugMode" class="pl-2 grey--text">
-        UUID: <span class="font-italic">{{ activeCanvasObject.toObject().uuid }}</span>
-      </div>
     </div>
   </div>
 </template>
@@ -62,20 +59,5 @@ export default {
   text-align: left;
   width: 180px;
   z-index: 1100;
-}
-.whiteboard-element-edit .btn-default {
-  padding: 5px 8px;
-}
-.whiteboard-element-edit .btn-default:not(:hover) {
-  background-color: #FFF;
-}
-.whiteboard-element-edit .btn-default i {
-  color: #666;
-  font-size: 17px;
-}
-.whiteboard-element-edit .btn-default i.fa-external-link {
-  left: 1px;
-  position: relative;
-  top: 2px;
 }
 </style>
