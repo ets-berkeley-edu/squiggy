@@ -11,6 +11,7 @@
 
 # Front-end
 node_modules
+scripts/node_js/save_whiteboard_as_png.js
 
 # Local configs
 config/*.json
