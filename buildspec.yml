@@ -8,6 +8,7 @@ phases:
     commands:
       - npm -v
       - npm install
+      - sudo npm install -g typescript
 
   pre_build:
     commands:
@@ -17,6 +18,7 @@ phases:
     commands:
       - npm install -g @vue/cli
       - npm run build-vue
+      - tsc --resolveJsonModule --esModuleInterop scripts/node_js/whiteboard_to_png.ts
 
   post_build:
     commands:
