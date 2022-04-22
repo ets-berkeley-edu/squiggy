@@ -79,8 +79,9 @@ def is_ready_to_export(whiteboard_id):
     for whiteboard_element in WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id):
         if not whiteboard_element.asset_id:
             element = whiteboard_element.element
-            if element.src and is_s3_preview_url(element.src):
-                element.src = get_s3_signed_url(element.src)
+            src = element.get('src')
+            if src and is_s3_preview_url(src):
+                element['src'] = get_s3_signed_url(src)
             elements['exportable'] = element
         elif whiteboard_element.asset_id not in asset_ids:
             asset_ids.append(whiteboard_element.asset_id)

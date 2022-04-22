@@ -4,15 +4,33 @@ import {fabric} from 'fabric'
 
 const WHITEBOARD_PADDING = 10
 
-// Command-line args must include absolute path to whiteboard-elements JSON file.
+/**
+ * USAGE:
+ * 1. IMPORTANT: Changes to this Typescript file must be compiled with `scripts/compile_whiteboard_to_png.sh`
+ * 2. Create mock data in whiteboardElements.json (array of serialized fabric objects, as seen in Squiggy database).
+ * 3. cd to Squiggy base directory
+ * 4. Run command
+ *      node \
+ *        ./scripts/node_js/save_whiteboard_as_png.js
+ *        -b /path/to/squiggy \
+ *        -w "/path/to/whiteboardElements.json" \
+ *        -p "/path/to/output/whiteboard.png"
+ * 5. [OPTIONAL] Put the node command above into a script named 'scripts/save_whiteboard_as_png_local.sh' (git-ignored)
+ */
+
+// @ts-ignore
 const args = process.argv
 const getArg = (flag: string) => {
   const index = args.indexOf(flag)
   return (index > -1 && index < args.length - 1) ? args[index + 1] : null
 }
 const baseDir = getArg('-b')
-const whiteboardElements = require(getArg('-w'))
 const pngFile = getArg('-p')
+const whiteboardElements = require(getArg('-w'))
+
+if (!baseDir || !pngFile || !whiteboardElements) {
+  throw new Error('Required arg(s) are missing. baseDir=' + baseDir + '; pngFile=' + pngFile + '; whiteboardElements=' + whiteboardElements + ';')
+}
 
 // Initialize fabric
 fabric.nodeCanvas.registerFont(`${baseDir}/public/fonts/HelveticaNeueuLight.ttf`, {
@@ -30,28 +48,6 @@ let right = Number.MIN_VALUE
 let bottom = Number.MIN_VALUE
 
 const deserializedElements: any[] = []
-
-_.each(whiteboardElements, function(whiteboardElement) {
-  // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
-  // of font family names. It seems that the only way to render custom fonts is to only specify one
-  if (whiteboardElement.fontFamily) {
-    whiteboardElement.fontFamily = 'HelveticaNeue-Light'
-  }
-  // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
-  const type = fabric.util.string.camelize(fabric.util.string.capitalize(whiteboardElement.type))
-  fabric[type].fromObject(whiteboardElement, (deserializedElement: any) => {
-    // When all elements have been added to the canvas, we will make sure each has its proper index.
-    deserializedElements.push(deserializedElement)
-
-    const bound = deserializedElement.getBoundingRect()
-    left = Math.min(left, bound.left)
-    top = Math.min(top, bound.top)
-    right = Math.max(right, bound.left + bound.width)
-    bottom = Math.max(bottom, bound.top + bound.height)
-
-    render()
-  })
-})
 
 const render = _.after(whiteboardElements.length, function() {
   // At this point we've figured out what the left-most and right-most element is. By subtracting
@@ -108,5 +104,27 @@ const render = _.after(whiteboardElements.length, function() {
   _.each(deserializedElements, function(deserializedElement) {
     canvas.add(deserializedElement)
     finishRender()
+  })
+})
+
+_.each(whiteboardElements, function(whiteboardElement) {
+  // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
+  // of font family names. It seems that the only way to render custom fonts is to only specify one
+  if (whiteboardElement.fontFamily) {
+    whiteboardElement.fontFamily = 'HelveticaNeue-Light'
+  }
+  // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
+  const type = fabric.util.string.camelize(fabric.util.string.capitalize(whiteboardElement.type))
+  fabric[type].fromObject(whiteboardElement, (deserializedElement: any) => {
+    // When all elements have been added to the canvas, we will make sure each has its proper index.
+    deserializedElements.push(deserializedElement)
+
+    const bound = deserializedElement.getBoundingRect()
+    left = Math.min(left, bound.left)
+    top = Math.min(top, bound.top)
+    right = Math.max(right, bound.left + bound.width)
+    bottom = Math.max(bottom, bound.top + bound.height)
+
+    render()
   })
 })
