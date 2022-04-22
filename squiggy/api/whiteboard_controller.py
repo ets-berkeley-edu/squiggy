@@ -25,13 +25,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import re
 
-from flask import current_app as app, request, Response
+from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now
-from squiggy.lib.whiteboard_util import get_whiteboard_png_stream
+from squiggy.lib.whiteboard_util import is_ready_to_export, to_png_file
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.category import Category
@@ -106,26 +106,20 @@ def export_as_asset(whiteboard_id):
 @login_required
 def export_as_png(whiteboard_id):
     whiteboard = _find_whiteboard(whiteboard_id)
-    if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
-        # TODO?
-        #   // If a downloadId parameter was provided, we set a cookie with it. This allows the UI to detect
-        #   // when the whiteboard download is ready
-        #   var downloadId = req.query.downloadId;
-        #   if (downloadId) {
-        #     var cookieName = util.format('whiteboard.%s.png', downloadId);
-        #     res.cookie(cookieName, 'true', {'expires': 0, 'sameSite': 'None', 'secure': true});
-        #   }
-        now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard.title)
-        return Response(
-            get_whiteboard_png_stream(session=current_user, whiteboard=whiteboard),
-            headers={
-                'Content-disposition': f'attachment; filename="{filename}_{now}.png"',
-                'Content-Type': 'image/png',
-            },
-        )
-    else:
+    if not whiteboard:
         raise ResourceNotFoundError('Not found')
+    if not can_view_whiteboard(user=current_user, whiteboard=whiteboard):
+        raise BadRequestError('Unauthorized')
+    if not is_ready_to_export(whiteboard_id):
+        raise BadRequestError('Whiteboard cannot be converted to PNG until previews are generated. Try again soon.')
+    # Download
+    now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
+    return send_file(
+        as_attachment=True,
+        attachment_filename=f'{filename}_{now}.png',
+        path_or_file=to_png_file(whiteboard),
+    )
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/restore')

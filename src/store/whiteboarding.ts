@@ -25,7 +25,6 @@ const state = {
   clipboard: undefined,
   debugLog: '',
   disableAll: true,
-  downloadId: undefined,
   fitToScreen: true,
   hideSidebar: false,
   // Variable that will keep track of whether a shape is currently being drawn
@@ -65,27 +64,24 @@ const mutations = {
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   exportAsPng: (state: any) => {
     state.isExportingAsPng = true
-    const done = function() {
-      state.isExportingAsPng = false
-    }
-    return axios.post(
-      `${apiUtils.apiBaseUrl()}/whiteboards/${state.whiteboard.id}/export/png`,
-      {
-        downloadId: $_createDownloadId()
-      }
-    ).then(
+    return axios.get(`${apiUtils.apiBaseUrl()}/api/whiteboard/${state.whiteboard.id}/export/png`).then(
       (response: any) => {
         const download = require('js-file-download')
         const now = moment().format('YYYY-MM-DD_HH-mm-ss')
-        download(response.data, `${state.whiteboard.title}-${now}.csv`)
-        done()
+        download(
+          response.data,
+          `${state.whiteboard.title}-${now}.png`,
+          'image/png',
+        )
+        state.isExportingAsPng = false
       },
-      done
+      function() {
+        state.isExportingAsPng = false
+      }
     )
   },
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
-      downloadId: $_createDownloadId(),
       sidebarExpanded: !whiteboard.deletedAt,
       viewport: document.getElementById('whiteboard-viewport'),
       whiteboard: whiteboard
@@ -168,10 +164,10 @@ const actions = {
       this.$hide()
     }
     // Open the export as asset modal dialog
-    $modal({
-      scope: scope,
-      templateUrl: '/app/whiteboards/exportasassetmodal/exportasasset.html'
-    })
+    // $modal({
+    //   scope: scope,
+    //   templateUrl: '/app/whiteboards/exportasassetmodal/exportasasset.html'
+    // })
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
   },
@@ -252,19 +248,6 @@ export default {
 }
 
 const $_alert = _.noop
-
-/**
- * Depending on the size of the whiteboard, exporting it to PNG can sometimes take a while. To
- * prevent the user from clicking the button twice when waiting to get a response, the button
- * will be disabled as soon as its clicked. Once the file has been downloaded, it will be
- * re-enabled. However, there are no cross-browser events that expose whether a file has been
- * downloaded. The PNG export endpoint works around this by taking in a `downloadId` parameter
- * and using that to construct a predictable cookie name. When a user clicks the button, the UI
- * will disable the button and wait until the cookie is set before re-enabling it again
- */
-const $_createDownloadId = () => new Date().getTime()
-
-const $modal = _.noop
 
 const $_getSelectedAsset = (): any => {
   // Get the id of the currently selected asset element.
