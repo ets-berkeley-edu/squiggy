@@ -3,8 +3,9 @@
 # Abort immediately if a command fails
 set -e
 
-npm install -g typescript
-npm install -g fabric
+# Install dependencies
+npm list | grep typescript || npm install -g typescript
+npm list | grep fabric || npm install -g fabric
 
 echo; echo 'Compiling...'; echo
 

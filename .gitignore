@@ -9,19 +9,20 @@
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
-# Front-end
+# Build artifacts
 node_modules
-scripts/node_js/save_whiteboard_as_png.js
 
-# Local configs
+# Configs
 config/*.json
 config/*-local.py
 config/*-local.conf
 config/*.pickle
 .env.*.local
 
-# Ignore local SQL scripts
+# Scripts
+scripts/*_local.sh
 scripts/db/local
+scripts/node_js/save_whiteboard_as_png.js
 
 # Local dev
 venv

@@ -43,7 +43,12 @@
               text
               @click="() => menu = false"
             >
-              Download as image
+              <div>
+                <font-awesome-icon icon="download" size="2x" />
+              </div>
+              <div class="pl-3">
+                Download as image
+              </div>
             </v-btn>
           </v-list-item-action>
         </v-list-item>
