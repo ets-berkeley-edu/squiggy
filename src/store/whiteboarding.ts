@@ -1,7 +1,4 @@
 import _ from 'lodash'
-import axios from 'axios'
-import moment from 'moment-timezone'
-import apiUtils from '@/api/api-utils'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
 import {getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
@@ -29,7 +26,6 @@ const state = {
   hideSidebar: false,
   // Variable that will keep track of whether a shape is currently being drawn
   isDrawingShape: false,
-  isExportingAsPng: false,
   // Keep track of whether the currently selected elements are in the process of being moved, scaled or rotated.
   isModifyingElement: false,
   isScrollingCanvas: false,
@@ -48,7 +44,6 @@ const getters = {
   disableAll: (state: any): boolean => state.disableAll,
   fitToScreen: (state: any): boolean => state.fitToScreen,
   hideSidebar: (state: any): boolean => state.hideSidebar,
-  isExportingAsPng: (state: any): boolean => state.isExportingAsPng,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
@@ -62,24 +57,6 @@ const mutations = {
   add: (state: any, whiteboardElement: any) => state.whiteboard.whiteboardElements.push(whiteboardElement),
   addAsset: (state: any, asset: any) => addAsset(asset, state),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
-  exportAsPng: (state: any) => {
-    state.isExportingAsPng = true
-    return axios.get(`${apiUtils.apiBaseUrl()}/api/whiteboard/${state.whiteboard.id}/export/png`).then(
-      (response: any) => {
-        const download = require('js-file-download')
-        const now = moment().format('YYYY-MM-DD_HH-mm-ss')
-        download(
-          response.data,
-          `${state.whiteboard.title}-${now}.png`,
-          'image/png',
-        )
-        state.isExportingAsPng = false
-      },
-      function() {
-        state.isExportingAsPng = false
-      }
-    )
-  },
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
       sidebarExpanded: !whiteboard.deletedAt,
@@ -171,7 +148,6 @@ const actions = {
     // Switch the toolbar back to move mode. This will also close the add asset popover
     commit('setMode', 'move')
   },
-  exportAsPng: ({commit}) => commit('exportAsPng'),
   getSelectedAsset: () => $_getSelectedAsset(),
   init: ({commit}, whiteboardId: number) => {
     return new Promise(resolve => {

@@ -37,22 +37,13 @@
             <v-btn
               id="toolbar-download-as-image-btn"
               class="d-flex justify-start w-100"
-              :disabled="isExportingAsPng || !whiteboard.whiteboardElements.length"
+              :disabled="!whiteboard.whiteboardElements.length"
+              :href="`${$config.apiBaseUrl}/api/whiteboard/${whiteboard.id}/export/png`"
+              link
               text
-              @click="exportAsPng"
+              @click="() => menu = false"
             >
-              <div>
-                <font-awesome-icon
-                  v-if="isExportingAsPng"
-                  icon="spinner"
-                  size="2x"
-                  spin
-                />
-                <font-awesome-icon v-if="!isExportingAsPng" icon="download" size="2x" />
-              </div>
-              <div class="pl-3">
-                {{ isExportingAsPng ? 'Downloading...' : 'Download as image' }}
-              </div>
+              Download as image
             </v-btn>
           </v-list-item-action>
         </v-list-item>

@@ -25,6 +25,7 @@
  * ENHANCEMENTS, OR MODIFICATIONS.
  */
 
+// IMPORTANT: Compile this Typescript file with `scripts/compile_whiteboard_to_png.sh`.
 
 const _ = require('lodash')
 const fabric = require('fabric').fabric

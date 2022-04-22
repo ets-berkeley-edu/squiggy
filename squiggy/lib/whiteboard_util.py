@@ -58,11 +58,6 @@ def to_png_file(whiteboard):
             stdout=subprocess.PIPE,
         ).wait(timeout=200000)
         return png_file
-        # return io.open(
-        #     png_file,
-        #     mode='r',
-        #     buffering=-1,
-        # )
     except OSError as e:
         app.logger.error(f"""
             OSError: {e.strerror}
