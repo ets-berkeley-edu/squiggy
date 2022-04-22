@@ -4,7 +4,7 @@
     class="navigation-drawer"
     :expand-on-hover="true"
     :mini-variant.sync="isMiniVariant"
-    :right="true"
+    right
   >
     <div v-if="isMiniVariant" class="pt-5 text-center">
       <v-badge color="green" :content="String(usersOnline.length)">
