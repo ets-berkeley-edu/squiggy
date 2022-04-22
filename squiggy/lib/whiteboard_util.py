@@ -23,100 +23,57 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+from flask import current_app as app
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 from squiggy.models.whiteboard_element import WhiteboardElement
 
 
-def get_whiteboard_png_stream(session, whiteboard):
-    if _check_element_exportability(session, whiteboard):
-        pass
-        # TODO:
-        #     if (err) {
-        #       log.error({
-        #         'type': err,
-        #         'whiteboard': whiteboard.id
-        #       }, 'Whiteboard is not exportable');
-        #       return callback({'code': 500, 'msg': 'There was an error exporting the whiteboard.'});
-        #     } else if (!_.isEmpty(whiteboardElements.errored)) {
-        #       return callback({
-        #           'code': 400,
-        #           'msg': 'The whiteboard could not be exported because one or more assets had a processing error. Remove blank assets to try again.'
-        #       });
-        #     } else if (!_.isEmpty(whiteboardElements.pending)) {
-        #       return callback({
-        #           'code': 400,
-        #           'msg': 'Whiteboard could not be exported because some assets are still processing. Try again once processing is complete.'
-        #       });
-        #     }
-        #     // Generating a PNG version of a whiteboard is a very CPU intensive process that can hold up the
-        #     // Node.JS event loop. On top of that, fabric.js and its dependency node-canvas suffer from memory
-        #     // leaks when importing images onto a Canvas. To avoid running out of memory or blocking the event loop,
-        #     // a PNG version of a whiteboard is generated in a child process
-        #     var childProcess = null;
-        #     try {
-        #       childProcess = spawn('node', ['../data/whiteboardToPng.js'], {
-        #         'cwd': __dirname,
-        #         'env': process.env
-        #       });
-        #     } catch (err) {
-        #       log.error({
-        #         'err': err,
-        #         'whiteboard': whiteboard.id
-        #       }, 'Could not spawn the whiteboardToPng child process');
-        #       return callback({'code': 500, 'msg': 'Failed to convert the whiteboard to PNG'});
-        #     }
-        #     // If PNG generation for a single whiteboard takes more than 30 seconds, something isn't right.
-        #     var childProcessTimeout = setTimeout(function() {
-        #       childProcess.kill();
-        #       log.error({'whiteboard': whiteboard.id}, 'The whiteboardToPng script timed out');
-        #     }, 30000);
-        #     // Feed the process the exportable elements
-        #     var elements = JSON.stringify(whiteboardElements.exportable);
-        #     childProcess.stdin.setEncoding = 'utf-8';
-        #     childProcess.stdin.write(elements);
-        #     childProcess.stdin.write('\n');
-        #     // Buffer the PNG stream in memory
-        #     var pngChunks = [];
-        #     childProcess.stdout.on('data', function(chunk) {
-        #       pngChunks.push(chunk);
-        #     });
-        #     // Log the error message the child process generates
-        #     childProcess.stderr.on('data', function(data) {
-        #       log.error({
-        #           'data': data.toString('utf-8'),
-        #           'whiteboard': whiteboard.id
-        #         }, 'Error output when converting a whiteboard to PNG');
-        #     });
-        #     // Once the PNG has been generated (or the script fails), return to the caller
-        #     childProcess.on('close', function(code) {
-        #       clearTimeout(childProcessTimeout);
-        #       if (code !== 0) {
-        #         log.error({
-        #           'code': code,
-        #           'whiteboard': whiteboard.id
-        #         }, 'The whiteboardToPng script exited with an unexpected error code');
-        #         return callback({'code': 500, 'msg': 'Failed to convert the whiteboard to PNG'});
-        #       }
-        #       // The last chunk contains the dimensions object, set off by a newline.
-        #       var lastPngChunk = pngChunks.pop();
-        #       var lastPngChunkLines = lastPngChunk.toString('utf8').split("\n");
-        #       var dimensionsData = lastPngChunkLines.pop();
-        #       // Image data may have been buffered in the same chunk as the dimensions object, in which case we
-        #       // should restore it to pngChunks.
-        #       if (lastPngChunkLines.length) {
-        #         var buffer = new Buffer(lastPngChunkLines.join("\n"), 'utf8');
-        #         pngChunks.push(buffer);
-        #       }
-        #       try {
-        #         var dimensions = JSON.parse(dimensionsData);
-        #       } catch (err) {
-        #         return callback({'code': 500, 'msg': 'Failed to parse the dimensions data'});
-        #       }
-        #       return callback(null, Buffer.concat(pngChunks), dimensions);
+def to_png_file(whiteboard):
+    base_dir = app.config['BASE_DIR']
+    whiteboard_elements_file = tempfile.NamedTemporaryFile(suffix='.json').name
+    with open(whiteboard_elements_file, mode='wt', encoding='utf-8') as f:
+        elements = [w['element'] for w in whiteboard['whiteboardElements']]
+        json.dump(elements, f)
+    try:
+        script = 'save_whiteboard_as_png.js'
+        png_dir = os.path.dirname(os.path.realpath(whiteboard_elements_file))
+        png_file = f'{png_dir}/whiteboard.png'
+        subprocess.Popen(
+            [
+                app.config['NODE_EXECUTABLE'],
+                f'{base_dir}/scripts/node_js/{script}',
+                '-b',
+                base_dir,
+                '-w',
+                whiteboard_elements_file,
+                '-p',
+                png_file,
+            ],
+            stdout=subprocess.PIPE,
+        ).wait(timeout=200000)
+        return png_file
+        # return io.open(
+        #     png_file,
+        #     mode='r',
+        #     buffering=-1,
+        # )
+    except OSError as e:
+        app.logger.error(f"""
+            OSError: {e.strerror}
+            OSError number: {e.errno}
+            OSError filename: {e.filename}
+        """)
+    except:  # noqa: E722
+        app.logger.error(sys.exc_info()[0])
 
 
-def _check_element_exportability(session, whiteboard):
-    pass
+def is_ready_to_export(whiteboard_id):
     # TODO:
     elements = {
         'exportable': [],
@@ -124,7 +81,7 @@ def _check_element_exportability(session, whiteboard):
         'errored': [],
     }
     asset_ids = []
-    for whiteboard_element in WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard.id):
+    for whiteboard_element in WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id):
         if not whiteboard_element.asset_id:
             element = whiteboard_element.element
             if element.src and is_s3_preview_url(element.src):
@@ -198,3 +155,4 @@ def _check_element_exportability(session, whiteboard):
     #       }
     #     });
     #   });
+    return True

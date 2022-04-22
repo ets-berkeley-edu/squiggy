@@ -2,21 +2,20 @@ import _ from 'lodash'
 const fs = require('fs')
 import {fabric} from 'fabric'
 
-const BASE_DIR = '/var/app/current'
 const WHITEBOARD_PADDING = 10
 
 // Command-line args must include absolute path to whiteboard-elements JSON file.
-let whiteboardElements = []
-
-_.each(process.argv, (arg: any) => {
-  if (_.endsWith(arg, 'whiteboardElements.json')) {
-    whiteboardElements = require(arg)
-    return false
-  }
-})
+const args = process.argv
+const getArg = (flag: string) => {
+  const index = args.indexOf(flag)
+  return (index > -1 && index < args.length - 1) ? args[index + 1] : null
+}
+const baseDir = getArg('-b')
+const whiteboardElements = require(getArg('-w'))
+const pngFile = getArg('-p')
 
 // Initialize fabric
-fabric.nodeCanvas.registerFont(`${BASE_DIR}/public/fonts/HelveticaNeueuLight.ttf`, {
+fabric.nodeCanvas.registerFont(`${baseDir}/public/fonts/HelveticaNeueuLight.ttf`, {
   family: 'HelveticaNeue-Light',
   weight: 'regular',
   style: 'normal'
@@ -35,7 +34,6 @@ const deserializedElements: any[] = []
 _.each(whiteboardElements, function(whiteboardElement) {
   // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
   // of font family names. It seems that the only way to render custom fonts is to only specify one
-  console.log('>> whiteboardElement')
   if (whiteboardElement.fontFamily) {
     whiteboardElement.fontFamily = 'HelveticaNeue-Light'
   }
@@ -63,22 +61,22 @@ const render = _.after(whiteboardElements.length, function() {
   let height = bottom - top
 
   // Neither width nor height should exceed 2048px.
-  let scaleFactor = 1
+  let scale_factor = 1
   if (width > 2048 && width >= height) {
-    scaleFactor = 2048 / width
+    scale_factor = 2048 / width
   } else if (height > 2048 && height > width) {
-    scaleFactor = 2048 / height
+    scale_factor = 2048 / height
   }
-  if (scaleFactor < 1) {
+  if (scale_factor < 1) {
     // If scaling down is required, first change the canvas dimensions.
-    width = width * scaleFactor
-    height = height * scaleFactor
+    width = width * scale_factor
+    height = height * scale_factor
     // Next, scale and reposition each element against top left corner of the canvas.
     _.each(deserializedElements, function(element) {
-      element.scaleX = element.scaleX * scaleFactor
-      element.scaleY = element.scaleY * scaleFactor
-      element.left = left + ((element.left - left) * scaleFactor)
-      element.top = top + ((element.top - top) * scaleFactor)
+      element.scaleX = element.scaleX * scale_factor
+      element.scaleY = element.scaleY * scale_factor
+      element.left = left + ((element.left - left) * scale_factor)
+      element.top = top + ((element.top - top) * scale_factor)
     })
   }
   // Add a bit of padding so elements don't stick to the side
@@ -91,27 +89,18 @@ const render = _.after(whiteboardElements.length, function() {
     width: width,
     height: height,
   })
+  canvas.absolutePan(new fabric.Point(left - WHITEBOARD_PADDING, top - WHITEBOARD_PADDING))
 
-  const pt = new fabric.Point(left - WHITEBOARD_PADDING, top - WHITEBOARD_PADDING)
-  canvas.absolutePan(pt)
-
-  // Don't render each element when it's added, rather render the entire Canvas once all elements
-  // have been added. This is significantly faster
+  // Render canvas AFTER all elements have been added. This is significantly faster
   canvas.renderOnAddRemove = false
 
-  // Once all elements have been added to the canvas, restore
-  // the layer order and convert to PNG
   const finishRender = _.after(deserializedElements.length, function() {
-    // Ensure each element is placed at the right index. This can only happen
-    // once all elements have been added to the canvas
+    // Ensure each element is placed at the right index.
     canvas.getObjects().sort(function(elementA, elementB) {
       return elementA.index - elementB.index
     })
-
-    // Render the canvas
     canvas.renderAll()
-    // Convert the canvas to a PNG file and return the data
-    canvas.createPNGStream().pipe(fs.createWriteStream(`${BASE_DIR}/whiteboard.png`))
+    canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
     return
   })
 

@@ -73,6 +73,8 @@ LOGGING_LOCATION = 'squiggy.log'
 LOGGING_LEVEL = logging.DEBUG
 LOGGING_PROPAGATION_LEVEL = logging.INFO
 
+NODE_EXECUTABLE = '/usr/bin/node'
+
 PREVIEWS_API_KEY = 'someKey'
 PREVIEWS_ENABLED = True
 PREVIEWS_URL = 'https://example.com/previews'
