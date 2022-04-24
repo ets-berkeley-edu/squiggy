@@ -30,10 +30,12 @@ import sys
 import tempfile
 
 from flask import current_app as app
+from squiggy import mock
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 from squiggy.models.whiteboard_element import WhiteboardElement
 
 
+@mock('fixtures/mock_whiteboard.png')
 def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
     whiteboard_elements_file = tempfile.NamedTemporaryFile(suffix='.json').name

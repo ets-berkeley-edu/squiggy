@@ -50,22 +50,21 @@ class TestAsset:
             assert asset['createdAt'] is not None
             assert asset['deletedAt'] is None
             assert asset['description'] is None
-            assert asset['downloadUrl'] is None
             assert asset['imageUrl'] is None
             assert asset['liked'] is False
             assert asset['likes'] == 0
-            assert asset['mime'] is None
             assert asset['pdfUrl'] is None
             assert asset['previewMetadata'] == '{}'
             assert asset['previewStatus'] == 'pending'
             assert asset['thumbnailUrl'] is None
             assert asset['title'] is not None
-            assert 'source' in asset
             assert asset['type']
             assert asset['createdAt'] is not None
             assert asset['updatedAt'] is not None
             assert asset['views'] == 0
             assert asset['visible'] is True
+            for key in ('downloadUrl', 'mime', 'source'):
+                assert key in asset, f'{key} not present in asset JSON'
 
             assert len(asset['users']) == 1
             assert asset['users'][0]['id'] == authorized_user_session.user.id

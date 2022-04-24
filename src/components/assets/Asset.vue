@@ -8,9 +8,7 @@
       </a>
       <v-card class="mt-3 pa-2" outlined>
         <v-card-text>
-          <div class="asset-image-container">
-            <AssetPreview :asset="asset" :contain="true" />
-          </div>
+          <AssetPreview :asset="asset" :contain="true" />
           <AssetOverview id="asset-overview" :asset="asset" />
         </v-card-text>
       </v-card>

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
-import {getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
+import {restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   deleteActiveElements,
@@ -59,7 +59,7 @@ const mutations = {
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
-      sidebarExpanded: !whiteboard.deletedAt,
+      sidebarExpanded: !whiteboard.isReadOnly,
       viewport: document.getElementById('whiteboard-viewport'),
       whiteboard: whiteboard
     })
@@ -72,7 +72,10 @@ const mutations = {
     state.windowWidth = window.innerWidth
   },
   resetSelected: (state: any) => state.selected = {},
-  restoreWhiteboard: (state: any) => state.whiteboard.deletedAt = null,
+  restoreWhiteboard: (state: any) => {
+    state.whiteboard.isReadOnly = false
+    state.whiteboard.deletedAt = null
+  },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
@@ -149,14 +152,12 @@ const actions = {
     commit('setMode', 'move')
   },
   getSelectedAsset: () => $_getSelectedAsset(),
-  init: ({commit}, whiteboardId: number) => {
+  init: ({commit}, whiteboard: any) => {
     return new Promise(resolve => {
-      getWhiteboard(whiteboardId).then(whiteboard => {
-        getCategories(false).then(categories => {
-          commit('setCategories', categories)
-          commit('init', whiteboard)
-          resolve(whiteboard)
-        })
+      getCategories(false).then(categories => {
+        commit('setCategories', categories)
+        commit('init', whiteboard)
+        resolve(whiteboard)
       })
     })
   },

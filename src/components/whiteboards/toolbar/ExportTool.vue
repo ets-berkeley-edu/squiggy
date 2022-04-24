@@ -38,7 +38,7 @@
               id="toolbar-download-as-image-btn"
               class="d-flex justify-start w-100"
               :disabled="!whiteboard.whiteboardElements.length"
-              :href="`${$config.apiBaseUrl}/api/whiteboard/${whiteboard.id}/export/png`"
+              :href="`${$config.apiBaseUrl}/api/whiteboard/${whiteboard.id}/download/png`"
               link
               text
               @click="() => menu = false"

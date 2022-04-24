@@ -9,6 +9,20 @@ export function deleteWhiteboard(whiteboardId: number) {
   return axios.delete(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/delete`)
 }
 
+export function exportAsset(
+  categoryIds: number[],
+  description: string,
+  title: string,
+  whiteboardId: number,
+) {
+  const data = {
+    categoryIds,
+    description,
+    title
+  }
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/export/asset`, data)
+}
+
 export function getWhiteboard(id: number) {
   return axios.get(`${utils.apiBaseUrl()}/api/whiteboard/${id}`)
 }

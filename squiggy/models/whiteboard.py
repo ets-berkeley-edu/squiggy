@@ -293,6 +293,7 @@ class Whiteboard(Base):
             'id': self.id,
             'courseId': self.course_id,
             'imageUrl': self.image_url,
+            'isReadOnly': self.deleted_at is not None,
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [_user_api_json(user) for user in self.users],

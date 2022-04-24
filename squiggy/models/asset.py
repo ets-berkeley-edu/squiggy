@@ -40,6 +40,7 @@ from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import db_row_to_dict, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset_category import asset_category_table
+from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
 
 assets_sort_by_options = {
@@ -415,8 +416,7 @@ class Asset(Base):
             )
             if like_query.first() is not None:
                 liked = True
-
-        return {
+        api_json = {
             'id': self.id,
             'assetType': self.asset_type,
             'body': self.body,
@@ -445,6 +445,25 @@ class Asset(Base):
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }
+        if self.asset_type == 'whiteboard':
+            api_json['isReadOnly'] = True
+            whiteboard_elements = []
+            for w in AssetWhiteboardElement.find_by_asset_id(self.id):
+                element = {
+                    **w.element,
+                    **{
+                        'uuid': w.uuid,
+                    },
+                }
+                whiteboard_elements.append({
+                    'assetId': w.element_asset_id,
+                    'createdAt': isoformat(w.created_at),
+                    'element': element,
+                    'updatedAt': isoformat(self.updated_at),
+                    'uuid': w.uuid,
+                })
+            api_json['whiteboardElements'] = whiteboard_elements
+        return api_json
 
 
 def validate_asset_url(url):

@@ -127,7 +127,7 @@
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
 import Whiteboarding from '@/mixins/Whiteboarding'
-import {createLinkAsset} from '@/api/assets'
+import {exportAsset} from '@/api/whiteboards'
 
 export default {
   name: 'ExportAsAsset',
@@ -144,8 +144,7 @@ export default {
     asset: {
       categoryId: undefined,
       description: undefined,
-      title: undefined,
-      url: undefined
+      title: undefined
     },
     isExporting: false,
     dialog: false
@@ -163,19 +162,14 @@ export default {
     onClickSave() {
       this.$announcer.polite('Exporting...')
       this.isExporting = true
-      createLinkAsset(
-        this.asset.categoryId,
+      const categoryIds = this.asset.categoryId ? [this.asset.categoryId] : []
+      exportAsset(
+        categoryIds,
         this.asset.description,
         this.asset.title,
-        this.asset.url
+        this.whiteboard.id
       ).then(() => {
         this.$announcer.polite('Asset created.')
-        this.asset = {
-          categoryId: undefined,
-          description: undefined,
-          title: undefined,
-          url: undefined
-        }
         this.dialog = false
         this.isExporting = false
       })

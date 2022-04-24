@@ -80,7 +80,7 @@ export function enableCanvasElements(enabled: boolean) {
 }
 
 export function initFabricCanvas(state: any, whiteboard: any) {
-  if (!whiteboard.deletedAt) {
+  if (!whiteboard.isReadOnly) {
     $_initSocket(state, whiteboard)
     $_addSocketListeners(state)
   }
@@ -240,7 +240,7 @@ const $_addDebugListenters = (fabricObject: any, objectType: string) => {
   }
 }
 
-const $_addListenters = (state: any) => {
+const $_addListeners = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
   const setModifyingElement = () => store.dispatch('whiteboarding/setIsModifyingElement', true)
   p.$canvas.on('object:moving', setModifyingElement)
@@ -580,7 +580,7 @@ const $_deserializeElement = (
   element = _.cloneDeep(element)
   element.uuid = uuid
   // Make the element unseletable when the whiteboard is rendered in read only mode
-  if (state.whiteboard.deletedAt) {
+  if (state.whiteboard.isReadOnly) {
     element.selectable = false
   }
   // Extract the type from the serialized element
@@ -664,22 +664,23 @@ const $_initCanvas = (state: any) => {
     selectionBorderColor: '#0295DE',
     selectionLineWidth: 2
   })
-  $_addDebugListenters(p.$canvas, 'Canvas')
-  // Make the border dashed
-  // @see http://fabricjs.com/fabric-intro-part-4/
-  p.$canvas.selectionDashArray = [10, 5]
+  if (!state.whiteboard.isReadOnly) {
+    $_addDebugListenters(p.$canvas, 'Canvas')
+    // Make the border dashed. See http://fabricjs.com/fabric-intro-part-4/
+    p.$canvas.selectionDashArray = [10, 5]
 
-  // Set the selection style for all elements
-  fabric.Object.prototype.borderColor = '#0295DE'
-  fabric.Object.prototype.borderScaleFactor = 0.3
-  fabric.Object.prototype.cornerColor = '#0295DE'
-  fabric.Object.prototype.cornerSize = 10
-  fabric.Object.prototype.transparentCorners = false
-  fabric.Object.prototype.rotatingPointOffset = 30
-  // Set the pencil brush as the drawing brush
-  p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
-  // Render the whiteboard
-  $_addListenters(state)
+    // Set the selection style for all elements
+    fabric.Object.prototype.borderColor = '#0295DE'
+    fabric.Object.prototype.borderScaleFactor = 0.3
+    fabric.Object.prototype.cornerColor = '#0295DE'
+    fabric.Object.prototype.cornerSize = 10
+    fabric.Object.prototype.transparentCorners = false
+    fabric.Object.prototype.rotatingPointOffset = 30
+    // Set the pencil brush as the drawing brush
+    p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
+    // Render the whiteboard
+    $_addListeners(state)
+  }
   $_renderWhiteboard(state)
 }
 
