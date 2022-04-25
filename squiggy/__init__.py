@@ -57,14 +57,21 @@ def std_commit(allow_test_environment=False):
             db.session.close()
 
 
-def mock_file_when_pytest(path_to_file):
+def mock_open_file(path_to_file):
     @decorator
-    def _mock_file_when_pytest(func, *args, **kw):
+    def _open_file(func, *args, **kw):
         if app.config['SQUIGGY_ENV'] == 'test':
             return open(f'{_get_fixtures_path()}/{path_to_file}', 'r')
         else:
             return func(*args, **kw)
-    return _mock_file_when_pytest
+    return _open_file
+
+
+def mock(mock_object):
+    @decorator
+    def _get_object(func, *args, **kw):
+        return mock_object if app.config['SQUIGGY_ENV'] == 'test' else func(*args, **kw)
+    return _get_object
 
 
 def _get_fixtures_path():

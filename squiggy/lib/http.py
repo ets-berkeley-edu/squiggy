@@ -30,7 +30,7 @@ import urllib
 from flask import Response
 import requests
 import simplejson as json
-from squiggy import mock_file_when_pytest
+from squiggy import mock_open_file
 from squiggy.lib.util import local_now
 from squiggy.logger import logger
 from werkzeug.wrappers import ResponseStream
@@ -91,7 +91,7 @@ def response_with_csv_download(rows, filename_prefix, fieldnames=None):
     return response
 
 
-@mock_file_when_pytest(path_to_file='mock_file_upload/the_gift.txt')
+@mock_open_file(path_to_file='mock_file_upload/the_gift.txt')
 def retrieve_to_file(url):
     file = tempfile.NamedTemporaryFile()
     urllib.request.urlretrieve(url, file.name)

@@ -37,7 +37,7 @@ from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
-from tests.util import override_config
+from tests.util import mock_s3_bucket, override_config
 
 unauthorized_user_id = '666'
 
@@ -117,22 +117,7 @@ class TestGetWhiteboards:
 
     def test_authorized(self, client, fake_auth):
         """Get all whiteboards."""
-        course = Course.find_by_canvas_course_id(
-            canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=1502870,
-        )
-        student = User.create(
-            canvas_course_role='Student',
-            canvas_enrollment_state='active',
-            canvas_full_name='Born to Collaborate',
-            canvas_user_id=987654321,
-            course_id=course.id,
-        )
-        whiteboard = Whiteboard.create(
-            course_id=course.id,
-            title='CyberCulture',
-            users=[student],
-        )
+        course, student, whiteboard = _create_student_whiteboard()
         assert student.id in [user['id'] for user in whiteboard['users']]
 
         # Deleted whiteboard
@@ -186,10 +171,10 @@ class TestExportAsAsset:
     @staticmethod
     def _api_export(
             client,
+            title,
             whiteboard_id,
-            category_ids=[],
+            category_ids=(),
             description=None,
-            title=None,
             expected_status_code=200,
     ):
         params = {
@@ -207,25 +192,41 @@ class TestExportAsAsset:
 
     def test_anonymous(self, client, mock_whiteboard):
         """Denies anonymous user."""
-        self._api_export(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
+        self._api_export(
+            client,
+            expected_status_code=401,
+            title='Asset of anonymous user',
+            whiteboard_id=mock_whiteboard['id'],
+        )
 
     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_export(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
+        self._api_export(
+            client,
+            expected_status_code=401,
+            title='Asset of an unauthorized user',
+            whiteboard_id=mock_whiteboard['id'],
+        )
 
-    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+    def test_authorized(self, client, fake_auth):
         """Authorized user can export whiteboard as asset."""
-        fake_auth.login(authorized_user_id)
+        course, student, whiteboard = _create_student_whiteboard()
+        fake_auth.login(student.id)
         WhiteboardElement.create(
             element={
                 'fontSize': 14,
                 'uuid': str(uuid4()),
             },
-            whiteboard_id=mock_whiteboard['id'])
+            whiteboard_id=whiteboard['id'])
         std_commit(allow_test_environment=True)
-        api_json = self._api_export(client, whiteboard_id=mock_whiteboard['id'])
-        assert 'id' in api_json
+        with mock_s3_bucket(app):
+            api_json = self._api_export(
+                client,
+                title='A is for Asset.',
+                whiteboard_id=whiteboard['id'],
+            )
+            assert 'id' in api_json
 
 
 class TestRestoreWhiteboard:
@@ -324,6 +325,26 @@ class TestRestoreWhiteboard:
 #         std_commit(allow_test_environment=True)
 #         response = client.get(f'/api/whiteboard/{whiteboard_id}')
 #         assert response.status_code == 404
+
+def _create_student_whiteboard():
+    course = Course.find_by_canvas_course_id(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=1502870,
+    )
+    student = User.create(
+        canvas_course_role='Student',
+        canvas_enrollment_state='active',
+        canvas_full_name='Born to Collaborate',
+        canvas_user_id=987654321,
+        course_id=course.id,
+    )
+    whiteboard = Whiteboard.create(
+        course_id=course.id,
+        title='CyberCulture',
+        users=[student],
+    )
+    return course, student, whiteboard
+
 
 def _get_sample_user(canvas_course_role, course):
     return next((u for u in course.users if u.canvas_course_role == canvas_course_role), None)

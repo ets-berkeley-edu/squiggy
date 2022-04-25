@@ -71,20 +71,16 @@ def export_as_asset(whiteboard_id):
             category_ids = list(params.get('categoryIds'))
             description = params.get('description')
             title = params.get('title') or whiteboard['title']
+            if not title:
+                raise BadRequestError('Required parameter is missing.')
             asset = Asset.create(
                 asset_type='whiteboard',
-                canvas_assignment_id=None,
                 categories=[Category.find_by_id(category_id=category_id) for category_id in category_ids],
                 course_id=current_user.course.id,
-                create_activity=True,
                 description=description,
-                download_url=whiteboard['imageUrl'],
-                mime=None,
                 source=str(whiteboard['id']),
                 title=title,
-                url=None,
                 users=[User.find_by_id(current_user.get_id())],
-                visible=True,
             )
             for whiteboard_element in whiteboard_elements:
                 element = whiteboard_element.element
@@ -101,7 +97,7 @@ def export_as_asset(whiteboard_id):
         raise ResourceNotFoundError('Not found')
 
 
-@app.route('/api/whiteboard/<whiteboard_id>/export/png')
+@app.route('/api/whiteboard/<whiteboard_id>/download/png')
 @feature_flag_whiteboards
 @login_required
 def export_as_png(whiteboard_id):

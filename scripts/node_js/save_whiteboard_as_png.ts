@@ -15,7 +15,7 @@ const WHITEBOARD_PADDING = 10
  *        -b /path/to/squiggy \
  *        -w "/path/to/whiteboardElements.json" \
  *        -p "/path/to/output/whiteboard.png"
- * 5. [OPTIONAL] Put the node command above into a script named 'scripts/save_whiteboard_as_png_local.sh' (git-ignored)
+ * 5. [OPTIONAL] Put the node command above into a script named 'scripts/run_whiteboard_as_png_local.sh' (git-ignored)
  */
 
 // @ts-ignore

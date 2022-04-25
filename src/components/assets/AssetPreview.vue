@@ -1,6 +1,6 @@
 <template>
   <div class="assetlibrary-item-preview-outer">
-    <div v-if="previewStatus === 'done'" class="assetlibrary-item-preview">
+    <div v-if="true || previewStatus === 'done'" class="assetlibrary-item-preview">
       <div v-if="asset.assetType === 'file' && !asset.pdfUrl && !videoUrl && asset.imageUrl">
         <v-img
           :id="`asset-preview-image-${asset.id}`"
@@ -70,9 +70,12 @@
           @error="imgError"
         />
       </div>
+      <div v-if="asset.assetType === 'whiteboard'" class="assetlibrary-item-whiteboard-preview">
+        <AssetTypeWhiteboard :asset="asset" :max-height="maxHeight" />
+      </div>
     </div>
     <div
-      v-if="previewStatus === 'pending'"
+      v-if="false && previewStatus === 'pending'"
       class="assetlibrary-item-preview-message"
     >
       <font-awesome-icon icon="spinner" spin />
@@ -88,8 +91,11 @@
 </template>
 
 <script>
+import AssetTypeWhiteboard from '@/components/assets/AssetTypeWhiteboard'
+
 export default {
   name: 'AssetPreview',
+  components: {AssetTypeWhiteboard},
   props: {
     asset: {
       required: true,
@@ -203,32 +209,25 @@ export default {
     height: 720px;
   }
 }
-
 .assetlibrary-item-preview-message {
   background-color: #FFF;
   padding: 170px 0;
 }
-
 .assetlibrary-item-preview-message > i {
   color: #747474;
   font-size: 50px;
 }
-
 .assetlibrary-item-preview-message p {
   font-size: 18px;
   margin: 15px 20px 0;
 }
-
 .assetlibrary-item-preview-message a {
   margin-top: 15px;
 }
-
 .assetlibrary-item-preview-message i.fa-spinner {
   margin-right: 5px;
 }
-
 .assetlibrary-item-preview-outer {
   text-align: center;
 }
-
 </style>

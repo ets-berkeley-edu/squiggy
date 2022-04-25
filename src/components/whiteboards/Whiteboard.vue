@@ -21,6 +21,7 @@ import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Users from '@/components/whiteboards/sidebar/Users'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
+import {getWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'Whiteboard',
@@ -31,11 +32,14 @@ export default {
   }),
   created() {
     this.$loading()
-    this.init(this.$route.params.id).then(whiteboard => {
-      this.setDisableAll(false)
-      clearTimeout(this.pingJob)
-      this.pingJob = setTimeout(this.keepSocketAlive, 60000)
-      this.$ready(whiteboard.title)
+    const whiteboardId = parseInt(this.$route.params.id, 10)
+    getWhiteboard(whiteboardId).then(whiteboard => {
+      this.init(whiteboard).then(whiteboard => {
+        this.setDisableAll(false)
+        clearTimeout(this.pingJob)
+        this.pingJob = setTimeout(this.keepSocketAlive, 60000)
+        this.$ready(whiteboard.title)
+      })
     })
   },
   destroyed() {
