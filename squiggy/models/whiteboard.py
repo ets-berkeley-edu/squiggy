@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import re
+from uuid import uuid4
 
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
@@ -95,19 +96,13 @@ class Whiteboard(Base):
         course_id,
         title,
         users,
-        elements=None,
-        image_url=None,
     ):
         whiteboard = cls(
             course_id=course_id,
-            image_url=image_url,
             title=title,
             users=users,
         )
         db.session.add(whiteboard)
-        std_commit()
-        for element in (elements or []):
-            element = WhiteboardElement.create(element=element, whiteboard_id=whiteboard.id)
         std_commit()
         return whiteboard.to_api_json()
 
@@ -237,21 +232,20 @@ class Whiteboard(Base):
         }
 
     @classmethod
-    def reconstitute(cls, asset, course_id):
-        # Remix
+    def remix(cls, asset, course_id, users):
         whiteboard = cls.create(
             course_id=course_id,
-            image_url=asset.image_url,
             title=asset.title,
+            users=users,
         )
-        for asset_whiteboard_element in AssetWhiteboardElement.find_by_asset_id(asset.id):
+        whiteboard_id = whiteboard['id']
+        for a in AssetWhiteboardElement.find_by_asset_id(asset.id):
             WhiteboardElement.create(
-                asset_id=asset.id,
-                element=asset_whiteboard_element.element,  # TODO: Storage.signWhiteboardElementSrc(asset_whiteboard_element.element)
-                whiteboard_id=whiteboard.id,
+                asset_id=a.element_asset_id,
+                element=a.element,
+                uuid=str(uuid4()),
+                whiteboard_id=whiteboard_id,
             )
-        db.session.add(whiteboard)
-        std_commit()
         return whiteboard
 
     @classmethod
