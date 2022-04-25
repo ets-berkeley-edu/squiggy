@@ -24,6 +24,7 @@
         <EditWhiteboard
           class="pt-10"
           :after-save="afterSave"
+          :on-click-delete="onClickDelete"
           :on-cancel="cancel"
           :on-ready="() => $announcer.polite('The edit Whiteboard dialog is ready.')"
           :reset="menu"
@@ -42,6 +43,12 @@ export default {
   name: 'EditWhiteboardTool',
   mixins: [Whiteboarding],
   components: {EditWhiteboard},
+  props: {
+    openDeleteDialog: {
+      required: true,
+      type: Function
+    }
+  },
   data: () => ({
     menu: false
   }),
@@ -58,13 +65,17 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
+    afterSave(whiteboard) {
+      this.onWhiteboardUpdate(whiteboard)
+      this.menu = false
+    },
     cancel() {
       this.$announcer.polite('Canceled')
       this.menu = false
     },
-    afterSave(whiteboard) {
-      this.onWhiteboardUpdate(whiteboard)
+    onClickDelete() {
       this.menu = false
+      this.openDeleteDialog()
     }
   }
 }
