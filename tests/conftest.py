@@ -40,6 +40,7 @@ from squiggy.models.course import Course
 from squiggy.models.user import User
 import squiggy.factory  # noqa
 from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_element import WhiteboardElement
 from tests.util import override_config  # noqa
 
 os.environ['SQUIGGY_ENV'] = 'test'  # noqa
@@ -188,15 +189,10 @@ def mock_asset(app, db_session):
         canvas_user_id=canvas_user_id,
         course_id=course.id,
     )
-    unique_token = datetime.now().isoformat()
-    asset = Asset.create(
-        asset_type='link',
+    asset = _create_asset(
+        app=app,
         categories=[category_hidden, category_visible],
-        course_id=course.id,
-        description=None,
-        download_url=f"s3://{app.config['AWS_S3_BUCKET_FOR_ASSETS']}/asset/{course.id}_{canvas_user_id}_{unique_token}.pdf",
-        title=f'Mock Asset created at {unique_token}',
-        url=f'https://en.wikipedia.org/wiki/{unique_token}',
+        course=course,
         users=[user],
     )
     for test_comment in _get_mock_comments():
@@ -233,27 +229,37 @@ def mock_whiteboard(app, db_session):
     )
     whiteboard = Whiteboard.create(
         course_id=course.id,
-        elements=[
-            {
-                'height': 600,
-                'type': 'canvas',
-                'uuid': str(uuid4()),
-                'width': 800,
-            },
-            {
-                'fill': 'rgb(0,0,0)',
-                'fontSize': 14,
-                'text': '',
-                'type': 'text',
-                'uuid': str(uuid4()),
-            },
-        ],
         title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',
         users=[user],
     )
     std_commit(allow_test_environment=True)
 
-    yield whiteboard
+    asset = _create_asset(app=app, course=course, users=[user])
+    for element in [
+        {
+            'assetId': asset.id,
+            'height': 600,
+            'type': 'asset',
+            'uuid': str(uuid4()),
+            'width': 800,
+        },
+        {
+            'fill': 'rgb(0,0,0)',
+            'fontSize': 14,
+            'text': '',
+            'type': 'text',
+            'uuid': str(uuid4()),
+        },
+    ]:
+        WhiteboardElement.create(
+            asset_id=element.get('assetId'),
+            element=element,
+            uuid=element['uuid'],
+            whiteboard_id=whiteboard['id'],
+        )
+        std_commit(allow_test_environment=True)
+
+    yield Whiteboard.find_by_id(current_user=LoginSession(user.id), whiteboard_id=whiteboard['id'])
 
     Whiteboard.delete(whiteboard_id=whiteboard['id'])
     std_commit(allow_test_environment=True)
@@ -267,6 +273,20 @@ def mock_category(db):
         title='Thought of you as my mountain top',
         canvas_assignment_id=98765,
         visible=True,
+    )
+
+
+def _create_asset(app, course, users, categories=None):
+    unique_token = datetime.now().isoformat()
+    return Asset.create(
+        asset_type='link',
+        categories=categories,
+        course_id=course.id,
+        description=None,
+        download_url=f"s3://{app.config['AWS_S3_BUCKET_FOR_ASSETS']}/asset/{course.id}_{unique_token}.pdf",
+        title=f'Mock Asset created at {unique_token}',
+        url=f'https://en.wikipedia.org/wiki/{unique_token}',
+        users=users,
     )
 
 

@@ -50,6 +50,10 @@ export function restoreWhiteboard(whiteboardId: number) {
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/restore`, {whiteboardId})
 }
 
+export function remixWhiteboard(assetId: number) {
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${assetId}/remix`, {assetId})
+}
+
 export function updateWhiteboard(title: string, userIds: number[], whiteboardId: number) {
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/update`, {title, userIds, whiteboardId})
 }

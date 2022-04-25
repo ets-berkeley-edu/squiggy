@@ -74,11 +74,11 @@ class WhiteboardElement(Base):
         return result and result['id']
 
     @classmethod
-    def create(cls, element, whiteboard_id, asset_id=None):
+    def create(cls, element, uuid, whiteboard_id, asset_id=None):
         whiteboard_element = cls(
             asset_id=asset_id,
             element=element,
-            uuid=element['uuid'],
+            uuid=uuid,
             whiteboard_id=whiteboard_id,
         )
         db.session.add(whiteboard_element)

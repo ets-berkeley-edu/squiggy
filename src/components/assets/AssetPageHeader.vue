@@ -32,6 +32,16 @@
           <span>Preview image last generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
         </v-tooltip>
       </div>
+      <div v-if="asset.assetType === 'whiteboard'" class="mr-2">
+        <v-btn
+          id="remix-asset-whiteboard-btn"
+          @click="remix"
+          @keypress.enter.prevent="remix"
+        >
+          <font-awesome-icon class="mr-2" icon="refresh" />
+          Remix
+        </v-btn>
+      </div>
       <div v-if="downloadUrl" class="mr-2">
         <v-btn id="download-asset-btn" @click="downloadAsset" @keypress.enter.prevent="downloadAsset">
           <font-awesome-icon class="mr-2" icon="download" />
@@ -91,6 +101,7 @@
 <script>
 import Utils from '@/mixins/Utils'
 import {deleteAsset} from '@/api/assets'
+import {remixWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'AssetPageHeader',
@@ -151,6 +162,11 @@ export default {
     edit() {
       this.$announcer.polite(`Edit asset ${this.asset.title}`)
       this.go(`/asset/${this.asset.id}/edit`)
+    },
+    remix() {
+      remixWhiteboard(this.asset.id).then(whiteboard => {
+        this.$announcer.polite(`Whiteboard ${whiteboard.title} is ready.`)
+      })
     }
   }
 }

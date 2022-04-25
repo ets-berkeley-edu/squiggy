@@ -46,7 +46,6 @@ def _api_get_asset(asset_id, client, expected_status_code=200):
 
 
 class TestGetAsset:
-    """Asset API."""
 
     def test_anonymous(self, client, mock_asset):
         """Denies anonymous user."""
@@ -93,7 +92,6 @@ class TestGetAsset:
 
 
 class TestDownloadAsset:
-    """Download Asset API."""
 
     @staticmethod
     def _api_download_asset(app, asset_id, client, expected_status_code=200):
@@ -130,7 +128,6 @@ class TestDownloadAsset:
 
 
 class TestGetAssets:
-    """Assets API."""
 
     @classmethod
     def _api_get_assets(
@@ -140,8 +137,8 @@ class TestGetAssets:
             category_id=None,
             expected_status_code=200,
             keywords=None,
-            limit=None,
-            offset=None,
+            limit=20,
+            offset=0,
             order_by=None,
             section_id=None,
             user_id=None,
@@ -173,16 +170,58 @@ class TestGetAssets:
         fake_auth.login(unauthorized_user_id)
         self._api_get_assets(client, expected_status_code=401)
 
-    def test_admin(self, client, fake_auth, authorized_user_id):
+    def test_admin(self, authorized_user_id, client, fake_auth):
         """Returns a well-formed response."""
         fake_auth.login(authorized_user_id)
         api_json = self._api_get_assets(client)
         assert 'total' in api_json
         assert 'results' in api_json
 
+    def test_assets_for_course(self, authorized_user_id, client, fake_auth):
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(user.id)
+        api_json = self._api_get_assets(client)
+        # Feed shape
+        assert api_json['offset'] == 0
+        assert api_json['total'] == len(api_json['results'])
+        # Ordering
+        assert api_json['results'][0]['id'] > api_json['results'][1]['id']
+        # Asset structure
+        for asset in api_json['results']:
+            assert asset['body'] is None
+            assert asset['canvasAssignmentId'] is None
+            assert asset['commentCount'] == 0
+            assert asset['courseId'] == user.course.id
+            assert asset['createdAt'] is not None
+            assert asset['deletedAt'] is None
+            assert asset['description'] is None
+            assert asset['imageUrl'] is None
+            assert asset['liked'] is False
+            assert asset['likes'] == 0
+            assert asset['pdfUrl'] is None
+            assert asset['previewMetadata'] == '{}'
+            assert asset['previewStatus'] == 'pending'
+            assert asset['thumbnailUrl'] is None
+            assert asset['title'] is not None
+            assert asset['type']
+            assert asset['createdAt'] is not None
+            assert asset['updatedAt'] is not None
+            assert asset['views'] == 0
+            assert asset['visible'] is True
+            for key in ('downloadUrl', 'mime', 'source'):
+                assert key in asset, f'{key} not present in asset JSON'
+
+            assert len(asset['users']) == 1
+            assert asset['users'][0]['id'] == user.id
+            assert asset['users'][0]['canvasFullName'] == 'Oliver Heyer'
+            assert asset['users'][0]['canvasUserId'] == 9876543
+            assert asset['users'][0]['canvasCourseRole'] == 'Teacher'
+            assert asset['users'][0]['canvasEnrollmentState'] == 'active'
+            assert 'canvasCourseSections' in asset['users'][0]
+            assert 'canvasImage' in asset['users'][0]
+
 
 class TestCreateAsset:
-    """Create asset API."""
 
     @staticmethod
     def _api_create_link_asset(
@@ -190,9 +229,10 @@ class TestCreateAsset:
             asset_type='link',
             category=None,
             description='Baby, be good, do what you should. You know it will be alright',
+            expected_status_code=200,
             title='What goes on in your mind?',
             url='https://www.youtube.com/watch?v=Pxq63cYIY1c',
-            expected_status_code=200,
+            visible=True,
     ):
         params = {
             'categoryId': category and category.id,
@@ -200,6 +240,7 @@ class TestCreateAsset:
             'title': title,
             'type': asset_type,
             'url': url,
+            'visible': visible,
         }
         response = client.post(
             '/api/asset/create',
@@ -337,9 +378,38 @@ class TestCreateAsset:
             assert download_url and download_url.endswith(f'-{filename}')
         assert User.find_by_id(authorized_user_id).points == user_points + 5
 
+    def test_asset_creation_activity(self, authorized_user_id, client, fake_auth):
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(user.id)
+        api_json = self._api_create_link_asset(
+            client=client,
+            title='Riding in a Stutz Bear Cat, Jim',
+            url='https://genius.com/The-velvet-underground-sweet-jane-lyrics',
+        )
+        asset_id = api_json['id']
+        activities = Activity.query.filter_by(asset_id=asset_id).all()
+        assert len(activities) == 1
+        assert activities[0].activity_type == 'asset_add'
+        assert activities[0].course_id == user.course.id
+        assert activities[0].object_type == 'asset'
+        assert activities[0].object_id == asset_id
+        assert activities[0].asset_id == asset_id
+        assert activities[0].user_id == user.id
+
+    def test_asset_creation_invisible_no_activities(self, authorized_user_id, client, fake_auth):
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(user.id)
+        api_json = self._api_create_link_asset(
+            client=client,
+            title='Riding in a Stutz Bear Cat, Jim',
+            url='https://genius.com/The-velvet-underground-sweet-jane-lyrics',
+            visible=False,
+        )
+        activities = Activity.query.filter_by(asset_id=api_json['id']).all()
+        assert len(activities) == 0
+
 
 class TestUpdateAsset:
-    """Update asset API."""
 
     @staticmethod
     def _api_update_asset(client, asset, expected_status_code=200):
@@ -391,7 +461,6 @@ class TestUpdateAsset:
 
 
 class TestRefreshAssetPreview:
-    """Refresh asset preview API."""
 
     @staticmethod
     def _api_refresh_asset_preview(asset_id, client, expected_status_code=200):
@@ -411,11 +480,11 @@ class TestRefreshAssetPreview:
         """Authorized user can refresh asset preview."""
         mock_asset.preview_status = 'done'
         fake_auth.login(mock_asset.users[0].id)
-        asset_feed = _api_get_asset(mock_asset.id, client)
-        assert asset_feed['previewStatus'] == 'done'
+        api_json = _api_get_asset(mock_asset.id, client)
+        assert api_json['previewStatus'] == 'done'
         self._api_refresh_asset_preview(mock_asset.id, client)
-        asset_feed = _api_get_asset(mock_asset.id, client)
-        assert asset_feed['previewStatus'] == 'pending'
+        api_json = _api_get_asset(mock_asset.id, client)
+        assert api_json['previewStatus'] == 'pending'
 
     def test_refresh_asset_by_instructor(self, client, db_session, fake_auth, mock_asset):
         """Instructor can refresh asset preview."""
@@ -423,15 +492,14 @@ class TestRefreshAssetPreview:
         course = Course.find_by_id(mock_asset.course_id)
         instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
-        asset_feed = _api_get_asset(mock_asset.id, client)
-        assert asset_feed['previewStatus'] == 'done'
+        api_json = _api_get_asset(mock_asset.id, client)
+        assert api_json['previewStatus'] == 'done'
         self._api_refresh_asset_preview(mock_asset.id, client)
-        asset_feed = _api_get_asset(mock_asset.id, client)
-        assert asset_feed['previewStatus'] == 'pending'
+        api_json = _api_get_asset(mock_asset.id, client)
+        assert api_json['previewStatus'] == 'pending'
 
 
 class TestDeleteAsset:
-    """Delete asset API."""
 
     @staticmethod
     def _api_delete_asset(asset_id, client, expected_status_code=200):
@@ -474,7 +542,6 @@ class TestDeleteAsset:
 
 
 class TestLikeAsset:
-    """Like asset API."""
 
     @staticmethod
     def _api_like_asset(asset_id, client, expected_status_code=200):

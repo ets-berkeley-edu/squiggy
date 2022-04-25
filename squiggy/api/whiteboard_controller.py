@@ -27,7 +27,7 @@ import re
 
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_whiteboard, can_view_whiteboard, feature_flag_whiteboards
+from squiggy.api.api_util import can_update_whiteboard, can_view_asset, can_view_whiteboard, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now
@@ -59,6 +59,27 @@ def get_whiteboard(whiteboard_id):
         raise ResourceNotFoundError('Not found')
 
 
+@app.route('/api/whiteboard/<asset_id>/remix', methods=['POST'])
+@feature_flag_whiteboards
+@login_required
+def remix_whiteboard(asset_id):
+    asset = Asset.find_by_id(asset_id=asset_id)
+    if not asset or not can_view_asset(asset=asset, user=current_user):
+        raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
+    if asset.asset_type != 'whiteboard':
+        raise BadRequestError('Asset type is not \'whiteboard\'.')
+    whiteboard = Whiteboard.remix(
+        asset=asset,
+        course_id=asset.course_id,
+        users=[User.find_by_id(current_user.user_id)],
+    )
+    whiteboard_id = whiteboard['id']
+    return tolerant_jsonify(Whiteboard.find_by_id(
+        current_user=current_user,
+        whiteboard_id=whiteboard_id),
+    )
+
+
 @app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
@@ -68,7 +89,7 @@ def export_as_asset(whiteboard_id):
         whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
         if whiteboard_elements:
             params = request.get_json()
-            category_ids = list(params.get('categoryIds'))
+            category_ids = list(params.get('categoryIds', []))
             description = params.get('description')
             title = params.get('title') or whiteboard['title']
             if not title:

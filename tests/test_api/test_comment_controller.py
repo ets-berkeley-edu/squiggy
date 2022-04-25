@@ -37,7 +37,6 @@ unauthorized_user_id = '666'
 
 
 class TestCreateComments:
-    """Create Comment API."""
 
     @classmethod
     def _api_create_comment(cls, asset_id, body, client, parent_id=None, expected_status_code=200):
@@ -117,7 +116,6 @@ class TestCreateComments:
 
 
 class TestGetComments:
-    """Comment API."""
 
     def test_anonymous(self, client):
         """Denies anonymous user."""
@@ -145,7 +143,6 @@ class TestGetComments:
 
 
 class TestUpdateComment:
-    """Update comment API."""
 
     @staticmethod
     def _api_update_comment(client, body, comment_id, expected_status_code=200):
@@ -197,7 +194,6 @@ class TestUpdateComment:
 
 
 class TestDeleteComment:
-    """Delete comment API."""
 
     @staticmethod
     def _api_delete_comment(comment_id, client, expected_status_code=200):

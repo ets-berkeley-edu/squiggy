@@ -213,11 +213,13 @@ class TestExportAsAsset:
         """Authorized user can export whiteboard as asset."""
         course, student, whiteboard = _create_student_whiteboard()
         fake_auth.login(student.id)
+        uuid = str(uuid4())
         WhiteboardElement.create(
             element={
                 'fontSize': 14,
-                'uuid': str(uuid4()),
+                'uuid': uuid,
             },
+            uuid=uuid,
             whiteboard_id=whiteboard['id'])
         std_commit(allow_test_environment=True)
         with mock_s3_bucket(app):
@@ -256,8 +258,56 @@ class TestRestoreWhiteboard:
         assert client.get(f"/api/whiteboard/{mock_whiteboard['id']}").json['deletedAt'] is None
 
 
+class TestRemixWhiteboard:
+
+    @staticmethod
+    def _api_remix_whiteboard(client, asset_id, expected_status_code=200):
+        response = client.post(f'/api/whiteboard/{asset_id}/remix')
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401)
+
+    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+        """Authorized user can update whiteboard."""
+        fake_auth.login(authorized_user_id)
+        whiteboard_id = mock_whiteboard['id']
+        title = 'Remix me'
+        response = client.post(
+            f'/api/whiteboard/{whiteboard_id}/export/asset',
+            data=json.dumps({'title': title}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+        asset = json.loads(response.data)
+        assert asset['title'] == title
+
+        remixed_whiteboard = self._api_remix_whiteboard(client, asset_id=asset['id'])
+        assert remixed_whiteboard['title'] == title
+        # Compare elements
+        original_whiteboard_elements = mock_whiteboard['whiteboardElements']
+        remixed_elements = remixed_whiteboard['whiteboardElements']
+        assert len(remixed_elements) == len(original_whiteboard_elements)
+
+        def _find_asset_element(elements):
+            return next((e for e in elements if e['assetId']), None)
+
+        original_asset_element = _find_asset_element(original_whiteboard_elements)
+        remixed_asset_element = _find_asset_element(remixed_elements)
+        asset_id = remixed_asset_element['assetId']
+        assert asset_id is not None
+        assert original_asset_element['assetId'] == asset_id
+        assert original_asset_element['uuid'] != remixed_asset_element['uuid']
+
+
 # class TestRefreshAssetPreview:
-#     """Refresh asset preview API."""
 #
 #     @staticmethod
 #     def _api_refresh_whiteboard_preview(whiteboard_id, client, expected_status_code=200):
@@ -297,7 +347,6 @@ class TestRestoreWhiteboard:
 #
 #
 # class TestDeleteWhiteboard:
-#     """Delete whiteboard API."""
 #
 #     @staticmethod
 #     def _api_delete_whiteboard(whiteboard_id, client, expected_status_code=200):

@@ -205,6 +205,7 @@ def _create_whiteboard_element(current_user, socket_id, whiteboard_element, whit
     whiteboard_element = WhiteboardElement.create(
         asset_id=asset_id,
         element=element,
+        uuid=element['uuid'],
         whiteboard_id=whiteboard_id,
     )
     if asset_id:
