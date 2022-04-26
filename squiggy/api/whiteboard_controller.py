@@ -139,7 +139,7 @@ def export_as_png(whiteboard_id):
     )
 
 
-@app.route('/api/whiteboard/<whiteboard_id>/restore')
+@app.route('/api/whiteboard/<whiteboard_id>/restore', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
 def restore_whiteboard(whiteboard_id):

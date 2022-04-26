@@ -235,7 +235,7 @@ class TestRestoreWhiteboard:
 
     @staticmethod
     def _api_restore_whiteboard(client, whiteboard_id, expected_status_code=200):
-        response = client.get(f'/api/whiteboard/{whiteboard_id}/restore')
+        response = client.post(f'/api/whiteboard/{whiteboard_id}/restore')
         assert response.status_code == expected_status_code
         return json.loads(response.data)
 

@@ -32,18 +32,21 @@ export default {
   mixins: [Context, Utils, Whiteboarding],
   components: {EditActiveFabricObject, Toolbar, ToolbarReadOnly, Users},
   data: () => ({
-    isReadOnly: true,
     pingJob: undefined
   }),
+  computed: {
+    isReadOnly() {
+      return this.$_.get(this.whiteboard, 'isReadOnly')
+    }
+  },
   created() {
     this.$loading()
     const whiteboardId = parseInt(this.$route.params.id, 10)
     getWhiteboard(whiteboardId).then(whiteboard => {
       this.init(whiteboard).then(whiteboard => {
-        this.isReadOnly = whiteboard.isReadOnly
         this.setDisableAll(false)
         this.$ready(whiteboard.title)
-        if (!this.isReadOnly) {
+        if (!this.whiteboard.isReadOnly) {
           clearTimeout(this.pingJob)
           this.pingJob = setTimeout(this.keepSocketAlive, 60000)
         }

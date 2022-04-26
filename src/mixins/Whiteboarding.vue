@@ -34,9 +34,7 @@ export default {
       'mode',
       'selected',
       'selectedAsset',
-      'windowHeight',
-      'whiteboard',
-      'windowWidth'
+      'whiteboard'
     ])
   },
   methods: {
