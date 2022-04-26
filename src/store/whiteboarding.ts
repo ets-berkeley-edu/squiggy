@@ -5,22 +5,21 @@ import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   deleteActiveElements,
-  enableCanvasElements,
-  initFabricCanvas,
+  initialize,
   moveLayer,
   onWhiteboardUpdate,
   ping,
-  setCanvasDimensions
+  refresh,
+  setCanvasDimensions,
+  setMode
 } from '@/store/whiteboarding/fabric-utils'
 
 const p = Vue.prototype
 
 const state = {
-  // Variable that will keep track of the copied element(s)
   activeCanvasObject: undefined,
   categories: undefined,
   clipboard: undefined,
-  debugLog: '',
   disableAll: true,
   fitToScreen: true,
   hideSidebar: false,
@@ -31,11 +30,12 @@ const state = {
   isScrollingCanvas: false,
   mode: 'move',
   selected: {},
-  sidebarExpanded: false,
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
   viewport: undefined,
-  whiteboard: undefined
+  whiteboard: undefined,
+  windowHeight: undefined,
+  windowWidth: undefined
 }
 
 const getters = {
@@ -49,29 +49,25 @@ const getters = {
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
   selectedAsset: () => null,
-  whiteboard: (state: any): any => state.whiteboard,
-  windowHeight: (state: any): number => state.windowHeight,
-  windowWidth: (state: any): number => state.windowWidth,
+  whiteboard: (state: any): any => state.whiteboard
 }
 
 const mutations = {
   add: (state: any, whiteboardElement: any) => state.whiteboard.whiteboardElements.push(whiteboardElement),
   addAsset: (state: any, asset: any) => addAsset(asset, state),
   afterWhiteboardDelete: (state: any) => {
-    state.whiteboard.isDeleted = true
+    state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
-    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+    if (p.$currentUser.isAdmin || p.$currentUser.isTeaching) {
+      refresh(state)
+    } else {
       window.close()
     }
   },
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   init: (state: any, whiteboard: any) => {
-    _.assignIn(state, {
-      sidebarExpanded: !whiteboard.isReadOnly,
-      viewport: document.getElementById('whiteboard-viewport'),
-      whiteboard: whiteboard
-    })
-    initFabricCanvas(state, whiteboard)
+    state.whiteboard = whiteboard
+    initialize(state)
   },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onWhiteboardUpdate: (state: any, whiteboard: any) => onWhiteboardUpdate(state, whiteboard),
@@ -83,6 +79,7 @@ const mutations = {
   restoreWhiteboard: (state: any) => {
     state.whiteboard.isReadOnly = false
     state.whiteboard.deletedAt = null
+    refresh(state)
   },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
@@ -92,32 +89,9 @@ const mutations = {
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
-  setMode: (state: any, mode: string) => {
-    // Deactivate the currently selected item
-    p.$canvas.discardActiveObject().requestRenderAll()
-    p.$canvas.isDrawingMode = false
-    // Prevent the p.$canvas items from being modified unless the whitnableCanvasElements(false, state)
-    if (mode === 'move') {
-      enableCanvasElements(true)
-      state.disableAll = false
-      // TODO:
-      // closePopovers()
-    } else if (mode === 'draw') {
-      // Draw mode has been selected
-      p.$canvas.isDrawingMode = true
-    } else if (mode === 'text') {
-      // Change the cursor to text mode
-      p.$canvas.cursor = 'text'
-    }
-    state.mode = mode
-  },
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
-  toggleSidebar: (state: any) => {
-    state.sidebarExpanded = !state.sidebarExpanded
-    // Recalculate the size of the whiteboard p.$canvas. `setTimeout` is required to ensure that the sidebar has collapsed/expanded.
-    setTimeout(() => setCanvasDimensions(state), 0)
-  },
+  toggleSidebar: (state: any) => setTimeout(() => setCanvasDimensions(state), 0),
   toggleZoom: (state: any) => {
     state.fitToScreen = !state.fitToScreen
     setCanvasDimensions(state)
@@ -129,42 +103,7 @@ const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
   onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
-  deleteWhiteboard: ({commit, state}) => {
-    deleteWhiteboard(state.whiteboard.id).then(() => {
-      commit('afterWhiteboardDelete')
-    })
-  },
-  exportAsAsset: ({commit, state}) => {
-    // Launch the modal that allows the current user to export the current whiteboard to the asset library
-    // Create a new scope for the modal dialog
-    const scope = state.$new(true)
-    scope.whiteboard = state.whiteboard
-    scope.closeModal = function(asset) {
-      if (asset) {
-        // Construct the link back to the asset library
-        // const assetLibraryLink = '/assetlibrary?api_domain=' + launchParams.apiDomain + '&course_id=' + launchParams.courseId + '&tool_url=' + launchParams.toolUrl
-        // Show a notification indicating the whiteboard was exported
-        $_alert({
-          container: '#whiteboards-board-notifications',
-          content: 'This board has been successfully added to the <strong>Asset Library</strong>.',
-          duration: 5,
-          keyboard: true,
-          show: true,
-          templateUrl: 'whiteboards-notification-template',
-          type: 'success'
-        })
-      }
-      this.$hide()
-    }
-    // Open the export as asset modal dialog
-    // $modal({
-    //   scope: scope,
-    //   templateUrl: '/app/whiteboards/exportasassetmodal/exportasasset.html'
-    // })
-    // Switch the toolbar back to move mode. This will also close the add asset popover
-    commit('setMode', 'move')
-  },
-  getSelectedAsset: () => $_getSelectedAsset(),
+  deleteWhiteboard: ({commit, state}) => deleteWhiteboard(state.whiteboard.id).then(() => commit('afterWhiteboardDelete')),
   init: ({commit}, whiteboard: any) => {
     return new Promise(resolve => {
       getCategories(false).then(categories => {
@@ -190,26 +129,6 @@ const actions = {
       }
     })
   },
-  reuseAsset: ({commit}) => {
-    // TODO
-
-    // Launch the modal that allows for an existing asset to be added to whiteboard canvas
-    // Create a new scope for the modal dialog
-    // var scope = $scope.$new(true);
-    // scope.closeModal = function(selectedAssets) {
-    //   _.each(selectedAssets, addAsset);
-    //   this.$hide();
-    //   this.$destroy();
-    // };
-    // Open the asset selection modal dialog
-    // $modal({
-    //   'animation': false,
-    //   'scope': scope,
-    //   'template': '/app/whiteboards/reuse/reuse.html'
-    // })
-    // Switch the toolbar back to move mode. This will also close the add asset popover
-    commit('setMode', 'move')
-  },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
   setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
@@ -217,7 +136,7 @@ const actions = {
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
-  setMode: ({commit}, mode: string) => commit('setMode', mode),
+  setMode: ({state}, mode: string) => setMode(state, mode),
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   setUsers: ({commit}, users: any[]) => commit('setUsers', users),
   toggleZoom: ({commit}) => commit('toggleZoom'),
@@ -230,14 +149,4 @@ export default {
   getters,
   actions,
   mutations
-}
-
-const $_alert = _.noop
-
-const $_getSelectedAsset = (): any => {
-  // Get the id of the currently selected asset element.
-  const selectedElement = p.$canvas.getActiveObject()
-  if (selectedElement) {
-    return selectedElement.assetId
-  }
 }

@@ -47,7 +47,7 @@ export function getWhiteboards(
 }
 
 export function restoreWhiteboard(whiteboardId: number) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/restore`, {whiteboardId})
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/restore`)
 }
 
 export function remixWhiteboard(assetId: number) {

@@ -3,9 +3,6 @@
     <v-row no-gutters>
       <v-col class="mt-3 py-3">
         <PageTitle text="Restore whiteboard" />
-        <div class="deep-orange--text font-weight-bold pt-2">
-          Deleted on {{ whiteboard.deletedAt | moment('MMM DD, YYYY') }}.
-        </div>
       </v-col>
     </v-row>
     <v-row>

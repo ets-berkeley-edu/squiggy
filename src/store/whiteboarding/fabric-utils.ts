@@ -73,21 +73,21 @@ export function deleteActiveElements(state: any) {
   }
 }
 
-export function enableCanvasElements(enabled: boolean) {
-  // Enable or disable elements on the canvas. Disabled elements are read-only.
-  p.$canvas.selection = enabled
-  _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
-}
-
-export function initFabricCanvas(state: any, whiteboard: any) {
-  if (!whiteboard.isReadOnly) {
-    $_initSocket(state, whiteboard)
+export function initialize(state: any) {
+  state.viewport = document.getElementById('whiteboard-viewport')
+  if (state.whiteboard.isReadOnly) {
+    state.disableAll = true
+    $_initCanvas(state)
+    $_renderWhiteboard(state)
+    $_enableCanvasElements(false)
+  } else {
+    $_initSocket(state)
     $_addSocketListeners(state)
+    // Order matters: (1) set up Fabric prototypes, (2) initialize the canvas.
+    $_initFabricPrototypes(state)
+    $_initCanvas(state)
+    $_addViewportListeners(state)
   }
-  // The whiteboard p.$canvas should be initialized only after our additions are made to Fabric prototypes.
-  $_initFabricPrototypes(state)
-  $_initCanvas(state)
-  $_addViewportListeners(state)
 }
 
 export function moveLayer(direction: string, state: any) {
@@ -151,6 +151,27 @@ export function ping(state: any) {
     },
     (users: any[]) => store.dispatch('whiteboarding/setUsers', users),
   )
+}
+
+export function refresh(state: any) {
+  const isReadOnly = state.whiteboard.isReadOnly
+  state.disableAll = isReadOnly
+  if (isReadOnly) {
+    $_initCanvas(state)
+    $_renderWhiteboard(state)
+  } else {
+    if (!p.$socket) {
+      $_initSocket(state)
+      $_addSocketListeners(state)
+    }
+    if (!p.$canvas) {
+      // Order matters: (1) set up Fabric prototypes, (2) initialize the canvas.
+      $_initFabricPrototypes(state)
+      $_initCanvas(state)
+      $_addViewportListeners(state)
+    }
+  }
+  $_enableCanvasElements(isReadOnly)
 }
 
 export function setCanvasDimensions(state: any) {
@@ -221,24 +242,25 @@ export function setCanvasDimensions(state: any) {
   }
 }
 
+export function setMode(state: any, mode: string) {
+  p.$canvas.discardActiveObject().requestRenderAll()
+  p.$canvas.isDrawingMode = false
+  if (mode === 'move') {
+    $_enableCanvasElements(true)
+    state.disableAll = false
+  } else if (mode === 'draw') {
+    p.$canvas.isDrawingMode = true
+  } else if (mode === 'text') {
+    p.$canvas.cursor = 'text'
+  }
+  state.mode = mode
+}
+
 /**
  * ---------------------------------------------------------------------------------------
  * Public functions above. Private functions below.
  * ---------------------------------------------------------------------------------------
  */
-
-const $_addDebugListenters = (fabricObject: any, objectType: string) => {
-  if (p.$config.isVueAppDebugMode) {
-    // Events listed in FABRIC_JS_DEBUG_EVENTS_EXCLUDE array are ignored when debugging. Developers can silence these
-    // debug-event-listenters by setting FABRIC_JS_DEBUG_EVENTS_EXCLUDE equal to '*' in the .env.development.local file.
-    const exclude = constants.FABRIC_JS_DEBUG_EVENTS_EXCLUDE
-    if (exclude !== '*') {
-      let eventNames = constants.FABRIC_EVENTS_PER_TYPE[objectType]
-      eventNames = _.filter(eventNames, (eventName: string) => !exclude.includes(eventName))
-      _.each(eventNames, (eventName: string) => fabricObject.on(eventName, () => console.log(`${objectType}:${eventName}`)))
-    }
-  }
-}
 
 const $_addListeners = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
@@ -326,7 +348,6 @@ const $_addListeners = (state: any) => {
         uuid: uuidv4(),
         width: 1
       })
-      $_addDebugListenters(shape, 'Object')
       p.$canvas.add(shape)
     }
     if (state.mode === 'text') {
@@ -343,7 +364,6 @@ const $_addListeners = (state: any) => {
         top: textPointer.y,
         uuid: uuidv4()
       })
-      $_addDebugListenters(iText, 'IText')
       p.$canvas.add(iText)
 
       // Put the editable text field in edit mode straight away
@@ -496,7 +516,7 @@ const $_addViewportListeners = (state: any) => {
   // Detect keydown events in the whiteboard to respond to keyboard shortcuts
   const element = document.getElementById('whiteboard-viewport')
   if (element) {
-    element.addEventListener('keydown', (event: any) => {
+    const onKeydown = (event: any) => {
       if (!state.disableAll) {
         if (event.keyCode === 8 || event.keyCode === 46) {
           // Delete or backspace
@@ -519,7 +539,8 @@ const $_addViewportListeners = (state: any) => {
           $_paste(state)
         }
       }
-    }, false)
+    }
+    element.addEventListener('keydown', onKeydown, false)
   }
 }
 
@@ -606,6 +627,11 @@ const $_deserializeElement = (
   return object
 }
 
+const $_enableCanvasElements = (enabled: boolean) => {
+  p.$canvas.selection = enabled
+  _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
+}
+
 const $_ensureWithinCanvas = (event: any) => {
   // Ensure that the currently active object or group can not be positioned off screen
   const element = event.target
@@ -665,7 +691,6 @@ const $_initCanvas = (state: any) => {
     selectionLineWidth: 2
   })
   if (!state.whiteboard.isReadOnly) {
-    $_addDebugListenters(p.$canvas, 'Canvas')
     // Make the border dashed. See http://fabricjs.com/fabric-intro-part-4/
     p.$canvas.selectionDashArray = [10, 5]
 
@@ -728,18 +753,18 @@ const $_initFabricPrototypes = (state: any) => {
   window.addEventListener('resize', () => setCanvasDimensions(state))
 }
 
-const $_initSocket = (state: any, whiteboard: any) => {
-  Vue.prototype.$socket = io(apiUtils.apiBaseUrl(), {
-    query: {
-      whiteboardId: whiteboard.id
-    }
-  })
-  p.$socket.on('connect', () => {
-    p.$socket.emit('join', {
-      userId: p.$currentUser.id,
-      whiteboardId: state.whiteboard.id
-    })
-  })
+const $_initSocket = (state: any) => {
+   p.$socket = io(apiUtils.apiBaseUrl(), {
+     query: {
+       whiteboardId: state.whiteboard.id
+     }
+   })
+   p.$socket.on('connect', () => {
+     p.$socket.emit('join', {
+       userId: p.$currentUser.id,
+       whiteboardId: state.whiteboard.id
+     })
+   })
 }
 
 const $_paste = (state: any): void => {
@@ -755,7 +780,6 @@ const $_paste = (state: any): void => {
     } else {
       const selection = new fabric.ActiveSelection(elements)
       selection.isHelper = true
-      $_addDebugListenters(selection, 'Object')
       p.$canvas.setActiveObject(selection)
     }
     p.$canvas.requestRenderAll()

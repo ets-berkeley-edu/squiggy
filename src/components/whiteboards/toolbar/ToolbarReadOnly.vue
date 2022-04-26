@@ -10,8 +10,8 @@
       dense
       elevation="0"
     >
-      <SettingsTool v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
       <ZoomTool />
+      <SettingsTool v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
     </v-toolbar>
   </v-card>
 </template>
