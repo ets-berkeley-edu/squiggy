@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
-import {restoreWhiteboard} from '@/api/whiteboards'
+import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   deleteActiveElements,
@@ -45,6 +45,7 @@ const getters = {
   fitToScreen: (state: any): boolean => state.fitToScreen,
   hideSidebar: (state: any): boolean => state.hideSidebar,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
+  isScrollingCanvas: (state: any): boolean => state.isScrollingCanvas,
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
   selectedAsset: () => null,
@@ -56,6 +57,13 @@ const getters = {
 const mutations = {
   add: (state: any, whiteboardElement: any) => state.whiteboard.whiteboardElements.push(whiteboardElement),
   addAsset: (state: any, asset: any) => addAsset(asset, state),
+  afterWhiteboardDelete: (state: any) => {
+    state.whiteboard.isDeleted = true
+    state.whiteboard.isReadOnly = true
+    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+      window.close()
+    }
+  },
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   init: (state: any, whiteboard: any) => {
     _.assignIn(state, {
@@ -121,6 +129,11 @@ const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
   onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
+  deleteWhiteboard: ({commit, state}) => {
+    deleteWhiteboard(state.whiteboard.id).then(() => {
+      commit('afterWhiteboardDelete')
+    })
+  },
   exportAsAsset: ({commit, state}) => {
     // Launch the modal that allows the current user to export the current whiteboard to the asset library
     // Create a new scope for the modal dialog

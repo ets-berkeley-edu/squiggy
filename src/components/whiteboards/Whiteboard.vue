@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <div v-if="!isLoading">
+    <div v-if="!isLoading && !isReadOnly">
       <Users v-if="!hideSidebar" />
       <EditActiveFabricObject />
     </div>
@@ -9,7 +9,10 @@
       <div id="whiteboard-viewport" class="whiteboard-viewport" tabindex="0">
         <canvas id="canvas"></canvas>
       </div>
-      <Toolbar />
+      <div v-if="!isLoading">
+        <ToolbarReadOnly v-if="isReadOnly && isScrollingCanvas" />
+        <Toolbar v-if="!isReadOnly" />
+      </div>
     </v-main>
   </v-app>
 </template>
@@ -18,6 +21,7 @@
 import Context from '@/mixins/Context'
 import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
+import ToolbarReadOnly from '@/components/whiteboards/toolbar/ToolbarReadOnly'
 import Users from '@/components/whiteboards/sidebar/Users'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
@@ -26,8 +30,9 @@ import {getWhiteboard} from '@/api/whiteboards'
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {EditActiveFabricObject, Toolbar, Users},
+  components: {EditActiveFabricObject, Toolbar, ToolbarReadOnly, Users},
   data: () => ({
+    isReadOnly: true,
     pingJob: undefined
   }),
   created() {
@@ -35,10 +40,13 @@ export default {
     const whiteboardId = parseInt(this.$route.params.id, 10)
     getWhiteboard(whiteboardId).then(whiteboard => {
       this.init(whiteboard).then(whiteboard => {
+        this.isReadOnly = whiteboard.isReadOnly
         this.setDisableAll(false)
-        clearTimeout(this.pingJob)
-        this.pingJob = setTimeout(this.keepSocketAlive, 60000)
         this.$ready(whiteboard.title)
+        if (!this.isReadOnly) {
+          clearTimeout(this.pingJob)
+          this.pingJob = setTimeout(this.keepSocketAlive, 60000)
+        }
       })
     })
   },

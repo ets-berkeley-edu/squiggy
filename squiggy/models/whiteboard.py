@@ -174,12 +174,14 @@ class Whiteboard(Base):
         whiteboards_by_id = {}
         for row in list(db.session.execute(sql, params)):
             whiteboard_id = int(row['id'])
+            deleted_at = row['deleted_at']
             whiteboard = whiteboards_by_id.get(whiteboard_id) or {
                 'id': whiteboard_id,
                 'courseId': row['course_id'],
                 'createdAt': isoformat(row['created_at']),
-                'deletedAt': isoformat(row['deleted_at']),
+                'deletedAt': isoformat(deleted_at),
                 'imageUrl': row['image_url'],
+                'isReadOnly': deleted_at is not None,
                 'thumbnailUrl': row['thumbnail_url'],
                 'title': row['title'],
                 'updatedAt': isoformat(row['updated_at']),

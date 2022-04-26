@@ -30,6 +30,7 @@ export default {
       'fitToScreen',
       'hideSidebar',
       'isModifyingElement',
+      'isScrollingCanvas',
       'mode',
       'selected',
       'selectedAsset',
@@ -42,6 +43,7 @@ export default {
     ...mapActions('whiteboarding', [
       'addAsset',
       'deleteActiveElements',
+      'deleteWhiteboard',
       'init',
       'moveLayer',
       'onWhiteboardUpdate',

@@ -35,19 +35,7 @@
         <PencilBrushTool />
         <ShapeTool />
       </v-btn-toggle>
-      <v-btn
-        id="toolbar-fit-to-screen"
-        class="mx-2"
-        color="white"
-        dense
-        elevation="1"
-        height="48px"
-        rounded
-        @click="toggleZoom"
-      >
-        <span class="sr-only">{{ fitToScreen ? 'Actual size' : 'Fit to screen' }}</span>
-        <font-awesome-icon color="grey" :icon="fitToScreen ? 'search-plus' : 'search-minus'" size="2x" />
-      </v-btn>
+      <ZoomTool />
       <AssetTool />
       <ExportTool />
       <DeleteWhiteboardDialog
@@ -69,8 +57,8 @@ import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
 import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
 import TextTool from '@/components/whiteboards/toolbar/TextTool'
 import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
+import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 import Whiteboarding from '@/mixins/Whiteboarding'
-import {deleteWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'Toolbar',
@@ -82,7 +70,8 @@ export default {
     ExportTool,
     PencilBrushTool,
     ShapeTool,
-    TextTool
+    TextTool,
+    ZoomTool
   },
   computed: {
     modeProxy: {
@@ -96,8 +85,7 @@ export default {
     }
   },
   data: () => ({
-    isDeleteDialogOpen: false,
-    toggle: 2
+    isDeleteDialogOpen: false
   }),
   methods: {
     cancelDelete() {
@@ -106,7 +94,7 @@ export default {
     },
     deleteConfirmed() {
       this.openDeleteDialog = false
-      deleteWhiteboard(this.whiteboard.id).then(window.close)
+      this.deleteWhiteboard()
     },
     openDeleteDialog() {
       this.isDeleteDialogOpen = true
