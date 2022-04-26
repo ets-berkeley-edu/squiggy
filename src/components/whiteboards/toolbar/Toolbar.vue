@@ -50,7 +50,12 @@
       </v-btn>
       <AssetTool />
       <ExportTool />
-      <EditWhiteboardTool />
+      <DeleteWhiteboardDialog
+        :on-cancel="cancelDelete"
+        :on-confirm-delete="deleteConfirmed"
+        :open="isDeleteDialogOpen"
+      />
+      <EditWhiteboardTool :open-delete-dialog="openDeleteDialog" />
     </v-toolbar>
   </v-card>
 </template>
@@ -58,20 +63,23 @@
 <script>
 import AssetTool from '@/components/whiteboards/toolbar/AssetTool'
 import Context from '@/mixins/Context'
+import DeleteWhiteboardDialog from '@/components/whiteboards/DeleteWhiteboardDialog'
 import EditWhiteboardTool from '@/components/whiteboards/toolbar/EditWhiteboardTool'
 import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
 import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
 import TextTool from '@/components/whiteboards/toolbar/TextTool'
 import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
 import Whiteboarding from '@/mixins/Whiteboarding'
+import {deleteWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'Toolbar',
   mixins: [Context, Whiteboarding],
   components: {
     AssetTool,
-    ExportTool,
+    DeleteWhiteboardDialog,
     EditWhiteboardTool,
+    ExportTool,
     PencilBrushTool,
     ShapeTool,
     TextTool
@@ -88,13 +96,21 @@ export default {
     }
   },
   data: () => ({
+    isDeleteDialogOpen: false,
     toggle: 2
-  })
+  }),
+  methods: {
+    cancelDelete() {
+      this.$announcer.polite('Canceled')
+      this.openDeleteDialog = false
+    },
+    deleteConfirmed() {
+      this.openDeleteDialog = false
+      deleteWhiteboard(this.whiteboard.id).then(window.close)
+    },
+    openDeleteDialog() {
+      this.isDeleteDialogOpen = true
+    }
+  }
 }
 </script>
-
-<style scoped>
-.toolbar {
-  z-index: 1100;
-}
-</style>

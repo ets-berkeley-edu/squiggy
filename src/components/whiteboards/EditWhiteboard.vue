@@ -127,13 +127,24 @@
                 <span v-if="!isSaving && !whiteboard">Create</span>
               </v-btn>
             </div>
+            <div v-if="canDelete">
+              <v-btn
+                id="delete-whiteboard-btn"
+                color="error"
+                :disabled="isSaving"
+                @click="openDeleteDialog"
+                @keypress.enter="openDeleteDialog"
+              >
+                Delete whiteboard
+              </v-btn>
+            </div>
             <div>
               <v-btn
                 id="cancel-btn"
                 :disabled="isSaving"
                 text
                 @click="onCancel"
-                @keypress.enter="cancel"
+                @keypress.enter="onCancel"
               >
                 Cancel
               </v-btn>
@@ -165,6 +176,11 @@ export default {
       required: true,
       type: Function
     },
+    onClickDelete: {
+      default: undefined,
+      required: false,
+      type: Function
+    },
     onReady: {
       required: true,
       type: Function
@@ -180,6 +196,7 @@ export default {
     }
   },
   data: () => ({
+    canDelete: false,
     isFetchingUsers: true,
     isInputValid: false,
     isSaving: false,
@@ -210,6 +227,10 @@ export default {
     this.init()
   },
   methods: {
+    openDeleteDialog() {
+      this.onClickDelete()
+      this.resetData()
+    },
     init() {
       this.resetData()
       getStudentsBySection().then(users => {
@@ -232,6 +253,7 @@ export default {
       if (this.whiteboard) {
         this.selectedUserIds = this.$_.map(this.whiteboard.users, 'id')
         this.title = this.whiteboard.title
+        this.canDelete = this.onClickDelete && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
       } else {
         this.selectedUserIds = [this.$currentUser.id]
         this.title = undefined
