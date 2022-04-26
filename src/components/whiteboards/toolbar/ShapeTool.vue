@@ -9,10 +9,10 @@
       <v-btn
         id="toolbar-shapes"
         class="pl-2"
-        :disabled="disableAll"
+        :disabled="disableAll || mode === 'shape'"
         icon
-        width="55px"
         value="shape"
+        width="55px"
         v-bind="attrs"
         v-on="on"
       >

@@ -16,21 +16,7 @@
         active-class="primary"
         rounded
       >
-        <v-btn
-          id="toolbar-move-btn"
-          class="pr-2"
-          :disabled="disableAll"
-          icon
-          value="move"
-          width="55px"
-        >
-          <span class="sr-only">Move and transform</span>
-          <font-awesome-icon
-            :color="mode === 'move' ? 'white' : 'grey'"
-            icon="arrows-up-down-left-right"
-            size="2x"
-          />
-        </v-btn>
+        <MoveTool />
         <TextTool />
         <PencilBrushTool />
         <ShapeTool />
@@ -52,6 +38,7 @@
 import AssetTool from '@/components/whiteboards/toolbar/AssetTool'
 import Context from '@/mixins/Context'
 import DeleteWhiteboardDialog from '@/components/whiteboards/DeleteWhiteboardDialog'
+import MoveTool from '@/components/whiteboards/toolbar/MoveTool'
 import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
 import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
 import SettingsTool from '@/components/whiteboards/toolbar/SettingsTool'
@@ -67,6 +54,7 @@ export default {
     AssetTool,
     DeleteWhiteboardDialog,
     ExportTool,
+    MoveTool,
     PencilBrushTool,
     SettingsTool,
     ShapeTool,
@@ -79,7 +67,6 @@ export default {
         return this.mode
       },
       set(value) {
-        console.log('setMode: ' + value)
         this.setMode(value)
       }
     }

@@ -89,10 +89,12 @@ const mutations = {
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
+  setMode: (state: any, mode: string) => setMode(state, mode),
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
   toggleSidebar: (state: any) => setTimeout(() => setCanvasDimensions(state), 0),
   toggleZoom: (state: any) => {
+    setMode(state, 'zoom')
     state.fitToScreen = !state.fitToScreen
     setCanvasDimensions(state)
   },
@@ -136,7 +138,7 @@ const actions = {
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
-  setMode: ({state}, mode: string) => setMode(state, mode),
+  setMode: ({commit}, mode: string) => commit('setMode', mode),
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   setUsers: ({commit}, users: any[]) => commit('setUsers', users),
   toggleZoom: ({commit}) => commit('toggleZoom'),
