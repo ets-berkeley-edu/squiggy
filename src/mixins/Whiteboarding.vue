@@ -49,6 +49,7 @@ export default {
       'onWhiteboardUpdate',
       'ping',
       'resetSelected',
+      'restoreWhiteboard',
       'setDisableAll',
       'setHideSidebar',
       'setMode',

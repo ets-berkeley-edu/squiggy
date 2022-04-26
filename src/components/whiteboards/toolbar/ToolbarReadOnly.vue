@@ -3,7 +3,6 @@
     class="mx-auto transparent"
     elevation="0"
     style="margin-top: -64px;"
-    max-width="700px"
   >
     <v-toolbar
       bottom
@@ -11,18 +10,20 @@
       dense
       elevation="0"
     >
+      <SettingsTool v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
       <ZoomTool />
     </v-toolbar>
   </v-card>
 </template>
 
 <script>
-import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
+import SettingsTool from '@/components/whiteboards/toolbar/SettingsTool'
 import Whiteboarding from '@/mixins/Whiteboarding'
+import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 
 export default {
   name: 'ToolbarReadOnly',
   mixins: [Whiteboarding],
-  components: {ZoomTool}
+  components: {SettingsTool, ZoomTool}
 }
 </script>

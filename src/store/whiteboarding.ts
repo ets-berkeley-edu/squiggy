@@ -178,22 +178,17 @@ const actions = {
   ping: ({state}) => ping(state),
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
-    if (state.whiteboard && state.whiteboard.deletedAt) {
-      return restoreWhiteboard(state.whiteboard.id).then(function() {
-        // Update local state
-        commit('restoreWhiteboard')
-        // Show a notification indicating the whiteboard was restored
-        $_alert({
-          container: '#whiteboards-board-notifications',
-          content: 'The whiteboard has been restored.',
-          duration: 5,
-          keyboard: true,
-          show: true,
-          templateUrl: 'whiteboards-notification-template',
-          type: 'success'
+    return new Promise<void>(resolve => {
+      if (state.whiteboard.deletedAt) {
+        restoreWhiteboard(state.whiteboard.id).then(function() {
+          // Update local state
+          commit('restoreWhiteboard')
+          resolve()
         })
-      })
-    }
+      } else {
+        resolve()
+      }
+    })
   },
   reuseAsset: ({commit}) => {
     // TODO

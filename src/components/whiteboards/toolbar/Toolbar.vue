@@ -43,7 +43,7 @@
         :on-confirm-delete="deleteConfirmed"
         :open="isDeleteDialogOpen"
       />
-      <EditWhiteboardTool :open-delete-dialog="openDeleteDialog" />
+      <SettingsTool :open-delete-dialog="openDeleteDialog" />
     </v-toolbar>
   </v-card>
 </template>
@@ -52,11 +52,11 @@
 import AssetTool from '@/components/whiteboards/toolbar/AssetTool'
 import Context from '@/mixins/Context'
 import DeleteWhiteboardDialog from '@/components/whiteboards/DeleteWhiteboardDialog'
-import EditWhiteboardTool from '@/components/whiteboards/toolbar/EditWhiteboardTool'
 import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
 import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
-import TextTool from '@/components/whiteboards/toolbar/TextTool'
+import SettingsTool from '@/components/whiteboards/toolbar/SettingsTool'
 import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
+import TextTool from '@/components/whiteboards/toolbar/TextTool'
 import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
@@ -66,9 +66,9 @@ export default {
   components: {
     AssetTool,
     DeleteWhiteboardDialog,
-    EditWhiteboardTool,
     ExportTool,
     PencilBrushTool,
+    SettingsTool,
     ShapeTool,
     TextTool,
     ZoomTool
