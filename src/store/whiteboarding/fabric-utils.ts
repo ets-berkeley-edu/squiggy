@@ -806,7 +806,7 @@ const $_renderWhiteboard = (state: any) => {
     $_restoreLayers(state)
     // Deactivate all elements and element selection when the whiteboard
     // is being rendered in read only mode
-    if (state.whiteboard.deletedAt) {
+    if (state.whiteboard.isReadOnly) {
       p.$canvas.discardActiveObject()
       p.$canvas.selection = false
     }

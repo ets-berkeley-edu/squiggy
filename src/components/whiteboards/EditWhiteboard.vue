@@ -31,7 +31,7 @@
       </v-row>
       <v-row>
         <v-col class="pt-5" cols="2">
-          <label class="float-right" for="whiteboard-description-textarea">Collaborators</label>
+          <label class="float-right" for="whiteboard-users-select">Collaborators</label>
         </v-col>
         <v-col cols="10">
           <v-autocomplete
@@ -253,7 +253,9 @@ export default {
       if (this.whiteboard) {
         this.selectedUserIds = this.$_.map(this.whiteboard.users, 'id')
         this.title = this.whiteboard.title
-        this.canDelete = this.onClickDelete && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
+        this.canDelete = !this.whiteboard.deletedAt
+          && this.onClickDelete
+          && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
       } else {
         this.selectedUserIds = [this.$currentUser.id]
         this.title = undefined
@@ -265,6 +267,7 @@ export default {
     save() {
       this.isSaving = true
       const done = whiteboard => {
+        this.onWhiteboardUpdate(whiteboard)
         this.$announcer.polite(`Whiteboard ${this.whiteboard ? 'updated' : 'created'}.`)
         this.isSaving = false
         this.afterSave(whiteboard)

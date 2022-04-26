@@ -21,11 +21,17 @@
     </template>
     <v-card>
       <v-card-text>
+        <RestoreWhiteboard
+          v-if="whiteboard.deletedAt"
+          :after-restore="close"
+          :on-cancel="close"
+        />
         <EditWhiteboard
+          v-if="!whiteboard.deletedAt"
           class="pt-10"
-          :after-save="afterSave"
+          :after-save="close"
           :on-click-delete="onClickDelete"
-          :on-cancel="cancel"
+          :on-cancel="close"
           :on-ready="() => $announcer.polite('The edit Whiteboard dialog is ready.')"
           :reset="menu"
           :whiteboard="whiteboard"
@@ -37,15 +43,17 @@
 
 <script>
 import EditWhiteboard from '@/components/whiteboards/EditWhiteboard'
+import RestoreWhiteboard from '@/components/whiteboards/toolbar/RestoreWhiteboard'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
-  name: 'EditWhiteboardTool',
+  name: 'SettingsTool',
   mixins: [Whiteboarding],
-  components: {EditWhiteboard},
+  components: {EditWhiteboard, RestoreWhiteboard},
   props: {
     openDeleteDialog: {
-      required: true,
+      default: () => {},
+      required: false,
       type: Function
     }
   },
@@ -65,16 +73,12 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
-    afterSave(whiteboard) {
-      this.onWhiteboardUpdate(whiteboard)
+    close() {
       this.menu = false
-    },
-    cancel() {
-      this.$announcer.polite('Canceled')
-      this.menu = false
+      this.$announcer.polite('Settings tool closed.')
     },
     onClickDelete() {
-      this.menu = false
+      this.close()
       this.openDeleteDialog()
     }
   }
