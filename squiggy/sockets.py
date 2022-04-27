@@ -50,16 +50,17 @@ def register_sockets(socketio):
         room = _get_room(whiteboard_id)
         join_room(room, sid=socket_id)
         emit(
-            args={
+            'join',
+            {
                 'userId': user_id,
                 'whiteboardId': whiteboard_id,
             },
             broadcast=True,
-            event='join',
             include_self=False,
             skip_sid=socket_id,
             to=room,
         )
+        return Whiteboard.find_by_id(LoginSession(user_id), whiteboard_id)['users']
 
     @socketio.on('leave')
     def socketio_leave(data):
@@ -74,13 +75,14 @@ def register_sockets(socketio):
         )
         room = _get_room(whiteboard_id)
         leave_room(room, sid=socket_id)
+        users = Whiteboard.find_by_id(current_user, whiteboard_id)['users']
         emit(
-            args={
+            'leave',
+            {
                 'userId': user_id,
-                'users': Whiteboard.find_by_id(current_user, whiteboard_id)['users'],
+                'users': users,
                 'whiteboardId': whiteboard_id,
             },
-            event='leave',
             include_self=False,
             skip_sid=socket_id,
             to=room,
@@ -100,12 +102,12 @@ def register_sockets(socketio):
             users=users,
         )
         emit(
-            args={
+            'update_whiteboard',
+            {
                 'title': title,
                 'users': [user.to_api_json() for user in users],
                 'whiteboardId': whiteboard_id,
             },
-            event='update_whiteboard',
             include_self=False,
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
@@ -123,11 +125,11 @@ def register_sockets(socketio):
             whiteboard_element=data.get('whiteboardElement'),
         )
         emit(
-            args={
-                'whiteboardElement': whiteboard_element,
+            'upsert_whiteboard_element',
+            {
+                'whiteboardElement': whiteboard_element.to_api_json(),
                 'whiteboardId': whiteboard_id,
             },
-            event='upsert_whiteboard_element',
             include_self=False,
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
@@ -145,11 +147,11 @@ def register_sockets(socketio):
             whiteboard_element=whiteboard_element,
         )
         emit(
-            args={
+            'delete_whiteboard_element',
+            {
                 'uuid': whiteboard_element['element']['uuid'],
                 'whiteboardId': whiteboard_id,
             },
-            event='delete_whiteboard_element',
             include_self=False,
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),

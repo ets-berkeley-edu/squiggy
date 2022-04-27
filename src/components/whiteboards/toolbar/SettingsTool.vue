@@ -31,7 +31,7 @@
         <EditWhiteboard
           v-if="!whiteboard.deletedAt"
           class="pt-10"
-          :after-save="close"
+          :after-save="afterSave"
           :on-click-delete="onClickDelete"
           :on-cancel="close"
           :on-ready="() => $announcer.polite('The edit Whiteboard dialog is ready.')"
@@ -75,6 +75,10 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
+    afterSave(updated) {
+      this.onWhiteboardUpdate(updated)
+      this.close()
+    },
     close() {
       this.menu = false
       this.$announcer.polite('Settings tool closed.')
