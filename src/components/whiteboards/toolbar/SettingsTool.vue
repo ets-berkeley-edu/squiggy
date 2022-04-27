@@ -11,7 +11,9 @@
         :disabled="disableAll"
         elevation="1"
         height="48px"
+        icon
         rounded
+        width="55px"
         v-bind="attrs"
         v-on="on"
       >
