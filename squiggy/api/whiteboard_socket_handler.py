@@ -185,7 +185,7 @@ def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whit
         socket_id=socket_id,
         whiteboard_id=whiteboard_id,
     )
-    return result
+    return result.to_api_json()
 
 
 def _create_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):

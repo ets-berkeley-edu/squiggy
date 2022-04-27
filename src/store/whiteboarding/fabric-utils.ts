@@ -320,6 +320,7 @@ const $_addListeners = (state: any) => {
     const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
     // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
     if (!isIncompleteIText && !element.isHelper) {
+      element.uuid = element.uuid || uuidv4()
       $_broadcastUpsert(element.assetId, element, state)
       setCanvasDimensions(state)
     }
