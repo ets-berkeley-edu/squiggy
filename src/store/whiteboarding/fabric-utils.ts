@@ -323,6 +323,7 @@ const $_addListeners = (state: any) => {
       element.uuid = element.uuid || uuidv4()
       $_broadcastUpsert(element.assetId, element, state)
       setCanvasDimensions(state)
+      store.dispatch('whiteboarding/setMode', 'move')
     }
   })
 
@@ -552,7 +553,7 @@ const $_calculateGlobalElementPosition = (selection: any, element: any): any => 
   const center = selection.getCenterPoint()
   const rotated = $_calculateRotatedLeftTop(selection, element)
   return {
-    angle: element.getAngle() + selection.getAngle(),
+    angle: element.angle + selection.angle,
     left: center.x + rotated.left,
     scaleX: element.get('scaleX') * selection.get('scaleX'),
     scaleY: element.get('scaleY') * selection.get('scaleY'),
@@ -561,16 +562,16 @@ const $_calculateGlobalElementPosition = (selection: any, element: any): any => 
 }
 
 /**
- * Calculate the top left position of an element in a group
- *
- * selection         The selection (group of objects) of which the element is a part
- * element           The Fabric.js element for which the top left position in its group should be calculated
- * @return {Object}                           The top left position of the element in its group. Will return the `top` and `left` postion
+ * selection: Object group of which the element is a part
+ * element: Fabric element for which the top left position in its group should be calculated
+ * Returns `top` and `left` position of the element in its group.
  */
  const $_calculateRotatedLeftTop = (selection: any, element: any): any => {
-  const groupAngle = selection.getAngle() * (Math.PI / 180)
-  const left = (-Math.sin(groupAngle) * element.getTop() * selection.get('scaleY') + Math.cos(groupAngle) * element.getLeft() * selection.get('scaleX'))
-  const top = (Math.cos(groupAngle) * element.getTop() * selection.get('scaleY') + Math.sin(groupAngle) * element.getLeft() * selection.get('scaleX'))
+  const groupAngle = selection.angle * (Math.PI / 180)
+  const scaleX = selection.get('scaleX')
+  const scaleY = selection.get('scaleY')
+  const left = (-Math.sin(groupAngle) * element.top * scaleY + Math.cos(groupAngle) * element.left * scaleX)
+  const top = (Math.cos(groupAngle) * element.top * scaleY + Math.sin(groupAngle) * element.left * scaleX)
   return {left, top}
 }
 
@@ -650,13 +651,13 @@ const $_getActiveObjects = () => {
   // return the selected whiteboard elements
   const activeElements: any[] = []
   const selection = p.$canvas.getActiveObject()
-  if (_.get(selection, 'type') === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-    _.each(selection.objects, (element: any) => {
+  if (selection.getObjects) {
+    _.each(selection.getObjects(), (element: any) => {
       // When a Fabric.js canvas element is part of a group selection, its properties will be
       // relative to the group. Therefore, we calculate the actual position of each element in
       // the group relative to the whiteboard canvas
       const position = $_calculateGlobalElementPosition(selection, element)
-      activeElements.push(_.assignTo({}, element.toObject(), position))
+      activeElements.push(_.assignIn({}, element.toObject(), position))
     })
   } else if (p.$canvas.getActiveObject()) {
     activeElements.push(p.$canvas.getActiveObject().toObject())
@@ -926,7 +927,7 @@ const $_updateLayers = (state: any) => {
       if (element.group) {
         // If the element is part of a group, calculate its global coordinates
         const position = $_calculateGlobalElementPosition(element.group, element)
-        const e = _.assignTo({}, element.toObject(), position)
+        const e = _.assignIn({}, element.toObject(), position)
         $_broadcastUpsert(e.assetId, e, state)
       } else {
         const e = element.toObject()
