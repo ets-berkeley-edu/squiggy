@@ -474,21 +474,20 @@ const $_addSocketListeners = (state: any) => {
 
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
-      const element = data.whiteboardElement
-      const uuid = element.uuid
+      const whiteboardElement = data.whiteboardElement
+      const element = whiteboardElement.element
+      const uuid = whiteboardElement.uuid
       const existing = $_getCanvasElement(uuid)
       if (existing) {
         // Deactivate the current group if any of the updated elements are in the current group
-        $_deactiveActiveGroupIfOverlap(element)
-        // Update the elements
-        $_updateCanvasElement(state, element.uuid, element)
-        // Recalculate the size of the whiteboard canvas
+        $_deactivateGroupIfOverlap(whiteboardElement)
+        $_updateCanvasElement(state, whiteboardElement.uuid, element)
         setCanvasDimensions(state)
       } else {
         const callback = (e: any) => {
           // Add the element to the whiteboard canvas and move it to its appropriate index
           p.$canvas.add(e)
-          element.moveTo(e.get('index'))
+          whiteboardElement.moveTo(e.get('index'))
           p.$canvas.requestRenderAll()
           // Recalculate the size of the whiteboard canvas
           setCanvasDimensions(state)
@@ -499,15 +498,13 @@ const $_addSocketListeners = (state: any) => {
   )
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on('delete_whiteboard_element', (data: any) => {
-    if (data.whiteboardId === state.whiteboardId) {
-      const element = $_getCanvasElement(data.uuid)
-      if (element) {
-        // Deactivate the current group if any of the deleted elements are in the current group
-        $_deactiveActiveGroupIfOverlap(element)
-        p.$canvas.remove(element)
-        // Recalculate the size of the whiteboard canvas
-        setCanvasDimensions(state)
-      }
+    const element = $_getCanvasElement(data.uuid)
+    if (element) {
+      // Deactivate the current group if any of the deleted elements are in the current group
+      $_deactivateGroupIfOverlap(element)
+      p.$canvas.remove(element)
+      // Recalculate the size of the whiteboard canvas
+      setCanvasDimensions(state)
     }
   })
 }
@@ -576,12 +573,12 @@ const $_calculateGlobalElementPosition = (selection: any, element: any): any => 
   return {left, top}
 }
 
-const $_deactiveActiveGroupIfOverlap = (element: any) => {
+const $_deactivateGroupIfOverlap = (element: any) => {
   // CONCURRENT EDITING
   // Deactivate the active group if any of the provided elements are a part of the active group
   // elements: The elements that should be checked for presence in the active group
   const selection = p.$canvas.getActiveObject()
-  if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+  if (selection && selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
     const intersection = _.intersection(_.map(selection.objects, 'uuid'), [element.uuid])
     if (intersection.length > 0) {
       p.$canvas.discardActiveGroup().requestRenderAll()
@@ -690,7 +687,9 @@ const $_initCanvas = (state: any) => {
     selectionBorderColor: '#0295DE',
     selectionLineWidth: 2
   })
-  if (!state.whiteboard.isReadOnly) {
+  if (state.whiteboard.isReadOnly) {
+    $_renderWhiteboard(state)
+  } else {
     // Make the border dashed. See http://fabricjs.com/fabric-intro-part-4/
     p.$canvas.selectionDashArray = [10, 5]
 
@@ -704,9 +703,9 @@ const $_initCanvas = (state: any) => {
     // Set the pencil brush as the drawing brush
     p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
     // Render the whiteboard
+    $_renderWhiteboard(state)
     $_addListeners(state)
   }
-  $_renderWhiteboard(state)
 }
 
 const $_initFabricPrototypes = (state: any) => {

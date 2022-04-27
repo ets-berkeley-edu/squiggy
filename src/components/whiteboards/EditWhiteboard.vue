@@ -267,7 +267,6 @@ export default {
     save() {
       this.isSaving = true
       const done = whiteboard => {
-        this.onWhiteboardUpdate(whiteboard)
         this.$announcer.polite(`Whiteboard ${this.whiteboard ? 'updated' : 'created'}.`)
         this.isSaving = false
         this.afterSave(whiteboard)
