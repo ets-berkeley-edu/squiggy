@@ -127,7 +127,7 @@ def register_sockets(socketio):
         emit(
             'upsert_whiteboard_element',
             {
-                'whiteboardElement': whiteboard_element.to_api_json(),
+                'whiteboardElement': whiteboard_element,
                 'whiteboardId': whiteboard_id,
             },
             include_self=False,

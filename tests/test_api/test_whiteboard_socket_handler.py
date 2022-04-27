@@ -120,9 +120,9 @@ class TestUpdateWhiteboardElements:
             std_commit(allow_test_environment=True)
 
         assert len(results) == len(whiteboard_elements)
-        updated_whiteboard_element = next((result for result in results if result.id == whiteboard_element['id']), None)
+        updated_whiteboard_element = next((result for result in results if result['id'] == whiteboard_element['id']), None)
         assert updated_whiteboard_element
-        assert updated_whiteboard_element.element['fill'] == updated_fill
+        assert updated_whiteboard_element['element']['fill'] == updated_fill
 
 
 def _get_authorized_user(whiteboard):
