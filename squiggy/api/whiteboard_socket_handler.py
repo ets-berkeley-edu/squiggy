@@ -70,8 +70,7 @@ def join_whiteboard(current_user, socket_id, whiteboard_id):
         whiteboard = _get_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id)
         if not whiteboard:
             raise ResourceNotFoundError('Whiteboard not found.')
-        # Delete stale sessions
-        WhiteboardSession.delete_stale_records(older_than_minutes=10)
+        # Delete stale sessions of current_user
         for session in WhiteboardSession.find(user_id=current_user.user_id, whiteboard_id=whiteboard_id):
             WhiteboardSession.delete(session.socket_id)
         # Create
@@ -98,6 +97,7 @@ def leave_whiteboard(current_user, socket_id, whiteboard_id):
 
 def update_updated_at(current_user, socket_id, whiteboard_id):
     if _is_allowed(current_user):
+        WhiteboardSession.delete_stale_records()
         if is_student(current_user):
             if WhiteboardSession.find_by_socket_id(socket_id=socket_id):
                 WhiteboardSession.update_updated_at(socket_id=socket_id)

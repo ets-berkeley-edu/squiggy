@@ -65,8 +65,9 @@ class WhiteboardSession(Base):
             std_commit()
 
     @classmethod
-    def delete_stale_records(cls, older_than_minutes=30):
-        db.session.execute(text(f"SELECT socket_id FROM whiteboard_sessions WHERE updated_at < (now() - INTERVAL '{older_than_minutes} minutes')"))
+    def delete_stale_records(cls, older_than_minutes=5):
+        sql = f"DELETE FROM whiteboard_sessions WHERE updated_at < (now() - INTERVAL '{older_than_minutes} minutes')"
+        db.session.execute(text(sql))
 
     @classmethod
     def find(cls, whiteboard_id, user_id=None):
