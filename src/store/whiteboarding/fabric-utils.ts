@@ -10,25 +10,22 @@ import {v4 as uuidv4} from 'uuid'
 const p = Vue.prototype
 
 export function addAsset(asset: any, state: any) {
-  // Switch the toolbar back to move mode
-  store.dispatch('whiteboarding/setMode', 'move')
+  store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
 
   // Default to a placeholder when the asset does not have a preview image
-  let imageUrl: any = undefined
+  let imageUrl: any
   if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
     imageUrl = asset.imageUrl
   } else {
     const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1 && _.startsWith(asset.downloadUrl, 'http')
     imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
   }
-  // Add the asset to the center of the whiteboard canvas
+  // Place asset at the center of the canvas.
   fabric.Image.fromURL(imageUrl, (element: any) => {
     // SuiteC-specific attributes
     element.assetId = asset.id
     element.uuid = uuidv4()
-
     // This will exclude the toolbar and sidebar, if expanded.
-    // Calculate the center point of the whiteboard canvas.
     const zoomLevel = p.$canvas.getZoom()
     const canvasCenter = {
       x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
@@ -46,11 +43,9 @@ export function addAsset(asset: any, state: any) {
     if (ratio < 1) {
       element.scale(ratio)
     }
-
     element.left = canvasCenter.x
     element.top = canvasCenter.y
 
-    // Add the new element to the canvas
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
     $_broadcastUpsert(asset.id, element, state)
@@ -91,20 +86,16 @@ export function initialize(state: any) {
 }
 
 export function moveLayer(direction: string, state: any) {
-  // Send the currently selected element(s) to the back or  bring the currently selected element(s) to the front.
-  // direction: `front` if the currently selected element(s) should be brought to the front,
-  // `back` if the currently selected element(s) should be sent to the back
+  // Send selected element(s) to either the front or the back.
   const elements: any[] = $_getActiveObjects()
-
-  // Sort the selected elements by their position to ensure that
-  // they are in the same order when moved to the back or front
-  elements.sort((elementA: any, elementB: any) => direction === 'back' ? elementB.index - elementA.index : elementA.index - elementB.index)
-
+  // Sort selected elements by position such that they are in the same order when moved to back or front.
+  elements.sort((elementA: any, elementB: any) => {
+    return direction === 'back' ? elementB.index - elementA.index : elementA.index - elementB.index
+  })
   const selection = p.$canvas.getActiveObject()
   if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
     p.$canvas.remove(selection)
   }
-
   p.$canvas.discardActiveObject().requestRenderAll()
   _.each(elements, (e: any) => {
     const element:any = $_getCanvasElement(e.uuid)
@@ -116,9 +107,8 @@ export function moveLayer(direction: string, state: any) {
       }
     }
   })
-  // Notify the server about the updated layers
+  // Persist the layers change.
   $_updateLayers(state)
-
   if (elements.length === 1) {
     // When only a single item was selected, re-select it
     p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
@@ -175,27 +165,25 @@ export function refresh(state: any) {
 }
 
 export function setCanvasDimensions(state: any) {
-  // Set the width and height of the whiteboard canvas. The width of the visible
-  // canvas will be the same for all users, and the canvas will be zoomed to accommodate
-  // that width. By default, the size of the zoomed canvas will be the same as the size
-  // of the viewport. When there are any elements on the canvas that are outside of the
-  // viewport boundaries, the canvas will be enlarged to incorporate those.
+  // Set the width and height of the whiteboard canvas. The width of the visible canvas will be the same for all users,
+  // and the canvas will be zoomed to accommodate that width. By default, the size of the zoomed canvas will be the
+  // same as the size of the viewport. When there are any elements on the canvas that are outside the viewport
+  // boundaries, the canvas will be enlarged to incorporate those.
 
-  // Zoom the canvas to accomodate the base width within the viewport
+  // Zoom the canvas to accommodate the base width within the viewport.
   const viewportWidth = state.viewport.clientWidth
   const ratio = viewportWidth / constants.CANVAS_BASE_WIDTH
   p.$canvas.setZoom(ratio)
 
-  // Calculate the position of the elements that are the most right and the
-  // most bottom. When all elements fit within the viewport, the canvas is
-  // made the same size as the viewport. When any elements overflow the viewport,
-  // the canvas is enlarged to incorporate all assets outside of the viewport
+  // Calculate the position of the elements that are the most right and the most bottom. When all elements fit within
+  // the viewport, the canvas is made the same size as the viewport. When any elements overflow the viewport, the
+  // canvas is enlarged to incorporate all assets outside the viewport
   const viewportHeight = state.viewport.clientHeight
   let maxRight = viewportWidth
   let maxBottom = viewportHeight
 
   p.$canvas.forEachObject((element: any) => {
-    let bound = null
+    let bound
     if (!element.group) {
       bound = element.getBoundingRect()
     } else {
@@ -204,9 +192,9 @@ export function setCanvasDimensions(state: any) {
     maxRight = Math.max(maxRight, _.get(bound, 'left') + _.get(bound, 'width'))
     maxBottom = Math.max(maxBottom, _.get(bound, 'top') + _.get(bound, 'height'))
   })
-  // Keep track of whether the canvas can currently be scrolled
+  // Keep track of whether the canvas can currently be scrolled.
   if (maxRight > viewportWidth || maxBottom > viewportHeight) {
-    store.dispatch('whiteboarding/setIsScrollingCanvas', true)
+    store.dispatch('whiteboarding/setIsScrollingCanvas', true).then(_.noop)
 
     // Add padding when the canvas can be scrolled
     if (maxRight > viewportWidth) {
@@ -216,17 +204,14 @@ export function setCanvasDimensions(state: any) {
       maxBottom += constants.CANVAS_PADDING
     }
   } else {
-    store.dispatch('whiteboarding/setIsScrollingCanvas', false)
+    store.dispatch('whiteboarding/setIsScrollingCanvas', false).then(_.noop)
   }
-
-  // When the entire whiteboard content should fit within
-  // the screen, adjust the zoom level to make it fit
+  // When the entire whiteboard content should fit within the screen, adjust the zoom level to make it fit.
   if (state.fitToScreen) {
-    // Calculate the actual unzoomed width of the whiteboard
+    // Calculate the actual un-zoomed width of the whiteboard.
     const realWidth = maxRight / p.$canvas.getZoom()
     const realHeight = maxBottom / p.$canvas.getZoom()
-    // Zoom the canvas based on whether the height or width
-    // needs the largest zoom out
+    // Zoom the canvas based on whether the height or width needs the largest zoom out.
     const widthRatio = viewportWidth / realWidth
     const heightRatio = viewportHeight / realHeight
     const ratio = Math.min(widthRatio, heightRatio)
@@ -235,8 +220,7 @@ export function setCanvasDimensions(state: any) {
     p.$canvas.setHeight(viewportHeight)
     p.$canvas.setWidth(viewportWidth)
   } else {
-    // Adjust the value for rounding issues to prevent scrollbars
-    // from incorrectly showing up
+    // Adjust the value for rounding issues to prevent scrollbars from incorrectly showing up.
     p.$canvas.setHeight(maxBottom - 1)
     p.$canvas.setWidth(maxRight - 1)
   }
@@ -272,15 +256,15 @@ const $_addListeners = (state: any) => {
 
   // One or multiple whiteboard canvas elements have been updated by the current user
   p.$canvas.on('object:modified', (event: any) => {
-    // Ensure that none of the modified objects are positioned off screen
+    // Ensure that none of the modified objects are positioned off-screen.
     $_ensureWithinCanvas(event)
     _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state))
   })
-
   // Indicate that the currently selected elements are no longer being modified once moving, scaling or rotating has finished
   p.$canvas.on('object:modified', () => store.dispatch('whiteboarding/setIsModifyingElement', false))
 
-  // (1) Draw a box around the currently selected element(s) and (2) position buttons that allow the selected element(s) to be modified.
+  // (1) Draw a box around the currently selected element(s), and
+  // (2) position buttons that allow the selected element(s) to be modified.
   p.$canvas.on('after:render', () => {
     const selection = p.$canvas.getActiveObject()
     if (selection && !state.isModifyingElement) {
@@ -300,17 +284,13 @@ const $_addListeners = (state: any) => {
     }
   })
 
-  /**
-   * When a new group has been added programmatically added, it needs to be programmatically
-   * removed from the canvas when the group is deselected
-   */
   p.$canvas.on('before:selection:cleared', () => {
+    // When a group is programmatically added then it must be programmatically removed when the group is deselected.
     const selection = p.$canvas.getActiveObject()
     if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(selection)
     }
   })
-
   // Recalculate the size of the whiteboard canvas when a selection has been deselected
   p.$canvas.on('selection:cleared', () => setCanvasDimensions(state))
 
@@ -318,24 +298,24 @@ const $_addListeners = (state: any) => {
     // A new element was added to the whiteboard canvas by the current user
     const element = event.target
     const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
-    // If the element already has a unique id, it was added by a different user and there is no need to persist the addition
+
     if (!isIncompleteIText && !element.isHelper) {
       element.uuid = element.uuid || uuidv4()
       $_broadcastUpsert(element.assetId, element, state)
       setCanvasDimensions(state)
-      store.dispatch('whiteboarding/setMode', 'move')
+      store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
     }
   })
 
   p.$canvas.on('mouse:down', (event: any) => {
     if (state.mode === 'shape') {
-      store.dispatch('whiteboarding/setIsDrawingShape', true)
+      store.dispatch('whiteboarding/setIsDrawingShape', true).then(_.noop)
       // Keep track of the point where drawing the shape started
-      store.dispatch('whiteboarding/setStartShapePointer', p.$canvas.getPointer(event.e))
+      store.dispatch('whiteboarding/setStartShapePointer', p.$canvas.getPointer(event.e)).then(_.noop)
 
       // Create selected shape to use as the drawing guide. The originX and originY of the helper element are set to
-      // left and top to make it easier to map the top left corner of the drawing guide with the original cursor postion.
-      // We use 'isHelper' to indicate that this element is a helper element that should not be saved back to the server.
+      // left and top to make it easier to map the top left corner of the drawing guide with original cursor position.
+      // We use 'isHelper' to indicate that the element should NOT be persisted to Squiggy db.
       const shape = new fabric[state.selected.shape]({
         fill: state.selected.fill,
         height: 1,
@@ -372,7 +352,7 @@ const $_addListeners = (state: any) => {
       setTimeout(function() {
         p.$canvas.setActiveObject(iText)
         iText.enterEditing()
-        // The textarea needs to be put in edit mode manually
+        // The textarea needs to be put in edit mode manually.
         // @see https://github.com/kangax/fabric.js/issues/1740
         iText.hiddenTextarea.focus()
       }, 0)
@@ -385,29 +365,24 @@ const $_addListeners = (state: any) => {
       // Get the current position of the mouse
       const currentShapePointer = p.$canvas.getPointer(event.e)
 
-      // When the user has moved the cursor to the left of the original
-      // starting point, move the left of the circle to that point so
-      // negative shape drawing can be achieved
+      // When the user has moved the cursor to the left of the original starting point,
+      // move the left of the circle to that point so negative shape drawing can be achieved
       if (state.startShapePointer.x > currentShapePointer.x) {
         shape.set({left: currentShapePointer.x})
       }
-      // When the user has moved the cursor above the original starting
-      // point, move the left of the circle to that point so negative
-      // shape drawing can be achieved
+      // When the user has moved the cursor above the original starting point,
+      // move the left of the circle to that point so negative shape drawing can be achieved
       if (state.startShapePointer.y > currentShapePointer.y) {
         shape.set({top: currentShapePointer.y})
       }
-
-      // Set the radius and width of the circle based on how much the cursor
-      // has moved compared to the starting point
+      // Set the radius and width of the circle based on how much the cursor has moved compared to the starting point.
       if (state.selected.shape === 'Circle') {
         shape.set({
           height: Math.abs(state.startShapePointer.x - currentShapePointer.x),
           radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2,
           width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
         })
-      // Set the width and height of the shape based on how much the cursor
-      // has moved compared to the starting point
+      // Set the width and height of the shape based on how much the cursor has moved compared to the starting point.
       } else {
         shape.set({
           height: Math.abs(state.startShapePointer.y - currentShapePointer.y),
@@ -422,25 +397,16 @@ const $_addListeners = (state: any) => {
     if (state.isDrawingShape) {
       const shape = $_getHelperObject()
       // Indicate that shape drawing has stopped
-      store.dispatch('whiteboarding/setIsDrawingShape', false)
-      store.dispatch('whiteboarding/setMode', 'move')
-      // Clone the drawn shape and add the clone to the canvas.
-      // This is caused by a bug in Fabric where it initially uses
-      // the size when drawing started to position the controls. Cloning
-      // ensures that the controls are added in the correct position.
-      // The origin of the element is also set to `center` to make it
-      // inline with the other whiteboard elements
+      store.dispatch('whiteboarding/setIsDrawingShape', false).then(_.noop)
+      store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
+      // Clone the drawn shape and add the clone to the canvas. This is caused by a bug in Fabric where it initially
+      // uses the size when drawing started to position the controls. Cloning ensures that the controls are added in
+      // the correct position. The origin of element is set to `center` to make it inline with the other elements.
       if (shape) {
         shape.left += shape.width / 2
         shape.top += shape.height / 2
         shape.originX = shape.originY = 'center'
-        // Indicate that this is no longer a drawing helper shape and can therefore be saved back to the server
         shape.isHelper = false
-
-        // TODO: why was it done like this in old SuiteC?
-        // p.$canvas.add(finalShape)
-        // p.$canvas.remove(state.shape)
-
         // Save the added shape and make it active.
         $_broadcastUpsert(NaN, shape, state)
         p.$canvas.setActiveObject(shape)
@@ -529,7 +495,7 @@ const $_addViewportListeners = (state: any) => {
             object.clone((clone: any) => {
               clones.push(clone)
               if (index === activeObjects.length - 1) {
-                store.dispatch('whiteboarding/setClipboard', clones)
+                store.dispatch('whiteboarding/setClipboard', clones).then(_.noop)
               }
             })
           })
@@ -544,9 +510,9 @@ const $_addViewportListeners = (state: any) => {
 }
 
 const $_calculateGlobalElementPosition = (selection: any, element: any): any => {
-  // Calculate the position of an element in a group relative to the whiteboard canvas.
-  // This function returns the position of the element relative to the whiteboard canvas.
-  // Will return the `angle`, `left` and `top` postion and the `scaleX` and `scaleY` scaling factors
+  // Calculate the position of an element in a group relative to the whiteboard canvas. This function returns the
+  // position of the element relative to the whiteboard canvas: `angle`, `left` and `top` position and
+  // the `scaleX` and `scaleY` scaling factors
   //
   // selection         The selection (group of objects) of which the element is a part
   // element           The Fabric.js element for which the position relative to its group should be calculated
@@ -594,36 +560,23 @@ const $_deserializeElement = (
   uuid: string,
   callback: any
 ) => {
-  // Convert a serialized Fabric.js canvas element to a proper Fabric.js canvas element
-  // element: The serialized Fabric.js canvas element to deserialize
-  // callback: Standard callback function
   element = _.cloneDeep(element)
   element.uuid = uuid
-  // Make the element unseletable when the whiteboard is rendered in read only mode
   if (state.whiteboard.isReadOnly) {
     element.selectable = false
   }
-  // Extract the type from the serialized element
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
-  let object = undefined
   if (element.type === 'image') {
-    // In order to avoid cross-domain errors when loading images from different domains,
-    // the source of the element needs to be temporarily cleared and set manually once
-    // the element has been created
+    // In order to avoid cross-domain errors when loading images from different domains, the source of the element
+    // needs to be temporarily cleared and set manually once the element has been created
     element.realSrc = element.src
     element.src = ''
     fabric[type].fromObject(element, (e: any) => {
       e.setSrc(e.get('realSrc'), () => callback(e))
     })
-  // TODO: Why the special treatment for 'async'?
-  // } else if (fabric[type].async) {
-  //   fabric[type].fromObject(element, callback)
-  // } else {
-  //   fabric[type].fromObject(element)
   } else {
-    object = fabric[type].fromObject(element, callback)
+    fabric[type].fromObject(element, callback)
   }
-  return object
 }
 
 const $_enableCanvasElements = (enabled: boolean) => {
@@ -632,10 +585,8 @@ const $_enableCanvasElements = (enabled: boolean) => {
 }
 
 const $_ensureWithinCanvas = (event: any) => {
-  // Ensure that the currently active object or group can not be positioned off screen
+  // Ensure that active object or group cannot be positioned off-screen.
   const element = event.target
-  // Don't allow the element's or group's bounding rectangle
-  // to go off screen
   element.setCoords()
   const bound = element.getBoundingRect()
   if (bound.left < 0) {
@@ -647,20 +598,19 @@ const $_ensureWithinCanvas = (event: any) => {
 }
 
 const $_getActiveObjects = () => {
-  // Get the currently selected whiteboard elements
-  // return the selected whiteboard elements
   const activeElements: any[] = []
   const selection = p.$canvas.getActiveObject()
-  if (selection.getObjects) {
-    _.each(selection.getObjects(), (element: any) => {
-      // When a Fabric.js canvas element is part of a group selection, its properties will be
-      // relative to the group. Therefore, we calculate the actual position of each element in
-      // the group relative to the whiteboard canvas
-      const position = $_calculateGlobalElementPosition(selection, element)
-      activeElements.push(_.assignIn({}, element.toObject(), position))
-    })
-  } else if (p.$canvas.getActiveObject()) {
-    activeElements.push(p.$canvas.getActiveObject().toObject())
+  if (selection) {
+    if (selection.getObjects) {
+      _.each(selection.getObjects(), (element: any) => {
+        // When a Fabric.js canvas is part of a group selection, its properties will be relative to the group.
+        // Therefore, we calculate the actual position of each element in the group relative to the whiteboard canvas.
+        const position = $_calculateGlobalElementPosition(selection, element)
+        activeElements.push(_.assignIn({}, element.toObject(), position))
+      })
+    } else {
+      activeElements.push(selection.toObject())
+    }
   }
   return activeElements
 }
@@ -679,11 +629,9 @@ const $_getCanvasElement = (uuid: string) => {
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
 const $_initCanvas = (state: any) => {
-  // Initialize the Fabric.js canvas and load the whiteboard content and online users
-  // Ensure that the horizontal and vertical origins of objects are set to center
+  // Ensure that the horizontal and vertical origins of objects are set to center.
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
-  // Set the selection style for the whiteboard
-  // Set the style of the multi-select helper
+  // Set selection style.
   p.$canvas = new fabric.Canvas('canvas', {
     selectionColor: 'transparent',
     selectionBorderColor: '#0295DE',
@@ -692,10 +640,8 @@ const $_initCanvas = (state: any) => {
   if (state.whiteboard.isReadOnly) {
     $_renderWhiteboard(state)
   } else {
-    // Make the border dashed. See http://fabricjs.com/fabric-intro-part-4/
+    // Make the border dashed.
     p.$canvas.selectionDashArray = [10, 5]
-
-    // Set the selection style for all elements
     fabric.Object.prototype.borderColor = '#0295DE'
     fabric.Object.prototype.borderScaleFactor = 0.3
     fabric.Object.prototype.cornerColor = '#0295DE'
@@ -704,7 +650,6 @@ const $_initCanvas = (state: any) => {
     fabric.Object.prototype.rotatingPointOffset = 30
     // Set the pencil brush as the drawing brush
     p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
-    // Render the whiteboard
     $_renderWhiteboard(state)
     $_addListeners(state)
   }
@@ -747,7 +692,7 @@ const $_initFabricPrototypes = (state: any) => {
         // The text element existed before. Notify the server that the element was updated
         $_broadcastUpsert(NaN, element, state)
       }
-      store.dispatch('whiteboarding/setMode', 'move')
+      store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
     }
   })
   // Recalculate the size of the p.$canvas when the window is resized
@@ -786,7 +731,7 @@ const $_paste = (state: any): void => {
     p.$canvas.requestRenderAll()
     // Set the size of the whiteboard canvas
     setCanvasDimensions(state)
-    store.dispatch('whiteboarding/setClipboard', undefined)
+    store.dispatch('whiteboarding/setClipboard', undefined).then(_.noop)
   })
 
   if (state.clipboard.length > 0) {
