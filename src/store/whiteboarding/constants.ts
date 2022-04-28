@@ -76,5 +76,7 @@ export default {
   TEXT_SIZE_OPTIONS: [
     {text: 'Normal', value: 14},
     {text: 'Title', value: 36}
-  ]
+  ],
+  VIEWPORT_ELEMENT_ID: 'whiteboard-viewport',
+  WHITEBOARD_ELEMENT_EDIT_ID: 'whiteboard-element-edit'
 }

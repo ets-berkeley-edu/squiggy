@@ -69,7 +69,7 @@ export function deleteActiveElements(state: any) {
 }
 
 export function initialize(state: any) {
-  state.viewport = document.getElementById('whiteboard-viewport')
+  state.viewport = document.getElementById(constants.VIEWPORT_ELEMENT_ID)
   if (state.whiteboard.isReadOnly) {
     state.disableAll = true
     $_initCanvas(state)
@@ -272,11 +272,11 @@ const $_addListeners = (state: any) => {
       const bound = selection.getBoundingRect()
       if (bound) {
         // Explicitly draw the bounding rectangle
-        p.$canvas.contextContainer.strokeStyle = '#0295DE'
+        p.$canvas.contextContainer.strokeStyle = constants.COLORS.lightBlue.hex
         p.$canvas.contextContainer.strokeRect(bound.left - 10, bound.top - 10, bound.width + 20, bound.height + 20)
       }
       // Position the buttons to modify the selected element(s)
-      const editButtons = document.getElementById('whiteboard-element-edit')
+      const editButtons = document.getElementById(constants.WHITEBOARD_ELEMENT_EDIT_ID)
       if (editButtons) {
         editButtons.style.left = (bound.left - 10) + 'px'
         editButtons.style.top = (bound.top + bound.height + 15) + 'px'
@@ -376,18 +376,17 @@ const $_addListeners = (state: any) => {
         shape.set({top: currentShapePointer.y})
       }
       // Set the radius and width of the circle based on how much the cursor has moved compared to the starting point.
-      if (state.selected.shape === 'Circle') {
+      const horizontal = Math.abs(state.startShapePointer.x - currentShapePointer.x)
+      const vertical = Math.abs(state.startShapePointer.y - currentShapePointer.y)
+      if (_.lowerCase(state.selected.shape) === 'circle') {
         shape.set({
-          height: Math.abs(state.startShapePointer.x - currentShapePointer.x),
-          radius: Math.abs(state.startShapePointer.x - currentShapePointer.x) / 2,
-          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
+          height: horizontal,
+          radius: Math.floor(horizontal / 2),
+          width: horizontal
         })
       // Set the width and height of the shape based on how much the cursor has moved compared to the starting point.
       } else {
-        shape.set({
-          height: Math.abs(state.startShapePointer.y - currentShapePointer.y),
-          width: Math.abs(state.startShapePointer.x - currentShapePointer.x)
-        })
+        shape.set({height: vertical, width: horizontal})
       }
       p.$canvas.requestRenderAll()
     }
@@ -479,7 +478,7 @@ const $_addSocketListeners = (state: any) => {
 
 const $_addViewportListeners = (state: any) => {
   // Detect keydown events in the whiteboard to respond to keyboard shortcuts
-  const element = document.getElementById('whiteboard-viewport')
+  const element = document.getElementById(constants.VIEWPORT_ELEMENT_ID)
   if (element) {
     const onKeydown = (event: any) => {
       if (!state.disableAll) {
@@ -632,9 +631,10 @@ const $_initCanvas = (state: any) => {
   // Ensure that the horizontal and vertical origins of objects are set to center.
   fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center'
   // Set selection style.
+  const lightBlue = constants.COLORS.lightBlue.hex
   p.$canvas = new fabric.Canvas('canvas', {
     selectionColor: 'transparent',
-    selectionBorderColor: '#0295DE',
+    selectionBorderColor: lightBlue,
     selectionLineWidth: 2
   })
   if (state.whiteboard.isReadOnly) {
@@ -642,9 +642,9 @@ const $_initCanvas = (state: any) => {
   } else {
     // Make the border dashed.
     p.$canvas.selectionDashArray = [10, 5]
-    fabric.Object.prototype.borderColor = '#0295DE'
+    fabric.Object.prototype.borderColor = lightBlue
     fabric.Object.prototype.borderScaleFactor = 0.3
-    fabric.Object.prototype.cornerColor = '#0295DE'
+    fabric.Object.prototype.cornerColor = lightBlue
     fabric.Object.prototype.cornerSize = 10
     fabric.Object.prototype.transparentCorners = false
     fabric.Object.prototype.rotatingPointOffset = 30
@@ -666,6 +666,7 @@ const $_initFabricPrototypes = (state: any) => {
         height: this.height,
         index: p.$canvas.getObjects().indexOf(this),
         isHelper: this.isHelper,
+        radius: this.radius,
         text: this.text,
         uuid: this.uuid,
         width: this.width
