@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@vue-a11y/announcer": "2.1.0",
-    "axios": "0.26.0",
+    "axios": "0.27.2",
     "core-js": "3.9.1",
     "fabric": "5.2.1",
     "highcharts": "9.1.0",
@@ -21,16 +21,15 @@
     "js-file-download": "0.4.12",
     "lodash": "4.17.21",
     "moment-timezone": "0.5.34",
-    "socket.io-client": "4.4.1",
-    "uuid": "^8.3.2",
+    "socket.io-client": "4.5.0",
+    "uuid": "8.3.2",
     "vue": "2.6.14",
-    "vue-fabric-wrapper": "0.3.71",
     "vue-infinite-loading": "2.4.5",
     "vue-kinesis": "1.2.3",
     "vue-moment": "4.1.0",
     "vue-router": "3.5.3",
     "vue-scrollto": "2.20.0",
-    "vuetify": "2.6.3",
+    "vuetify": "2.6.4",
     "vuex": "3.6.2"
   },
   "devDependencies": {
