@@ -27,6 +27,7 @@ from flask import current_app as app
 from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.util import is_student, safe_strip
+from squiggy.lib.whiteboard_preview_generator import WhiteboardPreviewGenerator
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
@@ -61,13 +62,7 @@ def delete_whiteboard_element(current_user, socket_id, whiteboard_element, white
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
         )
-        #
-        # TODO: Start background job? Create a queue (a SET of unique whiteboard_ids) waiting for preview generation.
-        # generate_whiteboard_preview(
-        #     course_id=current_user.course.id,
-        #     whiteboard=whiteboard,
-        # )
-        #
+        WhiteboardPreviewGenerator.queue(whiteboard_id)
     else:
         raise BadRequestError('Unauthorized')
 
@@ -114,7 +109,11 @@ def update_updated_at(current_user, socket_id, whiteboard_id):
                     user_id=current_user.user_id,
                     whiteboard_id=whiteboard_id,
                 )
-        whiteboard = Whiteboard.find_by_id(current_user=current_user, include_deleted=True, whiteboard_id=whiteboard_id)
+        whiteboard = Whiteboard.find_by_id(
+            current_user=current_user,
+            include_deleted=True,
+            whiteboard_id=whiteboard_id,
+        )
         return whiteboard['users']
     else:
         raise BadRequestError('Unauthorized')
@@ -162,18 +161,17 @@ def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, white
                 whiteboard_element=whiteboard_element,
                 whiteboard_id=whiteboard_id,
             )
-        #
-        # TODO: Start background job? Create a queue (a SET of unique whiteboard_ids) waiting for preview generation.
-        # whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
-        # generate_whiteboard_preview(course_id=current_user.course.id, whiteboard=whiteboard)
-        #
+        WhiteboardPreviewGenerator.queue(whiteboard_id)
         return whiteboard_element
     else:
         raise BadRequestError('Unauthorized')
 
 
 def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(current_user, whiteboard_id) if whiteboard_id else None
+    whiteboard = Whiteboard.find_by_id(
+        current_user=current_user,
+        whiteboard_id=whiteboard_id,
+    ) if whiteboard_id else None
     if not whiteboard:
         raise ResourceNotFoundError('Whiteboard not found.')
     if whiteboard['deletedAt']:
