@@ -78,9 +78,8 @@ class Whiteboard(Base):
         """
 
     @classmethod
-    def find_by_id(cls, current_user, whiteboard_id, include_deleted=True):
+    def find_by_id(cls, whiteboard_id, current_user=None, include_deleted=True):
         whiteboards = cls.get_whiteboards(
-            course_id=current_user.course.id,
             current_user=current_user,
             include_deleted=include_deleted,
             whiteboard_id=whiteboard_id,
@@ -116,8 +115,8 @@ class Whiteboard(Base):
     @classmethod
     def get_whiteboards(
             cls,
-            course_id,
-            current_user,
+            course_id=None,
+            current_user=None,
             include_deleted=False,
             keywords=None,
             limit=20,
@@ -128,27 +127,22 @@ class Whiteboard(Base):
     ):
         params = {
             'course_id': course_id,
-            'current_user_id': current_user.user_id,
+            'current_user_id': current_user.user_id if current_user else None,
             'keywords': ('%' + re.sub(r'\s+', '%', keywords.strip()) + '%') if keywords else None,
             'limit': limit,
             'offset': offset,
             'user_id': user_id,
             'whiteboard_id': whiteboard_id,
         }
-        where_clause = 'WHERE w.course_id = :course_id'
-        if not include_deleted:
-            where_clause += ' AND w.deleted_at IS NULL'
-        if keywords:
-            where_clause += ' AND (w.title ILIKE :keywords)'
-        if user_id:
-            where_clause += ' AND u.id = :user_id'
-        if whiteboard_id:
-            where_clause += ' AND w.id = :whiteboard_id'
-        if current_user.is_student or current_user.is_observer:
-            sql = 'SELECT whiteboard_id FROM whiteboard_users WHERE user_id = :current_user_id'
-            params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
-            where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
-
+        where_clause = _get_whiteboards_where_clause(
+            course_id=course_id,
+            current_user=current_user,
+            include_deleted=include_deleted,
+            keywords=keywords,
+            params=params,
+            user_id=user_id,
+            whiteboard_id=whiteboard_id,
+        )
         default_order_by = 'w.id DESC'
         order_by_clause = {
             'collaborator': 'u.canvas_full_name, u.canvas_user_id',
@@ -166,7 +160,7 @@ class Whiteboard(Base):
             LEFT JOIN activities act ON
                 act.object_type = 'whiteboard'
                 AND w.id = act.object_id
-                AND act.course_id = :course_id
+                AND act.course_id = w.course_id
             {where_clause}
             ORDER BY {order_by_clause}, u.canvas_full_name
             LIMIT :limit OFFSET :offset
@@ -298,3 +292,31 @@ class Whiteboard(Base):
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def _get_whiteboards_where_clause(
+        params,
+        course_id=None,
+        current_user=None,
+        include_deleted=False,
+        keywords=None,
+        user_id=None,
+        whiteboard_id=None,
+):
+    where_clause = 'WHERE TRUE'
+    if course_id:
+        where_clause += ' AND w.course_id = :course_id'
+    if not include_deleted:
+        where_clause += ' AND w.deleted_at IS NULL'
+    if keywords:
+        where_clause += ' AND (w.title ILIKE :keywords)'
+    if user_id:
+        where_clause += ' AND u.id = :user_id'
+    if whiteboard_id:
+        where_clause += ' AND w.id = :whiteboard_id'
+    if current_user:
+        if current_user.is_student or current_user.is_observer:
+            sql = 'SELECT whiteboard_id FROM whiteboard_users WHERE user_id = :current_user_id'
+            params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
+            where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
+    return where_clause

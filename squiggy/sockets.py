@@ -60,7 +60,11 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=room,
         )
-        return Whiteboard.find_by_id(LoginSession(user_id), whiteboard_id)['users']
+        whiteboard = Whiteboard.find_by_id(
+            current_user=LoginSession(user_id),
+            whiteboard_id=whiteboard_id,
+        )
+        return whiteboard['users']
 
     @socketio.on('leave')
     def socketio_leave(data):
@@ -75,7 +79,11 @@ def register_sockets(socketio):
         )
         room = _get_room(whiteboard_id)
         leave_room(room, sid=socket_id)
-        users = Whiteboard.find_by_id(current_user, whiteboard_id)['users']
+        whiteboard = Whiteboard.find_by_id(
+            current_user=current_user,
+            whiteboard_id=whiteboard_id,
+        )
+        users = whiteboard['users']
         emit(
             'leave',
             {

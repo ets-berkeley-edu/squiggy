@@ -70,7 +70,7 @@ def generate_preview_service_signature(nonce=None):
     return f"Bearer {nonce}:{base64.b64encode(digester.digest()).decode('utf-8')}"
 
 
-def generate_whiteboard_preview(course_id, whiteboard):
+def generate_whiteboard_preview(whiteboard):
     png_file = to_png_file(whiteboard)
     now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
@@ -78,7 +78,7 @@ def generate_whiteboard_preview(course_id, whiteboard):
         s3_attrs = upload_to_s3(
             byte_stream=f.read(),
             filename=f'{filename}_{now}.png',
-            s3_key_prefix=get_s3_key_prefix(course_id, 'whiteboard'),
+            s3_key_prefix=get_s3_key_prefix(whiteboard['courseId'], 'whiteboard'),
         )
     generate_previews(
         object_id=whiteboard['id'],
