@@ -783,11 +783,17 @@ const $_renderWhiteboard = (state: any) => {
     }
   })
   // Restore the layout of the whiteboard canvas
-  _.each(state.whiteboard.whiteboardElements, (element: any) => {
-    $_deserializeElement(state, element.element, element.uuid, (e: any) => {
-      p.$canvas.add(e)
-      restore()
-    })
+  const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, 'element.index')
+  _.each(whiteboardElements, (whiteboardElement: any) => {
+    $_deserializeElement(
+      state,
+      whiteboardElement.element,
+      whiteboardElement.uuid,
+      (e: any) => {
+        p.$canvas.add(e)
+        restore()
+      }
+    )
   })
 }
 
