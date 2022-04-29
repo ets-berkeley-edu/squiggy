@@ -29,9 +29,10 @@ import re
 from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_asset, can_view_asset
-from squiggy.lib.aws import stream_object
+from squiggy.lib.aws import stream_object, upload_to_s3
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import retrieve_to_file, tolerant_jsonify
+from squiggy.lib.previews import get_s3_key_prefix
 from squiggy.lib.util import is_admin, is_teaching, local_now, to_bool_or_none
 from squiggy.models.asset import Asset, validate_asset_url
 from squiggy.models.category import Category
@@ -129,10 +130,10 @@ def create_asset():
             }
         else:
             file_upload = _get_upload_from_http_post()
-        s3_attrs = Asset.upload_to_s3(
+        s3_attrs = upload_to_s3(
             filename=file_upload['name'],
             byte_stream=file_upload['byte_stream'],
-            course_id=current_user.course.id,
+            s3_key_prefix=get_s3_key_prefix(current_user.course.id, 'asset'),
         )
 
     asset = Asset.create(

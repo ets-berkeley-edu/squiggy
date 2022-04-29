@@ -24,12 +24,16 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from datetime import datetime
+import os
 import re
 from urllib.parse import parse_qs, urlparse
 
 import boto3
 from flask import current_app as app
+import magic
 import smart_open
+from squiggy.lib.errors import InternalServerError
+from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 
 
@@ -82,6 +86,21 @@ def stream_object(s3_url):
 
 def is_s3_preview_url(url):
     return url and re.compile(S3_PREVIEW_URL_PATTERN).match(url)
+
+
+def upload_to_s3(filename, byte_stream, s3_key_prefix):
+    bucket = app.config['S3_BUCKET']
+    (basename, extension) = os.path.splitext(filename)
+    # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
+    key = f"{s3_key_prefix}/{utc_now().strftime('%Y-%m-%d_%H%M%S')}-{basename[0:170]}{extension}"
+    content_type = magic.from_buffer(byte_stream, mime=True)
+    if put_binary_data_to_s3(bucket, key, byte_stream, content_type):
+        return {
+            'content_type': content_type,
+            'download_url': f's3://{bucket}/{key}',
+        }
+    else:
+        raise InternalServerError('Could not upload file.')
 
 
 def _get_s3_client():

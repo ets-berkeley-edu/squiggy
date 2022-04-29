@@ -61,6 +61,13 @@ def delete_whiteboard_element(current_user, socket_id, whiteboard_element, white
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
         )
+        #
+        # TODO: Start background job? Create a queue (a SET of unique whiteboard_ids) waiting for preview generation.
+        # generate_whiteboard_preview(
+        #     course_id=current_user.course.id,
+        #     whiteboard=whiteboard,
+        # )
+        #
     else:
         raise BadRequestError('Unauthorized')
 
@@ -155,6 +162,11 @@ def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, white
                 whiteboard_element=whiteboard_element,
                 whiteboard_id=whiteboard_id,
             )
+        #
+        # TODO: Start background job? Create a queue (a SET of unique whiteboard_ids) waiting for preview generation.
+        # whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
+        # generate_whiteboard_preview(course_id=current_user.course.id, whiteboard=whiteboard)
+        #
         return whiteboard_element
     else:
         raise BadRequestError('Unauthorized')

@@ -24,17 +24,13 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from itertools import groupby
-import os
 import re
 from urllib.parse import urlparse
 
-from flask import current_app as app
-import magic
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
-from squiggy.lib.aws import get_s3_signed_url, put_binary_data_to_s3
-from squiggy.lib.errors import InternalServerError
+from squiggy.lib.aws import get_s3_signed_url
 from squiggy.lib.http import request
 from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import db_row_to_dict, isoformat, utc_now
@@ -283,23 +279,6 @@ class Asset(Base):
         }
 
         return results
-
-    @classmethod
-    def upload_to_s3(cls, filename, byte_stream, course_id):
-        bucket = app.config['S3_BUCKET']
-        # S3 key begins with course id, reversed for performant key distribution, padded for readability.
-        reverse_course = str(course_id)[::-1].rjust(7, '0')
-        (basename, extension) = os.path.splitext(filename)
-        # Truncate file basename if longer than 170 characters; the complete constructed S3 URI must come in under 255.
-        key = f"{reverse_course}/assets/{utc_now().strftime('%Y-%m-%d_%H%M%S')}-{basename[0:170]}{extension}"
-        content_type = magic.from_buffer(byte_stream, mime=True)
-        if put_binary_data_to_s3(bucket, key, byte_stream, content_type):
-            return {
-                'content_type': content_type,
-                'download_url': f's3://{bucket}/{key}',
-            }
-        else:
-            raise InternalServerError('Could not upload file.')
 
     def add_like(self, user):
         like_activity = Activity.create_unless_exists(
