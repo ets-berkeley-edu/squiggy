@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from random import randint
 from uuid import uuid4
 
+from moto import mock_s3
 import pytest
 from squiggy import std_commit
 from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
@@ -33,6 +34,7 @@ from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.course import Course
+from tests.util import mock_s3_bucket
 
 
 class TestCreateWhiteboardElement:
@@ -57,20 +59,22 @@ class TestCreateWhiteboardElement:
                 whiteboard_id=mock_whiteboard['id'],
             )
 
-    def test_authorized(self, mock_whiteboard):
+    @mock_s3
+    def test_authorized(self, app, mock_whiteboard):
         """Authorized creates whiteboard elements."""
         whiteboard_element = _mock_whiteboard_element()
 
-        api_json = upsert_whiteboard_element(
-            current_user=_get_authorized_user(mock_whiteboard),
-            socket_id=_get_mock_socket_id(),
-            whiteboard_element=whiteboard_element,
-            whiteboard_id=mock_whiteboard['id'],
-        )
-        assert api_json['assetId'] == whiteboard_element['assetId']
-        assert api_json['element']['fill'] == whiteboard_element['element']['fill']
-        assert api_json['element']['fontSize'] == whiteboard_element['element']['fontSize']
-        assert api_json['element']['type'] == whiteboard_element['element']['type']
+        with mock_s3_bucket(app):
+            api_json = upsert_whiteboard_element(
+                current_user=_get_authorized_user(mock_whiteboard),
+                socket_id=_get_mock_socket_id(),
+                whiteboard_element=whiteboard_element,
+                whiteboard_id=mock_whiteboard['id'],
+            )
+            assert api_json['assetId'] == whiteboard_element['assetId']
+            assert api_json['element']['fill'] == whiteboard_element['element']['fill']
+            assert api_json['element']['fontSize'] == whiteboard_element['element']['fontSize']
+            assert api_json['element']['type'] == whiteboard_element['element']['type']
 
 
 class TestUpdateWhiteboardElements:
@@ -99,7 +103,8 @@ class TestUpdateWhiteboardElements:
                     whiteboard_id=mock_whiteboard['id'],
                 )
 
-    def test_authorized(self, mock_whiteboard):
+    @mock_s3
+    def test_authorized(self, app, mock_whiteboard):
         """Authorized user can update whiteboard elements."""
         whiteboard_elements = mock_whiteboard['whiteboardElements']
         whiteboard_element = whiteboard_elements[-1]
@@ -108,21 +113,22 @@ class TestUpdateWhiteboardElements:
 
         current_user = _get_authorized_user(mock_whiteboard)
         results = []
-        for whiteboard_element in mock_whiteboard['whiteboardElements']:
-            results.append(
-                upsert_whiteboard_element(
-                    current_user=current_user,
-                    socket_id=_get_mock_socket_id(),
-                    whiteboard_element=whiteboard_element,
-                    whiteboard_id=mock_whiteboard['id'],
-                ),
-            )
-            std_commit(allow_test_environment=True)
+        with mock_s3_bucket(app):
+            for whiteboard_element in mock_whiteboard['whiteboardElements']:
+                results.append(
+                    upsert_whiteboard_element(
+                        current_user=current_user,
+                        socket_id=_get_mock_socket_id(),
+                        whiteboard_element=whiteboard_element,
+                        whiteboard_id=mock_whiteboard['id'],
+                    ),
+                )
+                std_commit(allow_test_environment=True)
 
-        assert len(results) == len(whiteboard_elements)
-        updated_whiteboard_element = next((result for result in results if result['id'] == whiteboard_element['id']), None)
-        assert updated_whiteboard_element
-        assert updated_whiteboard_element['element']['fill'] == updated_fill
+            assert len(results) == len(whiteboard_elements)
+            updated_whiteboard_element = next((result for result in results if result['id'] == whiteboard_element['id']), None)
+            assert updated_whiteboard_element
+            assert updated_whiteboard_element['element']['fill'] == updated_fill
 
 
 def _get_authorized_user(whiteboard):

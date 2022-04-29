@@ -26,28 +26,40 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import base64
 import hashlib
 import hmac
+import re
 
 from flask import current_app as app
 from squiggy.lib import http
-from squiggy.lib.util import to_int, utc_now
+from squiggy.lib.aws import upload_to_s3
+from squiggy.lib.util import local_now, to_int, utc_now
+from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.logger import logger
 
 
-def generate_previews(asset_id, asset_url):
+def generate_previews(object_id, object_url, object_type='asset'):
     if not app.config['PREVIEWS_ENABLED']:
         return
+    api_prefix = app.config['API_PREFIX']
+    post_back_urls = {
+        'asset': f'{api_prefix}/previews/callback',
+        'whiteboard': f'{api_prefix}/previews/whiteboard/callback',
+    }
     response = http.request(
         app.config['PREVIEWS_URL'],
         headers={'authorization': generate_preview_service_signature()},
         method='post',
         data={
-            'id': asset_id,
-            'url': asset_url,
-            'postBackUrl': f"{app.config['API_PREFIX']}/previews/callback",
+            'id': object_id,
+            'url': object_url,
+            'postBackUrl': post_back_urls[object_type],
         },
     )
     if not response:
-        logger.error(f'Error generating previews (asset_id={asset_id}, asset_url={asset_url}.')
+        logger.error(f"""Failed to generate preview:
+            object_type = {object_type}
+            object_id = {object_id}
+            object_url = {object_url}
+        """)
     return response
 
 
@@ -56,6 +68,63 @@ def generate_preview_service_signature(nonce=None):
         nonce = str(int(utc_now().timestamp() * 1000))
     digester = hmac.new(_byte_string(app.config['PREVIEWS_API_KEY']), _byte_string(nonce), hashlib.sha1)
     return f"Bearer {nonce}:{base64.b64encode(digester.digest()).decode('utf-8')}"
+
+
+def generate_whiteboard_preview(course_id, whiteboard):
+    png_file = to_png_file(whiteboard)
+    now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
+    with open(png_file, mode='rb') as f:
+        s3_attrs = upload_to_s3(
+            byte_stream=f.read(),
+            filename=f'{filename}_{now}.png',
+            s3_key_prefix=get_s3_key_prefix(course_id, 'whiteboard'),
+        )
+    generate_previews(
+        object_id=whiteboard['id'],
+        object_type='whiteboard',
+        object_url=s3_attrs['download_url'],
+    )
+    pass
+    # TODO:
+    # getWhiteboardAsPngFile(whiteboard, function(err, dimensions, imageUri) {
+    #   if (err) {
+    #     log.error({
+    #       'err': err,
+    #       'whiteboard': whiteboard.id
+    #     }, 'Could not generate a PNG image for a whiteboard');
+    #     return callback(err);
+    #   }
+    #   log.info({'whiteboard': whiteboard.id}, 'Got the PNG data for a whiteboard');
+    #
+    #   // Store the large image URL
+    #   updateWhiteboardPreview(whiteboard, {'imageUrl': imageUri}, function(err, updatedWhiteboard) {
+    #     if (err) {
+    #       log.error({'err': err, 'whiteboard': whiteboard.id}, 'Unable to update whiteboard preview');
+    #       return callback(err);
+    #     }
+    #
+    #     // Pass on the image information to the caller
+    #     callback(err, updatedWhiteboard, dimensions);
+    #
+    #     // If the preview integration has been enabled, generate a thumbnail for the whiteboard asynchronously
+    #     if (config.get('previews.enabled')) {
+    #       Collabosphere.generatePreviews(whiteboard.id, imageUri, '/api/whiteboards-callback', function(err) {
+    #         if (err) {
+    #           log.error({'err': err, 'whiteboard': whiteboard.id}, 'Unable to generate a thumbnail');
+    #         }
+    #       });
+    #     }
+    #   });
+    # });
+
+
+def get_s3_key_prefix(course_id, object_type):
+    # S3 key begins with course id, reversed for performant key distribution, padded for readability.
+    return {
+        'asset': f"{str(course_id)[::-1].rjust(7, '0')}/assets",
+        'whiteboard': f"{str(course_id)[::-1].rjust(7, '0')}/whiteboard",
+    }[object_type]
 
 
 def verify_preview_service_authorization(auth_header):

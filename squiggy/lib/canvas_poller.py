@@ -31,7 +31,9 @@ from sqlalchemy import nullsfirst
 from sqlalchemy.orm import joinedload
 from squiggy import db, std_commit
 from squiggy.externals.canvas import get_canvas
+from squiggy.lib.aws import upload_to_s3
 from squiggy.lib.background_job import BackgroundJob
+from squiggy.lib.previews import get_s3_key_prefix
 from squiggy.lib.util import utc_now
 from squiggy.logger import initialize_background_logger, logger
 from squiggy.models.activity import Activity
@@ -395,10 +397,10 @@ class CanvasPoller(BackgroundJob):
                     db.session.add(existing_submission_asset)
                     std_commit()
                 else:
-                    s3_attrs = Asset.upload_to_s3(
+                    s3_attrs = upload_to_s3(
                         filename=attachment['display_name'],
                         byte_stream=urlopen(attachment['url']).read(),
-                        course_id=course.id,
+                        s3_key_prefix=get_s3_key_prefix(course.id, 'asset'),
                     )
                     file_submission_tracker[attachment['id']] = Asset.create(
                         asset_type='file',
