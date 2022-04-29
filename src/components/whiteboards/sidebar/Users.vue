@@ -33,8 +33,8 @@
           <span class="font-weight-bold red--text">No one is active.</span>
         </v-list-item-content>
       </v-list-item>
-      <v-divider class="mx-2" />
-      <v-list-item v-for="user in usersOffline" :key="user.id">
+      <v-divider class="mb-8 mx-2" />
+      <v-list-item v-for="user in usersOffline" :key="user.id" class="mb-2">
         <v-list-item-avatar :class="{'pr-3': isMiniVariant}">
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
