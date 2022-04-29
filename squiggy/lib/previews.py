@@ -85,38 +85,6 @@ def generate_whiteboard_preview(whiteboard):
         object_type='whiteboard',
         object_url=s3_attrs['download_url'],
     )
-    pass
-    # TODO:
-    # getWhiteboardAsPngFile(whiteboard, function(err, dimensions, imageUri) {
-    #   if (err) {
-    #     log.error({
-    #       'err': err,
-    #       'whiteboard': whiteboard.id
-    #     }, 'Could not generate a PNG image for a whiteboard');
-    #     return callback(err);
-    #   }
-    #   log.info({'whiteboard': whiteboard.id}, 'Got the PNG data for a whiteboard');
-    #
-    #   // Store the large image URL
-    #   updateWhiteboardPreview(whiteboard, {'imageUrl': imageUri}, function(err, updatedWhiteboard) {
-    #     if (err) {
-    #       log.error({'err': err, 'whiteboard': whiteboard.id}, 'Unable to update whiteboard preview');
-    #       return callback(err);
-    #     }
-    #
-    #     // Pass on the image information to the caller
-    #     callback(err, updatedWhiteboard, dimensions);
-    #
-    #     // If the preview integration has been enabled, generate a thumbnail for the whiteboard asynchronously
-    #     if (config.get('previews.enabled')) {
-    #       Collabosphere.generatePreviews(whiteboard.id, imageUri, '/api/whiteboards-callback', function(err) {
-    #         if (err) {
-    #           log.error({'err': err, 'whiteboard': whiteboard.id}, 'Unable to generate a thumbnail');
-    #         }
-    #       });
-    #     }
-    #   });
-    # });
 
 
 def get_s3_key_prefix(course_id, object_type):

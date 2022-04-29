@@ -270,6 +270,17 @@ class Whiteboard(Base):
         std_commit()
         return whiteboard
 
+    def update_preview(self, **kwargs):
+        image_url = kwargs.get('image_url')
+        thumbnail_url = kwargs.get('thumbnail_url')
+        if thumbnail_url:
+            self.thumbnail_url = thumbnail_url
+        if image_url:
+            self.image_url = image_url
+        db.session.add(self)
+        std_commit()
+        return True
+
     def to_api_json(self):
         user_ids_online = [session.user_id for session in WhiteboardSession.find(self.id)]
 
