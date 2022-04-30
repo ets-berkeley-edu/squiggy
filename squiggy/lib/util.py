@@ -58,16 +58,19 @@ def is_admin(user):
 
 
 def is_student(user):
-    return 'student' in (user.canvas_course_role or '').lower()
+    canvas_course_role = _get_canvas_course_role(user)
+    return 'student' in (canvas_course_role or '').lower()
 
 
 def is_observer(user):
-    return 'observer' in (user.canvas_course_role or '').lower()
+    canvas_course_role = _get_canvas_course_role(user)
+    return 'observer' in (canvas_course_role or '').lower()
 
 
 def is_teaching(user):
-    role = user.canvas_course_role and user.canvas_course_role.lower()
-    return role and ('instructor' in role or 'teacher' in role)
+    canvas_course_role = _get_canvas_course_role(user)
+    canvas_course_role = (canvas_course_role or '').lower()
+    return 'instructor' in canvas_course_role or 'teacher' in canvas_course_role
 
 
 def isoformat(value):
@@ -107,3 +110,7 @@ def to_int(s):
 
 def utc_now():
     return datetime.utcnow().replace(tzinfo=pytz.utc)
+
+
+def _get_canvas_course_role(user):
+    return user['canvasCourseRole'] if type(user) is dict else user.canvas_course_role

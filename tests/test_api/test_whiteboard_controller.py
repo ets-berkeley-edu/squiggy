@@ -230,7 +230,13 @@ class TestExportAsAsset:
                 title='A is for Asset.',
                 whiteboard_id=whiteboard['id'],
             )
-            assert 'id' in api_json
+            asset_id = api_json['id']
+            assert asset_id
+            for user in api_json['users']:
+                activities = Activity.find_by_object_id(object_type='asset', object_id=asset_id)
+                add_asset_activities = list(filter(lambda a: a.activity_type == 'whiteboard_export', activities))
+                assert len(add_asset_activities) == 1
+                assert add_asset_activities[0].user_id == user['id']
 
 
 class TestRestoreWhiteboard:
