@@ -141,6 +141,13 @@ _test_users = [
         'canvas_full_name': 'Anne-sophie is Da Best',
         'canvas_email': 'anne-sophie@berkeley.edu',
     },
+    {
+        'canvas_user_id': 4328765,
+        'canvas_course_role': 'Student',
+        'canvas_enrollment_state': 'active',
+        'canvas_full_name': 'Valerie Solanas',
+        'canvas_email': 'valerie@berkeley.edu',
+    },
 ]
 
 _test_whiteboards = [

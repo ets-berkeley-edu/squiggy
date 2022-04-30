@@ -44,7 +44,7 @@ activities_type = ENUM(
     'get_asset_view',
     'get_discussion_entry_reply',
     'get_whiteboard_add_asset',
-    'get_whiteboard_remix'
+    'get_whiteboard_remix',
     'whiteboard_add_asset',
     'whiteboard_export',
     'whiteboard_remix',

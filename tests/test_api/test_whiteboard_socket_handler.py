@@ -142,8 +142,12 @@ def _get_mock_socket_id():
 
 
 def _get_unauthorized_user(whiteboard):
+    whiteboard_user_ids = [u['id'] for u in whiteboard['users']]
     course_id = whiteboard['courseId']
-    not_teaching = list(filter(lambda u: not is_admin(u) and not is_teaching(u), Course.find_by_id(course_id).users))
+
+    def _is_unauthorized(user):
+        return not is_admin(user) and not is_teaching(user) and user.id not in whiteboard_user_ids
+    not_teaching = list(filter(lambda u: _is_unauthorized(u), Course.find_by_id(course_id).users))
     return LoginSession(user_id=not_teaching[0].id)
 
 

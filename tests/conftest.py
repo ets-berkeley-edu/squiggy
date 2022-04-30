@@ -141,7 +141,7 @@ def authorized_user_session(authorized_user_id):
 
 @pytest.fixture(scope='function')
 def student_id():
-    return User.query.filter_by(canvas_course_role='Student').first().id
+    return _get_student().id
 
 
 @pytest.fixture(scope='function')
@@ -230,7 +230,7 @@ def mock_whiteboard(app, db_session):
     whiteboard = Whiteboard.create(
         course_id=course.id,
         title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',
-        users=[user],
+        users=[user, _get_student()],
     )
     std_commit(allow_test_environment=True)
 
@@ -307,3 +307,7 @@ def _get_mock_comments():
             'body': 'And where will she go, and what shall she do, when midnight comes around?',
         },
     ]
+
+
+def _get_student():
+    return User.query.filter_by(canvas_course_role='Student').first()

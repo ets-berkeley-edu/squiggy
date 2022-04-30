@@ -28,6 +28,7 @@ from uuid import uuid4
 
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
+from squiggy.models.activity import Activity
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
 from squiggy.models.whiteboard_element import WhiteboardElement
@@ -228,11 +229,11 @@ class Whiteboard(Base):
         }
 
     @classmethod
-    def remix(cls, asset, course_id, users):
+    def remix(cls, asset, course_id, user):
         whiteboard = cls.create(
             course_id=course_id,
             title=asset.title,
-            users=users,
+            users=[user],
         )
         whiteboard_id = whiteboard['id']
         for a in AssetWhiteboardElement.find_by_asset_id(asset.id):
@@ -242,6 +243,27 @@ class Whiteboard(Base):
                 uuid=str(uuid4()),
                 whiteboard_id=whiteboard_id,
             )
+        # If user is remixing their own whiteboard then no 'activity' is created.
+        user_id = user.id
+        course_id = user.course.id
+        if user_id not in [user.id for user in asset.users]:
+            Activity.create(
+                activity_type='whiteboard_remix',
+                course_id=course_id,
+                user_id=user_id,
+                object_type='asset',
+                object_id=asset.id,
+                asset_id=asset.id,
+            )
+            for asset_user in asset.users:
+                Activity.create(
+                    activity_type='get_whiteboard_remix',
+                    course_id=course_id,
+                    user_id=asset_user.id,
+                    object_type='asset',
+                    object_id=asset.id,
+                    asset_id=asset.id,
+                )
         return whiteboard
 
     @classmethod

@@ -71,7 +71,7 @@ def remix_whiteboard(asset_id):
     whiteboard = Whiteboard.remix(
         asset=asset,
         course_id=asset.course_id,
-        users=[User.find_by_id(current_user.user_id)],
+        user=User.find_by_id(current_user.user_id),
     )
     whiteboard_id = whiteboard['id']
     return tolerant_jsonify(Whiteboard.find_by_id(
