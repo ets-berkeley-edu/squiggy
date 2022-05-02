@@ -167,6 +167,7 @@ class Whiteboard(Base):
             LIMIT :limit OFFSET :offset
         """
         whiteboards_by_id = {}
+        users_by_whiteboard_id = {}
         for row in list(db.session.execute(sql, params)):
             whiteboard_id = int(row['id'])
             deleted_at = row['deleted_at']
@@ -180,48 +181,27 @@ class Whiteboard(Base):
                 'thumbnailUrl': row['thumbnail_url'],
                 'title': row['title'],
                 'updatedAt': isoformat(row['updated_at']),
-                'users': [],
             }
+            whiteboards_by_id[whiteboard_id] = whiteboard
             user_id = row['user_id']
             if user_id:
-                is_online = bool(row['socket_id'])
-                match = next((u for u in whiteboard['users'] if u['id'] == user_id), None)
-                if match and is_online:
-                    match['isOnline'] = True
-                else:
-                    whiteboard['users'].append({
-                        'id': user_id,
-                        'canvasCourseRole': row['canvas_course_role'],
-                        'canvasCourseSections': row['canvas_course_sections'],
-                        'canvasEnrollmentState': row['canvas_enrollment_state'],
-                        'canvasFullName': row['canvas_full_name'],
-                        'canvasImage': row['canvas_image'],
-                        'canvasUserId': row['canvas_user_id'],
-                        'isOnline': is_online,
-                    })
-            whiteboards_by_id[whiteboard_id] = whiteboard
+                if whiteboard_id not in users_by_whiteboard_id:
+                    users_by_whiteboard_id[whiteboard_id] = {}
+                users_by_whiteboard_id[whiteboard_id][user_id] = {
+                    'id': user_id,
+                    'canvasCourseRole': row['canvas_course_role'],
+                    'canvasCourseSections': row['canvas_course_sections'],
+                    'canvasEnrollmentState': row['canvas_enrollment_state'],
+                    'canvasFullName': row['canvas_full_name'],
+                    'canvasImage': row['canvas_image'],
+                    'canvasUserId': row['canvas_user_id'],
+                    'isOnline': bool(row['socket_id']),
+                }
 
-        # Get the number of online users for each whiteboard in the result set, excluding admin users who are not members.
-        # We do this in a separate query because joins with `subquery: false` above would interfere with paging.
-        # A user with multiple sessions in the same whiteboard counts as a single online user.
-        sql = """
-            SELECT
-              s.created_at, s.socket_id, s.updated_at, s.user_id, s.whiteboard_id, COUNT(DISTINCT s.user_id)::int AS online_count
-            FROM whiteboard_sessions s
-            LEFT JOIN whiteboard_users u
-              ON u.whiteboard_id = s.whiteboard_id AND u.user_id = s.user_id
-            WHERE u.whiteboard_id = ANY(:whiteboard_ids)
-            GROUP BY s.created_at, s.socket_id, s.updated_at, s.user_id, s.whiteboard_id
-            ORDER BY s.whiteboard_id DESC
-        """
-        for row in db.session.execute(sql, {'whiteboard_ids': list(whiteboards_by_id.keys())}):
-            whiteboard_id = row['whiteboard_id']
+        for whiteboard_id, users_by_id in users_by_whiteboard_id.items():
             whiteboard = whiteboards_by_id[whiteboard_id]
-            whiteboard['onlineCount'] = row['online_count']
-            user_id = row['user_id']
-            user = next((user for user in whiteboard['users'] if user['id'] == user_id), None)
-            if user:
-                user['isOnline'] = True
+            whiteboard['users'] = list(users_by_id.values())
+            whiteboard['onlineCount'] = len([u for u in whiteboard['users'] if u['isOnline']])
         return {
             'offset': offset,
             'results': list(whiteboards_by_id.values()),
