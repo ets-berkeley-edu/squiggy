@@ -21,7 +21,7 @@
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
         <v-list-item-content :class="{'sr-only': isMiniVariant}">
-          <span class="font-weight-bold green--text">{{ user.canvasFullName }}<span v-if="user.id === $currentUser.id"> (me)</span></span>
+          <span :id="`user-${user.id}-is-online`" class="font-weight-bold green--text">{{ user.canvasFullName }}<span v-if="user.id === $currentUser.id"> (me)</span></span>
           <span class="sr-only"> is online.</span>
         </v-list-item-content>
       </v-list-item>
@@ -39,7 +39,7 @@
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
         <v-list-item-content :class="{'sr-only': isMiniVariant}">
-          <span class="grey--text">{{ user.canvasFullName }}<span class="sr-only"> is not online.</span></span>
+          <span :id="`user-${user.id}-is-not-online`" class="grey--text">{{ user.canvasFullName }}<span class="sr-only"> is not online.</span></span>
         </v-list-item-content>
       </v-list-item>
     </v-list>

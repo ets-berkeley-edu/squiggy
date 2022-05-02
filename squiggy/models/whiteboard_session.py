@@ -58,16 +58,20 @@ class WhiteboardSession(Base):
         return whiteboard_session
 
     @classmethod
-    def delete(cls, socket_id):
-        whiteboard_session = cls.query.filter_by(socket_id=str(socket_id)).first()
-        if whiteboard_session:
-            db.session.delete(whiteboard_session)
-            std_commit()
-
-    @classmethod
-    def delete_stale_records(cls, older_than_minutes=5):
-        sql = f"DELETE FROM whiteboard_sessions WHERE updated_at < (now() - INTERVAL '{older_than_minutes} minutes')"
-        db.session.execute(text(sql))
+    def delete_all(cls, socket_ids, older_than_minutes=5):
+        db.session.execute(
+            text("""
+                DELETE FROM whiteboard_sessions
+                WHERE
+                    (socket_id = ANY(:socket_ids))
+                    OR (updated_at < (now() - INTERVAL ':older_than_minutes minutes'))
+                """),
+            {
+                'older_than_minutes': older_than_minutes,
+                'socket_ids': socket_ids,
+            },
+        )
+        std_commit()
 
     @classmethod
     def find(cls, whiteboard_id, user_id=None):
@@ -76,10 +80,6 @@ class WhiteboardSession(Base):
         else:
             filter_by = cls.query.filter_by(whiteboard_id=whiteboard_id)
         return filter_by.all()
-
-    @classmethod
-    def find_by_socket_id(cls, socket_id):
-        return cls.query.filter_by(socket_id=str(socket_id)).first()
 
     @classmethod
     def update_updated_at(cls, socket_id):

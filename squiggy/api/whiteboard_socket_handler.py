@@ -74,9 +74,6 @@ def join_whiteboard(current_user, socket_id, whiteboard_id):
         whiteboard = _get_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id)
         if not whiteboard:
             raise ResourceNotFoundError('Whiteboard not found.')
-        # Delete stale sessions of current_user
-        for session in WhiteboardSession.find(user_id=current_user.user_id, whiteboard_id=whiteboard_id):
-            WhiteboardSession.delete(session.socket_id)
         # Create
         return update_updated_at(
             current_user=current_user,
@@ -94,23 +91,24 @@ def leave_whiteboard(current_user, socket_id, whiteboard_id):
             raise ResourceNotFoundError('Whiteboard not found.')
         if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
             raise BadRequestError('Unauthorized')
-        WhiteboardSession.delete(socket_id)
+        WhiteboardSession.delete_all([socket_id])
     else:
         raise BadRequestError('Unauthorized')
 
 
 def update_updated_at(current_user, socket_id, whiteboard_id):
     if _is_allowed(current_user):
-        WhiteboardSession.delete_stale_records()
+        _delete_expired_sessions(
+            active_socket_id=socket_id,
+            current_user=current_user,
+            whiteboard_id=whiteboard_id,
+        )
         if is_student(current_user):
-            if WhiteboardSession.find_by_socket_id(socket_id=socket_id):
-                WhiteboardSession.update_updated_at(socket_id=socket_id)
-            else:
-                WhiteboardSession.create(
-                    socket_id=socket_id,
-                    user_id=current_user.user_id,
-                    whiteboard_id=whiteboard_id,
-                )
+            WhiteboardSession.create(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
         whiteboard = Whiteboard.find_by_id(
             current_user=current_user,
             include_deleted=True,
@@ -167,6 +165,13 @@ def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, white
         return whiteboard_element
     else:
         raise BadRequestError('Unauthorized')
+
+
+def _delete_expired_sessions(active_socket_id, current_user, whiteboard_id):
+    sessions = WhiteboardSession.find(user_id=current_user.user_id, whiteboard_id=whiteboard_id)
+    expired_sessions = list(filter(lambda s: s.socket_id != active_socket_id, sessions))
+    if expired_sessions:
+        WhiteboardSession.delete_all([s.socket_id for s in expired_sessions])
 
 
 def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
