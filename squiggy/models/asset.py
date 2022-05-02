@@ -177,8 +177,9 @@ class Asset(Base):
         # Invisible assets generate no activities.
         if visible and create_activity is not False:
             for user in users:
+                activity_type = 'whiteboard_export' if asset_type == 'whiteboard' else 'asset_add'
                 Activity.create(
-                    activity_type='asset_add',
+                    activity_type=activity_type,
                     course_id=course_id,
                     user_id=user.id,
                     object_type='asset',

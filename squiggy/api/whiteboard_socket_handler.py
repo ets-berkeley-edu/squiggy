@@ -28,6 +28,8 @@ from squiggy.api.api_util import can_update_whiteboard
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.util import is_student, safe_strip
 from squiggy.lib.whiteboard_preview_generator import WhiteboardPreviewGenerator
+from squiggy.models.activity import Activity
+from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
@@ -225,6 +227,27 @@ def _create_whiteboard_element(current_user, socket_id, whiteboard_element, whit
             element_asset_id=element.get('assetId'),
             uuid=element['uuid'],
         )
+        asset = Asset.find_by_id(asset_id)
+        user_id = current_user.user_id
+        if user_id not in [user.id for user in asset.users]:
+            course_id = current_user.course.id
+            Activity.create(
+                activity_type='whiteboard_add_asset',
+                course_id=course_id,
+                user_id=user_id,
+                object_type='whiteboard',
+                object_id=whiteboard_id,
+                asset_id=asset.id,
+            )
+            for asset_user in asset.users:
+                Activity.create(
+                    activity_type='get_whiteboard_add_asset',
+                    course_id=course_id,
+                    user_id=asset_user.id,
+                    object_type='whiteboard',
+                    object_id=whiteboard_id,
+                    asset_id=asset.id,
+                )
     update_updated_at(
         current_user=current_user,
         socket_id=socket_id,

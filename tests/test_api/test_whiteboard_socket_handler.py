@@ -32,7 +32,9 @@ from squiggy import std_commit
 from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.login_session import LoginSession
-from squiggy.lib.util import is_admin, is_teaching
+from squiggy.lib.util import is_admin, is_student, is_teaching
+from squiggy.models.activity import Activity
+from squiggy.models.asset import Asset
 from squiggy.models.course import Course
 from tests.util import mock_s3_bucket
 
@@ -63,18 +65,30 @@ class TestCreateWhiteboardElement:
     def test_authorized(self, app, mock_whiteboard):
         """Authorized creates whiteboard elements."""
         whiteboard_element = _mock_whiteboard_element()
+        asset = Asset.find_by_id(whiteboard_element['assetId'])
 
         with mock_s3_bucket(app):
+            current_user = _get_authorized_user(mock_whiteboard)
             api_json = upsert_whiteboard_element(
-                current_user=_get_authorized_user(mock_whiteboard),
+                current_user=current_user,
                 socket_id=_get_mock_socket_id(),
                 whiteboard_element=whiteboard_element,
                 whiteboard_id=mock_whiteboard['id'],
             )
-            assert api_json['assetId'] == whiteboard_element['assetId']
+            assert api_json['assetId'] == asset.id
+            assert whiteboard_element['assetId'] == asset.id
             assert api_json['element']['fill'] == whiteboard_element['element']['fill']
             assert api_json['element']['fontSize'] == whiteboard_element['element']['fontSize']
             assert api_json['element']['type'] == whiteboard_element['element']['type']
+
+            activities = Activity.find_by_object_id(object_type='whiteboard', object_id=mock_whiteboard['id'])
+            add_asset_activities = list(filter(lambda a: a.activity_type == 'whiteboard_add_asset', activities))
+            assert len(add_asset_activities) == 1
+            assert add_asset_activities[0].user_id == current_user.user_id
+
+            get_add_asset_activities = list(filter(lambda a: a.activity_type == 'get_whiteboard_add_asset', activities))
+            assert len(get_add_asset_activities) == 1
+            assert get_add_asset_activities[0].user_id in [user.id for user in asset.users]
 
 
 class TestUpdateWhiteboardElements:
@@ -132,9 +146,9 @@ class TestUpdateWhiteboardElements:
 
 
 def _get_authorized_user(whiteboard):
-    course_id = whiteboard['courseId']
-    instructors = list(filter(lambda u: is_teaching(u), Course.find_by_id(course_id).users))
-    return LoginSession(user_id=instructors[0].id)
+    student = next((user for user in whiteboard['users'] if is_student(user)), None)
+    assert student
+    return LoginSession(user_id=student['id'])
 
 
 def _get_mock_socket_id():
@@ -142,9 +156,13 @@ def _get_mock_socket_id():
 
 
 def _get_unauthorized_user(whiteboard):
+    whiteboard_user_ids = [u['id'] for u in whiteboard['users']]
     course_id = whiteboard['courseId']
-    not_teaching = list(filter(lambda u: not is_admin(u) and not is_teaching(u), Course.find_by_id(course_id).users))
-    return LoginSession(user_id=not_teaching[0].id)
+
+    def _is_unauthorized(user):
+        return not is_admin(user) and not is_teaching(user) and user.id not in whiteboard_user_ids
+    unauthorized_users = list(filter(lambda u: _is_unauthorized(u), Course.find_by_id(course_id).users))
+    return LoginSession(user_id=unauthorized_users[0].id)
 
 
 def _mock_whiteboard_element():

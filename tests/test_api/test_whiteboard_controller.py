@@ -28,10 +28,12 @@ from random import randint
 from uuid import uuid4
 
 from flask import current_app as app
+from flask_login import logout_user
 from squiggy import std_commit
 from squiggy.api.whiteboard_socket_handler import join_whiteboard
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_teaching
+from squiggy.models.activity import Activity
 from squiggy.models.course import Course
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -228,7 +230,13 @@ class TestExportAsAsset:
                 title='A is for Asset.',
                 whiteboard_id=whiteboard['id'],
             )
-            assert 'id' in api_json
+            asset_id = api_json['id']
+            assert asset_id
+            for user in api_json['users']:
+                activities = Activity.find_by_object_id(object_type='asset', object_id=asset_id)
+                add_asset_activities = list(filter(lambda a: a.activity_type == 'whiteboard_export', activities))
+                assert len(add_asset_activities) == 1
+                assert add_asset_activities[0].user_id == user['id']
 
 
 class TestRestoreWhiteboard:
@@ -275,9 +283,9 @@ class TestRemixWhiteboard:
         fake_auth.login(unauthorized_user_id)
         self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401)
 
-    def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
+    def test_authorized(self, client, fake_auth, mock_whiteboard, student_id):
         """Authorized user can update whiteboard."""
-        fake_auth.login(authorized_user_id)
+        fake_auth.login(student_id)
         whiteboard_id = mock_whiteboard['id']
         title = 'Remix me'
         response = client.post(
@@ -286,25 +294,42 @@ class TestRemixWhiteboard:
             content_type='application/json',
         )
         assert response.status_code == 200
-        asset = json.loads(response.data)
-        assert asset['title'] == title
+        asset_original = json.loads(response.data)
+        assert asset_original['title'] == title
 
-        remixed_whiteboard = self._api_remix_whiteboard(client, asset_id=asset['id'])
-        assert remixed_whiteboard['title'] == title
-        # Compare elements
-        original_whiteboard_elements = mock_whiteboard['whiteboardElements']
-        remixed_elements = remixed_whiteboard['whiteboardElements']
-        assert len(remixed_elements) == len(original_whiteboard_elements)
+        student = User.find_by_id(student_id)
+        some_other_student = User.find_by_canvas_user_id(4328765)
+        assert some_other_student.id != student.id
 
-        def _find_asset_element(elements):
-            return next((e for e in elements if e['assetId']), None)
+        for user in [student, some_other_student]:
+            logout_user()
+            fake_auth.login(user.id)
+            remixed_whiteboard = self._api_remix_whiteboard(client, asset_id=asset_original['id'])
+            assert remixed_whiteboard['title'] == title
+            # Compare elements
+            original_whiteboard_elements = mock_whiteboard['whiteboardElements']
+            remixed_elements = remixed_whiteboard['whiteboardElements']
+            assert len(remixed_elements) == len(original_whiteboard_elements)
 
-        original_asset_element = _find_asset_element(original_whiteboard_elements)
-        remixed_asset_element = _find_asset_element(remixed_elements)
-        asset_id = remixed_asset_element['assetId']
-        assert asset_id is not None
-        assert original_asset_element['assetId'] == asset_id
-        assert original_asset_element['uuid'] != remixed_asset_element['uuid']
+            def _find_asset_element(elements):
+                return next((e for e in elements if e['assetId']), None)
+
+            original_asset_element = _find_asset_element(original_whiteboard_elements)
+            remixed_asset_element = _find_asset_element(remixed_elements)
+            asset_id = remixed_asset_element['assetId']
+            assert asset_id is not None
+            assert original_asset_element['assetId'] == asset_id
+            assert original_asset_element['uuid'] != remixed_asset_element['uuid']
+
+        activities = Activity.find_by_object_id(object_type='asset', object_id=asset_original['id'])
+        # Only the "other" user gets points for 'whiteboard_remix'
+        activities_whiteboard_remix = list(filter(lambda a: a.activity_type == 'whiteboard_remix', activities))
+        assert len(activities_whiteboard_remix) == 1
+        assert activities_whiteboard_remix[0].user_id == some_other_student.id
+        # Our student only gets 'get_whiteboard_remix' points when some other student does the remix.
+        activities_get_whiteboard_remix = list(filter(lambda a: a.activity_type == 'get_whiteboard_remix', activities))
+        assert len(activities_get_whiteboard_remix) == 1
+        assert activities_get_whiteboard_remix[0].user_id == student.id
 
 
 # class TestRefreshAssetPreview:
