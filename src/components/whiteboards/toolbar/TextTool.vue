@@ -7,6 +7,7 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-text-btn"
+        :color="mode === 'text' ? 'white' : 'primary'"
         :disabled="disableAll"
         icon
         :title="title"
@@ -15,7 +16,7 @@
         v-on="on"
       >
         <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon :color="mode === 'text' ? 'white' : 'grey'" icon="font" />
+        <font-awesome-icon icon="font" size="lg" />
       </v-btn>
     </template>
     <v-card>

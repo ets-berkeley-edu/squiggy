@@ -2,6 +2,9 @@
   height: 270px !important;
   width: 236px !important;
 }
+.bg-primary {
+  background-color: #378dc5 !important;
+}
 .bg-transparent {
   background-color: transparent !important;
 }

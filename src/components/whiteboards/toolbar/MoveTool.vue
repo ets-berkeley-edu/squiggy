@@ -1,17 +1,16 @@
 <template>
   <v-btn
     id="toolbar-move-btn"
-    class="pr-2"
-    :disabled="disableAll || mode === 'move'"
+    :color="mode === 'move' ? 'white' : 'primary'"
     icon
     :title="title"
     value="move"
-    width="55px"
   >
     <span class="sr-only">{{ title }}</span>
     <font-awesome-icon
-      :color="mode === 'move' ? 'white' : 'grey'"
+      :color="{'white': mode === 'move'}"
       icon="arrows-up-down-left-right"
+      size="lg"
     />
   </v-btn>
 </template>

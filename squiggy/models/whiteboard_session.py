@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from sqlalchemy import ForeignKey, Integer, text
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat
+from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.base import Base
 
 
@@ -48,12 +48,16 @@ class WhiteboardSession(Base):
 
     @classmethod
     def create(cls, socket_id, user_id, whiteboard_id):
-        whiteboard_session = cls(
-            socket_id=str(socket_id),
-            user_id=user_id,
-            whiteboard_id=whiteboard_id,
-        )
-        db.session.add(whiteboard_session)
+        whiteboard_session = cls.query.filter_by(socket_id=socket_id).first()
+        if whiteboard_session:
+            whiteboard_session.updated_at = utc_now()
+        else:
+            whiteboard_session = cls(
+                socket_id=str(socket_id),
+                user_id=user_id,
+                whiteboard_id=whiteboard_id,
+            )
+            db.session.add(whiteboard_session)
         std_commit()
         return whiteboard_session
 

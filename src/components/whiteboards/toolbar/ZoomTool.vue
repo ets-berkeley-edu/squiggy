@@ -1,14 +1,16 @@
 <template>
   <v-btn
     id="toolbar-fit-to-screen"
-    :class="{'white--text primary': mode === 'zoom'}"
+    :color="mode === 'zoom' ? 'white' : 'primary'"
     icon
+    value="zoom"
     @click="toggleZoom"
   >
     <span class="sr-only">{{ fitToScreen ? 'Actual size' : 'Fit to screen' }}</span>
     <font-awesome-icon
-      :color="mode === 'zoom' ? 'white' : 'grey'"
+      :color="{'white': mode === 'zoom'}"
       :icon="fitToScreen ? 'search-plus' : 'search-minus'"
+      size="lg"
     />
   </v-btn>
 </template>

@@ -5,23 +5,14 @@
     class="whiteboard-app-bar"
     :collapse="collapse"
     :collapse-on-scroll="!collapse"
-    dense
+    color="white"
     scroll-target="whiteboard-container"
   >
     <v-btn color="black" icon @click="() => collapse = !collapse">
       <span class="sr-only">{{ collapse }}</span>
       <font-awesome-icon :icon="collapse ? 'chevron-right' : 'chevron-left'" />
     </v-btn>
-    <div class="mr-10 pt-2">
-      <v-badge
-        color="green"
-        content="6"
-      >
-        <span class="sr-only">Users</span>
-        <font-awesome-icon icon="user-group" />
-      </v-badge>
-    </div>
-    <h1 class="mood-ring whiteboard-title" :class="{'sr-only': collapse}">
+    <h1 v-show="!collapse" class="mood-ring whiteboard-title">
       {{ whiteboard.title }}
     </h1>
 
@@ -31,9 +22,12 @@
       v-if="!whiteboard.isReadOnly"
       v-model="modeProxy"
       active-class="primary"
+      background-color="white"
+      borderless
       :class="{'sr-only': collapse}"
     >
       <MoveTool />
+      <ZoomTool />
       <TextTool />
       <PencilBrushTool />
       <ShapeTool />
@@ -42,10 +36,10 @@
 
     <v-spacer></v-spacer>
 
-    <ZoomTool />
-    <ExportTool />
+    <Users :collapse="collapse" />
+    <ExportTool v-if="!collapse" />
     <SettingsTool
-      v-if="!whiteboard.isReadOnly || ($currentUser.isAdmin || $currentUser.isTeaching)"
+      v-if="!collapse && !whiteboard.isReadOnly || ($currentUser.isAdmin || $currentUser.isTeaching)"
       :open-delete-dialog="openDeleteDialog"
     />
     <DeleteWhiteboardDialog
@@ -60,14 +54,15 @@
 import AssetTool from '@/components/whiteboards/toolbar/AssetTool'
 import Context from '@/mixins/Context'
 import DeleteWhiteboardDialog from '@/components/whiteboards/DeleteWhiteboardDialog'
-import MoveTool from '@/components/whiteboards/toolbar/MoveTool'
 import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
+import MoveTool from '@/components/whiteboards/toolbar/MoveTool'
 import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
 import SettingsTool from '@/components/whiteboards/toolbar/SettingsTool'
 import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
 import TextTool from '@/components/whiteboards/toolbar/TextTool'
-import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
+import Users from '@/components/whiteboards/sidebar/Users'
 import Whiteboarding from '@/mixins/Whiteboarding'
+import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 
 export default {
   name: 'Toolbar2',
@@ -81,6 +76,7 @@ export default {
     SettingsTool,
     ShapeTool,
     TextTool,
+    Users,
     ZoomTool
   },
   computed: {
@@ -118,7 +114,7 @@ export default {
   z-index: 1100;
 }
 .whiteboard-title {
-  font-size: 18px;
+  font-size: 24px;
   max-width: 25%;
   overflow: hidden;
   padding-right: 15px;

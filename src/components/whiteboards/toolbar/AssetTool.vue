@@ -7,15 +7,19 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-add-asset"
-        :color="menu ? 'primary' : 'white'"
-        dense
-        :disabled="disableAll"
+        :color="mode === 'assets' ? 'white' : 'primary'"
+        icon
+        :title="title"
         value="assets"
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="images" />
-        <span class="sr-only">Asset</span>
+        <span class="sr-only">{{ title }}</span>
+        <font-awesome-icon
+          :color="{'white': mode === 'assets'}"
+          icon="images"
+          size="lg"
+        />
       </v-btn>
     </template>
     <v-card>
@@ -57,6 +61,7 @@ export default {
     }
   },
   data: () => ({
+    title: 'Add or create assets for your whiteboard',
     toggle: false
   }),
   computed: {
