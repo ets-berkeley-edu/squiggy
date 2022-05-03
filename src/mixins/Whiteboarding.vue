@@ -34,7 +34,13 @@ export default {
       'selected',
       'selectedAsset',
       'whiteboard'
-    ])
+    ]),
+    usersOffline() {
+      return _.filter(this.whiteboard.users, user => !user.isOnline)
+    },
+    usersOnline() {
+      return _.filter(this.whiteboard.users, user => user.isOnline)
+    }
   },
   methods: {
     ...mapActions('whiteboarding', [

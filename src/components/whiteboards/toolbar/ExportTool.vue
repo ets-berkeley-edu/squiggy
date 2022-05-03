@@ -7,16 +7,20 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-export"
-        :disabled="disableAll"
-        icon
+        class="mx-2"
+        color="pink"
+        dark
+        fab
+        input-value="menu"
+        small
         v-bind="attrs"
         v-on="on"
       >
         <span class="sr-only">Export</span>
-        <font-awesome-icon color="grey" icon="download" />
+        <font-awesome-icon color="white" icon="download" />
       </v-btn>
     </template>
-    <v-card class="pb-2">
+    <v-card>
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Export whiteboard to Asset Library</h2>
       </v-card-title>
@@ -38,7 +42,7 @@
               @click="() => menu = false"
             >
               <div>
-                <font-awesome-icon icon="download" size="2x" />
+                <font-awesome-icon icon="download" />
               </div>
               <div class="pl-3">
                 Download as image

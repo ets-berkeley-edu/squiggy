@@ -7,14 +7,19 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-draw-btn"
-        :disabled="disableAll"
+        :color="mode === 'draw' ? 'white' : 'primary'"
         icon
+        :title="title"
         value="draw"
         v-bind="attrs"
         v-on="on"
       >
-        <span class="sr-only">Draw</span>
-        <font-awesome-icon :color="mode === 'draw' ? 'white' : 'grey'" icon="paintbrush" />
+        <span class="sr-only">{{ title }}</span>
+        <font-awesome-icon
+          :color="{'white': mode === 'draw'}"
+          icon="paintbrush"
+          size="lg"
+        />
       </v-btn>
     </template>
     <v-card>
@@ -63,6 +68,9 @@ export default {
   name: 'PencilBrushTool',
   components: {ColorPicker},
   mixins: [Whiteboarding],
+  data: () => ({
+    title: 'Draw colorful and squiggly lines'
+  }),
   computed: {
     menu: {
       get() {

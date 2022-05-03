@@ -7,8 +7,7 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-shapes"
-        class="pl-2"
-        :disabled="disableAll || mode === 'shape'"
+        :color="mode === 'shape' ? 'white' : 'primary'"
         icon
         :title="title"
         value="shape"
@@ -16,7 +15,11 @@
         v-on="on"
       >
         <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon :color="mode === 'shape' ? 'white' : 'grey'" icon="shapes" />
+        <font-awesome-icon
+          :color="{'white': mode === 'shape'}"
+          icon="shapes"
+          size="lg"
+        />
       </v-btn>
     </template>
     <v-card>
