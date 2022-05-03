@@ -12,8 +12,8 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="chain" size="2x" />
-        <span class="pl-2">Add Link</span>
+        <font-awesome-icon icon="chain" />
+        <span class="pl-2">Add Link Asset</span>
       </v-btn>
     </template>
     <v-card>
@@ -140,13 +140,6 @@ export default {
   name: 'AddLinkAsset',
   mixins: [Whiteboarding],
   components: {AccessibleSelect},
-  props: {
-    watchDialog: {
-      default: () => {},
-      required: false,
-      type: Function
-    }
-  },
   data: () => ({
     asset: {
       categoryId: undefined,
@@ -154,14 +147,9 @@ export default {
       title: undefined,
       url: undefined
     },
-    isSaving: false,
-    dialog: false
+    dialog: false,
+    isSaving: false
   }),
-  watch: {
-    dialog(value) {
-      this.watchDialog(value)
-    }
-  },
   methods: {
     onClickCancel() {
       this.dialog = false
@@ -184,7 +172,6 @@ export default {
             title: undefined,
             url: undefined
           }
-          this.dialog = false
           this.isSaving = false
         })
       })

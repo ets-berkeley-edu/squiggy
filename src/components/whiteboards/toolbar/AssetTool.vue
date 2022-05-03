@@ -1,9 +1,8 @@
 <template>
   <v-menu
     v-model="menu"
-    close-on-content-click
+    :close-on-content-click="false"
     offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -11,30 +10,29 @@
         :color="menu ? 'primary' : 'white'"
         dense
         :disabled="disableAll"
-        height="48px"
-        rounded
+        value="assets"
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon :color="menu ? 'white' : 'grey'" icon="circle-plus" size="2x" />
-        <span class="pl-2">Asset</span>
+        <font-awesome-icon icon="images" />
+        <span class="sr-only">Asset</span>
       </v-btn>
     </template>
     <v-card>
       <v-list>
         <v-list-item>
           <v-list-item-action class="mr-0 w-100">
-            <AddExistingAssets :watch-dialog="watchChildDialog" />
+            <AddExistingAssets />
           </v-list-item-action>
         </v-list-item>
         <v-list-item>
           <v-list-item-action class="mr-0 w-100">
-            <UploadNewAsset :watch-dialog="watchChildDialog" />
+            <UploadNewAsset />
           </v-list-item-action>
         </v-list-item>
         <v-list-item>
           <v-list-item-action class="mr-0 w-100">
-            <AddLinkAsset :watch-dialog="watchChildDialog" />
+            <AddLinkAsset />
           </v-list-item-action>
         </v-list-item>
       </v-list>
@@ -52,26 +50,35 @@ export default {
   name: 'AssetTool',
   mixins: [Whiteboarding],
   components: {AddExistingAssets, AddLinkAsset, UploadNewAsset},
-  data: () => ({
-    menu: false,
-    toggle: false
-  }),
-  watch: {
-    menu(value) {
-      if (value) {
-        this.setMode('move')
-        this.$putFocusNextTick('menu-header')
-      }
-      this.setDisableAll(value)
+  props: {
+    hidden: {
+      required: false,
+      type: Boolean
     }
   },
-  methods: {
-    watchChildDialog(isOpen) {
-      this.setHideSidebar(isOpen)
-      if (isOpen) {
-        this.menu = false
+  data: () => ({
+    toggle: false
+  }),
+  computed: {
+    menu: {
+      get() {
+        return this.mode === 'assets'
+      },
+      set(value) {
+        if (value) {
+          this.setMode('assets')
+          this.$putFocusNextTick('menu-header')
+        } else {
+          this.resetSelected()
+          this.setMode('move')
+        }
+        this.setDisableAll(value)
       }
     }
+  },
+  beforeDestroy() {
+    this.resetSelected()
+    this.setDisableAll(false)
   }
 }
 </script>

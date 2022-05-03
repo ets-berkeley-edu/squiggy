@@ -1,17 +1,11 @@
 <template>
   <v-app>
-    <div v-if="!isLoading && !isReadOnly">
-      <Users v-if="!hideSidebar" />
-      <EditActiveFabricObject />
-    </div>
+    <Toolbar />
+    <EditActiveFabricObject v-if="!isLoading && !whiteboard.isReadOnly" />
     <v-main id="whiteboard-container" class="whiteboard-container">
       <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
       <div id="whiteboard-viewport" class="whiteboard-viewport" tabindex="0">
         <canvas id="canvas"></canvas>
-      </div>
-      <div v-if="!isLoading">
-        <ToolbarReadOnly v-if="isReadOnly && isScrollingCanvas" />
-        <Toolbar v-if="!isReadOnly" />
       </div>
     </v-main>
   </v-app>
@@ -21,8 +15,6 @@
 import Context from '@/mixins/Context'
 import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
-import ToolbarReadOnly from '@/components/whiteboards/toolbar/ToolbarReadOnly'
-import Users from '@/components/whiteboards/sidebar/Users'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import {getWhiteboard} from '@/api/whiteboards'
@@ -30,15 +22,10 @@ import {getWhiteboard} from '@/api/whiteboards'
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {EditActiveFabricObject, Toolbar, ToolbarReadOnly, Users},
+  components: {EditActiveFabricObject, Toolbar},
   data: () => ({
     pingJob: undefined
   }),
-  computed: {
-    isReadOnly() {
-      return this.$_.get(this.whiteboard, 'isReadOnly')
-    }
-  },
   created() {
     this.$loading()
     const whiteboardId = parseInt(this.$route.params.id, 10)

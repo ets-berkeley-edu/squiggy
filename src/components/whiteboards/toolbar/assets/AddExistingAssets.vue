@@ -12,8 +12,8 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="bars" size="2x" />
-        <span class="pl-3">Use existing</span>
+        <font-awesome-icon icon="bars" />
+        <span class="pl-3">Add existing assets</span>
       </v-btn>
     </template>
     <v-card class="active-card">
@@ -106,16 +106,9 @@ export default {
   name: 'AddExistingAssets',
   components: {AssetCard, AssetsHeader, InfiniteLoading},
   mixins: [AssetsSearch, Context, Utils, Whiteboarding],
-  props: {
-    watchDialog: {
-      default: () => {},
-      required: false,
-      type: Function
-    }
-  },
   data: () => ({
+    allAssetsLoaded: false,
     dialog: false,
-    isComplete: false,
     isDialogReady: false,
     isSaving: false,
     selectedAssetIds: []
@@ -123,7 +116,7 @@ export default {
   computed: {
     assetGrid() {
       if (this.isDialogReady) {
-        if (this.isComplete) {
+        if (this.allAssetsLoaded) {
           return this.assets
         } else {
           let skeletonCount = 10
@@ -144,7 +137,7 @@ export default {
   watch: {
     dialog(value) {
       this.resetSearch()
-      this.isComplete = false
+      this.allAssetsLoaded = false
       this.selectedAssetIds = []
       if (value) {
         this.search().then(() => {
@@ -152,9 +145,8 @@ export default {
           this.$putFocusNextTick('modal-header')
         })
       } else {
-        this.cancel()
+        this.reset()
       }
-      this.watchDialog(value)
     }
   },
   methods: {
@@ -166,16 +158,16 @@ export default {
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     infiniteHandler($state) {
-      this.isComplete = this.$_.size(this.assets) >= this.totalAssetCount
-      if (this.isComplete) {
+      this.allAssetsLoaded = this.$_.size(this.assets) >= this.totalAssetCount
+      if (this.allAssetsLoaded) {
         $state.complete()
       } else {
         this.nextPage().then(() => $state.loaded())
       }
     },
     reset() {
+      this.allAssetsLoaded = false
       this.isSaving = false
-      this.dialog = false
       this.selectedAssetIds = []
     },
     save() {

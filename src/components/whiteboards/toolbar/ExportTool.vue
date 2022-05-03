@@ -3,25 +3,17 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-export"
-        class="mx-2"
-        color="white"
-        dense
         :disabled="disableAll"
-        elevation="1"
-        height="48px"
         icon
-        rounded
-        width="55px"
         v-bind="attrs"
         v-on="on"
       >
         <span class="sr-only">Export</span>
-        <font-awesome-icon color="grey" icon="download" size="2x" />
+        <font-awesome-icon color="grey" icon="download" />
       </v-btn>
     </template>
     <v-card class="pb-2">
@@ -80,7 +72,6 @@ export default {
   },
   methods: {
     watchChildDialog(isOpen) {
-      this.setHideSidebar(isOpen)
       if (isOpen) {
         this.menu = false
       }

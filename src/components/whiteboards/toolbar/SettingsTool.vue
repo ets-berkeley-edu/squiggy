@@ -6,19 +6,14 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-settings"
-        color="white"
         dense
         :disabled="disableAll"
-        elevation="1"
-        height="48px"
         icon
-        rounded
-        width="55px"
         v-bind="attrs"
         v-on="on"
       >
-        <span class="sr-only">Settings</span>
-        <font-awesome-icon color="grey" icon="cog" size="2x" />
+        <span class="sr-only">Edit</span>
+        <font-awesome-icon color="grey" icon="cog" />
       </v-btn>
     </template>
     <v-card>

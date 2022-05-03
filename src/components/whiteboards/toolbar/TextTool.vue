@@ -3,19 +3,19 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-text-btn"
         :disabled="disableAll"
         icon
+        :title="title"
         value="text"
         v-bind="attrs"
         v-on="on"
       >
-        <span class="sr-only">Text</span>
-        <font-awesome-icon :color="mode === 'text' ? 'white' : 'grey'" icon="font" size="2x" />
+        <span class="sr-only">{{ title }}</span>
+        <font-awesome-icon :color="mode === 'text' ? 'white' : 'grey'" icon="font" />
       </v-btn>
     </template>
     <v-card>
@@ -56,6 +56,9 @@ export default {
   name: 'TextTool',
   components: {AccessibleSelect, ColorPicker},
   mixins: [Whiteboarding],
+  data: () => ({
+    title: 'Add text to your whiteboard'
+  }),
   computed: {
     menu: {
       get() {

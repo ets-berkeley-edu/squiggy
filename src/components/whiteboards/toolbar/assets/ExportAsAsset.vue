@@ -12,7 +12,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="images" size="2x" />
+        <font-awesome-icon icon="images" />
         <span class="pl-3">Export to Asset Library</span>
       </v-btn>
     </template>
@@ -133,13 +133,6 @@ export default {
   name: 'ExportAsAsset',
   mixins: [Whiteboarding],
   components: {AccessibleSelect},
-  props: {
-    watchDialog: {
-      default: () => {},
-      required: false,
-      type: Function
-    }
-  },
   data: () => ({
     asset: {
       categoryId: undefined,
@@ -149,11 +142,6 @@ export default {
     isExporting: false,
     dialog: false
   }),
-  watch: {
-    dialog(value) {
-      this.watchDialog(value)
-    }
-  },
   methods: {
     onClickCancel() {
       this.dialog = false

@@ -12,8 +12,8 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="laptop" size="2x" />
-        <span class="pl-2">Upload New</span>
+        <font-awesome-icon icon="laptop" />
+        <span class="pl-2">Upload a new asset</span>
       </v-btn>
     </template>
     <v-card>
@@ -158,13 +158,6 @@ export default {
   name: 'UploadNewAsset',
   components: {AccessibleSelect, Alert},
   mixins: [Context, Utils, Whiteboarding],
-  props: {
-    watchDialog: {
-      default: () => {},
-      required: false,
-      type: Function
-    }
-  },
   data() {
     return {
       alert: undefined,
@@ -180,11 +173,6 @@ export default {
         v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
       ],
       uploading: false
-    }
-  },
-  watch: {
-    dialog(value) {
-      this.watchDialog(value)
     }
   },
   methods: {
@@ -215,7 +203,6 @@ export default {
         createFileAsset(this.categoryId, this.description, this.title, this.file).then(asset => {
           this.addAsset(asset).then(() => {
             this.$announcer.polite('File uploaded. Asset created.')
-            this.dialog = false
             this.isSaving = false
             this.uploading = false
           })
