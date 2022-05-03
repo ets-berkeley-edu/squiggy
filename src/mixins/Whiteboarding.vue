@@ -28,7 +28,6 @@ export default {
       'categories',
       'disableAll',
       'fitToScreen',
-      'hideSidebar',
       'isModifyingElement',
       'isScrollingCanvas',
       'mode',
@@ -49,7 +48,6 @@ export default {
       'resetSelected',
       'restoreWhiteboard',
       'setDisableAll',
-      'setHideSidebar',
       'setMode',
       'updateSelected',
       'toggleZoom'

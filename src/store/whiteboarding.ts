@@ -22,7 +22,6 @@ const state = {
   clipboard: undefined,
   disableAll: true,
   fitToScreen: true,
-  hideSidebar: false,
   // Variable that will keep track of whether a shape is currently being drawn
   isDrawingShape: false,
   // Keep track of whether the currently selected elements are in the process of being moved, scaled or rotated.
@@ -43,7 +42,6 @@ const getters = {
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll,
   fitToScreen: (state: any): boolean => state.fitToScreen,
-  hideSidebar: (state: any): boolean => state.hideSidebar,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   isScrollingCanvas: (state: any): boolean => state.isScrollingCanvas,
   mode: (state: any): string => state.mode,
@@ -85,7 +83,6 @@ const mutations = {
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
-  setHideSidebar: (state: any, hideSidebar: boolean) => state.hideSidebar = hideSidebar,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
@@ -134,7 +131,6 @@ const actions = {
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
   setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
-  setHideSidebar: ({commit}, hideSidebar: boolean) => commit('setHideSidebar', hideSidebar),
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
   setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
   setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),

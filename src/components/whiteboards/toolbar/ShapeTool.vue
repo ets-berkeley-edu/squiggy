@@ -3,7 +3,6 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -11,13 +10,13 @@
         class="pl-2"
         :disabled="disableAll || mode === 'shape'"
         icon
+        :title="title"
         value="shape"
-        width="55px"
         v-bind="attrs"
         v-on="on"
       >
-        <span class="sr-only">Shapes</span>
-        <font-awesome-icon :color="mode === 'shape' ? 'white' : 'grey'" icon="shapes" size="2x" />
+        <span class="sr-only">{{ title }}</span>
+        <font-awesome-icon :color="mode === 'shape' ? 'white' : 'grey'" icon="shapes" />
       </v-btn>
     </template>
     <v-card>
@@ -68,7 +67,8 @@ export default {
   mixins: [Whiteboarding],
   data: () => ({
     color: '#000000',
-    shapeStyle: 'Rect:thin'
+    shapeStyle: 'Rect:thin',
+    title: 'Add shapes to your whiteboard'
   }),
   computed: {
     menu: {

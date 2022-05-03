@@ -3,7 +3,6 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
-    top
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -15,7 +14,7 @@
         v-on="on"
       >
         <span class="sr-only">Draw</span>
-        <font-awesome-icon :color="mode === 'draw' ? 'white' : 'grey'" icon="paintbrush" size="2x" />
+        <font-awesome-icon :color="mode === 'draw' ? 'white' : 'grey'" icon="paintbrush" />
       </v-btn>
     </template>
     <v-card>

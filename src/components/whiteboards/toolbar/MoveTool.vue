@@ -4,14 +4,14 @@
     class="pr-2"
     :disabled="disableAll || mode === 'move'"
     icon
+    :title="title"
     value="move"
     width="55px"
   >
-    <span class="sr-only">Move and transform</span>
+    <span class="sr-only">{{ title }}</span>
     <font-awesome-icon
       :color="mode === 'move' ? 'white' : 'grey'"
       icon="arrows-up-down-left-right"
-      size="2x"
     />
   </v-btn>
 </template>
@@ -21,6 +21,9 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'MoveTool',
-  mixins: [Whiteboarding]
+  mixins: [Whiteboarding],
+  data: () => ({
+    title: 'Move and transform whiteboard elements'
+  })
 }
 </script>
