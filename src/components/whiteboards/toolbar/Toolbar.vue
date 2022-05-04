@@ -49,7 +49,7 @@
             <Users :collapse="collapse" />
             <ExportTool v-if="!collapse" />
             <SettingsTool
-              v-if="!collapse && !whiteboard.isReadOnly || ($currentUser.isAdmin || $currentUser.isTeaching)"
+              v-if="!collapse && (!whiteboard.isReadOnly || $currentUser.isAdmin || $currentUser.isTeaching)"
               :open-delete-dialog="openDeleteDialog"
             />
           </div>

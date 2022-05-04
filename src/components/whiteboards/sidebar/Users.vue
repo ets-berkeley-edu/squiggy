@@ -53,12 +53,12 @@
         </v-list-item-content>
       </v-list-item>
       <v-list-item v-if="!usersOnline.length">
-        <v-list-item-content class="pl-2 my-3">
+        <v-list-item-content class="pl-2 my-2">
           <span class="font-weight-bold red--text">No one is active.</span>
         </v-list-item-content>
       </v-list-item>
       <v-divider class="mb-2 mx-2" />
-      <v-list-item v-for="(user, index) in usersOffline" :key="user.id" :class="{'mb-2': index < usersOffline.length - 1}">
+      <v-list-item v-for="(user, index) in usersOffline" :key="user.id" :class="{'mb-1': index < usersOffline.length - 1}">
         <v-list-item-avatar>
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
