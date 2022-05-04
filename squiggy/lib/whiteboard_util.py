@@ -31,8 +31,6 @@ import tempfile
 
 from flask import current_app as app
 from squiggy import mock
-from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
-from squiggy.models.whiteboard_element import WhiteboardElement
 
 
 @mock('fixtures/mock_whiteboard.png')
@@ -68,89 +66,3 @@ def to_png_file(whiteboard):
         """)
     except:  # noqa: E722
         app.logger.error(sys.exc_info()[0])
-
-
-def is_ready_to_export(whiteboard_id):
-    # TODO:
-    elements = {
-        'exportable': [],
-        'pending': [],
-        'errored': [],
-    }
-    asset_ids = []
-    for whiteboard_element in WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id):
-        if not whiteboard_element.asset_id:
-            element = whiteboard_element.element
-            src = element.get('src')
-            if src and is_s3_preview_url(src):
-                element['src'] = get_s3_signed_url(src)
-            elements['exportable'] = element
-        elif whiteboard_element.asset_id not in asset_ids:
-            asset_ids.append(whiteboard_element.asset_id)
-
-    if not asset_ids:
-        # No need to continue
-        return
-    # assets = Asset.get_assets(
-    #     session=session,
-    #     order_by='recent',
-    #     offset=0,
-    #     limit=50,
-    #     filters={
-    #
-    #     },
-    # )
-    #   var assetOpts = {
-    #     // Include deleted assets, since whiteboards may still refer to them.
-    #     'paranoid': false,
-    #     'where': {'id': assetIds}
-    #   };
-    #   DB.Asset.findAll(assetOpts).complete(function(err, assets) {
-    #     async.each(whiteboard.whiteboardElements, function(whiteboardElement, done) {
-    #       var assetId = whiteboardElement.asset_id;
-    #       if (!assetId) {
-    #         // Nothing to do if this element is not sourced from an asset.
-    #         return done();
-    #       } else {
-    #         var matchingAsset = _.find(assets, {'id': assetId});
-    #         if (!matchingAsset) {
-    #           log.error({'whiteboardElement': whiteboardElement}, 'Asset not found for whiteboard element');
-    #           elements.errored.push(whiteboardElement.id);
-    #           return done();
-    #         }
-    #         var imageUrl = _.get(matchingAsset, 'image_url');
-    #         var previewStatus = _.get(matchingAsset, 'preview_status');
-    #         var width = _.get(matchingAsset, 'preview_metadata.image_width');
-    #         // If we don't have complete preview data, mark the asset as lacking a preview.
-    #         if (previewStatus !== 'done' || !imageUrl || !width) {
-    #           log.warn({
-    #             'whiteboard': whiteboard.id,
-    #             'whiteboardElement': whiteboardElement.id,
-    #             'asset': matchingAsset
-    #           }, 'Whiteboard element lacks preview data for export');
-    #           if (previewStatus === 'pending') {
-    #             elements.pending.push(whiteboardElement.id);
-    #           } else {
-    #             elements.errored.push(whiteboardElement.id);
-    #           }
-    #           return done();
-    #         } else {
-    #           // The element has complete preview data and is exportable.
-    #           elements.exportable.push(whiteboardElement.element);
-    #           if (imageUrl !== whiteboardElement.element.src) {
-    #             // If the whiteboard element has not been updated to reflect the preview, update it now.
-    #             updateAssetPreviewForElement(whiteboardElement, imageUrl, width, done);
-    #           } else {
-    #             return done();
-    #           }
-    #         }
-    #       }
-    #     }, function(err) {
-    #       if (err) {
-    #         return callback(err);
-    #       } else {
-    #         return callback(null, elements);
-    #       }
-    #     });
-    #   });
-    return True

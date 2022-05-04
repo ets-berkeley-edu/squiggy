@@ -27,8 +27,10 @@ import re
 from uuid import uuid4
 
 from squiggy import db, std_commit
+from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.activity import Activity
+from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.base import Base
 from squiggy.models.whiteboard_element import WhiteboardElement
@@ -112,6 +114,54 @@ class Whiteboard(Base):
         if whiteboard:
             whiteboard.deleted_at = utc_now()
             std_commit()
+
+    @classmethod
+    def get_exportability_summary(cls, current_user, whiteboard_id):
+        summary = {
+            'errored': [],
+            'exportable': [],
+            'pending': [],
+        }
+        asset_ids = []
+        whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
+        for whiteboard_element in whiteboard_elements:
+            if not whiteboard_element.asset_id:
+                element = whiteboard_element.element
+                src = element.get('src')
+                if src and is_s3_preview_url(src):
+                    element['src'] = get_s3_signed_url(src)
+                summary['exportable'] = element
+            elif whiteboard_element.asset_id not in asset_ids:
+                asset_ids.append(whiteboard_element.asset_id)
+
+        if asset_ids:
+            assets = Asset.get_assets(
+                filters={'asset_ids': asset_ids},
+                limit=100000,
+                offset=0,
+                order_by='id',
+                session=current_user,
+            )
+            assets_by_id = dict((asset.id, asset) for asset in assets)
+            for whiteboard_element in [e for e in whiteboard_elements if e['assetId']]:
+                asset_id = whiteboard_element['assetId']
+                asset = assets_by_id.get(asset_id)
+                if asset:
+                    image_url = asset['imageUrl']
+                    preview_status = asset['previewStatus']
+                    if not image_url or preview_status != 'done':
+                        whiteboard_element_id = whiteboard_element['id']
+                        key = 'pending' if preview_status == 'pending' else 'errored'
+                        summary[key].append(whiteboard_element_id)
+                    else:
+                        element = whiteboard_element['element']
+                        summary['exportable'].append(element)
+                        if image_url != element['src']:
+                            # TODO: If whiteboard element has not been updated to reflect the preview then update it here?
+                            pass
+                else:
+                    summary['errored'] = f'Asset (id: {asset_id}) not found for whiteboard element.'
+        return summary
 
     @classmethod
     def get_whiteboards(
