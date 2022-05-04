@@ -7,13 +7,19 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-upload-new-asset"
-        class="justify-start w-100"
-        text
+        :color="mode === 'upload' ? 'white' : 'primary'"
+        icon
+        title="Upload a new asset"
+        value="upload"
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="laptop" />
-        <span class="pl-2">Upload a new asset</span>
+        <span class="sr-only">Upload a new asset</span>
+        <font-awesome-icon
+          :color="{'white': mode === 'upload'}"
+          icon="upload"
+          size="lg"
+        />
       </v-btn>
     </template>
     <v-card>
@@ -163,10 +169,10 @@ export default {
       alert: undefined,
       categoryId: undefined,
       description: undefined,
+      dialog: false,
       file: undefined,
       fileAssetValid: false,
       isSaving: false,
-      dialog: false,
       title: '',
       titleRules: [
         v => !!this.$_.trim(v) || 'Please enter a title',

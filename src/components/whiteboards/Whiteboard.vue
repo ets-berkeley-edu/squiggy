@@ -8,12 +8,29 @@
         <canvas id="canvas"></canvas>
       </div>
     </v-main>
+    <div v-if="whiteboard">
+      <Snackbar
+        :timeout="3000"
+        :top="true"
+      >
+        <h2 class="green--text text--lighten-2">Welcome!</h2>
+        <div class="py-2 subtitle-2">
+          <h3 class="green--text text--lighten-3">Whiteboard:</h3>
+          {{ whiteboard.title }}
+        </div>
+        <div class="pb-2 subtitle-2">
+          <h3 class="green--text text--lighten-3">Collaborator{{ whiteboard.users.length === 1 ? '' : 's' }}</h3>
+          {{ oxfordJoin($_.map(whiteboard.users, 'canvasFullName')) }}
+        </div>
+      </Snackbar>
+    </div>
   </v-app>
 </template>
 
 <script>
 import Context from '@/mixins/Context'
 import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
+import Snackbar from '@/components/util/Snackbar'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
@@ -22,8 +39,9 @@ import {getWhiteboard} from '@/api/whiteboards'
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {EditActiveFabricObject, Toolbar},
+  components: {Snackbar, EditActiveFabricObject, Toolbar},
   data: () => ({
+    isSnackbarOpen: false,
     pingJob: undefined
   }),
   created() {

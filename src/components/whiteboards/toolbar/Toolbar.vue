@@ -10,49 +10,38 @@
   >
     <v-container class="px-0" fluid>
       <v-row justify="space-between" no-gutters>
-        <v-col
-          class="align-center d-flex justify-start"
-          cols="4"
-        >
-          <div class="pr-2">
-            <v-btn
-              id="collapse-and-expand-the-app-bar"
-              color="green"
-              fab
-              input-value="collapse"
-              :small="!collapse"
-              :x-small="collapse"
-              @click="() => collapse = !collapse"
-            >
-              <font-awesome-icon
-                color="white"
-                :icon="collapse ? 'chevron-right' : 'chevron-left'"
-                size="lg"
-              />
-            </v-btn>
-          </div>
-          <h1
-            v-if="!collapse"
-            id="whiteboard-title"
-            class="whiteboard-title"
+        <v-col class="align-center d-flex" cols="8">
+          <h1 id="whiteboard-title" class="sr-only">{{ whiteboard.title }}</h1>
+          <v-btn
+            id="collapse-and-expand-the-app-bar"
+            color="green"
+            fab
+            input-value="collapse"
+            :small="!collapse"
+            :x-small="collapse"
+            @click="() => collapse = !collapse"
           >
-            {{ whiteboard.title }}
-          </h1>
-        </v-col>
-        <v-col v-if="!collapse" class="text-center" cols="4">
+            <font-awesome-icon
+              color="white"
+              :icon="collapse ? 'chevron-right' : 'chevron-left'"
+              size="lg"
+            />
+          </v-btn>
           <v-btn-toggle
-            v-if="!whiteboard.isReadOnly"
+            v-if="!collapse && !whiteboard.isReadOnly"
             v-model="modeProxy"
             active-class="primary"
             background-color="white"
-            borderless
+            class="ml-6"
           >
             <MoveTool />
             <ZoomTool />
             <TextTool />
             <PencilBrushTool />
             <ShapeTool />
-            <AssetTool />
+            <AddExistingAssets />
+            <AddLinkAsset />
+            <UploadNewAsset />
           </v-btn-toggle>
         </v-col>
         <v-col cols="4">
@@ -76,7 +65,8 @@
 </template>
 
 <script>
-import AssetTool from '@/components/whiteboards/toolbar/AssetTool'
+import AddExistingAssets from '@/components/whiteboards/toolbar/assets/AddExistingAssets'
+import AddLinkAsset from '@/components/whiteboards/toolbar/assets/AddLinkAsset'
 import Context from '@/mixins/Context'
 import DeleteWhiteboardDialog from '@/components/whiteboards/DeleteWhiteboardDialog'
 import ExportTool from '@/components/whiteboards/toolbar/ExportTool'
@@ -85,6 +75,7 @@ import PencilBrushTool from '@/components/whiteboards/toolbar/PencilBrushTool'
 import SettingsTool from '@/components/whiteboards/toolbar/SettingsTool'
 import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
 import TextTool from '@/components/whiteboards/toolbar/TextTool'
+import UploadNewAsset from '@/components/whiteboards/toolbar/assets/UploadNewAsset'
 import Users from '@/components/whiteboards/sidebar/Users'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
@@ -93,7 +84,8 @@ export default {
   name: 'Toolbar2',
   mixins: [Context, Whiteboarding],
   components: {
-    AssetTool,
+    AddExistingAssets,
+    AddLinkAsset,
     DeleteWhiteboardDialog,
     ExportTool,
     MoveTool,
@@ -101,6 +93,7 @@ export default {
     SettingsTool,
     ShapeTool,
     TextTool,
+    UploadNewAsset,
     Users,
     ZoomTool
   },
@@ -137,12 +130,5 @@ export default {
 <style scoped>
 .whiteboard-app-bar {
   z-index: 1100;
-}
-.whiteboard-title {
-  color: green;
-  font-size: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 </style>
