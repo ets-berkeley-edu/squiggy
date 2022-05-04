@@ -118,6 +118,13 @@ def export_as_asset(whiteboard_id):
         raise ResourceNotFoundError('Not found')
 
 
+@app.route('/api/whiteboard/<whiteboard_id>/exportability_summary')
+@feature_flag_whiteboards
+@login_required
+def exportability_summary(whiteboard_id):
+    return tolerant_jsonify(Whiteboard.get_exportability_summary(current_user, whiteboard_id))
+
+
 @app.route('/api/whiteboard/<whiteboard_id>/download/png')
 @feature_flag_whiteboards
 @login_required

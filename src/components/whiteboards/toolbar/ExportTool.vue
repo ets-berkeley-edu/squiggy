@@ -20,7 +20,7 @@
         <font-awesome-icon color="white" icon="download" />
       </v-btn>
     </template>
-    <v-card>
+    <v-card v-if="exportability">
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Export whiteboard to Asset Library</h2>
       </v-card-title>
@@ -30,7 +30,7 @@
             <ExportAsAsset :watch-dialog="watchChildDialog" />
           </v-list-item-action>
         </v-list-item>
-        <v-list-item v-if="whiteboard">
+        <v-list-item v-if="whiteboard && !exportability.errored.length && !exportability.pending.length">
           <v-list-item-action class="mr-0 my-0 w-100">
             <v-btn
               id="toolbar-download-as-image-btn"
@@ -50,6 +50,16 @@
             </v-btn>
           </v-list-item-action>
         </v-list-item>
+        <v-list-item v-if="exportability.errored.length" class="d-flex">
+          <font-awesome-icon icon="exclamation-triangle" class="pr-2" />
+          <div class="red--text">
+            Whiteboard cannot be exported due to an asset processing error. Remove problematic assets and retry.
+          </div>
+        </v-list-item>
+        <v-list-item v-if="exportability.pending.length">
+          <font-awesome-icon icon="exclamation-triangle" class="pr-2" />
+          <div class="red--text">Whiteboard cannot be exported yet, assets are still processing. Try again soon.</div>
+        </v-list-item>
       </v-list>
     </v-card>
   </v-menu>
@@ -58,21 +68,31 @@
 <script>
 import Whiteboarding from '@/mixins/Whiteboarding'
 import ExportAsAsset from '@/components/whiteboards/toolbar/assets/ExportAsAsset'
+import {getExportabilitySummary} from '@/api/whiteboards'
 
 export default {
   name: 'ExportTool',
   mixins: [Whiteboarding],
   components: {ExportAsAsset},
   data: () => ({
+    exportability: undefined,
     menu: false
   }),
   watch: {
     menu(value) {
       if (value) {
+        getExportabilitySummary(this.whiteboard.id).then(summary => {
+          this.exportability = summary
+        })
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(value)
     }
+  },
+  created() {
+    getExportabilitySummary(this.whiteboard.id).then(summary => {
+      this.exportability = summary
+    })
   },
   methods: {
     watchChildDialog(isOpen) {
