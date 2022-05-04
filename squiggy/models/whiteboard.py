@@ -142,20 +142,18 @@ class Whiteboard(Base):
                 order_by='id',
                 session=current_user,
             )
-            assets_by_id = dict((asset.id, asset) for asset in assets)
-            for whiteboard_element in [e for e in whiteboard_elements if e['assetId']]:
-                asset_id = whiteboard_element['assetId']
+            assets_by_id = dict((asset['id'], asset) for asset in assets['results'])
+            for whiteboard_element in [e for e in whiteboard_elements if e.asset_id]:
+                asset_id = whiteboard_element.asset_id
                 asset = assets_by_id.get(asset_id)
                 if asset:
                     image_url = asset['imageUrl']
                     preview_status = asset['previewStatus']
                     if not image_url or preview_status != 'done':
-                        whiteboard_element_id = whiteboard_element['id']
                         key = 'pending' if preview_status == 'pending' else 'errored'
-                        summary[key].append(whiteboard_element_id)
+                        summary[key].append(whiteboard_element.id)
                     else:
-                        element = whiteboard_element['element']
-                        summary['exportable'].append(element)
+                        summary['exportable'].append(whiteboard_element.element)
                         if image_url != element['src']:
                             # TODO: If whiteboard element has not been updated to reflect the preview then update it here?
                             pass

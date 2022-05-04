@@ -1,8 +1,9 @@
 <template>
   <v-snackbar
     v-model="snackbar"
+    centered
     :color="color"
-    rounded
+    multi-line
     :timeout="timeout"
     :top="top"
   >

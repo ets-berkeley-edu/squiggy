@@ -26,6 +26,10 @@
       <v-card-text class="pt-8">
         <div class="pb-4">
           <h2>Upload a File</h2>
+          <div class="pt-2 subtitle-1">
+            The uploaded file will be used to create a new asset.
+            Next, the new asset will be added to this whiteboard.
+          </div>
         </div>
         <div
           v-if="!uploading && !file"
@@ -209,6 +213,7 @@ export default {
         createFileAsset(this.categoryId, this.description, this.title, this.file).then(asset => {
           this.addAsset(asset).then(() => {
             this.$announcer.polite('File uploaded. Asset created.')
+            this.dialog = false
             this.isSaving = false
             this.uploading = false
           })
