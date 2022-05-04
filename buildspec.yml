@@ -18,7 +18,7 @@ phases:
     commands:
       - npm install -g @vue/cli
       - npm run build-vue
-      - tsc --resolveJsonModule --esModuleInterop ./scripts/node_js/whiteboard_to_png.ts
+      - tsc --resolveJsonModule --esModuleInterop ./scripts/node_js/save_whiteboard_as_png.ts
 
   post_build:
     commands:
