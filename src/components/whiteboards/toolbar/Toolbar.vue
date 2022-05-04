@@ -2,46 +2,71 @@
   <v-app-bar
     v-if="whiteboard"
     app
-    class="whiteboard-app-bar"
+    class="whiteboard-app-bar pl-0"
     :collapse="collapse"
     :collapse-on-scroll="!collapse"
     color="white"
     scroll-target="whiteboard-container"
   >
-    <v-btn color="black" icon @click="() => collapse = !collapse">
-      <span class="sr-only">{{ collapse }}</span>
-      <font-awesome-icon :icon="collapse ? 'chevron-right' : 'chevron-left'" />
-    </v-btn>
-    <h1 v-show="!collapse" class="mood-ring whiteboard-title">
-      {{ whiteboard.title }}
-    </h1>
-
-    <v-spacer></v-spacer>
-
-    <v-btn-toggle
-      v-if="!whiteboard.isReadOnly"
-      v-model="modeProxy"
-      active-class="primary"
-      background-color="white"
-      borderless
-      :class="{'sr-only': collapse}"
-    >
-      <MoveTool />
-      <ZoomTool />
-      <TextTool />
-      <PencilBrushTool />
-      <ShapeTool />
-      <AssetTool />
-    </v-btn-toggle>
-
-    <v-spacer></v-spacer>
-
-    <Users :collapse="collapse" />
-    <ExportTool v-if="!collapse" />
-    <SettingsTool
-      v-if="!collapse && !whiteboard.isReadOnly || ($currentUser.isAdmin || $currentUser.isTeaching)"
-      :open-delete-dialog="openDeleteDialog"
-    />
+    <v-container class="px-0" fluid>
+      <v-row justify="space-between" no-gutters>
+        <v-col
+          class="align-center d-flex justify-start"
+          cols="4"
+        >
+          <div class="pr-2">
+            <v-btn
+              id="collapse-and-expand-the-app-bar"
+              color="green"
+              fab
+              input-value="collapse"
+              :small="!collapse"
+              :x-small="collapse"
+              @click="() => collapse = !collapse"
+            >
+              <font-awesome-icon
+                color="white"
+                :icon="collapse ? 'chevron-right' : 'chevron-left'"
+                size="lg"
+              />
+            </v-btn>
+          </div>
+          <h1
+            v-if="!collapse"
+            id="whiteboard-title"
+            class="whiteboard-title"
+          >
+            {{ whiteboard.title }}
+          </h1>
+        </v-col>
+        <v-col v-if="!collapse" class="text-center" cols="4">
+          <v-btn-toggle
+            v-if="!whiteboard.isReadOnly"
+            v-model="modeProxy"
+            active-class="primary"
+            background-color="white"
+            borderless
+          >
+            <MoveTool />
+            <ZoomTool />
+            <TextTool />
+            <PencilBrushTool />
+            <ShapeTool />
+            <AssetTool />
+          </v-btn-toggle>
+        </v-col>
+        <v-col cols="4">
+          <div class="align-center d-flex justify-end">
+            <Users :collapse="collapse" />
+            <ExportTool v-if="!collapse" />
+            <SettingsTool
+              v-if="!collapse && !whiteboard.isReadOnly || ($currentUser.isAdmin || $currentUser.isTeaching)"
+              :open-delete-dialog="openDeleteDialog"
+            />
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
     <DeleteWhiteboardDialog
       :on-cancel="cancelDelete"
       :on-confirm-delete="deleteConfirmed"
@@ -114,49 +139,10 @@ export default {
   z-index: 1100;
 }
 .whiteboard-title {
-  font-size: 24px;
-  max-width: 25%;
+  color: green;
+  font-size: 20px;
   overflow: hidden;
-  padding-right: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.mood-ring {
-  -webkit-animation:colorchange 300s infinite alternate;
-}
-@-webkit-keyframes colorchange {
-  0% {
-    color: darkgrey;
-  }
-  10% {
-    color: #378dc5;
-  }
-  20% {
-    color: #1abc9c;
-  }
-  30% {
-    color: #d35400;
-  }
-  40% {
-    color: #378dc5;
-  }
-  50% {
-    color: white;
-  }
-  60% {
-    color: #378dc5;
-  }
-  70% {
-    color: #2980b9;
-  }
-  80% {
-    color: #f1c40f;
-  }
-  90% {
-    color: #2980b9;
-  }
-  100% {
-    color: pink;
-  }
 }
 </style>

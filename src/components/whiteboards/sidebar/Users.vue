@@ -15,7 +15,7 @@
         <v-badge
           bordered
           bottom
-          color="green"
+          :color="usersOnline.length ? 'green' : 'grey'"
           :content="usersOnline.length"
           :offset-x="collapse ? 20 : 10"
           :offset-y="collapse ? 20 : 10"
@@ -43,7 +43,12 @@
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
         <v-list-item-content>
-          <span :id="`user-${user.id}-is-online`" class="font-weight-bold green--text">{{ user.canvasFullName }}<span v-if="user.id === $currentUser.id"> (me)</span></span>
+          <span
+            :id="`user-${user.id}-is-online`"
+            class="font-weight-bold green--text"
+          >
+            {{ user.canvasFullName }}<span v-if="user.id === $currentUser.id"> (me)</span>
+          </span>
           <span class="sr-only"> is online.</span>
         </v-list-item-content>
       </v-list-item>
@@ -58,7 +63,12 @@
           <Avatar id="current-user-avatar" :user="user" />
         </v-list-item-avatar>
         <v-list-item-content>
-          <span :id="`user-${user.id}-is-not-online`" class="grey--text">{{ user.canvasFullName }}<span class="sr-only"> is not online.</span></span>
+          <span
+            :id="`user-${user.id}-is-not-online`"
+            class="grey--text"
+          >
+            {{ user.canvasFullName }}<span class="sr-only"> is not online.</span>
+          </span>
         </v-list-item-content>
       </v-list-item>
     </v-list>
