@@ -26,6 +26,14 @@
       <v-card-text class="pl-8 pt-8">
         <v-container fluid>
           <v-row>
+            <v-col class="pb-2">
+              <h2 id="modal-header">Add a Link</h2>
+              <div class="pt-2 subtitle-1">
+                A new asset will be created and then added to this whiteboard.
+              </div>
+            </v-col>
+          </v-row>
+          <v-row>
             <v-col class="pt-5" cols="2">
               <h2 id="modal-header" class="sr-only">Choose the type of asset you want to upload</h2>
               <label class="float-right" for="asset-url-input">
@@ -42,6 +50,7 @@
               <v-text-field
                 id="asset-url-input"
                 v-model="asset.url"
+                hide-details
                 maxlength="255"
                 outlined
                 required
@@ -64,6 +73,7 @@
               <v-text-field
                 id="asset-title-input"
                 v-model="asset.title"
+                hide-details
                 maxlength="255"
                 outlined
                 required
@@ -77,6 +87,7 @@
             <v-col cols="10">
               <AccessibleSelect
                 id-prefix="asset-category"
+                hide-details
                 :items="categories"
                 item-text="title"
                 item-value="id"
@@ -179,6 +190,7 @@ export default {
             title: undefined,
             url: undefined
           }
+          this.dialog = false
           this.isSaving = false
         })
       })

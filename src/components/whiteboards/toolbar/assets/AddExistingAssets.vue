@@ -174,6 +174,7 @@ export default {
     },
     reset() {
       this.allAssetsLoaded = false
+      this.isDialogReady = false
       this.isSaving = false
       this.selectedAssetIds = []
     },
@@ -185,6 +186,7 @@ export default {
           this.addAsset(asset)
           if (index === this.selectedAssetIds.length - 1) {
             this.$announcer.polite('Assets added')
+            this.dialog = false
             this.reset()
           }
         })
