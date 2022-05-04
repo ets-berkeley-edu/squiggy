@@ -26,12 +26,12 @@
       </v-card-title>
       <v-list>
         <v-list-item>
-          <v-list-item-action class="mr-0 w-100">
+          <v-list-item-action class="mr-0 my-0 w-100">
             <ExportAsAsset :watch-dialog="watchChildDialog" />
           </v-list-item-action>
         </v-list-item>
         <v-list-item v-if="whiteboard">
-          <v-list-item-action class="mr-0 w-100">
+          <v-list-item-action class="mr-0 my-0 w-100">
             <v-btn
               id="toolbar-download-as-image-btn"
               class="d-flex justify-start w-100"

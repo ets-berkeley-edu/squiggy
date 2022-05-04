@@ -31,7 +31,7 @@ from squiggy.api.api_util import can_update_whiteboard, can_view_asset, can_view
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now
-from squiggy.lib.whiteboard_util import is_ready_to_export, to_png_file
+from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.category import Category
@@ -127,8 +127,13 @@ def export_as_png(whiteboard_id):
         raise ResourceNotFoundError('Not found')
     if not can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('Unauthorized')
-    if not is_ready_to_export(whiteboard_id):
-        raise BadRequestError('Whiteboard cannot be converted to PNG until previews are generated. Try again soon.')
+
+    summary = Whiteboard.get_exportability_summary(current_user, whiteboard_id)
+    if summary['errored']:
+        raise BadRequestError('Whiteboard cannot be exported due to an asset processing error. Remove problematic assets and retry.')
+    if summary['pending']:
+        raise BadRequestError('Whiteboard cannot be exported yet, assets are still processing. Try again soon.')
+
     # Download
     now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
