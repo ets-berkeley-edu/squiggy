@@ -130,7 +130,7 @@ class Whiteboard(Base):
                 src = element.get('src')
                 if src and is_s3_preview_url(src):
                     element['src'] = get_s3_signed_url(src)
-                summary['exportable'] = element
+                summary['exportable'].append(element)
             elif whiteboard_element.asset_id not in asset_ids:
                 asset_ids.append(whiteboard_element.asset_id)
 
@@ -154,7 +154,8 @@ class Whiteboard(Base):
                         summary[key].append(whiteboard_element.id)
                     else:
                         summary['exportable'].append(whiteboard_element.element)
-                        if image_url != element['src']:
+                        src = whiteboard_element.element.get('src')
+                        if image_url != src:
                             # TODO: If whiteboard element has not been updated to reflect the preview then update it here?
                             pass
                 else:
