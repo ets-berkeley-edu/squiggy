@@ -7,13 +7,19 @@
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-asset-add-link"
-        class="justify-start w-100"
-        text
+        :color="mode === 'link' ? 'white' : 'primary'"
+        icon
+        :title="title"
+        value="link"
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="chain" />
-        <span class="pl-2">Add Link Asset</span>
+        <span class="sr-only">{{ title }}</span>
+        <font-awesome-icon
+          :color="{'white': mode === 'link'}"
+          icon="chain"
+          size="lg"
+        />
       </v-btn>
     </template>
     <v-card>
@@ -148,7 +154,8 @@ export default {
       url: undefined
     },
     dialog: false,
-    isSaving: false
+    isSaving: false,
+    title: 'Add Link Asset'
   }),
   methods: {
     onClickCancel() {

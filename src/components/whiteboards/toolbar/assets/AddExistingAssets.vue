@@ -1,22 +1,28 @@
 <template>
   <v-dialog
     v-model="dialog"
+    fullscreen
     scrollable
-    transition="dialog-bottom-transition"
   >
     <template #activator="{on, attrs}">
       <v-btn
         id="toolbar-add-existing-assets"
-        class="justify-start w-100"
-        text
+        :color="mode === 'assets' ? 'white' : 'primary'"
+        icon
+        :title="title"
+        value="assets"
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="bars" />
-        <span class="pl-3">Add existing assets</span>
+        <span class="sr-only">{{ title }}</span>
+        <font-awesome-icon
+          :color="{'white': mode === 'assets'}"
+          icon="images"
+          size="lg"
+        />
       </v-btn>
     </template>
-    <v-card class="active-card">
+    <v-card>
       <v-card-title class="pb-1">
         <h2 id="modal-header" class="title">Select Asset(s)</h2>
       </v-card-title>
@@ -111,7 +117,8 @@ export default {
     dialog: false,
     isDialogReady: false,
     isSaving: false,
-    selectedAssetIds: []
+    selectedAssetIds: [],
+    title: 'Add existing assets'
   }),
   computed: {
     assetGrid() {
@@ -188,11 +195,6 @@ export default {
 </script>
 
 <style scoped>
-.active-card {
-  left: 0;
-  position: fixed;
-  top: 0;
-}
 .asset-checkbox-label {
   max-width: 240px;
 }
