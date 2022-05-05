@@ -6,7 +6,6 @@
     :collapse="collapse"
     :collapse-on-scroll="!collapse"
     color="white"
-    scroll-target="whiteboard-container"
   >
     <v-container class="px-0" fluid>
       <v-row justify="space-between" no-gutters>

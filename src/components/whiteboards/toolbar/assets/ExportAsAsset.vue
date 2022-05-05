@@ -8,7 +8,8 @@
       <v-btn
         id="toolbar-export-to-asset-library-btn"
         class="justify-start w-100"
-        text
+        color="white"
+        elevation="0"
         v-bind="attrs"
         v-on="on"
       >
