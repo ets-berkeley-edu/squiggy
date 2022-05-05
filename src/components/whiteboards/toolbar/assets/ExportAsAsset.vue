@@ -32,9 +32,6 @@
                 />
                 <h2 id="modal-header" class="pl-2">Export to Asset Library</h2>
               </div>
-              <div class="pt-2 subtitle-1">
-                Create an asset, using elements of this whiteboard, and export it to the Asset Library.
-              </div>
             </v-col>
           </v-row>
           <v-row>
