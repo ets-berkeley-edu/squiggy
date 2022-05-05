@@ -267,19 +267,24 @@ const $_addListeners = (state: any) => {
   // (2) position buttons that allow the selected element(s) to be modified.
   p.$canvas.on('after:render', () => {
     const selection = p.$canvas.getActiveObject()
-    if (selection && !state.isModifyingElement) {
+    if (!_.isEmpty(selection) && !state.isModifyingElement) {
       // Get the bounding rectangle around the currently selected element(s)
       const bound = selection.getBoundingRect()
       if (bound) {
         // Explicitly draw the bounding rectangle
         p.$canvas.contextContainer.strokeStyle = constants.COLORS.lightBlue.hex
-        p.$canvas.contextContainer.strokeRect(bound.left - 10, bound.top - 10, bound.width + 20, bound.height + 20)
+        p.$canvas.contextContainer.strokeRect(
+          bound.left - 10,
+          bound.top - 10,
+          bound.width + 20,
+          bound.height + 20
+        )
       }
       // Position the buttons to modify the selected element(s)
       const editButtons = document.getElementById(constants.WHITEBOARD_ELEMENT_EDIT_ID)
       if (editButtons) {
         editButtons.style.left = (bound.left - 10) + 'px'
-        editButtons.style.top = (bound.top + bound.height + 15) + 'px'
+        editButtons.style.top = (bound.top + bound.height + 75) + 'px'
       }
     }
   })
