@@ -10,7 +10,7 @@
         id="open-asset-btn"
         icon
         target="_blank"
-        :to="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${activeCanvasObject.assetId}`"
+        :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${activeCanvasObject.assetId}`"
       >
         <span class="sr-only">Open original asset</span>
         <font-awesome-icon icon="arrow-up-right-from-square" />
