@@ -20,7 +20,7 @@
         <font-awesome-icon color="white" icon="download" />
       </v-btn>
     </template>
-    <v-card v-if="exportability">
+    <v-card v-if="exportability" class="pt-1">
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Export whiteboard to Asset Library</h2>
       </v-card-title>
@@ -40,7 +40,7 @@
               :href="`${$config.apiBaseUrl}/api/whiteboard/${whiteboard.id}/download/png`"
               @click="() => menu = false"
             >
-              <font-awesome-icon icon="download" />
+              <font-awesome-icon icon="download" size="lg" />
               <span class="pl-3">Download as image</span>
             </v-btn>
           </v-list-item-action>
@@ -56,6 +56,16 @@
           <div class="red--text">Whiteboard cannot be exported yet, assets are still processing. Try again soon.</div>
         </v-list-item>
       </v-list>
+      <v-card-text v-if="!$canvas.getObjects().length">
+        <div class="pt-5 px-3 subtitle-1">
+          When this whiteboard has one or more elements, it can be:
+          <ul>
+            <li>Downloaded as PNG file</li>
+            <li>Exported to the Asset Library</li>
+          </ul>
+          Enjoy!
+        </div>
+      </v-card-text>
     </v-card>
   </v-menu>
 </template>

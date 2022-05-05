@@ -712,10 +712,12 @@ const $_initSocket = (state: any) => {
      }
    })
    p.$socket.on('connect', () => {
+     const userId: number = p.$currentUser.id
      p.$socket.emit('join', {
-       userId: p.$currentUser.id,
+       userId: userId,
        whiteboardId: state.whiteboard.id
      })
+     store.dispatch('whiteboarding/join', userId).then(_.noop)
    })
 }
 
