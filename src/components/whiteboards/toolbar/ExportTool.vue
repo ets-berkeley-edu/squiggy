@@ -24,7 +24,7 @@
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Export whiteboard to Asset Library</h2>
       </v-card-title>
-      <v-list>
+      <v-list v-if="$canvas.getObjects().length">
         <v-list-item>
           <v-list-item-action class="mr-0 my-0 w-100">
             <ExportAsAsset :watch-dialog="watchChildDialog" />
@@ -34,19 +34,14 @@
           <v-list-item-action class="mr-0 my-0 w-100">
             <v-btn
               id="toolbar-download-as-image-btn"
-              class="d-flex justify-start w-100"
-              :disabled="!whiteboard.whiteboardElements.length"
+              class="justify-start w-100"
+              color="white"
+              elevation="0"
               :href="`${$config.apiBaseUrl}/api/whiteboard/${whiteboard.id}/download/png`"
-              link
-              text
               @click="() => menu = false"
             >
-              <div>
-                <font-awesome-icon icon="download" />
-              </div>
-              <div class="pl-3">
-                Download as image
-              </div>
+              <font-awesome-icon icon="download" />
+              <span class="pl-3">Download as image</span>
             </v-btn>
           </v-list-item-action>
         </v-list-item>
