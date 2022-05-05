@@ -31,6 +31,7 @@ import tempfile
 
 from flask import current_app as app
 from squiggy import mock
+from squiggy.logger import logger
 
 
 @mock('fixtures/mock_whiteboard.png')
@@ -44,19 +45,21 @@ def to_png_file(whiteboard):
         script = 'save_whiteboard_as_png.js'
         png_dir = os.path.dirname(os.path.realpath(whiteboard_elements_file))
         png_file = f'{png_dir}/whiteboard.png'
-        subprocess.Popen(
-            [
-                app.config['NODE_EXECUTABLE'],
-                f'{base_dir}/scripts/node_js/{script}',
-                '-b',
-                base_dir,
-                '-w',
-                whiteboard_elements_file,
-                '-p',
-                png_file,
-            ],
-            stdout=subprocess.PIPE,
-        ).wait(timeout=200000)
+        executable = [
+            app.config['NODE_EXECUTABLE'],
+            f'{base_dir}/scripts/node_js/{script}',
+            '-b',
+            base_dir,
+            '-w',
+            whiteboard_elements_file,
+            '-p',
+            png_file,
+        ]
+        logger.info(f"""
+            Execute whiteboard.to_png_file script:
+            {executable}
+        """)
+        subprocess.Popen(executable, stdout=subprocess.PIPE).wait(timeout=200000)
         return png_file
     except OSError as e:
         app.logger.error(f"""
