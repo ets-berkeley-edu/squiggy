@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
-import os
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
@@ -37,13 +37,13 @@ from squiggy.logger import logger
 @mock('fixtures/mock_whiteboard.png')
 def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
-    whiteboard_elements_file = tempfile.NamedTemporaryFile(suffix='.json').name
-    with open(whiteboard_elements_file, mode='wt', encoding='utf-8') as f:
+    fd, whiteboard_elements_file = tempfile.mkstemp(suffix='.json')
+    png_dir = Path(whiteboard_elements_file).parent
+    with open(whiteboard_elements_file, mode='w+', encoding='utf-8') as f:
         elements = [w['element'] for w in whiteboard['whiteboardElements']]
         json.dump(elements, f)
     try:
         script = 'save_whiteboard_as_png.js'
-        png_dir = os.path.dirname(os.path.realpath(whiteboard_elements_file))
         png_file = f'{png_dir}/whiteboard.png'
         executable = [
             app.config['NODE_EXECUTABLE'],
