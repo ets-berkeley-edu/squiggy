@@ -40,6 +40,9 @@ export default {
       required: true,
       type: Function
     }
+  },
+  created() {
+    this.setFill(this.color)
   }
 }
 </script>
