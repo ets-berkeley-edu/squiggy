@@ -22,6 +22,7 @@
           <v-text-field
             id="whiteboard-title-input"
             v-model="title"
+            hide-details
             outlined
             required
             :rules="titleRules"
