@@ -67,6 +67,12 @@ const mutations = {
     state.whiteboard = whiteboard
     initialize(state)
   },
+  join: (state: any, userId: number) => {
+    const user = _.find(state.whiteboard.users, ['id', userId])
+    if (user) {
+      user.isOnline = true
+    }
+  },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onWhiteboardUpdate: (state: any, whiteboard: any) => onWhiteboardUpdate(state, whiteboard),
   onWindowResize: (state: any) => {
@@ -89,7 +95,6 @@ const mutations = {
   setMode: (state: any, mode: string) => setMode(state, mode),
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
-  toggleSidebar: (state: any) => setTimeout(() => setCanvasDimensions(state), 0),
   toggleZoom: (state: any) => {
     setMode(state, 'zoom')
     state.fitToScreen = !state.fitToScreen
@@ -112,6 +117,7 @@ const actions = {
       })
     })
   },
+  join: ({commit}, userId: any) => commit('join', userId),
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
   ping: ({state}) => ping(state),
   resetSelected: ({commit}) => commit('resetSelected'),

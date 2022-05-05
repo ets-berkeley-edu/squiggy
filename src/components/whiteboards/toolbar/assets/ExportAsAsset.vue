@@ -13,7 +13,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="images" />
+        <font-awesome-icon icon="images" size="lg" />
         <span class="pl-3">Export to Asset Library</span>
       </v-btn>
     </template>
@@ -21,16 +21,19 @@
       <v-card-text class="pl-8 pt-8">
         <v-container fluid>
           <v-row>
-            <v-col class="pt-5" cols="12">
-              <img
-                v-if="whiteboard.thumbnailUrl"
-                :src="whiteboard.thumbnailUrl"
-              />
-              <div
-                v-if="!whiteboard.thumbnailUrl"
-                class="text-center col-list-item-thumbnail-default col-list-item-no-metadata"
-              >
-                <font-awesome-icon icon="calendar" size="2x" />
+            <v-col class="py-2" cols="12">
+              <div class="align-center d-flex" :class="{'flex-column': whiteboard.thumbnailUrl}">
+                <img v-if="whiteboard.thumbnailUrl" alt="Whiteboard thumbnail image" :src="whiteboard.thumbnailUrl" />
+                <font-awesome-icon
+                  v-if="!whiteboard.thumbnailUrl"
+                  color="primary"
+                  icon="images"
+                  size="2x"
+                />
+                <h2 id="modal-header" class="pl-2">Export to Asset Library</h2>
+              </div>
+              <div class="pt-2 subtitle-1">
+                Create an asset, using elements of this whiteboard, and export it to the Asset Library.
               </div>
             </v-col>
           </v-row>
