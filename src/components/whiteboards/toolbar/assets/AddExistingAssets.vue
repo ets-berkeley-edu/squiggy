@@ -37,7 +37,7 @@
           <div
             v-for="(asset, index) in assetGrid"
             :key="index"
-            class="mt-4"
+            class="ma-3"
           >
             <AssetCard
               :asset="asset"
