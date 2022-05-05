@@ -32,7 +32,7 @@
           <span>Preview image last generated at {{ previewGeneratedAt | moment('lll') }}. Click to update.</span>
         </v-tooltip>
       </div>
-      <div v-if="asset.assetType === 'whiteboard'" class="mr-2">
+      <div v-if="canRemixAsset" class="mr-2">
         <v-btn
           id="remix-asset-whiteboard-btn"
           @click="remix"
@@ -117,7 +117,9 @@ export default {
     }
   },
   data: () => ({
+    canDeleteAsset: false,
     canEditAsset: false,
+    canRemixAsset: false,
     dialogConfirmDelete: undefined,
     downloadUrl: undefined
   }),
@@ -137,6 +139,7 @@ export default {
     const isAssetOwner = this.$_.find(this.asset.users, {'id': this.$currentUser.id})
     this.canEditAsset = isTeacherOrAdmin || isAssetOwner
     this.canDeleteAsset = isTeacherOrAdmin || (isAssetOwner && !this.asset.likes && !this.asset.commentCount)
+    this.canRemixAsset = this.asset.assetType === 'whiteboard'
   },
   methods: {
     cancelDelete() {

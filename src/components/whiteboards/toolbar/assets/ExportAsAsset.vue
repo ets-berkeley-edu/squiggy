@@ -19,7 +19,7 @@
     </template>
     <v-card>
       <v-card-text class="pl-8 pt-8">
-        <v-container fluid>
+        <v-container v-if="!asset.id" fluid>
           <v-row>
             <v-col class="py-2" cols="12">
               <div class="align-center d-flex" :class="{'flex-column': whiteboard.thumbnailUrl}">
@@ -53,6 +53,7 @@
               <v-text-field
                 id="asset-title-input"
                 v-model="asset.title"
+                hide-details
                 maxlength="255"
                 outlined
                 required
@@ -66,6 +67,7 @@
             <v-col cols="10">
               <AccessibleSelect
                 id-prefix="asset-category"
+                hide-details
                 :items="categories"
                 item-text="title"
                 item-value="id"
@@ -123,6 +125,9 @@
             </v-col>
           </v-row>
         </v-container>
+        <div v-if="asset.id">
+          <ExportSummary :asset="asset" :on-click-close="onClickClose" />
+        </div>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -130,13 +135,14 @@
 
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
+import ExportSummary from '@/components/whiteboards/ExportSummary'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import {exportAsset} from '@/api/whiteboards'
 
 export default {
   name: 'ExportAsAsset',
   mixins: [Whiteboarding],
-  components: {AccessibleSelect},
+  components: {AccessibleSelect, ExportSummary},
   data: () => ({
     asset: {
       categoryId: undefined,
@@ -151,6 +157,10 @@ export default {
       this.dialog = false
       this.$announcer.polite('Canceled')
     },
+    onClickClose() {
+      this.dialog = false
+      this.$announcer.polite('Closed')
+    },
     onClickSave() {
       this.$announcer.polite('Exporting...')
       this.isExporting = true
@@ -160,12 +170,18 @@ export default {
         this.asset.description,
         this.asset.title,
         this.whiteboard.id
-      ).then(() => {
+      ).then(asset => {
         this.$announcer.polite('Asset created.')
-        this.dialog = false
         this.isExporting = false
+        this.asset = asset
       })
     },
   }
 }
 </script>
+
+<style scoped>
+.asset-card {
+  z-index: 1500
+}
+</style>

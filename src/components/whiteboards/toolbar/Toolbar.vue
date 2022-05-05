@@ -4,7 +4,7 @@
     app
     class="whiteboard-app-bar pl-0"
     :collapse="collapse"
-    :collapse-on-scroll="!collapse"
+    :collapse-on-scroll="false"
     color="white"
   >
     <v-container class="px-0" fluid>

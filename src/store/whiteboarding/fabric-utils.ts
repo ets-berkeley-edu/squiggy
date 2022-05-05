@@ -25,7 +25,6 @@ export function addAsset(asset: any, state: any) {
     // SuiteC-specific attributes
     element.assetId = asset.id
     element.uuid = uuidv4()
-    // This will exclude the toolbar and sidebar, if expanded.
     const zoomLevel = p.$canvas.getZoom()
     const canvasCenter = {
       x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
