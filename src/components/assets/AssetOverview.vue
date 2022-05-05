@@ -129,6 +129,7 @@ export default {
     }
   },
   data: () => ({
+    canLikeAsset: false,
     imageUrl: undefined,
     likeCount: undefined,
     liked: undefined,
@@ -167,7 +168,6 @@ export default {
 .like-asset-btn:hover {
   color: #719fdd;
 }
-
 .like-asset-btn-liked {
   color: #4172b4 !important;
 }
