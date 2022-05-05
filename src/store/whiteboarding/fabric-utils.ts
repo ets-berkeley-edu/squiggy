@@ -705,19 +705,29 @@ const $_initFabricPrototypes = (state: any) => {
 }
 
 const $_initSocket = (state: any) => {
-   p.$socket = io(apiUtils.apiBaseUrl(), {
-     query: {
-       whiteboardId: state.whiteboard.id
-     }
-   })
-   p.$socket.on('connect', () => {
-     const userId: number = p.$currentUser.id
-     p.$socket.emit('join', {
-       userId: userId,
-       whiteboardId: state.whiteboard.id
-     })
-     store.dispatch('whiteboarding/join', userId).then(_.noop)
-   })
+  p.$socket = io(apiUtils.apiBaseUrl(), {
+    query: {
+      whiteboardId: state.whiteboard.id
+    }
+  })
+  const tryReconnect = () => {
+    setTimeout(() => {
+      p.$socket.io.open((err) => {
+        if (err) {
+          tryReconnect()
+        }
+      })
+    }, 2000)
+  }
+  p.$socket.on('close', tryReconnect)
+  p.$socket.on('connect', () => {
+    const userId: number = p.$currentUser.id
+    p.$socket.emit('join', {
+      userId: userId,
+      whiteboardId: state.whiteboard.id
+    })
+    store.dispatch('whiteboarding/join', userId).then(_.noop)
+  })
 }
 
 const $_paste = (state: any): void => {

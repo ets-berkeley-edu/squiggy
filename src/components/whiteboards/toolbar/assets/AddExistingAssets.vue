@@ -165,11 +165,15 @@ export default {
     },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     infiniteHandler($state) {
-      this.allAssetsLoaded = this.$_.size(this.assets) >= this.totalAssetCount
-      if (this.allAssetsLoaded) {
+      if (this.isSaving || !this.dialog) {
         $state.complete()
       } else {
-        this.nextPage().then(() => $state.loaded())
+        this.allAssetsLoaded = this.$_.size(this.assets) >= this.totalAssetCount
+        if (this.allAssetsLoaded) {
+          $state.complete()
+        } else {
+          this.nextPage().then(() => $state.loaded())
+        }
       }
     },
     reset() {
@@ -181,7 +185,7 @@ export default {
     save() {
       if (this.selectedAssetIds.length) {
         this.isSaving = true
-        this.selectedAssetIds.forEach((assetId, index) => {
+        this.$_.uniq(this.selectedAssetIds).forEach((assetId, index) => {
           const asset = this.$_.find(this.assets, ['id', assetId])
           this.addAsset(asset)
           if (index === this.selectedAssetIds.length - 1) {
