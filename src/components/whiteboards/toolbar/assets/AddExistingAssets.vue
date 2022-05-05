@@ -66,7 +66,7 @@
         <v-spacer></v-spacer>
         <div class="pb-3 pr-2">
           <v-btn
-            id="save-blackout"
+            id="save-btn"
             color="primary"
             :disabled="disableSave"
             @click="save"
@@ -84,7 +84,7 @@
             <span v-if="!isSaving">Save</span>
           </v-btn>
           <v-btn
-            id="cancel-edit-of-blackout"
+            id="cancel-btn"
             text
             @click="cancel"
           >
