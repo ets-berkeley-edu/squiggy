@@ -103,7 +103,7 @@
             </v-col>
             <v-col cols="10">
               <div class="d-flex flex-column flex-column-reverse">
-                <div class="caption">Add some more context to your link. You can use plain text or #keywords</div>
+                <div class="caption">Add context to your link with plain text or #keywords.</div>
                 <div>
                   <v-textarea
                     id="asset-description-textarea"
@@ -113,6 +113,20 @@
                   />
                 </div>
               </div>
+            </v-col>
+          </v-row>
+          <v-row no-gutters>
+            <v-col cols="2"></v-col>
+            <v-col cols="10">
+              <v-checkbox
+                :id="`asset-visible-checkbox`"
+                v-model="asset.visible"
+                hide-details
+              >
+                <template #label>
+                  Add to Asset Library
+                </template>
+              </v-checkbox>
             </v-col>
           </v-row>
           <v-row no-gutters>
@@ -162,7 +176,8 @@ export default {
       categoryId: undefined,
       description: undefined,
       title: undefined,
-      url: undefined
+      url: undefined,
+      visible: true
     },
     dialog: false,
     isSaving: false,
@@ -180,7 +195,8 @@ export default {
         this.asset.categoryId,
         this.asset.description,
         this.asset.title,
-        this.asset.url
+        this.asset.url,
+        this.asset.visible
       ).then(asset => {
         this.addAsset(asset).then(() => {
           this.$announcer.polite('Link asset created.')

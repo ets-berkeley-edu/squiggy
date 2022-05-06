@@ -21,13 +21,20 @@ export function bookmarkletCreateFileAsset(categoryId, description, title, url) 
   })
 }
 
-export function createLinkAsset(categoryId, description, title, url) {
+export function createLinkAsset(
+  categoryId: number,
+  description: string,
+  title: string,
+  url: string,
+  visible: boolean = true
+) {
   return axios.post(`${utils.apiBaseUrl()}/api/asset/create`, {
     categoryId,
     description,
     title,
     type: 'link',
-    url
+    url,
+    visible
   })
 }
 
