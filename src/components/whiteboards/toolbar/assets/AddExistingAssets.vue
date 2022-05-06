@@ -47,6 +47,7 @@
               :on-asset-click="asset => selectedAssetIds.push(asset.id)"
             >
               <v-checkbox
+                :id="`asset-${asset.id}`"
                 v-model="selectedAssetIds"
                 class="mb-0 pt-0"
                 dark

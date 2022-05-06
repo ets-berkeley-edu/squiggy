@@ -6,10 +6,9 @@
     open-on-hover
   >
     <template #activator="{on, attrs}">
-      <v-toolbar-title
+      <div
         id="show-whiteboard-collaborators-btn"
         :class="{'mx-2': !collapse}"
-        icon
         tabindex="0"
         v-bind="attrs"
         v-on="on"
@@ -22,27 +21,30 @@
           :offset-x="collapse ? 20 : 10"
           :offset-y="collapse ? 20 : 10"
         >
-          <v-avatar>
-            <Avatar
-              v-if="usersOnline.length"
-              id="one-or-more-users-online"
-              :size="collapse ? 'small' : 'medium'"
-              :user="usersOnline[0]"
-            />
-            <Avatar
-              v-if="!usersOnline.length"
-              id="zero-users-online"
-              :size="collapse ? 'small' : 'medium'"
-              :user="$currentUser"
+          <v-avatar v-if="primary" color="green lighten-4" :size="collapse ? '36px' : '48px'">
+            <img
+              :id="`current-user-${primary.id}`"
+              alt="Avatar"
+              :src="getAvatar(primary)"
             />
           </v-avatar>
         </v-badge>
-      </v-toolbar-title>
+      </div>
     </template>
     <v-list>
+      <v-list-item-title class="ma-3 pl-2">
+        <h2 class="grey--text text--darken-2 title">Collaborator{{ whiteboard.users.length === 1 ? '' : 's' }}</h2>
+      </v-list-item-title>
+      <v-divider class="mb-2 mx-2" />
       <v-list-item v-for="user in usersOnline" :key="user.id">
         <v-list-item-avatar>
-          <Avatar id="current-user-avatar" :user="user" />
+          <v-avatar color="green lighten-4" size="48px">
+            <img
+              :id="`user-${user.id}-online`"
+              alt="Avatar"
+              :src="getAvatar(user)"
+            />
+          </v-avatar>
         </v-list-item-avatar>
         <v-list-item-content>
           <span
@@ -59,10 +61,15 @@
           <span class="font-weight-bold red--text">No one is active.</span>
         </v-list-item-content>
       </v-list-item>
-      <v-divider v-if="usersOffline.length" class="mb-2 mx-2" />
       <v-list-item v-for="(user, index) in usersOffline" :key="user.id" :class="{'mb-1': index < usersOffline.length - 1}">
         <v-list-item-avatar>
-          <Avatar id="current-user-avatar" :user="user" />
+          <v-avatar color="grey lighten-1" size="42px">
+            <img
+              :id="`user-${user.id}-offline`"
+              alt="Avatar"
+              :src="getAvatar(user)"
+            >
+          </v-avatar>
         </v-list-item-avatar>
         <v-list-item-content>
           <span
@@ -78,18 +85,27 @@
 </template>
 
 <script>
-import Avatar from '@/components/user/Avatar'
 import Utils from '@/mixins/Utils.vue'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Users',
   mixins: [Utils, Whiteboarding],
-  components: {Avatar},
   props: {
     collapse: {
       required: true,
       type: Boolean
+    }
+  },
+  data: () => ({
+    primary: undefined
+  }),
+  created() {
+    this.primary = this.usersOnline.length ? this.usersOnline[0] : this.$currentUser
+  },
+  methods: {
+    getAvatar(user) {
+      return user.canvasImage || require('@/assets/avatar-50.png')
     }
   }
 }
