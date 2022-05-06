@@ -89,6 +89,7 @@
                 <v-text-field
                   id="asset-title-input"
                   v-model="title"
+                  hide-details
                   label="Enter a title"
                   outlined
                   required
@@ -104,6 +105,7 @@
               <v-col cols="10">
                 <AccessibleSelect
                   id-prefix="asset-category"
+                  hide-details
                   :items="categories"
                   item-text="title"
                   item-value="id"
@@ -129,6 +131,20 @@
                     />
                   </div>
                 </div>
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col cols="2"></v-col>
+              <v-col cols="10">
+                <v-checkbox
+                  :id="`asset-visible-checkbox`"
+                  v-model="visible"
+                  hide-details
+                >
+                  <template #label>
+                    Also add this file to Asset Library
+                  </template>
+                </v-checkbox>
               </v-col>
             </v-row>
             <v-row>
@@ -182,7 +198,8 @@ export default {
         v => !!this.$_.trim(v) || 'Please enter a title',
         v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
       ],
-      uploading: false
+      uploading: false,
+      visible: true
     }
   },
   methods: {
@@ -210,7 +227,13 @@ export default {
     upload() {
       this.uploading = true
       if (this.file && this.title) {
-        createFileAsset(this.categoryId, this.description, this.title, this.file).then(asset => {
+        createFileAsset(
+          this.categoryId,
+          this.description,
+          this.title,
+          this.file,
+          this.visible
+        ).then(asset => {
           this.addAsset(asset).then(() => {
             this.$announcer.polite('File uploaded. Asset created.')
             this.dialog = false
