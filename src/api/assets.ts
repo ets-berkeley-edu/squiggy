@@ -38,13 +38,21 @@ export function createLinkAsset(
   })
 }
 
-export function createFileAsset(categoryId, description, title, file) {
+export function createFileAsset(
+  categoryId: number,
+  description: string,
+  title: string,
+  file,
+  visible: boolean = true
+) {
+  const type = 'file'
   return utils.postMultipartFormData(`${utils.apiBaseUrl()}/api/asset/create`, {
     categoryId,
     description,
     'file[0]': file,
     title,
-    type: 'file'
+    type,
+    visible
   })
 }
 

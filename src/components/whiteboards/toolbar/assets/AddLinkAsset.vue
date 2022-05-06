@@ -124,7 +124,7 @@
                 hide-details
               >
                 <template #label>
-                  Add to Asset Library
+                  Also add this link to Asset Library
                 </template>
               </v-checkbox>
             </v-col>
