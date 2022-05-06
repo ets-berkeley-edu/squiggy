@@ -2,13 +2,15 @@
   <v-menu
     id="collaborators-list"
     offset-y
+    open-on-focus
     open-on-hover
   >
     <template #activator="{on, attrs}">
-      <v-btn
+      <v-toolbar-title
         id="show-whiteboard-collaborators-btn"
         :class="{'mx-2': !collapse}"
         icon
+        tabindex="0"
         v-bind="attrs"
         v-on="on"
       >
@@ -35,7 +37,7 @@
             />
           </v-avatar>
         </v-badge>
-      </v-btn>
+      </v-toolbar-title>
     </template>
     <v-list>
       <v-list-item v-for="user in usersOnline" :key="user.id">
