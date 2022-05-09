@@ -91,11 +91,22 @@
                   v-model="title"
                   hide-details
                   label="Enter a title"
+                  maxlength="255"
                   outlined
                   required
-                  :rules="titleRules"
                   @keydown.enter="upload"
                 />
+                <div class="pl-1">
+                  <span
+                    :aria-live="title.length === 255 ? 'assertive' : null"
+                    class="font-size-12"
+                    :class="title.length === 255 ? 'red--text' : 'text--secondary'"
+                    role="alert"
+                  >
+                    255 character limit
+                    <span v-if="title.length">({{ 255 - title.length }} remaining)</span>
+                  </span>
+                </div>
               </v-col>
             </v-row>
             <v-row v-if="categories.length">
@@ -194,10 +205,6 @@ export default {
       fileAssetValid: false,
       isSaving: false,
       title: '',
-      titleRules: [
-        v => !!this.$_.trim(v) || 'Please enter a title',
-        v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
-      ],
       uploading: false,
       visible: true
     }

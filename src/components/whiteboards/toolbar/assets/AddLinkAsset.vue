@@ -51,7 +51,7 @@
                 id="asset-url-input"
                 v-model="asset.url"
                 hide-details
-                maxlength="255"
+                maxlength="2048"
                 outlined
                 required
               />
@@ -78,6 +78,17 @@
                 outlined
                 required
               />
+              <div class="pl-1">
+                <span
+                  :aria-live="asset.title.length === 255 ? 'assertive' : null"
+                  class="font-size-12"
+                  :class="asset.title.length === 255 ? 'red--text' : 'text--secondary'"
+                  role="alert"
+                >
+                  255 character limit
+                  <span v-if="title.length">({{ 255 - asset.title.length }} remaining)</span>
+                </span>
+              </div>
             </v-col>
           </v-row>
           <v-row v-if="categories.length">
@@ -175,7 +186,7 @@ export default {
     asset: {
       categoryId: undefined,
       description: undefined,
-      title: undefined,
+      title: '',
       url: undefined,
       visible: true
     },
@@ -203,7 +214,7 @@ export default {
           this.asset = {
             categoryId: undefined,
             description: undefined,
-            title: undefined,
+            title: '',
             url: undefined
           }
           this.dialog = false

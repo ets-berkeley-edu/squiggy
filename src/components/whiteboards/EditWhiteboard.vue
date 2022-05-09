@@ -23,15 +23,26 @@
             id="whiteboard-title-input"
             v-model="title"
             hide-details
+            maxlength="255"
             outlined
             required
-            :rules="titleRules"
             @keydown.enter="submit"
           />
+          <div class="pl-1 py-1">
+            <span
+              :aria-live="title.length === 255 ? 'assertive' : null"
+              class="font-size-12"
+              :class="title.length === 255 ? 'red--text' : 'text--secondary'"
+              role="alert"
+            >
+              255 character limit
+              <span v-if="title.length">({{ 255 - title.length }} remaining)</span>
+            </span>
+          </div>
         </v-col>
       </v-row>
       <v-row no-gutters>
-        <v-col class="pt-5">
+        <v-col>
           <h2 class="text-h6">Select course member(s) to add to this whiteboard</h2>
         </v-col>
       </v-row>
@@ -208,11 +219,7 @@ export default {
     isInputValid: false,
     isSaving: false,
     selectedUserIds: [],
-    title: undefined,
-    titleRules: [
-      v => !!v || 'Please enter a title',
-      v => (!v || v.length <= 255) || 'Title must be 255 characters or less',
-    ],
+    title: '',
     users: undefined
   }),
   computed: {
@@ -240,6 +247,7 @@ export default {
     },
     init() {
       this.resetData()
+      this.isFetchingUsers = true
       getStudents().then(users => {
         this.users = users
         const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
@@ -263,9 +271,8 @@ export default {
         this.canDelete = !this.whiteboard.deletedAt && this.onClickDelete
       } else {
         this.selectedUserIds = [this.$currentUser.id]
-        this.title = undefined
+        this.title = ''
       }
-      this.isFetchingUsers = true
       this.isInputValid = false
       this.isSaving = false
     },
