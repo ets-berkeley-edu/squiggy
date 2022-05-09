@@ -41,7 +41,7 @@
           </div>
         </v-col>
       </v-row>
-      <v-row no-gutters>
+      <v-row>
         <v-col>
           <h2 class="text-h6">Select course member(s) to add to this whiteboard</h2>
         </v-col>
@@ -79,8 +79,16 @@
                 @click="data.select"
                 @click:close="remove(data.item)"
               >
-                <v-avatar left>
-                  <v-img :src="data.item.canvasImage"></v-img>
+                <v-avatar :aria-label="getAvatarLabel(data.item)" left>
+                  <v-img
+                    v-if="!data.item.isTeaching && !data.item.isAdmin"
+                    :alt="getAvatarLabel(data.item)"
+                    :src="data.item.canvasImage"
+                  />
+                  <font-awesome-icon
+                    v-if="data.item.isTeaching || data.item.isAdmin"
+                    icon="graduation-cap"
+                  />
                 </v-avatar>
                 {{ data.item.canvasFullName }}
               </v-chip>
@@ -90,8 +98,20 @@
                 <v-list-item-content v-text="data.item"></v-list-item-content>
               </template>
               <template v-else>
-                <v-list-item-avatar>
-                  <img :aria-label="`Photo of ${data.item.canvasFullName}`" :src="data.item.canvasImage" />
+                <v-list-item-avatar :aria-label="getAvatarLabel(data.item)" class="mr-1">
+                  <img
+                    v-if="!data.item.isTeaching && !data.item.isAdmin"
+                    :id="`student-${data.item.id}`"
+                    :alt="getAvatarLabel(data.item)"
+                    :src="data.item.canvasImage"
+                  />
+                  <font-awesome-icon
+                    v-if="data.item.isTeaching || data.item.isAdmin"
+                    :id="`non-student-${data.item.id}`"
+                    :alt="getAvatarLabel(data.item)"
+                    :aria-label="getAvatarLabel(data.item)"
+                    icon="graduation-cap"
+                  />
                 </v-list-item-avatar>
                 <v-list-item-content>
                   <v-list-item-title v-html="data.item.canvasFullName"></v-list-item-title>
@@ -245,11 +265,13 @@ export default {
       this.onClickDelete()
       this.resetData()
     },
+    getAvatarLabel: user => `Photo of ${user.canvasFullName}`,
     init() {
       this.resetData()
       this.isFetchingUsers = true
       getStudents().then(users => {
-        this.users = users
+        const nonStudents = this.whiteboard ? this.$_.filter(this.whiteboard.users, u => u.isTeaching || u.isAdmin) : []
+        this.users = users.concat(nonStudents)
         const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
         if (addCurrentUser) {
           this.users.push(this.$currentUser)

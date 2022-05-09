@@ -17,32 +17,53 @@
           bordered
           bottom
           :color="usersOnline.length ? 'green' : 'grey'"
-          :content="usersOnline.length"
+          :content="`${usersOnline.length}`"
           :offset-x="collapse ? 20 : 10"
           :offset-y="collapse ? 20 : 10"
         >
-          <v-avatar v-if="primary" color="green lighten-4" :size="collapse ? '36px' : '48px'">
+          <v-avatar
+            v-if="primary"
+            :aria-label="getAvatarLabel(primary)"
+            color="green lighten-4"
+            :size="collapse ? '36px' : '48px'"
+          >
             <img
-              :id="`current-user-${primary.id}`"
-              alt="Avatar"
+              v-if="!primary.isTeaching && !primary.isAdmin"
+              :id="`current-student-${primary.id}`"
+              :alt="getAvatarLabel(primary)"
               :src="getAvatar(primary)"
+            />
+            <font-awesome-icon
+              v-if="primary.isTeaching || primary.isAdmin"
+              :id="`current-non-student-${primary.id}`"
+              icon="graduation-cap"
             />
           </v-avatar>
         </v-badge>
       </div>
     </template>
-    <v-list>
-      <v-list-item-title class="ma-3 pl-2">
+    <v-list class="pl-2 pr-4">
+      <v-list-item-title class="ma-3 px-2">
         <h2 class="grey--text text--darken-2 title">Collaborator{{ whiteboard.users.length === 1 ? '' : 's' }}</h2>
       </v-list-item-title>
       <v-divider class="mb-2 mx-2" />
       <v-list-item v-for="user in usersOnline" :key="user.id">
-        <v-list-item-avatar>
-          <v-avatar color="green lighten-4" size="48px">
+        <v-list-item-avatar class="mr-1">
+          <v-avatar
+            :aria-label="getAvatarLabel(user)"
+            color="green lighten-4"
+            size="32px"
+          >
             <img
-              :id="`user-${user.id}-online`"
-              alt="Avatar"
+              v-if="!user.isTeaching && !user.isAdmin"
+              :id="`student-${user.id}-online`"
+              :alt="getAvatarLabel(user)"
               :src="getAvatar(user)"
+            />
+            <font-awesome-icon
+              v-if="user.isTeaching || user.isAdmin"
+              :id="`non-student-${user.id}-online`"
+              icon="graduation-cap"
             />
           </v-avatar>
         </v-list-item-avatar>
@@ -62,13 +83,23 @@
         </v-list-item-content>
       </v-list-item>
       <v-list-item v-for="(user, index) in usersOffline" :key="user.id" :class="{'mb-1': index < usersOffline.length - 1}">
-        <v-list-item-avatar>
-          <v-avatar color="grey lighten-1" size="42px">
+        <v-list-item-avatar class="mr-1">
+          <v-avatar
+            :aria-label="getAvatarLabel(user)"
+            color="grey lighten-1"
+            size="32px"
+          >
             <img
-              :id="`user-${user.id}-offline`"
-              alt="Avatar"
+              v-if="!user.isTeaching && !user.isAdmin"
+              :id="`student-${user.id}-offline`"
+              :alt="getAvatarLabel(user)"
               :src="getAvatar(user)"
-            >
+            />
+            <font-awesome-icon
+              v-if="user.isTeaching || user.isAdmin"
+              :id="`non-student-${user.id}-offline`"
+              icon="graduation-cap"
+            />
           </v-avatar>
         </v-list-item-avatar>
         <v-list-item-content>
@@ -104,9 +135,8 @@ export default {
     this.primary = this.usersOnline.length ? this.usersOnline[0] : this.$currentUser
   },
   methods: {
-    getAvatar(user) {
-      return user.canvasImage || require('@/assets/avatar-50.png')
-    }
+    getAvatar: user => user.canvasImage || require('@/assets/avatar-50.png'),
+    getAvatarLabel: user => `Photo of ${user.canvasFullName}`
   }
 }
 </script>
