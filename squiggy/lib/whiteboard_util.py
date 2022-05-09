@@ -24,10 +24,9 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import json
-from pathlib import Path
 import subprocess
-import sys
 import tempfile
+import traceback
 
 from flask import current_app as app
 from squiggy import mock
@@ -37,35 +36,32 @@ from squiggy.logger import logger
 @mock('fixtures/mock_whiteboard.png')
 def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
-    fd, whiteboard_elements_file = tempfile.mkstemp(suffix='.json')
-    png_dir = Path(whiteboard_elements_file).parent
-    with open(whiteboard_elements_file, mode='w+', encoding='utf-8') as f:
-        elements = [w['element'] for w in whiteboard['whiteboardElements']]
-        json.dump(elements, f)
-    try:
-        script = 'save_whiteboard_as_png.js'
-        png_file = f'{png_dir}/whiteboard.png'
-        executable = [
-            app.config['NODE_EXECUTABLE'],
-            f'{base_dir}/scripts/node_js/{script}',
-            '-b',
-            base_dir,
-            '-w',
-            whiteboard_elements_file,
-            '-p',
-            png_file,
-        ]
-        logger.info(f"""
-            Execute whiteboard.to_png_file script:
-            {executable}
-        """)
-        subprocess.Popen(executable, stdout=subprocess.PIPE).wait(timeout=200000)
-        return png_file
-    except OSError as e:
-        app.logger.error(f"""
-            OSError: {e.strerror}
-            OSError number: {e.errno}
-            OSError filename: {e.filename}
-        """)
-    except:  # noqa: E722
-        app.logger.error(sys.exc_info()[0])
+    with tempfile.NamedTemporaryFile(suffix='.json') as whiteboard_elements_file:
+        elements = json.dumps([w['element'] for w in whiteboard['whiteboardElements']])
+        whiteboard_elements_file.write(bytes(elements, 'utf-8'))
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:
+                executable = [
+                    app.config['NODE_EXECUTABLE'],
+                    f'{base_dir}/scripts/node_js/save_whiteboard_as_png.js',
+                    '-b',
+                    base_dir,
+                    '-w',
+                    whiteboard_elements_file.name,
+                    '-p',
+                    png_file.name,
+                ]
+                logger.info(f'Run whiteboard.to_png_file script: {executable}')
+                exit_code = subprocess.run(executable, capture_output=True)
+                logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
+                return png_file
+        except OSError as e:
+            app.logger.error(f"""
+                OSError: {e.strerror}
+                OSError number: {e.errno}
+                OSError filename: {e.filename}
+            """)
+            return None
+        except:  # noqa: E722
+            logger.error(traceback.format_exc())
+            return None
