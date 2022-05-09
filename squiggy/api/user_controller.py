@@ -27,6 +27,7 @@ from flask import current_app as app, request
 from flask_login import current_user, login_required
 from squiggy.lib.errors import BadRequestError, ForbiddenRequestError
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.util import is_student
 from squiggy.models.user import User
 
 
@@ -41,26 +42,11 @@ def get_users():
     return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id)])
 
 
-@app.route('/api/users/students_by_section')
+@app.route('/api/users/students')
 @login_required
 def students_by_section():
-    api_json = []
-    sectionless_students = []
-    users = [user.to_api_json() for user in User.get_users_by_course_id(course_id=current_user.course.id)]
-    for user in users:
-        if user['isStudent']:
-            canvas_course_sections = user['canvasCourseSections']
-            if canvas_course_sections:
-                for canvas_course_section in canvas_course_sections:
-                    if canvas_course_section not in api_json:
-                        api_json.append({'header': canvas_course_section})
-                    api_json.append(user)
-            else:
-                if not sectionless_students:
-                    api_json.append({'header': 'Students not associated with a section'})
-                sectionless_students.append(user)
-    api_json.extend(sectionless_students)
-    return tolerant_jsonify(api_json)
+    users = User.get_users_by_course_id(course_id=current_user.course.id)
+    return tolerant_jsonify([u.to_api_json() for u in users if is_student(u)])
 
 
 @app.route('/api/users/leaderboard')
