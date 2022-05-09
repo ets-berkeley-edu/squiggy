@@ -136,11 +136,15 @@ def export_as_png(whiteboard_id):
     # Download
     now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
     filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
-    return send_file(
-        as_attachment=True,
-        attachment_filename=f'{filename}_{now}.png',
-        path_or_file=to_png_file(whiteboard),
-    )
+    png_file = to_png_file(whiteboard)
+    if png_file:
+        return send_file(
+            as_attachment=True,
+            attachment_filename=f'{filename}_{now}.png',
+            path_or_file=png_file.name,
+        )
+    else:
+        raise BadRequestError('Failed to generate whiteboard PNG')
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/restore', methods=['POST'])
