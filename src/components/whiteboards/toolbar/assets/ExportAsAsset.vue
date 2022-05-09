@@ -55,6 +55,17 @@
                 outlined
                 required
               />
+              <div class="pl-1">
+                <span
+                  :aria-live="asset.title.length === 255 ? 'assertive' : null"
+                  class="font-size-12"
+                  :class="asset.title.length === 255 ? 'red--text' : 'text--secondary'"
+                  role="alert"
+                >
+                  255 character limit
+                  <span v-if="asset.title.length">({{ 255 - asset.title.length }} remaining)</span>
+                </span>
+              </div>
             </v-col>
           </v-row>
           <v-row v-if="categories.length">
@@ -143,8 +154,8 @@ export default {
   data: () => ({
     asset: {
       categoryId: undefined,
-      description: undefined,
-      title: undefined
+      description: '',
+      title: ''
     },
     isExporting: false,
     dialog: false
@@ -176,9 +187,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.asset-card {
-  z-index: 1500
-}
-</style>
