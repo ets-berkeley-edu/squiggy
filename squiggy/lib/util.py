@@ -54,7 +54,8 @@ def db_row_to_dict(row):
 
 
 def is_admin(user):
-    return user.canvas_course_role and 'admin' in user.canvas_course_role.lower()
+    canvas_course_role = _get_canvas_course_role(user)
+    return 'admin' in (canvas_course_role or '').lower()
 
 
 def is_student(user):
@@ -68,8 +69,7 @@ def is_observer(user):
 
 
 def is_teaching(user):
-    canvas_course_role = _get_canvas_course_role(user)
-    canvas_course_role = (canvas_course_role or '').lower()
+    canvas_course_role = (_get_canvas_course_role(user) or '').lower()
     return 'instructor' in canvas_course_role or 'teacher' in canvas_course_role
 
 
@@ -113,4 +113,7 @@ def utc_now():
 
 
 def _get_canvas_course_role(user):
-    return user['canvasCourseRole'] if type(user) is dict else user.canvas_course_role
+    if type(user) is dict:
+        return user.get('canvasCourseRole') or user.get('canvas_course_role')
+    else:
+        return user.canvas_course_role

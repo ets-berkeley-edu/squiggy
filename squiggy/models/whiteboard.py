@@ -28,7 +28,7 @@ from uuid import uuid4
 
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
-from squiggy.lib.util import isoformat, utc_now
+from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -244,7 +244,11 @@ class Whiteboard(Base):
                     'canvasFullName': row['canvas_full_name'],
                     'canvasImage': row['canvas_image'],
                     'canvasUserId': row['canvas_user_id'],
+                    'isAdmin': is_admin(row),
+                    'isObserver': is_observer(row),
                     'isOnline': bool(row['socket_id']),
+                    'isStudent': is_student(row),
+                    'isTeaching': is_teaching(row),
                 }
 
         for whiteboard_id, users_by_id in users_by_whiteboard_id.items():
