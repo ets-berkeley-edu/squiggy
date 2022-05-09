@@ -2,7 +2,7 @@
   <v-form v-model="isInputValid" @submit="save">
     <v-container fluid>
       <v-row no-gutters>
-        <v-col class="pb-3">
+        <v-col class="pb-2">
           <PageTitle :text="whiteboard ? 'Update whiteboard' : 'Create a new whiteboard'" />
         </v-col>
       </v-row>
@@ -30,7 +30,12 @@
           />
         </v-col>
       </v-row>
-      <v-row>
+      <v-row no-gutters>
+        <v-col class="pt-5">
+          <h2 class="text-h6">Select course member(s) to add to this whiteboard</h2>
+        </v-col>
+      </v-row>
+      <v-row class="pb-5">
         <v-col class="pt-5" cols="2">
           <label class="float-right" for="whiteboard-users-select">Collaborators</label>
         </v-col>
@@ -39,11 +44,12 @@
             id="whiteboard-users-select"
             v-model="selectedUserIds"
             chips
-            clearable
             color="blue-grey lighten-2"
             :disabled="isSaving"
             :error="!selectedUserIds.length"
             filled
+            hide-details
+            hide-selected
             item-text="canvasFullName"
             item-value="id"
             :items="users"
@@ -162,7 +168,7 @@ import Context from '@/mixins/Context'
 import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 import {createWhiteboard, updateWhiteboard} from '@/api/whiteboards'
-import {getStudentsBySection} from '@/api/users'
+import {getStudents} from '@/api/users'
 
 export default {
   name: 'EditWhiteboard',
@@ -234,7 +240,7 @@ export default {
     },
     init() {
       this.resetData()
-      getStudentsBySection().then(users => {
+      getStudents().then(users => {
         this.users = users
         const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
         if (addCurrentUser) {
@@ -254,9 +260,7 @@ export default {
       if (this.whiteboard) {
         this.selectedUserIds = this.$_.map(this.whiteboard.users, 'id')
         this.title = this.whiteboard.title
-        this.canDelete = !this.whiteboard.deletedAt
-          && this.onClickDelete
-          && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
+        this.canDelete = !this.whiteboard.deletedAt && this.onClickDelete
       } else {
         this.selectedUserIds = [this.$currentUser.id]
         this.title = undefined

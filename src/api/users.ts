@@ -5,8 +5,8 @@ export function getLeaderboard() {
   return axios.get(`${utils.apiBaseUrl()}/api/users/leaderboard`)
 }
 
-export function getStudentsBySection() {
-  return axios.get(`${utils.apiBaseUrl()}/api/users/students_by_section`)
+export function getStudents() {
+  return axios.get(`${utils.apiBaseUrl()}/api/users/students`)
 }
 
 export function getUsers() {
