@@ -30,7 +30,7 @@ from flask_login import current_user, login_required
 from squiggy.api.api_util import can_update_whiteboard, can_view_asset, can_view_whiteboard, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import local_now
+from squiggy.lib.util import local_now, to_int
 from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -44,7 +44,8 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 @feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
-    whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id)
+    whiteboard_id = to_int(whiteboard_id)
+    whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id) if whiteboard_id else None
     if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         return tolerant_jsonify(whiteboard)
     else:
