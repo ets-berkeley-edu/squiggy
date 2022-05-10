@@ -281,6 +281,20 @@ class Asset(Base):
 
         return results
 
+    def get_used_in_assets(self):
+        def _to_api_json(row):
+            return {
+                'id': row['id'],
+                'title': row['title'],
+                'description': row['description'],
+            }
+        sql = text("""SELECT DISTINCT a.id, a.title, a.description
+            FROM assets a
+            JOIN asset_whiteboard_elements e ON a.id = e.asset_id
+            WHERE e.element_asset_id = :element_asset_id AND a.deleted_at IS NULL
+        """)
+        return [_to_api_json(row) for row in db.session.execute(sql, {'element_asset_id': self.id})]
+
     def add_like(self, user):
         like_activity = Activity.create_unless_exists(
             activity_type='asset_like',
@@ -418,6 +432,7 @@ class Asset(Base):
             'thumbnailUrl': thumbnail_url,
             'title': self.title,
             'url': self.url,
+            'usedInAssets': self.get_used_in_assets(),
             'users': [u.to_api_json() for u in self.users],
             'views': self.views,
             'visible': self.visible,
