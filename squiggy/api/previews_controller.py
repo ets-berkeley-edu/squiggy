@@ -96,7 +96,8 @@ def _update_whiteboard_preview(params):
     if not whiteboard:
         raise BadRequestError(f'Whiteboard {whiteboard_id} not found.')
 
-    return whiteboard.update_preview(
+    return Whiteboard.update_preview(
         image_url=params.get('image'),
         thumbnail_url=params.get('thumbnail'),
+        whiteboard_id=whiteboard_id,
     )
