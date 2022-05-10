@@ -325,14 +325,14 @@ class Whiteboard(Base):
         std_commit()
         return whiteboard
 
-    def update_preview(self, **kwargs):
-        image_url = kwargs.get('image_url')
-        thumbnail_url = kwargs.get('thumbnail_url')
+    @classmethod
+    def update_preview(cls, image_url, thumbnail_url, whiteboard_id):
+        whiteboard = cls.query.filter_by(id=whiteboard_id).first()
         if thumbnail_url:
-            self.thumbnail_url = thumbnail_url
+            whiteboard.thumbnail_url = thumbnail_url
         if image_url:
-            self.image_url = image_url
-        db.session.add(self)
+            whiteboard.image_url = image_url
+        db.session.add(whiteboard)
         std_commit()
         return True
 
