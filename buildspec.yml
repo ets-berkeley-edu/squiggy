@@ -35,6 +35,7 @@ artifacts:
   - 'consoler.py'
   - 'dist/**/*'
   - 'fixtures/**/*'
+  - 'node_modules/**/*'
   - 'requirements.txt'
   - 'scripts/**/*'
   - 'squiggy/**/*'

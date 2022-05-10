@@ -52,7 +52,11 @@ def to_png_file(whiteboard):
                     png_file.name,
                 ]
                 logger.info(f'Run whiteboard.to_png_file script: {executable}')
-                exit_code = subprocess.run(executable, capture_output=True)
+                exit_code = subprocess.run(
+                    executable,
+                    capture_output=True,
+                    env={'NODE_PATH': f'{base_dir}/node_modules'},
+                )
                 logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
                 return png_file
         except OSError as e:
