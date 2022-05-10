@@ -3,7 +3,6 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 14
       python: 3.7
     commands:
       - npm -v
@@ -16,6 +15,13 @@ phases:
 
   build:
     commands:
+      - npm install -g n
+      - n latest
+      - npm update -g npm
+      - echo node -v
+      - node -v
+      - echo npm -v
+      - npm -v
       - npm install -g @vue/cli
       - npm run build-vue
       - tsc --resolveJsonModule --esModuleInterop ./scripts/node_js/save_whiteboard_as_png.ts
