@@ -59,7 +59,7 @@
         {{ asset.description }}
       </v-col>
     </v-row>
-    <v-row v-if="asset.assetType !== 'file'">
+    <v-row v-if="!['file', 'whiteboard'].includes(asset.assetType)">
       <v-col
         class="font-weight-bold text-no-wrap"
         lg="1"
