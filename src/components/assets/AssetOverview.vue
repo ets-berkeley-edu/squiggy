@@ -61,7 +61,7 @@
     </v-row>
     <v-row v-if="!['file', 'whiteboard'].includes(asset.assetType)">
       <v-col
-        class="font-weight-bold text-no-wrap"
+        class="font-weight-bold text-no-wrap text-right"
         lg="1"
         md="1"
         sm="2"
@@ -79,9 +79,33 @@
         <span class="sr-only">none</span>
       </v-col>
     </v-row>
+    <v-row v-if="asset.usedInAssets.length" justify="start">
+      <v-col
+        class="font-weight-bold pt-3 text-no-wrap text-right"
+        lg="1"
+        md="1"
+        sm="2"
+      >
+        Used in:
+      </v-col>
+      <v-col>
+        <div
+          v-for="(usedInAsset, index) in asset.usedInAssets"
+          :key="index"
+          :class="{'pt-1': index > 0}"
+        >
+          <router-link
+            :id="`asset-used-in-${usedInAsset.id}`"
+            :to="`/asset/${usedInAsset.id}`"
+          >
+            {{ usedInAsset.title }}
+          </router-link>
+        </div>
+      </v-col>
+    </v-row>
     <v-row justify="start">
       <v-col
-        class="font-weight-bold text-no-wrap"
+        class="font-weight-bold text-no-wrap text-right"
         lg="1"
         md="1"
         sm="2"
