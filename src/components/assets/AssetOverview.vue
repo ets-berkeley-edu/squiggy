@@ -157,7 +157,8 @@ export default {
     imageUrl: undefined,
     likeCount: undefined,
     liked: undefined,
-    sourceUrl: undefined
+    sourceUrl: undefined,
+    usedInAssets: undefined
   }),
   created() {
     this.canLikeAsset = !(this.$_.find(this.asset.users, {id: this.$currentUser.id}))
@@ -165,8 +166,24 @@ export default {
     this.likeCount = this.asset.likes
     this.liked = this.asset.liked
     this.sourceUrl = this.asset.source || this.asset.url
+    this.usedInAssets = this.getUsedInAssets()
   },
   methods: {
+    getUsedInAssets() {
+      const assets = []
+      const currentUserAssetIds = this.$_.map(this.asset.usedInAssets, 'id')
+      this.$_.each(this.asset.usedInAssets, usedInAsset => {
+        if (
+          usedInAsset.visible
+          || this.$currentUser.isAdmin
+          || this.$currentUser.isTeaching
+          || currentUserAssetIds.includes(usedInAsset.id)
+        ) {
+          assets.push(usedInAsset)
+        }
+      })
+      return assets
+    },
     toggleLike() {
       if (this.liked) {
         removeLikeAsset(this.asset.id).then(data => {

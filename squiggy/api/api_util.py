@@ -74,7 +74,11 @@ def can_update_asset(user, asset):
 
 
 def can_view_asset(asset, user):
-    return user and (user.course.id == asset.course_id or user.is_admin)
+    if user and user.is_admin:
+        return True
+    if not user or user.course.id != asset.course_id:
+        return False
+    return asset.visible or (asset.id in [a.id for a in current_user.user.assets])
 
 
 def can_update_whiteboard(user, whiteboard):
