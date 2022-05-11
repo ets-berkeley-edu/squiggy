@@ -103,7 +103,7 @@ def create_asset():
     source = params.get('source')
     url = params.get('url')
     title = params.get('title', url)
-    visible = params.get('visible', True)
+    visible = to_bool_or_none(params.get('visible', True))
     if not asset_type or not title:
         raise BadRequestError('Asset creation requires title and type.')
 
