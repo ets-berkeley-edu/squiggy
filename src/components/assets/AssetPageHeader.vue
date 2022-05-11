@@ -33,14 +33,7 @@
         </v-tooltip>
       </div>
       <div v-if="canRemixAsset" class="mr-2">
-        <v-btn
-          id="remix-asset-whiteboard-btn"
-          @click="remix"
-          @keypress.enter.prevent="remix"
-        >
-          <font-awesome-icon class="mr-2" icon="refresh" />
-          Remix
-        </v-btn>
+        <RemixAsset :asset="asset" />
       </div>
       <div v-if="downloadUrl" class="mr-2">
         <v-btn id="download-asset-btn" @click="downloadAsset" @keypress.enter.prevent="downloadAsset">
@@ -99,13 +92,14 @@
 </template>
 
 <script>
+import RemixAsset from '@/components/assets/RemixAsset'
 import Utils from '@/mixins/Utils'
 import {deleteAsset} from '@/api/assets'
-import {remixWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'AssetPageHeader',
   mixins: [Utils],
+  components: {RemixAsset},
   props: {
     asset: {
       required: true,
@@ -165,11 +159,6 @@ export default {
     edit() {
       this.$announcer.polite(`Edit asset ${this.asset.title}`)
       this.go(`/asset/${this.asset.id}/edit`)
-    },
-    remix() {
-      remixWhiteboard(this.asset.id).then(whiteboard => {
-        this.$announcer.polite(`Whiteboard ${whiteboard.title} is ready.`)
-      })
     }
   }
 }
