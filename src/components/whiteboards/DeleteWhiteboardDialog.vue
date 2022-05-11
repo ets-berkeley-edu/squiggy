@@ -1,11 +1,14 @@
 <template>
   <v-dialog v-model="dialog" width="500">
-    <v-card>
-      <v-card-title>Delete whiteboard?</v-card-title>
-      <v-card-text class="pt-3">
-        Are you sure?
+    <v-card class="pt-4">
+      <v-card-title>Are you sure?</v-card-title>
+      <v-card-text class="pt-2">
+        Please confirm that you want to delete the "<span class="font-weight-bold">{{ whiteboard.title }}</span>"
+        Whiteboard<span v-if="showCollaborators">, owned by
+          <span v-if="whiteboard.users.length === 1">{{ whiteboard.users[0].canvasFullName }}</span>
+          <span v-if="whiteboard.users.length > 1">{{ oxfordJoin($_.map(whiteboard.users, 'canvasFullName')) }}?</span>
+        </span><span v-if="!showCollaborators">?</span>
       </v-card-text>
-      <v-divider />
       <v-card-actions>
         <v-spacer />
         <div class="d-flex pa-2">
@@ -35,8 +38,12 @@
 </template>
 
 <script>
+import Utils from '@/mixins/Utils'
+import Whiteboarding from '@/mixins/Whiteboarding'
+
 export default {
   name: 'DeleteWhiteboardDialog',
+  mixins: [Utils, Whiteboarding],
   props: {
     onCancel: {
       required: true,
@@ -52,12 +59,16 @@ export default {
     }
   },
   data: () => ({
-    dialog: false
+    dialog: false,
+    showCollaborators: undefined
   }),
   watch: {
     open(value) {
       this.dialog = value
     }
+  },
+  created() {
+    this.showCollaborators = this.whiteboard.users.length > 1 || this.$currentUser.id !== this.whiteboard.users[0].id
   },
   methods: {
     cancel() {
