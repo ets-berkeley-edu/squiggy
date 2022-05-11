@@ -113,10 +113,10 @@ export default {
   methods: {
     cancelDelete() {
       this.$announcer.polite('Canceled')
-      this.openDeleteDialog = false
+      this.isDeleteDialogOpen = false
     },
     deleteConfirmed() {
-      this.openDeleteDialog = false
+      this.isDeleteDialogOpen = false
       this.deleteWhiteboard()
     },
     openDeleteDialog() {

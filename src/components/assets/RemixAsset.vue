@@ -97,7 +97,7 @@
           </v-row>
           <v-row v-if="whiteboard.description" class="pt-2" no-gutters>
             <v-col id="whiteboard-description">
-              <h3 class="sr-only">Description XXX</h3>
+              <h3 class="sr-only">Description</h3>
               {{ whiteboard.description }}
             </v-col>
           </v-row>
