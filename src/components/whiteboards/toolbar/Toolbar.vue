@@ -75,7 +75,7 @@ import SettingsTool from '@/components/whiteboards/toolbar/SettingsTool'
 import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
 import TextTool from '@/components/whiteboards/toolbar/TextTool'
 import UploadNewAsset from '@/components/whiteboards/toolbar/assets/UploadNewAsset'
-import Users from '@/components/whiteboards/sidebar/Users'
+import Users from '@/components/whiteboards/toolbar/Users'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 

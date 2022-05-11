@@ -206,7 +206,7 @@ export default {
       isSaving: false,
       title: '',
       uploading: false,
-      visible: true
+      visible: false
     }
   },
   methods: {

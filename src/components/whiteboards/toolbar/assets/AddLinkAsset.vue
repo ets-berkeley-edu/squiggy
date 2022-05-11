@@ -188,7 +188,7 @@ export default {
       description: undefined,
       title: '',
       url: undefined,
-      visible: true
+      visible: false
     },
     dialog: false,
     isSaving: false,
