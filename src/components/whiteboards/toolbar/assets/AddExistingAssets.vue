@@ -80,7 +80,7 @@
                 size="18"
                 width="2"
               />
-              Saving
+              Saving {{ dialog }}
             </span>
             <span v-if="!isSaving">Save</span>
           </v-btn>
@@ -186,11 +186,13 @@ export default {
     save() {
       if (this.selectedAssetIds.length) {
         this.isSaving = true
-        this.$_.uniq(this.selectedAssetIds).forEach((assetId, index) => {
+        const assetIds = this.$_.uniq(this.selectedAssetIds)
+        this.$_.each(assetIds, (assetId, index) => {
           const asset = this.$_.find(this.assets, ['id', assetId])
           this.addAsset(asset)
-          if (index === this.selectedAssetIds.length - 1) {
+          if (index === assetIds.length - 1) {
             this.$announcer.polite('Assets added')
+            this.isSaving = false
             this.dialog = false
             this.reset()
           }
