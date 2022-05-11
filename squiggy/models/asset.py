@@ -215,15 +215,16 @@ class Asset(Base):
     @classmethod
     def get_assets(cls, session, order_by, offset, limit, filters):
         params = {
-            'course_id': session.course.id,
-            'user_id': session.user.id,
             'asset_ids': filters.get('asset_ids'),
             'asset_types': filters.get('asset_type'),
             'category_id': filters.get('category_id'),
-            'owner_id': filters.get('owner_id'),
-            'section_id': filters.get('section_id'),
+            'course_id': session.course.id,
+            'my_asset_ids': [a.id for a in session.user.assets],
             'offset': offset,
+            'owner_id': filters.get('owner_id'),
             'limit': limit,
+            'section_id': filters.get('section_id'),
+            'user_id': session.user.id,
         }
 
         from_clause = """FROM assets a
@@ -237,7 +238,7 @@ class Asset(Base):
                 AND act.object_type = 'asset'
                 AND act.type = 'asset_like'"""
 
-        where_clause = _build_where_clause(filters, params)
+        where_clause = _build_where_clause(filters, params, session)
         order_clause = _build_order_clause(order_by)
 
         assets_query = text(f"""SELECT DISTINCT ON (a.id, a.likes, a.views, a.comment_count) a.*, act.type AS activity_type
@@ -485,13 +486,15 @@ def _build_order_clause(order_by):
         return ' ORDER BY a.id DESC'
 
 
-def _build_where_clause(filters, params):
+def _build_where_clause(filters, params, session):
     where_clause = """WHERE
         a.deleted_at IS NULL
         AND a.course_id = :course_id
         AND a.visible = TRUE
         AND (c.visible = TRUE OR c.visible IS NULL)"""
 
+    if not session.is_admin and not session.is_teaching:
+        where_clause += ' AND (a.visible = TRUE OR a.id = ANY(:my_asset_ids))'
     if filters.get('keywords'):
         where_clause += ' AND (a.title ILIKE :keywords OR a.description ILIKE :keywords)'
         params['keywords'] = '%' + re.sub(r'\s+', '%', filters['keywords'].strip()) + '%'
