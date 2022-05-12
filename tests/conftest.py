@@ -310,4 +310,4 @@ def _get_mock_comments():
 
 
 def _get_student():
-    return User.query.filter_by(canvas_course_role='Student').first()
+    return User.query.filter_by(canvas_course_role='Student', canvas_enrollment_state='active').first()

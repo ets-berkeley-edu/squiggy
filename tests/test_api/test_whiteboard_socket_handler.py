@@ -55,7 +55,7 @@ class TestCreateWhiteboardElement:
         """Denies unauthorized user."""
         with pytest.raises(ResourceNotFoundError):
             upsert_whiteboard_element(
-                current_user=_get_unauthorized_user(mock_whiteboard),
+                current_user=_get_non_collaborator(mock_whiteboard),
                 socket_id=_get_mock_socket_id(),
                 whiteboard_element=_mock_whiteboard_element(),
                 whiteboard_id=mock_whiteboard['id'],
@@ -146,7 +146,7 @@ class TestUpdateWhiteboardElements:
 
 
 def _get_authorized_user(whiteboard):
-    student = next((user for user in whiteboard['users'] if is_student(user)), None)
+    student = next((u for u in whiteboard['users'] if is_student(u) and u['canvasEnrollmentState'] == 'active'), None)
     assert student
     return LoginSession(user_id=student['id'])
 
@@ -155,14 +155,18 @@ def _get_mock_socket_id():
     return str(randint(1, 9999999))
 
 
-def _get_unauthorized_user(whiteboard):
+def _get_non_collaborator(whiteboard):
     whiteboard_user_ids = [u['id'] for u in whiteboard['users']]
     course_id = whiteboard['courseId']
 
     def _is_unauthorized(user):
-        return not is_admin(user) and not is_teaching(user) and user.id not in whiteboard_user_ids
+        return not is_admin(user) \
+            and not is_teaching(user) \
+            and user.canvas_enrollment_state == 'active' \
+            and user.id not in whiteboard_user_ids
     unauthorized_users = list(filter(lambda u: _is_unauthorized(u), Course.find_by_id(course_id).users))
-    return LoginSession(user_id=unauthorized_users[0].id)
+    user = unauthorized_users[0]
+    return LoginSession(user_id=user.id)
 
 
 def _mock_whiteboard_element():
