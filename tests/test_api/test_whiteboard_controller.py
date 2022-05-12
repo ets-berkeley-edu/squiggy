@@ -287,6 +287,34 @@ class TestRestoreWhiteboard:
         assert client.get(f"/api/whiteboard/{mock_whiteboard['id']}").json['deletedAt'] is None
 
 
+class TestGetEligibleCollaborators:
+
+    @classmethod
+    def _api_eligible_collaborators(cls, client, expected_status_code=200):
+        response = client.get('/api/whiteboards/eligible_collaborators')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_eligible_collaborators(client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_eligible_collaborators(client, expected_status_code=401)
+
+    def test_authorized(self, client, fake_auth, authorized_user_id):
+        """Authorized user can get /students_by_section."""
+        fake_auth.login(authorized_user_id)
+        current_user = User.find_by_id(authorized_user_id)
+        eligible_collaborators = self._api_eligible_collaborators(client)
+        user_count = len(eligible_collaborators)
+        assert user_count > 1
+        users_of_all_types = User.get_users_by_course_id(course_id=current_user.course.id)
+        assert user_count == len(users_of_all_types)
+
+
 class TestRemixWhiteboard:
 
     @staticmethod

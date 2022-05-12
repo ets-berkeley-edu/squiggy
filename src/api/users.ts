@@ -5,10 +5,6 @@ export function getLeaderboard() {
   return axios.get(`${utils.apiBaseUrl()}/api/users/leaderboard`)
 }
 
-export function getStudents() {
-  return axios.get(`${utils.apiBaseUrl()}/api/users/students`)
-}
-
 export function getUsers() {
   return axios.get(`${utils.apiBaseUrl()}/api/users`)
 }

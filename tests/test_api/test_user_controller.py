@@ -25,8 +25,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 import json
 
-from squiggy.models.user import User
-
 unauthorized_user_id = '666'
 
 
@@ -100,38 +98,6 @@ class TestGetUsers:
         api_json = self._api_get_users(client)
         for user in api_json:
             assert user['canvasEnrollmentState'] == 'active' or user['canvasEnrollmentState'] == 'invited'
-
-
-class TestGetStudents:
-
-    @classmethod
-    def _api_get_students(cls, client, expected_status_code=200):
-        response = client.get('/api/users/students')
-        assert response.status_code == expected_status_code
-        return response.json
-
-    def test_anonymous(self, client):
-        """Denies anonymous user."""
-        self._api_get_students(client, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        fake_auth.login(unauthorized_user_id)
-        self._api_get_students(client, expected_status_code=401)
-
-    def test_authorized(self, client, fake_auth, authorized_user_id):
-        """Authorized user can get /students_by_section."""
-        fake_auth.login(authorized_user_id)
-        current_user = User.find_by_id(authorized_user_id)
-        students = self._api_get_students(client)
-        student_count = len(students)
-        assert student_count > 1
-
-        users_of_all_types = User.get_users_by_course_id(course_id=current_user.course.id)
-        assert student_count < len(users_of_all_types)
-        for student in students:
-            assert student['isStudent']
-            assert 'canvasFullName' in student
 
 
 class TestGetLeaderboard:
