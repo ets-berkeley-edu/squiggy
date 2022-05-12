@@ -41,17 +41,9 @@ const router = new Router({
     },
     {
       path: '/',
+      beforeEnter: auth.requiresAuthenticated,
       component: BaseView,
       children: [
-        {
-          beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/error') : next(),
-          path: '/squiggy',
-          component: Squiggy,
-          meta: {
-            isLoginPage: true,
-            title: 'Hello!'
-          }
-        },
         {
           path: '/asset/create',
           component: AddLinkAsset,
@@ -169,6 +161,7 @@ const router = new Router({
       ]
     },
     {
+      beforeEnter: auth.requiresAuthenticated,
       path: '/whiteboard/:id',
       component: Whiteboard,
       meta: {
@@ -234,6 +227,15 @@ const router = new Router({
       path: '/',
       component: BaseView,
       children: [
+        {
+          beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/error') : next(),
+          path: '/squiggy',
+          component: Squiggy,
+          meta: {
+            isLoginPage: true,
+            title: 'Hello!'
+          }
+        },
         {
           beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/404') : next(),
           path: '/404',

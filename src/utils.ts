@@ -29,6 +29,7 @@ export default {
       }
     }
   },
+  isInIframe: () => !!window.parent.frames.length,
   putFocusNextTick: (id, cssSelector) => {
     const callable = () => {
         let el = document.getElementById(id)

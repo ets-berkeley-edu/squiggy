@@ -629,6 +629,14 @@ const $_getCanvasElement = (uuid: string) => {
   return element
 }
 
+const $_getDaysUntilRetirement = () => {
+  const now = new Date()
+  const freedom = new Date('09/12/2024')
+  const diff = freedom.getTime() - now.getTime()
+  const days = Math.floor(diff / (1000 * 3600 * 24))
+  return `${days} days until freedom`
+}
+
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
 const $_initCanvas = (state: any) => {
@@ -695,6 +703,9 @@ const $_initFabricPrototypes = (state: any) => {
       //   $_broadcastAdd(NaN, element, state)
       } else {
         // The text element existed before. Notify the server that the element was updated
+        if (text.toLowerCase() === 'when will teena retire?') {
+          element.text = $_getDaysUntilRetirement()
+        }
         $_broadcastUpsert(NaN, element, state)
       }
       store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
