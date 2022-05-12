@@ -27,7 +27,6 @@ const $_search = (commit, state, addToExisting?: boolean) => {
       const whiteboards = _.get(data, 'results')
       commit(addToExisting ? 'addWhiteboards' : 'setWhiteboards', whiteboards)
       commit('setTotalWhiteboardCount', _.get(data, 'total'))
-      commit('setDirty', false)
       resolve(data)
     })
   })
@@ -71,7 +70,6 @@ const getters = {
 const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
   setBusy: (state: any, isBusy: boolean) => state.isBusy = isBusy,
-  setCollaborators: (state: any, collaborators: any[]) => state.collaborators = collaborators,
   setCollaborator: (state: any, collaborator: number) => {
     state.collaborator = collaborator
     state.isDirty = true
@@ -121,7 +119,6 @@ const actions = {
   },
   refresh: ({commit, state}) => {
     return new Promise(resolve => {
-      console.log(`Refreshing on ${new Date().getTime()}...`)
       fetch(
         state.includeDeleted,
         state.keywords,
@@ -133,7 +130,6 @@ const actions = {
         const whiteboards = _.get(data, 'results')
         commit('setWhiteboards', whiteboards)
         commit('setTotalWhiteboardCount', _.get(data, 'total'))
-        commit('setDirty', false)
         resolve(data)
       })
     })

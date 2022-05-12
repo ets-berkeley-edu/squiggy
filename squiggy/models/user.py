@@ -201,6 +201,7 @@ class User(Base):
             'canvasFullName': self.canvas_full_name,
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
+            'whiteboards': [{'id': w.id, 'title': w.title} for w in self.whiteboards],
             'isAdmin': is_admin(self),
             'isObserver': is_observer(self),
             'isStudent': is_student(self),

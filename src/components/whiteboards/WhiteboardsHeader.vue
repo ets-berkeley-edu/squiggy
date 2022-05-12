@@ -17,7 +17,7 @@
       </div>
     </div>
     <v-alert
-      v-if="hasLoaded && !hasWhiteboards"
+      v-if="hasLoaded && !$currentUser.whiteboards.length"
       role="alert"
       outlined
       text
@@ -26,7 +26,7 @@
     >
       <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
     </v-alert>
-    <div v-if="hasWhiteboards && !$currentUser.isObserver && !$currentUser.isStudent">
+    <div v-if="(totalWhiteboardCount > 1) && !$currentUser.isObserver && !$currentUser.isStudent">
       <v-expand-transition>
         <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
           <v-text-field
@@ -206,81 +206,6 @@
       width="auto"
     />
   </div>
-  <!--
-  <div>
-    <div>
-
->>>> SIMPLE SEARCH <<<<
-
-      <div data-ng-show="!isAdvancedSearch">
-        <form class="form-inline search-form" name="whiteboardsSearchForm" data-ng-submit="search()">
-          <label for="whiteboards-search" class="sr-only">Search Whiteboards</label>
-          <div class="input-group search-container">
-            <input type="text" id="whiteboards-search" class="form-control" placeholder="Search" data-ng-model="keywords">
-            <button class="btn btn-link search-advanced" title="Advanced search" type="button" data-ng-click="showAdvancedView()">
-              <i class="fa fa-caret-down">
-                <span class="sr-only">Advanced search</span>
-              </i>
-            </button>
-            <span class="input-group-btn">
-              <button type="submit" class="btn btn-default" title="Search">
-                <i class="fa fa-search">
-                  <span class="sr-only">Search</span>
-                </i>
-              </button>
-            </span>
-          </div>
-        </div>
-      </form>
-
->>>> ADVANCED SEARCH <<<<
-
-      <div data-ng-show="isAdvancedSearch" class="col-pane">
-        <form name="whiteboardsSearchAdvancedForm" class="form-horizontal search-advancedform" data-ng-submit="search()" novalidate>
-
->>>> SEARCH <<<<
-
-          <div class="form-group">
-            <label for="whiteboards-search-keywords" class="col-sm-1 control-label">Search</label>
-            <div class="col-sm-11">
-              <input type="text" id="whiteboards-search-keywords" data-ng-model="keywords" name="whiteboardsSearchKeywords" class="form-control" placeholder="Keyword" data-ng-maxlength="255">
-            </div>
-          </div>
-
->>>> FILTER BY <<<<
-
-          <div class="form-group">
-            <label for="whiteboards-search-user" class="col-sm-1 control-label">Filter by</label>
-            <div class="col-sm-4">
-              <select id="whiteboards-search-user" class="form-control" data-ng-model="user" data-value="{{user}}" data-ng-options="user.id as user.canvas_full_name for user in users">
-                <option value="" selected>Collaborator</option>
-              </select>
-            </div>
-          </div>
-
->>>> INCLUDE DELETED <<<<
-
-          <div class="form-group">
-            <div class="col-sm-1"></div>
-            <div class="col-sm-7">
-              <input id="whiteboards-search-include-deleted" type="checkbox" class="form-checkbox" data-ng-model="includeDeleted">
-              <label for="whiteboards-search-include-deleted">Include deleted whiteboards</label>
-            </div>
-          </div>
-
->>>> BUTTONS <<<<
-
-          <div class="form-group text-right">
-            <div class="col-sm-offset-1 col-sm-11">
-              <a class="btn btn-default" data-ng-click="showSimpleView()">Cancel</a>
-              <button type="submit" class="btn btn-primary">Search</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  -->
 </template>
 
 <script>
@@ -305,7 +230,6 @@ export default {
     alert: undefined,
     alertType: undefined,
     hasLoaded: false,
-    hasWhiteboards: undefined,
     keyForSelectReset: new Date().getTime()
   }),
   watch: {
@@ -319,8 +243,7 @@ export default {
     }
   },
   created() {
-    this.init().then(data => {
-      this.hasWhiteboards = !!data.length
+    this.init().then(() => {
       this.setExpanded(this.orderBy !== this.orderByDefault && !!this.userId)
       if (this.putFocusOnLoad) {
         this.$putFocusNextTick(this.putFocusOnLoad)
@@ -360,6 +283,7 @@ export default {
     reset(expand, fetchAgain) {
       this.setOrderBy(this.orderByDefault)
       this.setUserId(null)
+      this.setIncludeDeleted(false)
       this.rewriteBookmarkHash({orderBy: this.orderByDefault})
       this.setDirty(false)
       this.alert = null
