@@ -35,7 +35,6 @@
           </v-row>
           <v-row>
             <v-col class="pt-5" cols="2">
-              <h2 id="modal-header" class="sr-only">Choose the type of asset you want to upload</h2>
               <label class="float-right" for="asset-url-input">
                 URL
                 <font-awesome-icon
@@ -146,7 +145,7 @@
                 <v-btn
                   id="save-btn"
                   color="primary"
-                  :disabled="isSaving"
+                  :disabled="disableSave"
                   @click="onClickSave"
                   @keypress.enter="onClickSave"
                 >
@@ -187,13 +186,18 @@ export default {
       categoryId: undefined,
       description: undefined,
       title: '',
-      url: undefined,
+      url: '',
       visible: false
     },
     dialog: false,
     isSaving: false,
     title: 'Add Link Asset'
   }),
+  computed: {
+    disableSave() {
+      return this.isSaving || !this.$_.trim(this.asset.title) || !this.$_.trim(this.asset.url)
+    }
+  },
   methods: {
     onClickCancel() {
       this.dialog = false
