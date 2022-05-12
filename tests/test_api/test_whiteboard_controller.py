@@ -29,7 +29,7 @@ from uuid import uuid4
 
 from flask import current_app as app
 from flask_login import logout_user
-from squiggy import std_commit
+from squiggy import db, std_commit
 from squiggy.api.whiteboard_socket_handler import join_whiteboard
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_teaching
@@ -116,6 +116,27 @@ class TestGetWhiteboards:
         with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', False):
             fake_auth.login(authorized_user_id)
             self._api_get_whiteboards(client, expected_status_code=401)
+
+    def test_inactive_collaborator(self, client, fake_auth):
+        course, student_1, whiteboard = _create_student_whiteboard()
+        student_2 = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='Inactive Ira',
+            canvas_user_id=958437621,
+            course_id=course.id,
+        )
+        # Expect two active users
+        whiteboard = Whiteboard.update(whiteboard['title'], [student_1, student_2], whiteboard['id'])
+        assert len(whiteboard.to_api_json()['users']) == 2
+        # Make inactive
+        inactive_student_2 = User.find_by_id(student_2.id)
+        inactive_student_2.canvas_enrollment_state = 'inactive'
+        db.session.add(inactive_student_2)
+        std_commit(allow_test_environment=True)
+        # Verify: the inactive student is effectively dropped
+        whiteboard = Whiteboard.update(whiteboard.title, [student_1, student_2], whiteboard.id)
+        assert len(whiteboard.to_api_json()['users']) == 1
 
     def test_authorized(self, client, fake_auth):
         """Get all whiteboards."""
@@ -283,8 +304,9 @@ class TestRemixWhiteboard:
         fake_auth.login(unauthorized_user_id)
         self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401)
 
-    def test_authorized(self, client, fake_auth, mock_whiteboard, student_id):
+    def test_authorized(self, client, fake_auth, mock_whiteboard):
         """Authorized user can update whiteboard."""
+        student_id = mock_whiteboard['users'][0]['id']
         fake_auth.login(student_id)
         whiteboard_id = mock_whiteboard['id']
         title = 'Remix me'
