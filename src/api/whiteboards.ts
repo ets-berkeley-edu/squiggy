@@ -23,6 +23,10 @@ export function exportAsset(
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/export/asset`, data)
 }
 
+export function getEligibleCollaborators() {
+  return axios.get(`${utils.apiBaseUrl()}/api/whiteboards/eligible_collaborators`)
+}
+
 export function getExportabilitySummary(whiteboardId: number) {
   return axios.get(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/exportability_summary`)
 }

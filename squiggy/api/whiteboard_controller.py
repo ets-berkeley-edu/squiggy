@@ -215,6 +215,13 @@ def delete_whiteboard(whiteboard_id):
     return tolerant_jsonify({'message': f'Whiteboard {whiteboard_id} deleted'}), 200
 
 
+@app.route('/api/whiteboards/eligible_collaborators')
+@login_required
+def eligible_collaborators():
+    course_id = current_user.course.id
+    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=course_id)])
+
+
 @app.route('/api/whiteboard/update', methods=['POST'])
 @feature_flag_whiteboards
 @login_required

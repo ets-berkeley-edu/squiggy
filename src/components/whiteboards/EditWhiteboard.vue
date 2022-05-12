@@ -198,8 +198,7 @@
 import Context from '@/mixins/Context'
 import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
-import {createWhiteboard, updateWhiteboard} from '@/api/whiteboards'
-import {getStudents} from '@/api/users'
+import {createWhiteboard, getEligibleCollaborators, updateWhiteboard} from '@/api/whiteboards'
 
 export default {
   name: 'EditWhiteboard',
@@ -269,7 +268,7 @@ export default {
     init() {
       this.resetData()
       this.isFetchingUsers = true
-      getStudents().then(users => {
+      getEligibleCollaborators().then(users => {
         const nonStudents = this.whiteboard ? this.$_.filter(this.whiteboard.users, u => u.isTeaching || u.isAdmin) : []
         this.users = users.concat(nonStudents)
         const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)

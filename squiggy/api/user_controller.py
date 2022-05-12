@@ -27,7 +27,6 @@ from flask import current_app as app, request
 from flask_login import current_user, login_required
 from squiggy.lib.errors import BadRequestError, ForbiddenRequestError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import is_student
 from squiggy.models.user import User
 
 
@@ -40,13 +39,6 @@ def my_profile():
 @login_required
 def get_users():
     return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id)])
-
-
-@app.route('/api/users/students')
-@login_required
-def students_by_section():
-    users = User.get_users_by_course_id(course_id=current_user.course.id)
-    return tolerant_jsonify([u.to_api_json() for u in users if is_student(u)])
 
 
 @app.route('/api/users/leaderboard')
