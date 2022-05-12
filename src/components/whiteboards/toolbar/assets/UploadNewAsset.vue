@@ -216,7 +216,6 @@ export default {
         || !this.file
         || !this.fileAssetValid
         || !this.$_.trim(this.title)
-        || !this.$_.trim(this.asset.url)
     }
   },
   methods: {
