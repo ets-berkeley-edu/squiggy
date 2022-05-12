@@ -164,7 +164,7 @@
                   <v-btn
                     id="upload-file-btn"
                     color="primary"
-                    :disabled="!file || !fileAssetValid"
+                    :disabled="disableSave"
                     elevation="1"
                     @click="upload"
                   >
@@ -207,6 +207,16 @@ export default {
       title: '',
       uploading: false,
       visible: false
+    }
+  },
+  computed: {
+    disableSave() {
+      return this.isSaving
+        || this.uploading
+        || !this.file
+        || !this.fileAssetValid
+        || !this.$_.trim(this.title)
+        || !this.$_.trim(this.asset.url)
     }
   },
   methods: {
