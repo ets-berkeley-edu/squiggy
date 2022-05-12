@@ -32,7 +32,9 @@ class LoginSession:
     user = None
 
     def __init__(self, user_id):
-        self.user = User.find_by_id(user_id) if user_id else None
+        user = User.find_by_id(user_id) if user_id else None
+        is_authorized = user and (is_admin(user) or user.canvas_enrollment_state != 'inactive')
+        self.user = user if is_authorized else None
 
     def get_id(self):
         return self.user and self.user.id

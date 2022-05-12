@@ -623,7 +623,7 @@ class TestLikeAsset:
 
     def test_likes_multiple_users_increment_remove_likes_decrement(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
-        user_iterator = (user for user in course_users if user not in mock_asset.users)
+        user_iterator = (user for user in course_users if user not in mock_asset.users and user.canvas_enrollment_state == 'active')
         different_user_1 = next(user_iterator)
         different_user_2 = next(user_iterator)
         # Clean up any point values out of sync from earlier tests.

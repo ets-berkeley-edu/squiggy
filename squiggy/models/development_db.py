@@ -142,6 +142,13 @@ _test_users = [
         'canvas_email': 'anne-sophie@berkeley.edu',
     },
     {
+        'canvas_user_id': 8765433,
+        'canvas_course_role': 'Student',
+        'canvas_enrollment_state': 'inactive',
+        'canvas_full_name': 'Poly Styrene',
+        'canvas_email': 'x-ray-spex@berkeley.edu',
+    },
+    {
         'canvas_user_id': 4328765,
         'canvas_course_role': 'Student',
         'canvas_enrollment_state': 'active',

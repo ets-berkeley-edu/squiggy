@@ -88,6 +88,18 @@ class TestDevAuth:
                 expected_status_code=403,
             )
 
+    def test_canvas_enrollment_state(self, app, client):
+        """Fails if canvas_enrollment_state is not active."""
+        user = User.find_by_canvas_user_id(8765433)
+        assert user.canvas_enrollment_state == 'inactive'
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
+            self._api_dev_auth_login(
+                client,
+                password=app.config['DEVELOPER_AUTH_PASSWORD'],
+                user_id=user.id,
+                expected_status_code=403,
+            )
+
     def test_unauthorized_user(self, app, client):
         """Fails if the chosen user_id does not match an authorized user."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
