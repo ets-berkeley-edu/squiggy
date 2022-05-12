@@ -206,7 +206,7 @@ class Whiteboard(Base):
             FROM whiteboards w
             LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id
             LEFT JOIN whiteboard_sessions s ON s.user_id = wu.user_id
-            LEFT JOIN users u ON wu.user_id = u.id
+            LEFT JOIN users u ON wu.user_id = u.id AND u.canvas_enrollment_state != 'inactive'
             LEFT JOIN activities act ON
                 act.object_type = 'whiteboard'
                 AND w.id = act.object_id
@@ -352,7 +352,7 @@ class Whiteboard(Base):
             'isReadOnly': self.deleted_at is not None,
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
-            'users': [_user_api_json(user) for user in self.users],
+            'users': [_user_api_json(user) for user in self.users if user.canvas_enrollment_state != 'inactive'],
             'whiteboardElements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
             'createdAt': isoformat(self.created_at),
             'deletedAt': isoformat(self.deleted_at),

@@ -217,24 +217,26 @@ def mock_whiteboard(app, db_session):
         canvas_course_id=randrange(1000000),
     )
     course = Course.query.order_by(Course.name).all()[0]
-    canvas_user_id = str(randint(1000000, 9999999))
-    user = User.create(
-        canvas_course_role='Student',
-        canvas_course_sections=[],
-        canvas_email=f'{canvas_user_id}@berkeley.edu',
-        canvas_enrollment_state='active',
-        canvas_full_name=f'Student {canvas_user_id}',
-        canvas_user_id=canvas_user_id,
-        course_id=course.id,
-    )
+    users = []
+    for canvas_user_id in [randint(1000000, 9999999), randint(1000000, 9999999)]:
+        users.append(User.create(
+            canvas_course_role='Student',
+            canvas_course_sections=[],
+            canvas_email=f'{canvas_user_id}@berkeley.edu',
+            canvas_enrollment_state='active',
+            canvas_full_name=f'Student {canvas_user_id}',
+            canvas_user_id=canvas_user_id,
+            course_id=course.id,
+        ))
     whiteboard = Whiteboard.create(
         course_id=course.id,
-        title=f'Mock Whiteboard of canvas_user_id {canvas_user_id}',
-        users=[user, _get_student()],
+        title=f'Mock Whiteboard of users {[u.canvas_user_id for u in users]}',
+        users=users,
     )
     std_commit(allow_test_environment=True)
 
-    asset = _create_asset(app=app, course=course, users=[user])
+    student_1 = users[0]
+    asset = _create_asset(app=app, course=course, users=[student_1])
     for element in [
         {
             'assetId': asset.id,
@@ -259,7 +261,8 @@ def mock_whiteboard(app, db_session):
         )
         std_commit(allow_test_environment=True)
 
-    yield Whiteboard.find_by_id(current_user=LoginSession(user.id), whiteboard_id=whiteboard['id'])
+    whiteboard = Whiteboard.find_by_id(current_user=LoginSession(student_1.id), whiteboard_id=whiteboard['id'])
+    yield whiteboard
 
     Whiteboard.delete(whiteboard_id=whiteboard['id'])
     std_commit(allow_test_environment=True)
