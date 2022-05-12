@@ -86,7 +86,8 @@ if (isBookmarklet) {
   axios.defaults.headers['Squiggy-Bookmarklet-Auth'] = params.get('_b')
 }
 
-const isInIframe = !!window.parent.frames.length
+const isInIframe = utils.isInIframe()
+
 Vue.prototype.$isInIframe = isInIframe && !isBookmarklet
 Vue.prototype.$isBookmarklet = isBookmarklet
 

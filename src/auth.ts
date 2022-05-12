@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import utils from '@/utils'
 
 const $_goToLogin = (to: any, next: any) => {
   next({
@@ -11,14 +12,17 @@ const $_goToLogin = (to: any, next: any) => {
 }
 
 export default {
-  requiresAdmin: (to: any, from: any, next: any) => {
+  requiresAuthenticated: (to: any, from: any, next: any) => {
     const currentUser = Vue.prototype.$currentUser
     if (currentUser.isAuthenticated) {
-      if (currentUser.isAdmin) {
-        next()
-      } else {
-        next({path: '/404'})
-      }
+      next()
+    } else if (utils.isInIframe()) {
+      next({
+        path: '/error',
+        query: {
+          m: 'Sorry, you are not authorized to use this tool.'
+        }
+      })
     } else {
       $_goToLogin(to, next)
     }
