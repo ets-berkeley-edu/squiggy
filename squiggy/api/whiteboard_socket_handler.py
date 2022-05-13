@@ -36,6 +36,17 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
+def check_for_updates(current_user, socket_id, whiteboard_id):
+    if _is_allowed(current_user):
+        whiteboard = update_updated_at(current_user, socket_id, whiteboard_id)
+        return {
+            'summary': Whiteboard.get_exportability_summary(current_user, whiteboard_id),
+            'users': whiteboard['users'],
+        }
+    else:
+        raise BadRequestError('Unauthorized')
+
+
 def delete_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
     if _is_allowed(current_user):
         whiteboard = _get_whiteboard(current_user, whiteboard_id)
@@ -74,8 +85,7 @@ def join_whiteboard(current_user, socket_id, whiteboard_id):
         whiteboard = _get_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id)
         if not whiteboard:
             raise ResourceNotFoundError('Whiteboard not found.')
-        # Create
-        return update_updated_at(
+        update_updated_at(
             current_user=current_user,
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
@@ -114,7 +124,7 @@ def update_updated_at(current_user, socket_id, whiteboard_id):
             include_deleted=True,
             whiteboard_id=whiteboard_id,
         )
-        return whiteboard['users']
+        return whiteboard
     else:
         raise BadRequestError('Unauthorized')
 

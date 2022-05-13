@@ -4,11 +4,11 @@ import {getCategories} from '@/api/categories'
 import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
+  checkForUpdates,
   deleteActiveElements,
   initialize,
   moveLayer,
   onWhiteboardUpdate,
-  ping,
   refresh,
   setCanvasDimensions,
   setMode
@@ -105,7 +105,7 @@ const mutations = {
 
 const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
-  onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
+  checkForUpdates: ({state}) => checkForUpdates(state),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => deleteWhiteboard(state.whiteboard.id).then(() => commit('afterWhiteboardDelete')),
   init: ({commit}, whiteboard: any) => {
@@ -119,7 +119,7 @@ const actions = {
   },
   join: ({commit}, userId: any) => commit('join', userId),
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
-  ping: ({state}) => ping(state),
+  onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
