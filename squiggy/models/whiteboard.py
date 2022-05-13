@@ -236,6 +236,7 @@ class Whiteboard(Base):
                 'thumbnailUrl': row['thumbnail_url'],
                 'title': row['title'],
                 'updatedAt': isoformat(row['updated_at']),
+                'users': [],
             }
             whiteboards_by_id[whiteboard_id] = whiteboard
             user_id = row['user_id']
