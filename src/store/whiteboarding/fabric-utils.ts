@@ -633,8 +633,7 @@ const $_getDaysUntilRetirement = () => {
   const now = new Date()
   const freedom = new Date('09/12/2024')
   const diff = freedom.getTime() - now.getTime()
-  const days = Math.floor(diff / (1000 * 3600 * 24))
-  return `${days} days until freedom`
+  return Math.floor(diff / (1000 * 3600 * 24))
 }
 
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
@@ -698,13 +697,13 @@ const $_initFabricPrototypes = (state: any) => {
           $_broadcastDelete(element, state)
         }
         p.$canvas.remove(element)
-      // } else if (!element.get('uuid')) {
-      //   // The text element did not exist before. Notify the server that the element was added
-      //   $_broadcastAdd(NaN, element, state)
       } else {
         // The text element existed before. Notify the server that the element was updated
-        if (text.toLowerCase() === 'when will teena retire?') {
-          element.text = $_getDaysUntilRetirement()
+        const days_until_retirement = $_getDaysUntilRetirement()
+        if (days_until_retirement === 0) {
+          element.text = 'Sorry, SuiteC is past its expiration date. Please rebuild it, in Perl. Thank you.'
+        } else if (text.toLowerCase() === 'when will teena retire?') {
+          element.text = `${days_until_retirement} days until freedom`
         }
         $_broadcastUpsert(NaN, element, state)
       }

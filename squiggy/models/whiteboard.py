@@ -184,6 +184,7 @@ class Whiteboard(Base):
             'user_id': user_id,
             'whiteboard_id': whiteboard_id,
         }
+        # Construct fragments of SQL
         where_clause = _get_whiteboards_where_clause(
             course_id=course_id,
             current_user=current_user,
@@ -193,25 +194,30 @@ class Whiteboard(Base):
             user_id=user_id,
             whiteboard_id=whiteboard_id,
         )
+        join_clause = """
+            LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id
+            LEFT JOIN whiteboard_sessions s ON s.user_id = wu.user_id
+            LEFT JOIN users u ON wu.user_id = u.id AND u.canvas_enrollment_state != 'inactive'
+            LEFT JOIN activities act ON act.object_type = 'whiteboard' AND w.id = act.object_id
+        """
         default_order_by = 'w.id DESC'
         order_by_clause = {
             'collaborator': 'u.canvas_full_name, u.canvas_user_id',
             'recent': default_order_by,
         }.get(order_by) or default_order_by
 
+        # First, get whiteboard_ids
+        sql = f'SELECT w.id FROM whiteboards w {join_clause} {where_clause}'
+        all_whiteboard_ids = list({row['id'] for row in list(db.session.execute(sql, params))})
+        params['whiteboard_ids'] = all_whiteboard_ids
+
+        # Next, get search results per whiteboard_ids above.
         sql = f"""
-            SELECT
-                w.*, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name,
-                u.canvas_image, u.canvas_user_id, u.id AS user_id, s.socket_id
+            SELECT w.*, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name,
+              u.canvas_image, u.canvas_user_id, u.id AS user_id, s.socket_id
             FROM whiteboards w
-            LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id
-            LEFT JOIN whiteboard_sessions s ON s.user_id = wu.user_id
-            LEFT JOIN users u ON wu.user_id = u.id AND u.canvas_enrollment_state != 'inactive'
-            LEFT JOIN activities act ON
-                act.object_type = 'whiteboard'
-                AND w.id = act.object_id
-                AND act.course_id = w.course_id
-            {where_clause}
+            {join_clause}
+            WHERE w.id = ANY(:whiteboard_ids)
             ORDER BY {order_by_clause}, u.canvas_full_name
             LIMIT :limit OFFSET :offset
         """
@@ -258,7 +264,7 @@ class Whiteboard(Base):
         return {
             'offset': offset,
             'results': list(whiteboards_by_id.values()),
-            'total': len(whiteboards_by_id),
+            'total': len(all_whiteboard_ids),
         }
 
     @classmethod
