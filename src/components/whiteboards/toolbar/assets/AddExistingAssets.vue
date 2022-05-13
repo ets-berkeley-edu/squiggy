@@ -28,6 +28,9 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text>
+        <div v-if="totalAssetCount === 0">
+          <h3 id="no-existing-assets" class="px-3 py-8">There are no existing assets to add.</h3>
+        </div>
         <AssetsHeader
           v-if="totalAssetCount > 1"
           :hide-manage-assets-button="true"
@@ -149,6 +152,9 @@ export default {
       this.selectedAssetIds = []
       if (value) {
         this.search().then(() => {
+          if (!this.totalAssetCount) {
+            this.allAssetsLoaded = true
+          }
           this.isDialogReady = true
           this.$putFocusNextTick('modal-header')
         })
