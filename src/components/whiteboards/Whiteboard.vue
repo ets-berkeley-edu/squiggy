@@ -25,7 +25,7 @@ export default {
   components: {EditActiveFabricObject, Toolbar},
   data: () => ({
     isSnackbarOpen: false,
-    pingJob: undefined
+    refreshJob: undefined
   }),
   created() {
     this.$loading()
@@ -35,19 +35,19 @@ export default {
         this.setDisableAll(false)
         this.$ready(whiteboard.title)
         if (!this.whiteboard.isReadOnly) {
-          clearTimeout(this.pingJob)
-          this.pingJob = setTimeout(this.keepSocketAlive, 60000)
+          clearTimeout(this.refreshJob)
+          this.refreshJob = setTimeout(this.refresh, 60000)
         }
       })
     })
   },
   destroyed() {
-    clearTimeout(this.pingJob)
+    clearTimeout(this.refreshJob)
   },
   methods: {
-    keepSocketAlive() {
-      this.ping()
-      this.pingJob = setTimeout(this.keepSocketAlive, 60000)
+    refresh() {
+      this.checkForUpdates()
+      this.refreshJob = setTimeout(this.refresh, 60000)
     }
   }
 }

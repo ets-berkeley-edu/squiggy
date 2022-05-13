@@ -131,14 +131,26 @@ export function onWhiteboardUpdate(state: any, whiteboard: any) {
   }
 }
 
-export function ping(state: any) {
+export function checkForUpdates(state: any) {
   p.$socket.emit(
-    'ping',
+    'check_for_updates',
     {
       userId: p.$currentUser.id,
       whiteboardId: state.whiteboard.id
     },
-    (users: any[]) => store.dispatch('whiteboarding/setUsers', users),
+    (data: any) => {
+      store.dispatch('whiteboarding/setUsers', data.users)
+      _.each(data.updated, whiteboardElement => {
+        const uuid = whiteboardElement.uuid
+        const existing = $_getCanvasElement(uuid)
+        if (existing) {
+          // Deactivate the current group if any of the updated elements are in the current group
+          $_deactivateGroupIfOverlap(whiteboardElement)
+          $_updateCanvasElement(state, uuid, whiteboardElement.element)
+          setCanvasDimensions(state)
+        }
+      })
+    },
   )
 }
 

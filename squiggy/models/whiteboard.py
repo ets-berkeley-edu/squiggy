@@ -121,6 +121,7 @@ class Whiteboard(Base):
             'errored': [],
             'exportable': [],
             'pending': [],
+            'updated': [],
         }
         asset_ids = []
         whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
@@ -153,11 +154,18 @@ class Whiteboard(Base):
                         key = 'pending' if preview_status == 'pending' else 'errored'
                         summary[key].append(whiteboard_element.id)
                     else:
-                        summary['exportable'].append(whiteboard_element.element)
-                        src = whiteboard_element.element.get('src')
-                        if image_url != src:
-                            # TODO: If whiteboard element has not been updated to reflect the preview then update it here?
-                            pass
+                        element = whiteboard_element.element
+                        summary['exportable'].append(element)
+                        if image_url != element.get('src'):
+                            # Update preview image. Front-end will re-render the element.
+                            element['src'] = image_url
+                            whiteboard_element = WhiteboardElement.update(
+                                asset_id=asset_id,
+                                element=element,
+                                uuid=whiteboard_element.uuid,
+                                whiteboard_id=whiteboard_id,
+                            )
+                            summary['updated'].append(whiteboard_element.to_api_json())
                 else:
                     summary['errored'] = f'Asset (id: {asset_id}) not found for whiteboard element.'
         return summary

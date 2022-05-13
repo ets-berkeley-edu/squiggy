@@ -25,8 +25,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import request
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, join_whiteboard, \
-    leave_whiteboard, update_updated_at, update_whiteboard, upsert_whiteboard_element
+from squiggy.api.whiteboard_socket_handler import check_for_updates, delete_whiteboard_element, join_whiteboard, \
+    leave_whiteboard, update_whiteboard, upsert_whiteboard_element
 from squiggy.lib.login_session import LoginSession
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -165,9 +165,9 @@ def register_sockets(socketio):
             to=_get_room(whiteboard_id),
         )
 
-    @socketio.on('ping')
-    def socketio_ping(data):
-        return update_updated_at(
+    @socketio.on('check_for_updates')
+    def socketio_check_for_updates(data):
+        return check_for_updates(
             current_user=LoginSession(data.get('userId')),
             socket_id=request.sid,
             whiteboard_id=data.get('whiteboardId'),
