@@ -16,16 +16,6 @@
         </v-btn>
       </div>
     </div>
-    <v-alert
-      v-if="hasLoaded && !$currentUser.whiteboards.length"
-      role="alert"
-      outlined
-      text
-      type="success"
-      elevation="2"
-    >
-      <router-link to="/whiteboard/create" class="hover-link">Create a whiteboard</router-link>. You currently have none.
-    </v-alert>
     <div v-if="(totalWhiteboardCount > 1) && !$currentUser.isObserver && !$currentUser.isStudent">
       <v-expand-transition>
         <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
@@ -229,7 +219,6 @@ export default {
   data: () => ({
     alert: undefined,
     alertType: undefined,
-    hasLoaded: false,
     keyForSelectReset: new Date().getTime()
   }),
   watch: {
@@ -249,7 +238,6 @@ export default {
         this.$putFocusNextTick(this.putFocusOnLoad)
       }
       this.setBusy(false)
-      this.hasLoaded = true
     })
   },
   methods: {
