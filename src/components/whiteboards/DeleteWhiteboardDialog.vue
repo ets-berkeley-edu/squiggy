@@ -68,7 +68,8 @@ export default {
     }
   },
   created() {
-    this.showCollaborators = this.whiteboard.users.length > 1 || this.$currentUser.id !== this.whiteboard.users[0].id
+    const userCount = this.whiteboard.users.length
+    this.showCollaborators = !!userCount && (userCount > 1 || this.$currentUser.id !== this.whiteboard.users[0].id)
   },
   methods: {
     cancel() {
