@@ -4,7 +4,7 @@
       <router-view />
     </v-main>
     <FooterIFrame v-if="isInIframe" />
-    <FooterStandalone v-if="!isInIframe && $currentUser.isAuthenticated" />
+    <FooterStandalone v-if="!isInIframe && $currentUser.isAuthenticated && !$_.get($router.currentRoute.meta, 'hideStandaloneFooter')" />
   </div>
 </template>
 

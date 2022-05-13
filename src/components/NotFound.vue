@@ -7,8 +7,10 @@
     >
       <v-img
         v-if="!isInIframe"
+        alt="TV screen with colored bars"
+        aria-label="TV screen with colored bars"
         :aspect-ratio="16 / 9"
-        src="@/assets/hello.jpg"
+        src="@/assets/color-bars.png"
       />
       <v-card-text class="pt-5 text-center">
         <PageTitle text="Uh oh!" />

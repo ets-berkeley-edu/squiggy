@@ -211,6 +211,7 @@ const router = new Router({
           path: '/bookmarklet/error',
           component: Error,
           meta: {
+            hideStandaloneFooter: true,
             title: 'Bookmarklet Error'
           }
         },
@@ -218,6 +219,7 @@ const router = new Router({
           path: '/bookmarklet/404',
           component: NotFound,
           meta: {
+            hideStandaloneFooter: true,
             title: 'Page not found'
           }
         }
@@ -241,6 +243,7 @@ const router = new Router({
           path: '/404',
           component: NotFound,
           meta: {
+            hideStandaloneFooter: true,
             title: 'Page not found'
           }
         },
@@ -249,6 +252,7 @@ const router = new Router({
           path: '/error',
           component: Error,
           meta: {
+            hideStandaloneFooter: true,
             title: 'Error'
           }
         },
