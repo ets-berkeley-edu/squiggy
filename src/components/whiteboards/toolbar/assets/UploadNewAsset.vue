@@ -172,7 +172,13 @@
                   </v-btn>
                 </div>
                 <div>
-                  <v-btn id="upload-file-cancel-btn" elevation="1" @click="go('/assets')">Cancel</v-btn>
+                  <v-btn
+                    id="upload-file-cancel-btn"
+                    elevation="1"
+                    @click="onClickCancel"
+                  >
+                    Cancel
+                  </v-btn>
                 </div>
               </v-col>
             </v-row>
@@ -187,14 +193,13 @@
 import AccessibleSelect from '@/components/util/AccessibleSelect'
 import Alert from '@/components/util/Alert'
 import Context from '@/mixins/Context'
-import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import {createFileAsset} from '@/api/assets'
 
 export default {
   name: 'UploadNewAsset',
   components: {AccessibleSelect, Alert},
-  mixins: [Context, Utils, Whiteboarding],
+  mixins: [Context, Whiteboarding],
   data() {
     return {
       alert: undefined,
@@ -224,6 +229,10 @@ export default {
     },
     browseFiles() {
       this.$refs.browseFileInput.click()
+    },
+    onClickCancel() {
+      this.dialog = false
+      this.$announcer.polite('Canceled')
     },
     onFileBrowserChange(e) {
       this.selectFile(e.target.files)
