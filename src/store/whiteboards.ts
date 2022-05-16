@@ -69,6 +69,18 @@ const getters = {
 
 const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
+  refresh: (state: any, data: any) => {
+    const results = _.get(data, 'results')
+    _.each(results, row => {
+      const existing = _.find(state.whiteboards, ['id', row['id']])
+      if (existing) {
+        _.assignIn(existing, row)
+      } else {
+        state.whiteboards.push(row)
+      }
+    })
+    state.totalWhiteboardCount = _.get(data, 'total')
+  },
   setBusy: (state: any, isBusy: boolean) => state.isBusy = isBusy,
   setCollaborator: (state: any, collaborator: number) => {
     state.collaborator = collaborator
@@ -127,9 +139,7 @@ const actions = {
         state.orderBy,
         state.userId
       ).then(data => {
-        const whiteboards = _.get(data, 'results')
-        commit('setWhiteboards', whiteboards)
-        commit('setTotalWhiteboardCount', _.get(data, 'total'))
+        commit('refresh', data)
         resolve(data)
       })
     })
