@@ -85,6 +85,7 @@ export default {
   methods: {
     fetch() {
       return this.nextPage().then(() => {
+        this.isComplete = this.whiteboards.length === this.totalWhiteboardCount
         if (this.totalWhiteboardCount) {
           this.$announcer.polite(`${this.whiteboards.length} of ${this.totalWhiteboardCount} whiteboards loaded.`)
         } else {

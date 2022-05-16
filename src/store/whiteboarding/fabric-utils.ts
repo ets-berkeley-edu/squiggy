@@ -470,7 +470,6 @@ const $_addSocketListeners = (state: any) => {
         const callback = (e: any) => {
           // Add the element to the whiteboard canvas and move it to its appropriate index
           p.$canvas.add(e)
-          whiteboardElement.moveTo(e.get('index'))
           p.$canvas.requestRenderAll()
           // Recalculate the size of the whiteboard canvas
           setCanvasDimensions(state)
