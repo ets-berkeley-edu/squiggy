@@ -78,6 +78,21 @@ class WhiteboardSession(Base):
         std_commit()
 
     @classmethod
+    def delete_stale_sessions(cls, whiteboard_ids, older_than_minutes=5):
+        db.session.execute(
+            text("""
+                DELETE FROM whiteboard_sessions s
+                WHERE whiteboard_id = ANY(:whiteboard_ids)
+                  AND (updated_at < (now() - INTERVAL ':older_than_minutes minutes'))
+            """),
+            {
+                'older_than_minutes': older_than_minutes,
+                'whiteboard_ids': whiteboard_ids,
+            },
+        )
+        std_commit()
+
+    @classmethod
     def find(cls, whiteboard_id, user_id=None):
         if user_id:
             filter_by = cls.query.filter_by(user_id=user_id, whiteboard_id=whiteboard_id)
