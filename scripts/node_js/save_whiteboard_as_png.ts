@@ -33,7 +33,7 @@ if (!baseDir || !pngFile || !whiteboardElements) {
 }
 
 // Initialize fabric
-fabric.nodeCanvas.registerFont(`${baseDir}/public/fonts/HelveticaNeueuLight.ttf`, {
+fabric.nodeCanvas.registerFont(`${baseDir}/dist/static/fonts/HelveticaNeueuLight.ttf`, {
   family: 'HelveticaNeue-Light',
   weight: 'regular',
   style: 'normal'
