@@ -119,7 +119,7 @@ export default {
       masquerade(userId).then(
         data => {
           if (data.isAuthenticated) {
-            window.location.href = '/'
+            window.location.href = '/squiggy'
           } else {
             onError(data)
           }

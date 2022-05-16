@@ -37,7 +37,7 @@ const router = new Router({
   routes: [
     {
       path: '/',
-      redirect: '/squiggy'
+      redirect: '/404'
     },
     {
       path: '/',

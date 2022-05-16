@@ -43,6 +43,7 @@ def app_config():
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
         'canvasApiUrl': app.config['CANVAS_API_URL'],
         'canvasBaseUrl': app.config['CANVAS_BASE_URL'],
+        'developerAuthEnabled': app.config['DEVELOPER_AUTH_ENABLED'],
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],
         'orderByOptions': assets_sort_by_options,
         's3PreviewUrlPattern': S3_PREVIEW_URL_PATTERN,

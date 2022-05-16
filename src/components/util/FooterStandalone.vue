@@ -9,7 +9,7 @@
                 id="go-home-btn"
                 :disabled="$router.currentRoute.meta.isLoginPage"
                 icon
-                @click="go('/')"
+                @click="go('/squiggy')"
               >
                 <span class="sr-only">Go home</span>
                 <font-awesome-icon icon="home" size="lg" />
@@ -75,7 +75,7 @@ export default {
   methods: {
     logOut() {
       this.$announcer.polite('Logging out')
-      getCasLogoutUrl().then(() => window.location.href = '/')
+      getCasLogoutUrl().then(() => window.location.href = '/squiggy')
     }
   }
 }
