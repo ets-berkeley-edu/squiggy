@@ -85,7 +85,7 @@ def join_whiteboard(current_user, socket_id, whiteboard_id):
         whiteboard = _get_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id)
         if not whiteboard:
             raise ResourceNotFoundError('Whiteboard not found.')
-        update_updated_at(
+        return update_updated_at(
             current_user=current_user,
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,

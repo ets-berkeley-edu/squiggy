@@ -42,7 +42,7 @@ def register_sockets(socketio):
         socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
-        join_whiteboard(
+        whiteboard = join_whiteboard(
             current_user=LoginSession(user_id),
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
@@ -51,10 +51,7 @@ def register_sockets(socketio):
         join_room(room, sid=socket_id)
         emit(
             'join',
-            {
-                'userId': user_id,
-                'whiteboardId': whiteboard_id,
-            },
+            whiteboard,
             broadcast=True,
             include_self=False,
             skip_sid=socket_id,
@@ -79,18 +76,10 @@ def register_sockets(socketio):
         )
         room = _get_room(whiteboard_id)
         leave_room(room, sid=socket_id)
-        whiteboard = Whiteboard.find_by_id(
-            current_user=current_user,
-            whiteboard_id=whiteboard_id,
-        )
-        users = whiteboard['users']
+        whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
         emit(
             'leave',
-            {
-                'userId': user_id,
-                'users': users,
-                'whiteboardId': whiteboard_id,
-            },
+            whiteboard,
             include_self=False,
             skip_sid=socket_id,
             to=room,
