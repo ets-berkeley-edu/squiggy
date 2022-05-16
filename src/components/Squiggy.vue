@@ -85,7 +85,12 @@ export default {
   mixins: [Context, Utils],
   data: () => ({
     width: 300
-  })
+  }),
+  created() {
+    if (!this.$config.developerAuthEnabled || (this.$currentUser.isAuthenticated && !this.$currentUser.isAdmin)) {
+      this.$router.push('/error?m=Sorry, something went wrong. Please contact us if problems persist.')
+    }
+  }
 }
 </script>
 

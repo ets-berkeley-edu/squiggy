@@ -20,12 +20,7 @@ export default {
       if (Vue.prototype.$isInIframe) {
         router.push({path: '/launchfailure'})
       } else {
-        router.push({
-          path: '/',
-          query: {
-            m: 'Your session has expired'
-          }
-        })
+        router.push({path: '/error', query: {m: 'Your session has expired.'}})
       }
     }
   },
