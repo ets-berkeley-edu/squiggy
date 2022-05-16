@@ -137,9 +137,9 @@ class Course(Base):
         std_commit()
         return course
 
-    def to_api_json(self):
+    def to_api_json(self, include_users=False):
         canvas = Canvas.find_by_domain(canvas_api_domain=self.canvas_api_domain)
-        return {
+        api_json = {
             'active': self.active,
             'assetLibraryUrl': self.asset_library_url,
             'canvas': canvas.to_api_json(),
@@ -156,6 +156,10 @@ class Course(Base):
             'createdAt': _isoformat(self.created_at),
             'updatedAt': _isoformat(self.updated_at),
         }
+        if include_users:
+            users = list(self.users)
+            api_json['users'] = [user.to_api_json() for user in users]
+        return api_json
 
     def activate(self):
         self.active = True

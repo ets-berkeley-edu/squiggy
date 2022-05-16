@@ -24,9 +24,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
-from flask_login import current_user
+from flask_login import current_user, login_required
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.models.course import Course
 
 
 @app.route('/api/course/activate', methods=['POST'])
@@ -34,3 +35,9 @@ from squiggy.lib.http import tolerant_jsonify
 def activate():
     current_user.course.activate()
     return tolerant_jsonify({'status': 'success'})
+
+
+@app.route('/api/course/<course_id>')
+@login_required
+def get_course(course_id):
+    return tolerant_jsonify(Course.find_by_id(course_id).to_api_json(include_users=True))

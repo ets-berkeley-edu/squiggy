@@ -403,3 +403,48 @@ class TestCookieAuth:
             client=client,
             expected_status_code=401,
         )
+
+
+class TestMasquerade:
+
+    @staticmethod
+    def _api_masquerade(client, user_id, expected_status_code=200):
+        response = client.post(
+            '/api/auth/masquerade',
+            data=json.dumps({'userId': user_id}),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return json.loads(response.data)
+
+    def test_disabled(self, app, client, authorized_user_id, fake_auth):
+        """Blocks access unless enabled."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', False):
+            admin = User.find_by_canvas_user_id(321098)
+            fake_auth.login(admin.id)
+            self._api_masquerade(
+                client,
+                user_id=authorized_user_id,
+                expected_status_code=404,
+            )
+
+    def test_unauthorized(self, app, client, fake_auth, student_id):
+        """Non-admin users are not authorized."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
+            fake_auth.login(student_id)
+            teacher = User.find_by_canvas_user_id(9876543)
+            self._api_masquerade(
+                client,
+                user_id=teacher.id,
+                expected_status_code=401,
+            )
+
+    def test_unauthorized_user(self, app, client, fake_auth):
+        """Fails if the chosen user_id does not match an authorized user."""
+        with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
+            admin = User.find_by_canvas_user_id(321098)
+            fake_auth.login(admin.id)
+
+            teacher = User.find_by_canvas_user_id(9876543)
+            masquerading = self._api_masquerade(client, user_id=teacher.id)
+            assert masquerading['id'] == teacher.id

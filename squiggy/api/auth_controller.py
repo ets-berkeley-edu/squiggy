@@ -28,7 +28,7 @@ import re
 from flask import current_app as app, request
 from flask_login import current_user, login_required, logout_user
 from lti.contrib.flask import FlaskToolProvider
-from squiggy.api.api_util import start_login_session
+from squiggy.api.api_util import admin_required, start_login_session
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
@@ -85,6 +85,17 @@ def lti_launch_engagement_index():
 @app.route('/api/auth/lti_launch/whiteboards', methods=['POST'])
 def lti_launch_whiteboards():
     return _lti_launch(TOOL_ID_WHITEBOARDS)
+
+
+@app.route('/api/auth/masquerade', methods=['POST'])
+@admin_required
+def masquerade():
+    params = request.get_json() or {}
+    if app.config['DEVELOPER_AUTH_ENABLED']:
+        user_id = to_int(params.get('userId'))
+        return start_login_session(LoginSession(user_id))
+    else:
+        raise ResourceNotFoundError('Unknown path')
 
 
 def _canvas_external_tool_url(s, headers):
