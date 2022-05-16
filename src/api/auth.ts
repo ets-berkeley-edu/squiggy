@@ -21,3 +21,7 @@ export function getCasLogoutUrl() {
           return Vue.prototype.$currentUser
         })
 }
+
+export function masquerade(userId: number) {
+  return axios.post(`${utils.apiBaseUrl()}/api/auth/masquerade`, {userId})
+}

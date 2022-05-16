@@ -36,6 +36,17 @@ from squiggy.models.asset import assets_type
 from squiggy.models.canvas import Canvas
 
 
+def admin_required(func):
+    @wraps(func)
+    def _admin_required(*args, **kw):
+        if current_user.is_admin:
+            return func(*args, **kw)
+        else:
+            logger.warning(f'Unauthorized request to {request.path}')
+            return app.login_manager.unauthorized()
+    return _admin_required
+
+
 def feature_flag_whiteboards(func):
     @wraps(func)
     def _feature_flag_required(*args, **kw):

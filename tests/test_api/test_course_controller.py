@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from squiggy.models.course import Course
+from squiggy.models.user import User
 
 
 unauthorized_user_id = '666'
@@ -34,9 +35,10 @@ def _api_activate_course(client, expected_status_code=200):
     assert response.status_code == expected_status_code
 
 
-def _api_get_course(client):
-    response = client.get('/api/profile/my')
-    return response.json['course']
+def _api_get_course(client, course_id, expected_status_code=200):
+    response = client.get(f'/api/course/{course_id}')
+    assert response.status_code == expected_status_code
+    return response.json
 
 
 class TestReactivateCourse:
@@ -57,13 +59,30 @@ class TestReactivateCourse:
 
     def test_teacher(self, client, fake_auth, authorized_user_id, db_session):
         """Allows teacher."""
+        user = User.find_by_id(authorized_user_id)
         fake_auth.login(authorized_user_id)
-        course_feed = _api_get_course(client)
-        assert course_feed['active'] is True
+        api_json = _api_get_course(client, user.course_id)
+        assert api_json['active'] is True
 
-        db_course = db_session.query(Course).filter_by(id=course_feed['id']).first()
-        db_course.active = False
-        assert _api_get_course(client)['active'] is False
+        course_id = api_json['id']
+        assert course_id == user.course_id
+        course = db_session.query(Course).filter_by(id=course_id).first()
+        course.active = False
+        assert _api_get_course(client, course_id)['active'] is False
 
         _api_activate_course(client)
-        assert _api_get_course(client)['active'] is True
+        assert _api_get_course(client, course_id)['active'] is True
+
+
+class TestGetCourse:
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        _api_get_course(client, course_id=1, expected_status_code=401)
+
+    def test_student(self, client, fake_auth, student_id):
+        """Authenticated user succeeds."""
+        user = User.find_by_id(student_id)
+        fake_auth.login(user.id)
+        api_json = _api_get_course(client, user.course_id)
+        assert user.id in [user['id'] for user in api_json['users']]

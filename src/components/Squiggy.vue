@@ -26,6 +26,9 @@
         src="@/assets/hello.jpg"
       />
     </div>
+    <div class="grey--text pb-3 subtitle-1 text--darken-1">
+      Hello {{ $currentUser.canvasFullName }}.
+    </div>
     <v-expansion-panels v-if="$currentUser.isAuthenticated" class="w-50">
       <v-expansion-panel>
         <v-expansion-panel-header>
@@ -49,7 +52,7 @@
           <h2 class="primary--text text-no-wrap">Course {{ $currentUser.course.id }}</h2>
         </v-expansion-panel-header>
         <v-expansion-panel-content>
-          <CourseSummary :course="$currentUser.course" />
+          <CourseSummary :course-id="$currentUser.course.id" />
         </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
