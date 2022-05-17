@@ -74,7 +74,7 @@ export default {
   },
   methods: {
     afterSave(updated) {
-      this.onWhiteboardUpdate(updated)
+      this.emitWhiteboardUpdate(updated)
       this.close()
     },
     close() {

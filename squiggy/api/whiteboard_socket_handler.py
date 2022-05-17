@@ -38,11 +38,16 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 
 def check_for_updates(current_user, socket_id, whiteboard_id):
     if _is_allowed(current_user):
-        whiteboard = update_updated_at(current_user, socket_id, whiteboard_id)
-        return {
-            'summary': Whiteboard.get_exportability_summary(current_user, whiteboard_id),
-            'users': whiteboard['users'],
-        }
+        update_updated_at(
+            current_user=current_user,
+            socket_id=socket_id,
+            whiteboard_id=whiteboard_id,
+        )
+        return Whiteboard.find_by_id(
+            current_user=current_user,
+            include_deleted=True,
+            whiteboard_id=whiteboard_id,
+        )
     else:
         raise BadRequestError('Unauthorized')
 

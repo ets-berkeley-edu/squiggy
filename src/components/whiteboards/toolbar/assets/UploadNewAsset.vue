@@ -223,6 +223,22 @@ export default {
         || !this.$_.trim(this.title)
     }
   },
+  watch: {
+    dialog(value) {
+      if (!value) {
+        this.alert = undefined
+        this.categoryId = undefined
+        this.description = undefined
+        this.dialog = false
+        this.file = undefined
+        this.fileAssetValid = false
+        this.isSaving = false
+        this.title = ''
+        this.uploading = false
+        this.visible = false
+      }
+    }
+  },
   methods: {
     addFile(e) {
       this.selectFile(e.dataTransfer.files)

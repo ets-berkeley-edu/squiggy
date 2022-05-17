@@ -4,6 +4,7 @@
     offset-y
     open-on-focus
     open-on-hover
+    width="800"
   >
     <template #activator="{on, attrs}">
       <div

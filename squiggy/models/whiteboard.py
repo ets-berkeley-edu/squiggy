@@ -88,8 +88,52 @@ class Whiteboard(Base):
             whiteboard_id=whiteboard_id,
         )
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
-        if whiteboard:
-            whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
+        if not whiteboard:
+            return None
+        whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
+        asset_ids = []
+        for whiteboard_element in whiteboard['whiteboardElements']:
+            asset_id = whiteboard_element['assetId']
+            if not asset_id:
+                element = whiteboard_element['element']
+                src = element.get('src')
+                if src and is_s3_preview_url(src):
+                    element['src'] = get_s3_signed_url(src)
+            elif asset_id not in asset_ids:
+                asset_ids.append(asset_id)
+
+        if asset_ids:
+            assets = Asset.get_assets(
+                filters={'asset_ids': asset_ids},
+                limit=100000,
+                offset=0,
+                order_by='id',
+                session=current_user,
+            )
+            assets_by_id = dict((asset['id'], asset) for asset in assets['results'])
+            for whiteboard_element in [w for w in whiteboard['whiteboardElements'] if w['assetId']]:
+                asset_id = whiteboard_element['assetId']
+                asset = assets_by_id.get(asset_id)
+                if asset:
+                    asset_preview_status = None
+                    image_url = asset['imageUrl']
+                    preview_status = asset['previewStatus']
+                    if not image_url or preview_status != 'done':
+                        asset_preview_status = 'pending' if preview_status == 'pending' else 'error'
+                    else:
+                        element = whiteboard_element['element']
+                        if image_url != element.get('src'):
+                            # Update preview image. Front-end will re-render the element.
+                            element['src'] = image_url
+                            whiteboard_element = WhiteboardElement.update(
+                                asset_id=asset_id,
+                                element=element,
+                                uuid=whiteboard_element.uuid,
+                                whiteboard_id=whiteboard_id,
+                            )
+                            whiteboard_element['element'] = whiteboard_element.element
+                            asset_preview_status = 'updated'
+                    whiteboard_element['assetPreviewStatus'] = asset_preview_status
         return whiteboard
 
     @classmethod
@@ -114,61 +158,6 @@ class Whiteboard(Base):
         if whiteboard:
             whiteboard.deleted_at = utc_now()
             std_commit()
-
-    @classmethod
-    def get_exportability_summary(cls, current_user, whiteboard_id):
-        summary = {
-            'errored': [],
-            'exportable': [],
-            'pending': [],
-            'updated': [],
-        }
-        asset_ids = []
-        whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
-        for whiteboard_element in whiteboard_elements:
-            if not whiteboard_element.asset_id:
-                element = whiteboard_element.element
-                src = element.get('src')
-                if src and is_s3_preview_url(src):
-                    element['src'] = get_s3_signed_url(src)
-                summary['exportable'].append(element)
-            elif whiteboard_element.asset_id not in asset_ids:
-                asset_ids.append(whiteboard_element.asset_id)
-
-        if asset_ids:
-            assets = Asset.get_assets(
-                filters={'asset_ids': asset_ids},
-                limit=100000,
-                offset=0,
-                order_by='id',
-                session=current_user,
-            )
-            assets_by_id = dict((asset['id'], asset) for asset in assets['results'])
-            for whiteboard_element in [e for e in whiteboard_elements if e.asset_id]:
-                asset_id = whiteboard_element.asset_id
-                asset = assets_by_id.get(asset_id)
-                if asset:
-                    image_url = asset['imageUrl']
-                    preview_status = asset['previewStatus']
-                    if not image_url or preview_status != 'done':
-                        key = 'pending' if preview_status == 'pending' else 'errored'
-                        summary[key].append(whiteboard_element.id)
-                    else:
-                        element = whiteboard_element.element
-                        summary['exportable'].append(element)
-                        if image_url != element.get('src'):
-                            # Update preview image. Front-end will re-render the element.
-                            element['src'] = image_url
-                            whiteboard_element = WhiteboardElement.update(
-                                asset_id=asset_id,
-                                element=element,
-                                uuid=whiteboard_element.uuid,
-                                whiteboard_id=whiteboard_id,
-                            )
-                            summary['updated'].append(whiteboard_element.to_api_json())
-                else:
-                    summary['errored'] = f'Asset (id: {asset_id}) not found for whiteboard element.'
-        return summary
 
     @classmethod
     def get_whiteboards(

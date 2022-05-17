@@ -1,6 +1,10 @@
 <template>
   <div v-if="!isLoading" class="align-center d-flex flex-column my-10">
-    <h1 class="grey--text text--darken-2">Squiggy v{{ $config.app.version }}</h1>
+    <h1 class="grey--text text--darken-2">
+      <span v-if="$currentUser.isAdmin">Squiggy</span>
+      <span v-if="!$currentUser.isAdmin">SuiteC</span>
+      v{{ $config.app.version }}
+    </h1>
     <div v-if="$config.app.build">
       <a
         id="link-to-github-commit"
@@ -12,7 +16,7 @@
         <i class="fa-brands fa-github" />
       </a>
     </div>
-    <div class="align-center d-flex flex-column justify-space-between mb-4">
+    <div v-if="$currentUser.isAdmin" class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
         v-model="width"
         class="align-self-stretch"
@@ -87,7 +91,7 @@ export default {
     width: 300
   }),
   created() {
-    if (!this.$config.developerAuthEnabled || (this.$currentUser.isAuthenticated && !this.$currentUser.isAdmin)) {
+    if (!this.$config.developerAuthEnabled || !this.$currentUser.isAuthenticated) {
       this.$router.push('/error?m=Sorry, something went wrong. Please contact us if problems persist.')
     }
   }

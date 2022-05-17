@@ -27,10 +27,6 @@ export function getEligibleCollaborators() {
   return axios.get(`${utils.apiBaseUrl()}/api/whiteboards/eligible_collaborators`)
 }
 
-export function getExportabilitySummary(whiteboardId: number) {
-  return axios.get(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/exportability_summary`)
-}
-
 export function getWhiteboard(id: number) {
   return axios.get(`${utils.apiBaseUrl()}/api/whiteboard/${id}`)
 }
