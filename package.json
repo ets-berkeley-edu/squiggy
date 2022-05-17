@@ -1,14 +1,11 @@
 {
   "name": "squiggy",
   "version": "3.0.0",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/ets-berkeley-edu/squiggy.git"
-  },
   "scripts": {
     "build-vue": "vue-cli-service build --modern --dest 'dist/static'",
     "lint-vue": "vue-cli-service lint --config .eslintrc.js --no-fix src scripts/node_js",
     "lint-vue-fix": "vue-cli-service lint src",
+    "preinstall": "npx npm-force-resolutions",
     "serve-vue": "vue-cli-service serve --open"
   },
   "dependencies": {
@@ -59,6 +56,7 @@
     "eslint-plugin-vue": "^7.20.0",
     "eslint-plugin-xss": "^0.1.11",
     "eslint-utils": "^2.1.0",
+    "npm-force-resolutions": "^0.0.10",
     "sass": "^1.29.0",
     "sass-loader": "^10.1.0",
     "typescript": "~4.2.4",
@@ -68,5 +66,13 @@
     "vue-template-compiler": "^2.6.14",
     "vuetify-loader": "^1.7.3"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "resolutions": {
+    "merge": "2.1.1",
+    "minimist": "1.2.6"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ets-berkeley-edu/squiggy.git"
+  }
 }
