@@ -27,6 +27,7 @@ export default {
   data: () => ({
     anchor: null,
     isComplete: false,
+    isRefreshing: false,
     refreshJob: undefined
   }),
   computed: {
@@ -46,9 +47,11 @@ export default {
     }
   },
   created() {
+    document.addEventListener('visibilitychange', this.onVisibilityChange)
     this.$loading(true)
   },
   destroyed() {
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
     clearTimeout(this.refreshJob)
   },
   mounted() {
@@ -57,7 +60,7 @@ export default {
     if (this.isReturning) {
       this.handleResults()
     } else {
-      this.resetOffset()
+      this.setOffset(0)
       this.isComplete = false
       this.stopInfiniteLoading()
       this.getBookmarkHash().then(bookmarkHash => {
@@ -113,10 +116,25 @@ export default {
       }
       this.scheduleRefreshJob()
     },
+    onVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        clearTimeout(this.refreshJob)
+        // We want to refresh all whiteboards visible to the user.
+        const previousOffset = this.offset
+        this.setOffset(0)
+        this.search().then(() => {
+          this.setOffset(previousOffset)
+          this.scheduleRefreshJob()
+        })
+      }
+    },
     runRefresh() {
-      if (!this.isBusy || !this.$_.trim(this.keywords) || !this.orderBy || !this.userId) {
+      const run = !this.isRefreshing && (!this.isBusy || !this.$_.trim(this.keywords) || !this.orderBy || !this.userId)
+      if (run) {
+        this.isRefreshing = true
         this.refresh().then(() => {
           this.scheduleRefreshJob()
+          this.isRefreshing = false
         })
       }
     },
