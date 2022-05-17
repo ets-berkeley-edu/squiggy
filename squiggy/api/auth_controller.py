@@ -28,7 +28,7 @@ import re
 from flask import current_app as app, request
 from flask_login import current_user, login_required, logout_user
 from lti.contrib.flask import FlaskToolProvider
-from squiggy.api.api_util import admin_required, start_login_session
+from squiggy.api.api_util import start_login_session
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
@@ -88,7 +88,7 @@ def lti_launch_whiteboards():
 
 
 @app.route('/api/auth/masquerade', methods=['POST'])
-@admin_required
+@login_required
 def masquerade():
     params = request.get_json() or {}
     if app.config['DEVELOPER_AUTH_ENABLED']:

@@ -241,4 +241,8 @@ def update_whiteboard():
 
 
 def _find_whiteboard(whiteboard_id):
-    return Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
+    return Whiteboard.find_by_id(
+        current_user=current_user,
+        include_deleted=current_user.is_admin or current_user.is_teaching,
+        whiteboard_id=whiteboard_id,
+    )
