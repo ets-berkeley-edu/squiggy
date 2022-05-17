@@ -388,8 +388,12 @@ class TestRemixWhiteboard:
         assert activities_whiteboard_remix[0].user_id == some_other_student.id
         # Our student only gets 'get_whiteboard_remix' points when some other student does the remix.
         activities_get_whiteboard_remix = list(filter(lambda a: a.activity_type == 'get_whiteboard_remix', activities))
-        assert len(activities_get_whiteboard_remix) == 1
-        assert activities_get_whiteboard_remix[0].user_id == student.id
+        assert len(activities_get_whiteboard_remix) == 2
+
+        collaborator_user_ids = [u['id'] for u in mock_whiteboard['users']]
+        assert len(activities_get_whiteboard_remix) == len(collaborator_user_ids)
+        for activity in activities_get_whiteboard_remix:
+            assert activity.user_id in collaborator_user_ids
 
 
 # class TestRefreshAssetPreview:

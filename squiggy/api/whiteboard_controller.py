@@ -87,6 +87,7 @@ def export_as_asset(whiteboard_id):
             title = params.get('title') or whiteboard['title']
             if not title:
                 raise BadRequestError('Required parameter is missing.')
+            collaborator_user_ids = [u['id'] for u in whiteboard['users']]
             asset = Asset.create(
                 asset_type='whiteboard',
                 categories=[Category.find_by_id(category_id=category_id) for category_id in category_ids],
@@ -94,7 +95,7 @@ def export_as_asset(whiteboard_id):
                 description=description,
                 source=str(whiteboard['id']),
                 title=title,
-                users=[User.find_by_id(current_user.get_id())],
+                users=User.find_by_ids(collaborator_user_ids),
             )
             for whiteboard_element in whiteboard_elements:
                 element = whiteboard_element.element
