@@ -113,6 +113,10 @@
                   @click="onClickSave"
                   @keypress.enter="onClickSave"
                 >
+                  <span v-if="isExporting">
+                    <font-awesome-icon class="mr-2" icon="spinner" spin />
+                    Exporting...
+                  </span>
                   <span v-if="!isExporting">
                     <font-awesome-icon class="mr-2" icon="check" />
                     Export
@@ -160,6 +164,9 @@ export default {
     isExporting: false,
     dialog: false
   }),
+  created() {
+    this.asset.title = this.whiteboard.title
+  },
   methods: {
     onClickCancel() {
       this.dialog = false

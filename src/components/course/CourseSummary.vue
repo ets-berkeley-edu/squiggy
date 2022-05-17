@@ -108,7 +108,7 @@ export default {
     course: undefined
   }),
   created() {
-    this.allowMasquerade = this.$currentUser.isAdmin || this.$config.isVueAppDebugMode
+    this.allowMasquerade = this.$config.developerAuthEnabled && (this.$currentUser.isAdmin || this.$config.isVueAppDebugMode)
     getCourse(this.courseId).then(course => {
       this.course = course
     })
