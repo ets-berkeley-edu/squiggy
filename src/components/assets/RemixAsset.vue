@@ -26,7 +26,7 @@
               <h2 id="modal-header" class="pl-3">Remixing...</h2>
             </v-col>
           </v-row>
-          <v-row justify="center pb-12">
+          <v-row class="text-center pb-12">
             <v-col class="text-center">
               <v-progress-circular
                 class="spinner"
@@ -99,14 +99,6 @@
             <v-col id="whiteboard-description">
               <h3 class="sr-only">Description</h3>
               {{ whiteboard.description }}
-            </v-col>
-          </v-row>
-          <v-row v-if="whiteboard.categories.length">
-            <v-col>
-              <h3>{{ whiteboard.categories.length === 1 ? 'Category' : 'Categories' }}</h3>
-              <div>
-                {{ oxfordJoin($_.map(whiteboard.categories, 'title')) }}
-              </div>
             </v-col>
           </v-row>
           <v-row no-gutters>
