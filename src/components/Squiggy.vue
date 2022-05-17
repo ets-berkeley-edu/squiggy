@@ -1,8 +1,8 @@
 <template>
   <div v-if="!isLoading" class="align-center d-flex flex-column my-10">
     <h1 class="grey--text text--darken-2">
-      <span v-if="$currentUser.isAdmin">Squiggy</span>
-      <span v-if="!$currentUser.isAdmin">SuiteC</span>
+      <span v-if="showLennyAndSquiggy">Squiggy</span>
+      <span v-if="!showLennyAndSquiggy">SuiteC</span>
       v{{ $config.app.version }}
     </h1>
     <div v-if="$config.app.build">
@@ -16,7 +16,7 @@
         <i class="fa-brands fa-github" />
       </a>
     </div>
-    <div v-if="$currentUser.isAdmin" class="align-center d-flex flex-column justify-space-between mb-4">
+    <div v-if="showLennyAndSquiggy" class="align-center d-flex flex-column justify-space-between mb-4">
       <v-slider
         v-model="width"
         class="align-self-stretch"
@@ -68,7 +68,7 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-    <div v-if="!$currentUser.isAuthenticated">
+    <div v-if="$config.developerAuthEnabled && !$currentUser.isAuthenticated">
       <DevAuth />
     </div>
   </div>
@@ -88,10 +88,12 @@ export default {
   components: {Avatar, Configs, CourseSummary, DevAuth, UserSummary},
   mixins: [Context, Utils],
   data: () => ({
+    showLennyAndSquiggy: undefined,
     width: 300
   }),
   created() {
-    if (!this.$config.developerAuthEnabled || !this.$currentUser.isAuthenticated) {
+    this.showLennyAndSquiggy = this.$config.developerAuthEnabled && (this.$config.isVueAppDebugMode || this.$currentUser.isAdmin)
+    if (!this.$config.isVueAppDebugMode) {
       this.$router.push('/error?m=Sorry, something went wrong. Please contact us if problems persist.')
     }
   }

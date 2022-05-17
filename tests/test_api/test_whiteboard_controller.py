@@ -44,7 +44,7 @@ from tests.util import mock_s3_bucket, override_config
 unauthorized_user_id = '666'
 
 
-def _api_get_whiteboard(whiteboard_id, client, expected_status_code=200):
+def _api_get_whiteboard(client, whiteboard_id, expected_status_code=200):
     response = client.get(f'/api/whiteboard/{whiteboard_id}')
     assert response.status_code == expected_status_code
     return response.json
@@ -54,12 +54,22 @@ class TestGetWhiteboard:
 
     def test_anonymous(self, client):
         """Denies anonymous user."""
-        _api_get_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
+        _api_get_whiteboard(client=client, expected_status_code=401, whiteboard_id=1)
 
     def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        _api_get_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
+        _api_get_whiteboard(client=client, expected_status_code=401, whiteboard_id=1)
+
+    def test_deleted_whiteboard(self, client, fake_auth):
+        """Students cannot reach deleted whiteboards."""
+        course, student, whiteboard = _create_student_whiteboard()
+        whiteboard_id = whiteboard['id']
+        Whiteboard.delete(whiteboard_id)
+        std_commit(allow_test_environment=True)
+
+        fake_auth.login(student.id)
+        _api_get_whiteboard(client, expected_status_code=404, whiteboard_id=whiteboard_id)
 
     def test_owner_view_whiteboard(self, client, fake_auth, mock_whiteboard):
         """Authorized user can view whiteboard."""

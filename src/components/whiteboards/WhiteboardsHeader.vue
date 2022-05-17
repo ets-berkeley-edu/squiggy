@@ -16,7 +16,7 @@
         </v-btn>
       </div>
     </div>
-    <div v-if="(totalWhiteboardCount > 1) && !$currentUser.isObserver && !$currentUser.isStudent">
+    <div v-if="!$currentUser.isObserver && !$currentUser.isStudent">
       <v-expand-transition>
         <div v-if="!expanded" class="align-start d-flex justify-space-between w-50">
           <v-text-field
@@ -188,7 +188,7 @@
       </v-expand-transition>
     </div>
     <Alert
-      v-if="alert"
+      v-if="alert && (isDirty || !totalWhiteboardCount)"
       id="assert-library-alert"
       class="my-2"
       :messages="[alert]"
@@ -246,12 +246,14 @@ export default {
       this.alertType = null
     },
     fetch() {
-      if (this.$_.trim(this.keywords) || this.orderBy || this.userId) {
+      this.alert = undefined
+      if (this.includeDeleted || this.$_.trim(this.keywords) || this.orderBy || this.userId) {
         this.setBusy(true)
         this.resetOffset()
         this.$announcer.polite('Searching')
         this.search().then(data => {
           this.updateSearchBookmark()
+          this.setDirty(true)
           this.setBusy(false)
           if (data.total) {
             this.$announcer.polite(`${data.total} matching ${data.total === 1 ? 'whiteboard' : 'whiteboards'} found`)
@@ -260,10 +262,13 @@ export default {
             this.alert = 'No matching whiteboards found'
           }
         })
+      } else {
+        this.setDirty(false)
       }
     },
     onClickClearSearchInput() {
       this.setKeywords(undefined)
+      this.setIncludeDeleted(false)
       this.setOrderBy('recent')
       this.setUserId(undefined)
       this.fetch()

@@ -54,7 +54,7 @@
                 <th>Id</th>
                 <th>Name</th>
                 <th>Role</th>
-                <th v-if="$currentUser.isAdmin">Action</th>
+                <th v-if="allowMasquerade">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -66,7 +66,7 @@
                 <td>{{ user.id }}</td>
                 <td>{{ user.canvasFullName }}<span v-if="user.id === $currentUser.id"> (you)</span></td>
                 <td>{{ user.canvasCourseRole }}</td>
-                <td v-if="$currentUser.isAdmin">
+                <td v-if="allowMasquerade">
                   <v-btn
                     v-if="user.id !== $currentUser.id"
                     :id="`become-${user.id}`"
@@ -104,9 +104,11 @@ export default {
     }
   },
   data: () => ({
+    allowMasquerade: undefined,
     course: undefined
   }),
   created() {
+    this.allowMasquerade = this.$currentUser.isAdmin || this.$config.isVueAppDebugMode
     getCourse(this.courseId).then(course => {
       this.course = course
     })

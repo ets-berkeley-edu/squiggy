@@ -428,10 +428,9 @@ class TestMasquerade:
                 expected_status_code=404,
             )
 
-    def test_unauthorized(self, app, client, fake_auth, student_id):
+    def test_unauthorized(self, app, client, fake_auth):
         """Non-admin users are not authorized."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
-            fake_auth.login(student_id)
             teacher = User.find_by_canvas_user_id(9876543)
             self._api_masquerade(
                 client,
@@ -439,7 +438,7 @@ class TestMasquerade:
                 expected_status_code=401,
             )
 
-    def test_unauthorized_user(self, app, client, fake_auth):
+    def test_authorized(self, app, client, fake_auth):
         """Fails if the chosen user_id does not match an authorized user."""
         with override_config(app, 'DEVELOPER_AUTH_ENABLED', True):
             admin = User.find_by_canvas_user_id(321098)

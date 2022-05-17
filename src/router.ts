@@ -36,8 +36,8 @@ const router = new Router({
   mode: 'history',
   routes: [
     {
-      path: '/',
-      redirect: '/404'
+      beforeEnter: (to: any, from: any, next: any) => next(Vue.prototype.$config.isVueAppDebugMode ? '/squiggy' : '/404'),
+      path: '/'
     },
     {
       path: '/',
