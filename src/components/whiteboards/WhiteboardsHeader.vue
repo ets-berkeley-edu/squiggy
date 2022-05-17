@@ -249,7 +249,7 @@ export default {
       this.alert = undefined
       if (this.includeDeleted || this.$_.trim(this.keywords) || this.orderBy || this.userId) {
         this.setBusy(true)
-        this.resetOffset()
+        this.setOffset(0)
         this.$announcer.polite('Searching')
         this.search().then(data => {
           this.updateSearchBookmark()

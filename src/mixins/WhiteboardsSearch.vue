@@ -16,6 +16,7 @@ export default {
       'isDirty',
       'keywords',
       'limit',
+      'offset',
       'orderBy',
       'orderByDefault',
       'totalWhiteboardCount',
@@ -36,7 +37,6 @@ export default {
       'init',
       'nextPage',
       'refresh',
-      'resetOffset',
       'search',
       'setBusy',
       'setCollaborator',
@@ -44,6 +44,7 @@ export default {
       'setExpanded',
       'setIncludeDeleted',
       'setKeywords',
+      'setOffset',
       'setOrderBy',
       'setUserId',
       'updateWhiteboardStore'

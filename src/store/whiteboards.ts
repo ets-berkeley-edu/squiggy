@@ -60,6 +60,7 @@ const getters = {
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
+  offset: (state: any): number => state.offset,
   orderBy: (state: any): string => state.orderBy,
   orderByDefault: (): string => orderByDefault,
   totalWhiteboardCount: (state: any): number => state.totalWhiteboardCount,
@@ -144,7 +145,6 @@ const actions = {
       })
     })
   },
-  resetOffset: ({commit}) => commit('setOffset', 0),
   search: ({commit, state}) => $_search(commit, state),
   setBusy: ({commit}, isBusy) => commit('setBusy', isBusy),
   setCollaborator: ({commit}, collaborator) => commit('setCollaborator', collaborator),
@@ -152,6 +152,7 @@ const actions = {
   setExpanded: ({commit}, expanded) => commit('setExpanded', expanded),
   setIncludeDeleted: ({commit}, includeDeleted) => commit('setIncludeDeleted', includeDeleted),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
+  setOffset: ({commit}, offset) => commit('setOffset', offset),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
   setUserId: ({commit}, userId) => commit('setUserId', userId),
   updateWhiteboardStore: ({commit}, updatedWhiteboard) => commit('updateWhiteboardStore', updatedWhiteboard)
