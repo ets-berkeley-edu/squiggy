@@ -35,8 +35,7 @@ export default {
         this.setDisableAll(false)
         this.$ready(whiteboard.title)
         if (!this.whiteboard.isReadOnly) {
-          clearTimeout(this.refreshJob)
-          this.refreshJob = setTimeout(this.refresh, 60000)
+          this.refresh()
         }
       })
     })
@@ -46,8 +45,9 @@ export default {
   },
   methods: {
     refresh() {
+      clearTimeout(this.refreshJob)
       this.checkForUpdates()
-      this.refreshJob = setTimeout(this.refresh, 60000)
+      this.refreshJob = setTimeout(this.refresh, this.$config.whiteboardsRefreshInterval)
     }
   }
 }

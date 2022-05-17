@@ -6,9 +6,9 @@ import {
   addAsset,
   checkForUpdates,
   deleteActiveElements,
+  emitWhiteboardUpdate,
   initialize,
   moveLayer,
-  onWhiteboardUpdate,
   refresh,
   setCanvasDimensions,
   setMode
@@ -63,6 +63,7 @@ const mutations = {
     }
   },
   deleteActiveElements: (state: any) => deleteActiveElements(state),
+  emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
   init: (state: any, whiteboard: any) => {
     state.whiteboard = whiteboard
     initialize(state)
@@ -74,7 +75,6 @@ const mutations = {
     }
   },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
-  onWhiteboardUpdate: (state: any, whiteboard: any) => onWhiteboardUpdate(state, whiteboard),
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
@@ -108,6 +108,7 @@ const actions = {
   checkForUpdates: ({state}) => checkForUpdates(state),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => deleteWhiteboard(state.whiteboard.id).then(() => commit('afterWhiteboardDelete')),
+  emitWhiteboardUpdate: ({commit}, whiteboard: any) => commit('emitWhiteboardUpdate', whiteboard),
   init: ({commit}, whiteboard: any) => {
     return new Promise(resolve => {
       getCategories(false).then(categories => {
@@ -119,7 +120,6 @@ const actions = {
   },
   join: ({commit}, userId: any) => commit('join', userId),
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
-  onWhiteboardUpdate: ({commit}, whiteboard: any) => commit('onWhiteboardUpdate', whiteboard),
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {

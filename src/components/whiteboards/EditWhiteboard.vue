@@ -26,7 +26,7 @@
             maxlength="255"
             outlined
             required
-            @keydown.enter="submit"
+            @keydown.enter="save"
           />
           <div class="pl-1 py-1">
             <span
@@ -298,20 +298,22 @@ export default {
       this.isSaving = false
     },
     save() {
-      this.isSaving = true
-      const done = whiteboard => {
-        this.$announcer.polite(`Whiteboard ${this.whiteboard ? 'updated' : 'created'}.`)
-        this.isSaving = false
-        this.afterSave(whiteboard)
-      }
-      if (this.whiteboard) {
-        updateWhiteboard(
-          this.title,
-          this.selectedUserIds,
-          this.whiteboard.id
-        ).then(done)
-      } else {
-        createWhiteboard(this.title, this.selectedUserIds).then(done)
+      if (!this.disableSave) {
+        this.isSaving = true
+        const done = whiteboard => {
+          this.$announcer.polite(`Whiteboard ${this.whiteboard ? 'updated' : 'created'}.`)
+          this.isSaving = false
+          this.afterSave(whiteboard)
+        }
+        if (this.whiteboard) {
+          updateWhiteboard(
+            this.title,
+            this.selectedUserIds,
+            this.whiteboard.id
+          ).then(done)
+        } else {
+          createWhiteboard(this.title, this.selectedUserIds).then(done)
+        }
       }
     }
   }

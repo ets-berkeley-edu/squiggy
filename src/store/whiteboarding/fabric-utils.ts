@@ -67,6 +67,25 @@ export function deleteActiveElements(state: any) {
   }
 }
 
+export function emitWhiteboardUpdate(state: any, whiteboard: any) {
+  document.title = `${whiteboard.title} | SuiteC`
+  state.whiteboard.title = whiteboard.title
+  state.whiteboard.users = whiteboard.users
+  state.whiteboard.deletedAt = whiteboard.deletedAt
+  p.$socket.emit('update_whiteboard', {
+    title: whiteboard.title,
+    userId: p.$currentUser.id,
+    users: whiteboard.users,
+    whiteboardId: state.whiteboard.id
+  })
+  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+    const userIds = _.map(whiteboard.users, 'id')
+    if (!_.includes(userIds, p.$currentUser.id)) {
+      window.close()
+    }
+  }
+}
+
 export function initialize(state: any) {
   state.viewport = document.getElementById(constants.VIEWPORT_ELEMENT_ID)
   if (state.whiteboard.isReadOnly) {
@@ -114,23 +133,6 @@ export function moveLayer(direction: string, state: any) {
   }
 }
 
-export function onWhiteboardUpdate(state: any, whiteboard: any) {
-  _.assignIn(state.whiteboard, whiteboard)
-  document.title = `${whiteboard.title} | SuiteC`
-  p.$socket.emit('update_whiteboard', {
-    title: whiteboard.title,
-    userId: p.$currentUser.id,
-    users: whiteboard.users,
-    whiteboardId: state.whiteboard.id
-  })
-  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-    const userIds = _.map(whiteboard.users, 'id')
-    if (!_.includes(userIds, p.$currentUser.id)) {
-      window.close()
-    }
-  }
-}
-
 export function checkForUpdates(state: any) {
   p.$socket.emit(
     'check_for_updates',
@@ -140,14 +142,17 @@ export function checkForUpdates(state: any) {
     },
     (data: any) => {
       store.dispatch('whiteboarding/setUsers', data.users)
-      _.each(data.updated, whiteboardElement => {
-        const uuid = whiteboardElement.uuid
-        const existing = $_getCanvasElement(uuid)
-        if (existing) {
-          // Deactivate the current group if any of the updated elements are in the current group
-          $_deactivateGroupIfOverlap(whiteboardElement)
-          $_updateCanvasElement(state, uuid, whiteboardElement.element)
-          setCanvasDimensions(state)
+      _.each(data.whiteboardElements, whiteboardElement => {
+        // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
+        if (whiteboardElement.assetPreviewStatus === 'updated') {
+          const uuid = whiteboardElement.uuid
+          const existing = $_getCanvasElement(uuid)
+          if (existing) {
+            // Deactivate the current group if any of the updated elements are in the current group
+            $_deactivateGroupIfOverlap(whiteboardElement)
+            $_updateCanvasElement(state, uuid, whiteboardElement.element)
+            setCanvasDimensions(state)
+          }
         }
       })
     },

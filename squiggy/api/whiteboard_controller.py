@@ -111,13 +111,6 @@ def export_as_asset(whiteboard_id):
         raise ResourceNotFoundError('Not found')
 
 
-@app.route('/api/whiteboard/<whiteboard_id>/exportability_summary')
-@feature_flag_whiteboards
-@login_required
-def exportability_summary(whiteboard_id):
-    return tolerant_jsonify(Whiteboard.get_exportability_summary(current_user, whiteboard_id))
-
-
 @app.route('/api/whiteboard/<whiteboard_id>/download/png')
 @feature_flag_whiteboards
 @login_required
@@ -128,10 +121,11 @@ def export_as_png(whiteboard_id):
     if not can_view_whiteboard(user=current_user, whiteboard=whiteboard):
         raise BadRequestError('Unauthorized')
 
-    summary = Whiteboard.get_exportability_summary(current_user, whiteboard_id)
-    if summary['errored']:
+    key = 'assetPreviewStatus'
+    asset_preview_statuses = [e[key] for e in whiteboard['whiteboardElements'] if key in e]
+    if 'error' in asset_preview_statuses:
         raise BadRequestError('Whiteboard cannot be exported due to an asset processing error. Remove problematic assets and retry.')
-    if summary['pending']:
+    if 'pending' in asset_preview_statuses:
         raise BadRequestError('Whiteboard cannot be exported yet, assets are still processing. Try again soon.')
 
     # Download
