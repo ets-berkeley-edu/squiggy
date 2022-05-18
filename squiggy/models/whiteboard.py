@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import re
 from uuid import uuid4
 
+from sqlalchemy import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
 from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, utc_now
@@ -81,7 +82,7 @@ class Whiteboard(Base):
         """
 
     @classmethod
-    def find_by_id(cls, whiteboard_id, current_user=None, include_deleted=True):
+    def find_by_id(cls, current_user, whiteboard_id, include_deleted=True):
         whiteboards = cls.get_whiteboards(
             current_user=current_user,
             include_deleted=include_deleted,
@@ -318,12 +319,17 @@ class Whiteboard(Base):
         return whiteboard
 
     @classmethod
-    def undelete(cls, whiteboard_id, title):
-        whiteboard = cls.find_by_id(whiteboard_id)
-        whiteboard.title = title
-        db.session.add(whiteboard)
-        std_commit()
-        return whiteboard
+    def undelete(cls, title, whiteboard_id):
+        sql = """
+            UPDATE whiteboards
+            SET deleted_at = NULL, title = :title, updated_at = now()
+            WHERE whiteboard_id = :whiteboard_id
+        """
+        params = {
+            'title': title,
+            'whiteboard_id': whiteboard_id,
+        }
+        db.session.execute(text(sql), params)
 
     @classmethod
     def update(cls, title, users, whiteboard_id):

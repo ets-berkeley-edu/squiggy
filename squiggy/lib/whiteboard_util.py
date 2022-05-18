@@ -37,35 +37,37 @@ from squiggy.logger import logger
 def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
     with tempfile.NamedTemporaryFile(suffix='.json') as whiteboard_elements_file:
-        elements = json.dumps([w['element'] for w in whiteboard['whiteboardElements']])
-        whiteboard_elements_file.write(bytes(elements, 'utf-8'))
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:
-                executable = [
-                    app.config['NODE_EXECUTABLE'],
-                    f'{base_dir}/scripts/node_js/save_whiteboard_as_png.js',
-                    '-b',
-                    base_dir,
-                    '-w',
-                    whiteboard_elements_file.name,
-                    '-p',
-                    png_file.name,
-                ]
-                logger.info(f'Run whiteboard.to_png_file script: {executable}')
-                exit_code = subprocess.run(
-                    executable,
-                    capture_output=True,
-                    env={'NODE_PATH': f'{base_dir}/node_modules'},
-                )
-                logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
-                return png_file
-        except OSError as e:
-            app.logger.error(f"""
-                OSError: {e.strerror}
-                OSError number: {e.errno}
-                OSError filename: {e.filename}
-            """)
-            return None
-        except:  # noqa: E722
-            logger.error(traceback.format_exc())
-            return None
+        whiteboard_elements = whiteboard['whiteboardElements']
+        if whiteboard_elements:
+            elements = json.dumps([w['element'] for w in whiteboard['whiteboardElements']])
+            whiteboard_elements_file.write(bytes(elements, 'utf-8'))
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:
+                    executable = [
+                        app.config['NODE_EXECUTABLE'],
+                        f'{base_dir}/scripts/node_js/save_whiteboard_as_png.js',
+                        '-b',
+                        base_dir,
+                        '-w',
+                        whiteboard_elements_file.name,
+                        '-p',
+                        png_file.name,
+                    ]
+                    logger.info(f'Run whiteboard.to_png_file script: {executable}')
+                    exit_code = subprocess.run(
+                        executable,
+                        capture_output=True,
+                        env={'NODE_PATH': f'{base_dir}/node_modules'},
+                    )
+                    logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
+                    return png_file
+            except OSError as e:
+                app.logger.error(f"""
+                    OSError: {e.strerror}
+                    OSError number: {e.errno}
+                    OSError filename: {e.filename}
+                """)
+                return None
+            except:  # noqa: E722
+                logger.error(traceback.format_exc())
+                return None
