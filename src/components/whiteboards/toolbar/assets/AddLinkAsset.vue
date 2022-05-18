@@ -53,6 +53,8 @@
                 maxlength="2048"
                 outlined
                 required
+                :error="$_.trim(asset.url) ? !isValidURL(asset.url) : false"
+                @keydown.enter="onClickSave"
               />
             </v-col>
           </v-row>
@@ -174,12 +176,13 @@
 
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
+import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import {createLinkAsset} from '@/api/assets'
 
 export default {
   name: 'AddLinkAsset',
-  mixins: [Whiteboarding],
+  mixins: [Utils, Whiteboarding],
   components: {AccessibleSelect},
   data: () => ({
     asset: {
@@ -195,7 +198,7 @@ export default {
   }),
   computed: {
     disableSave() {
-      return this.isSaving || !this.$_.trim(this.asset.title) || !this.$_.trim(this.asset.url)
+      return this.isSaving || !this.$_.trim(this.asset.title) || !this.isValidURL(this.asset.url)
     }
   },
   methods: {
@@ -204,27 +207,29 @@ export default {
       this.$announcer.polite('Canceled')
     },
     onClickSave() {
-      this.$announcer.polite('Creating asset...')
-      this.isSaving = true
-      createLinkAsset(
-        this.asset.categoryId,
-        this.asset.description,
-        this.asset.title,
-        this.asset.url,
-        this.asset.visible
-      ).then(asset => {
-        this.addAsset(asset).then(() => {
-          this.$announcer.polite('Link asset created.')
-          this.asset = {
-            categoryId: undefined,
-            description: undefined,
-            title: '',
-            url: undefined
-          }
-          this.dialog = false
-          this.isSaving = false
+      if (!this.disableSave) {
+        this.$announcer.polite('Creating asset...')
+        this.isSaving = true
+        createLinkAsset(
+          this.asset.categoryId,
+          this.asset.description,
+          this.asset.title,
+          this.asset.url,
+          this.asset.visible
+        ).then(asset => {
+          this.addAsset(asset).then(() => {
+            this.$announcer.polite('Link asset created.')
+            this.asset = {
+              categoryId: undefined,
+              description: undefined,
+              title: '',
+              url: undefined
+            }
+            this.dialog = false
+            this.isSaving = false
+          })
         })
-      })
+      }
     },
   }
 }
