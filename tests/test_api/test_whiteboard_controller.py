@@ -32,7 +32,7 @@ from flask_login import logout_user
 from squiggy import db, std_commit
 from squiggy.api.whiteboard_socket_handler import join_whiteboard
 from squiggy.lib.login_session import LoginSession
-from squiggy.lib.util import is_teaching
+from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.activity import Activity
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -193,7 +193,7 @@ class TestGetWhiteboards:
                 assert not my_whiteboard_session
 
             whiteboards_deleted = next((w for w in whiteboards if w['deletedAt']), [])
-            if user.canvas_course_role == 'Administrator':
+            if is_admin(user) or is_teaching(user):
                 assert len(whiteboards_deleted)
             else:
                 assert len(whiteboards_deleted) == 0
