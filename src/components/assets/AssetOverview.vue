@@ -79,7 +79,7 @@
         <span class="sr-only">none</span>
       </v-col>
     </v-row>
-    <v-row v-if="asset.usedInAssets.length" justify="start">
+    <v-row v-if="$_.size(usedInAssets)" justify="start">
       <v-col
         class="font-weight-bold pt-3 text-no-wrap text-right"
         lg="1"
@@ -90,7 +90,7 @@
       </v-col>
       <v-col>
         <div
-          v-for="(usedInAsset, index) in $_.filter(asset.usedInAssets, a => a.id !== asset.id)"
+          v-for="(usedInAsset, index) in usedInAssets"
           :key="index"
           :class="{'pt-1': index > 0}"
         >
@@ -171,14 +171,9 @@ export default {
   methods: {
     getUsedInAssets() {
       const assets = []
-      const currentUserAssetIds = this.$_.map(this.asset.usedInAssets, 'id')
+      const showAll = this.$currentUser.isAdmin || this.$currentUser.isTeaching
       this.$_.each(this.asset.usedInAssets, usedInAsset => {
-        if (
-          usedInAsset.visible
-          || this.$currentUser.isAdmin
-          || this.$currentUser.isTeaching
-          || currentUserAssetIds.includes(usedInAsset.id)
-        ) {
+        if (usedInAsset.id !== this.asset.id && (showAll || usedInAsset.visible)) {
           assets.push(usedInAsset)
         }
       })
