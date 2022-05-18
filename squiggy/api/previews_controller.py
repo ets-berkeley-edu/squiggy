@@ -68,7 +68,11 @@ def _handle_previews_callback(object_type):
     if object_type == 'asset':
         success = _update_asset_preview(metadata=metadata, params=params)
     elif object_type == 'whiteboard':
-        success = _update_whiteboard_preview(params=params)
+        success = Whiteboard.update_preview(
+            image_url=params.get('image'),
+            thumbnail_url=params.get('thumbnail'),
+            whiteboard_id=params['id'],
+        )
     if success:
         return tolerant_jsonify({'status': 'success'})
     else:
@@ -87,17 +91,4 @@ def _update_asset_preview(metadata, params):
         image_url=params.get('image'),
         pdf_url=params.get('pdf'),
         metadata=metadata,
-    )
-
-
-def _update_whiteboard_preview(params):
-    whiteboard_id = params['id']
-    whiteboard = Whiteboard.find_by_id(whiteboard_id)
-    if not whiteboard:
-        raise BadRequestError(f'Whiteboard {whiteboard_id} not found.')
-
-    return Whiteboard.update_preview(
-        image_url=params.get('image'),
-        thumbnail_url=params.get('thumbnail'),
-        whiteboard_id=whiteboard_id,
     )

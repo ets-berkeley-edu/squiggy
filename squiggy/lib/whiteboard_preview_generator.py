@@ -25,7 +25,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from time import sleep
 
+from sqlalchemy import text
+from squiggy import db
 from squiggy.lib.background_job import BackgroundJob
+from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
 from squiggy.logger import initialize_background_logger, logger
 from squiggy.models.whiteboard import Whiteboard
@@ -63,9 +66,30 @@ class WhiteboardPreviewGenerator(BackgroundJob):
                 self.whiteboard_id_queue.clear()
 
                 for whiteboard_id in whiteboard_id_set:
-                    whiteboard = Whiteboard.find_by_id(whiteboard_id)
-                    self.logger.info(f'Generating preview image for whiteboard {whiteboard_id}')
-                    generate_whiteboard_preview(whiteboard=whiteboard)
+                    # First, find user authorized to render whiteboard.
+                    sql = text("""
+                        SELECT u.id FROM users u
+                        JOIN whiteboards w ON w.course_id = u.course_id
+                        WHERE w.id = :whiteboard_id
+                          AND (
+                            u.canvas_course_role ILIKE '%admin%'
+                            OR u.canvas_course_role ILIKE '%instructor%'
+                            OR u.canvas_course_role ILIKE '%teacher%'
+                        )
+                        ORDER BY u.canvas_course_role LIMIT 1
+                    """)
+                    result = db.session.execute(sql, {'whiteboard_id': whiteboard_id}).fetchone()
+                    user_id = result[0] if result else None
+                    if user_id:
+                        # Next, generate whiteboard preview image.
+                        whiteboard = Whiteboard.find_by_id(
+                            current_user=LoginSession(user_id),
+                            whiteboard_id=whiteboard_id,
+                        )
+                        self.logger.info(f'Generating preview image for whiteboard {whiteboard_id}')
+                        generate_whiteboard_preview(whiteboard=whiteboard)
+                    else:
+                        self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
                 # This iteration is done
                 self.is_running = False
             sleep(15)
