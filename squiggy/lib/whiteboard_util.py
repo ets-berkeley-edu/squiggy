@@ -36,11 +36,14 @@ from squiggy.logger import logger
 @mock('fixtures/mock_whiteboard.png')
 def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
-    with tempfile.NamedTemporaryFile(suffix='.json') as whiteboard_elements_file:
-        whiteboard_elements = whiteboard['whiteboardElements']
-        if whiteboard_elements:
-            elements = json.dumps([w['element'] for w in whiteboard['whiteboardElements']])
-            whiteboard_elements_file.write(bytes(elements, 'utf-8'))
+    whiteboard_elements = whiteboard['whiteboardElements']
+    if whiteboard_elements:
+        temp_file = tempfile.NamedTemporaryFile(suffix='.json')
+        with open(temp_file.name, mode='wt', encoding='utf-8') as f:
+            elements = [w['element'] for w in whiteboard['whiteboardElements']]
+            json.dump(elements, f)
+
+        with open(f.name, mode='rb') as f:
             try:
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:
                     executable = [
@@ -49,14 +52,12 @@ def to_png_file(whiteboard):
                         '-b',
                         base_dir,
                         '-w',
-                        whiteboard_elements_file.name,
+                        f.name,
                         '-p',
                         png_file.name,
                     ]
-                    logger.info(f'Run whiteboard.to_png_file script: {executable}')
                     exit_code = subprocess.run(
                         executable,
-                        capture_output=True,
                         env={'NODE_PATH': f'{base_dir}/node_modules'},
                     )
                     logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
