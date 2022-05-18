@@ -160,7 +160,7 @@ def restore_whiteboard(whiteboard_id):
 @login_required
 def get_whiteboards():
     params = request.get_json()
-    include_deleted = params.get('includeDeleted', False) if current_user.is_admin else False
+    include_deleted = params.get('includeDeleted', False) if current_user.is_admin or current_user.is_teaching else False
     keywords = params.get('keywords')
     limit = params.get('limit')
     offset = params.get('offset')
