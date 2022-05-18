@@ -36,39 +36,37 @@ from squiggy.logger import logger
 @mock('fixtures/mock_whiteboard.png')
 def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
-    whiteboard_elements = whiteboard['whiteboardElements']
-    if whiteboard_elements:
-        temp_file = tempfile.NamedTemporaryFile(suffix='.json')
-        with open(temp_file.name, mode='wt', encoding='utf-8') as f:
-            elements = [w['element'] for w in whiteboard['whiteboardElements']]
-            json.dump(elements, f)
+    temp_file = tempfile.NamedTemporaryFile(suffix='.json')
+    with open(temp_file.name, mode='wt', encoding='utf-8') as f:
+        elements = [w['element'] for w in whiteboard['whiteboardElements']]
+        json.dump(elements, f)
 
-        with open(f.name, mode='rb') as f:
-            try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:
-                    executable = [
-                        app.config['NODE_EXECUTABLE'],
-                        f'{base_dir}/scripts/node_js/save_whiteboard_as_png.js',
-                        '-b',
-                        base_dir,
-                        '-w',
-                        f.name,
-                        '-p',
-                        png_file.name,
-                    ]
-                    exit_code = subprocess.run(
-                        executable,
-                        env={'NODE_PATH': f'{base_dir}/node_modules'},
-                    )
-                    logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
-                    return png_file
-            except OSError as e:
-                app.logger.error(f"""
-                    OSError: {e.strerror}
-                    OSError number: {e.errno}
-                    OSError filename: {e.filename}
-                """)
-                return None
-            except:  # noqa: E722
-                logger.error(traceback.format_exc())
-                return None
+    with open(f.name, mode='rb') as f:
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:
+                executable = [
+                    app.config['NODE_EXECUTABLE'],
+                    f'{base_dir}/scripts/node_js/save_whiteboard_as_png.js',
+                    '-b',
+                    base_dir,
+                    '-w',
+                    f.name,
+                    '-p',
+                    png_file.name,
+                ]
+                exit_code = subprocess.run(
+                    executable,
+                    env={'NODE_PATH': f'{base_dir}/node_modules'},
+                )
+                logger.info(f'Exit code of whiteboard.to_png_file script: {exit_code}')
+                return png_file
+        except OSError as e:
+            app.logger.error(f"""
+                OSError: {e.strerror}
+                OSError number: {e.errno}
+                OSError filename: {e.filename}
+            """)
+            return None
+        except:  # noqa: E722
+            logger.error(traceback.format_exc())
+            return None

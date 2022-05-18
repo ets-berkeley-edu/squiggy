@@ -90,7 +90,7 @@
       </v-col>
       <v-col>
         <div
-          v-for="(usedInAsset, index) in asset.usedInAssets"
+          v-for="(usedInAsset, index) in $_.filter(asset.usedInAssets, a => a.id !== asset.id)"
           :key="index"
           :class="{'pt-1': index > 0}"
         >
