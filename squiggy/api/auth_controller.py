@@ -55,7 +55,7 @@ def dev_auth_login():
         raise ResourceNotFoundError('Unknown path')
 
 
-@app.route('/api/auth/logout', methods=['POST'])
+@app.route('/api/auth/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     response = tolerant_jsonify(current_user.to_api_json())

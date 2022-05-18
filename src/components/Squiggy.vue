@@ -93,7 +93,7 @@ export default {
   }),
   created() {
     this.showLennyAndSquiggy = this.$config.developerAuthEnabled && (this.$config.isVueAppDebugMode || this.$currentUser.isAdmin)
-    if (!this.$config.isVueAppDebugMode) {
+    if (this.$config.developerAuthEnabled) {
       this.$router.push('/error?m=Sorry, something went wrong. Please contact us if problems persist.')
     }
   }
