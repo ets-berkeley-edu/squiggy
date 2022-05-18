@@ -129,7 +129,7 @@ class Whiteboard(Base):
                             whiteboard_element = WhiteboardElement.update(
                                 asset_id=asset_id,
                                 element=element,
-                                uuid=whiteboard_element.uuid,
+                                uuid=whiteboard_element['uuid'],
                                 whiteboard_id=whiteboard_id,
                             )
                             whiteboard_element['element'] = whiteboard_element.element
