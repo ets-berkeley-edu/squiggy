@@ -2,53 +2,82 @@
   <v-container fluid>
     <v-row>
       <v-col>
-        <v-row justify="space-between">
-          <v-col v-for="user in asset.users" :key="user.id">
-            <div class="align-center d-flex">
-              <div class="pr-1">
-                by
-              </div>
-              <div class="pr-1">
-                <Avatar :user="user" />
-              </div>
-              <div>
-                <UserLink :user="user" />
-                on {{ asset.createdAt | moment('LL') }}
-              </div>
-            </div>
+        <v-row align="center" justify="space-between">
+          <v-col
+            class="font-weight-bold text-no-wrap text-right"
+            lg="1"
+            md="1"
+            sm="2"
+          >
+            Created:
           </v-col>
           <v-col>
-            <v-row align="center" justify="end">
-              <div v-if="canLikeAsset" class="mr-3">
-                <v-btn
-                  id="like-asset-btn"
-                  icon
-                  class="like-asset-btn"
-                  :class="{'like-asset-btn-liked': liked}"
-                  @click="toggleLike"
-                  @keypress.enter.prevent="toggleLike"
-                >
+            {{ asset.createdAt | moment('LL') }}
+          </v-col>
+          <v-col class="text-right">
+            <v-container fluid>
+              <v-row align="center" justify="end" no-gutters>
+                <div v-if="canLikeAsset" class="mr-3">
+                  <v-btn
+                    id="like-asset-btn"
+                    icon
+                    class="like-asset-btn pt-0 mt-0"
+                    :class="{'like-asset-btn-liked': liked}"
+                    @click="toggleLike"
+                    @keypress.enter.prevent="toggleLike"
+                  >
+                    <font-awesome-icon icon="thumbs-up" />
+                    <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
+                    <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
+                  </v-btn>
+                </div>
+                <div v-if="!canLikeAsset" class="mr-3">
                   <font-awesome-icon icon="thumbs-up" />
                   <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
                   <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
-                </v-btn>
+                </div>
+                <div class="mr-5">
+                  <font-awesome-icon icon="eye" />
+                  <span id="asset-view-count" class="ml-1">{{ asset.views }}</span>
+                  <span class="sr-only">{{ asset.views === 1 ? 'view' : 'views' }}</span>
+                </div>
+                <div class="mr-3">
+                  <font-awesome-icon icon="comment" />
+                  <span id="asset-comment-count" class="ml-1">{{ asset.commentCount }}</span>
+                  <span class="sr-only">{{ asset.commentCount === 1 ? 'comment' : 'comments' }}</span>
+                </div>
+              </v-row>
+            </v-container>
+          </v-col>
+        </v-row>
+        <v-row justify="space-between">
+          <v-col
+            class="font-weight-bold pt-4 text-no-wrap text-right"
+            lg="1"
+            md="1"
+            sm="2"
+          >
+            Owned by:
+          </v-col>
+          <v-col>
+            <div v-if="asset.users.length === 1">
+              <div class="align-center d-flex">
+                <Avatar class="pr-1" :user="asset.users[0]" />
+                <UserLink :user="asset.users[0]" />
               </div>
-              <div v-if="!canLikeAsset" class="mr-3">
-                <font-awesome-icon icon="thumbs-up" />
-                <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
-                <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
+            </div>
+            <div v-if="asset.users.length > 1">
+              <div v-for="user in asset.users" :key="user.id" class="pb-1">
+                <div class="align-center d-flex">
+                  <div>
+                    <Avatar :user="user" />
+                  </div>
+                  <div class="pl-2">
+                    <UserLink :user="user" />
+                  </div>
+                </div>
               </div>
-              <div class="mr-5">
-                <font-awesome-icon icon="eye" />
-                <span id="asset-view-count" class="ml-1">{{ asset.views }}</span>
-                <span class="sr-only">{{ asset.views === 1 ? 'view' : 'views' }}</span>
-              </div>
-              <div class="mr-3">
-                <font-awesome-icon icon="comment" />
-                <span id="asset-comment-count" class="ml-1">{{ asset.commentCount }}</span>
-                <span class="sr-only">{{ asset.commentCount === 1 ? 'comment' : 'comments' }}</span>
-              </div>
-            </v-row>
+            </div>
           </v-col>
         </v-row>
       </v-col>

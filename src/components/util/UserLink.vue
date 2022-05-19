@@ -50,13 +50,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.hover-link {
-  text-decoration: none;
-}
-
-.hover-link:hover {
-  text-decoration: underline;
-}
-</style>

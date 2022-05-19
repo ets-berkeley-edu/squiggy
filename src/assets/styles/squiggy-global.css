@@ -36,6 +36,12 @@
 .h-100 {
   height: 100% !important;
 }
+.hover-link {
+  text-decoration: none;
+}
+.hover-link:hover {
+  text-decoration: underline;
+}
 .icon-denotes-required {
   margin-bottom: 2px;
   margin-left: 2px;
