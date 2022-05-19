@@ -116,25 +116,18 @@ class Whiteboard(Base):
                 asset_id = whiteboard_element['assetId']
                 asset = assets_by_id.get(asset_id)
                 if asset:
-                    asset_preview_status = None
-                    image_url = asset['imageUrl']
-                    preview_status = asset['previewStatus']
-                    if not image_url or preview_status != 'done':
-                        asset_preview_status = 'pending' if preview_status == 'pending' else 'error'
-                    else:
-                        element = whiteboard_element['element']
-                        if image_url != element.get('src'):
-                            # Update preview image. Front-end will re-render the element.
-                            element['src'] = image_url
-                            whiteboard_element = WhiteboardElement.update(
-                                asset_id=asset_id,
-                                element=element,
-                                uuid=whiteboard_element['uuid'],
-                                whiteboard_id=whiteboard_id,
-                            )
-                            whiteboard_element['element'] = whiteboard_element.element
-                            asset_preview_status = 'updated'
-                    whiteboard_element['assetPreviewStatus'] = asset_preview_status
+                    asset_image_url = asset['imageUrl']
+                    element = whiteboard_element['element']
+                    if asset_image_url != element.get('src'):
+                        # Update preview image. Front-end will re-render the element.
+                        element['src'] = asset_image_url
+                        w = WhiteboardElement.update(
+                            asset_id=asset_id,
+                            element=element,
+                            uuid=whiteboard_element['uuid'],
+                            whiteboard_id=whiteboard_id,
+                        )
+                        whiteboard_element['element'] = w.element
         return whiteboard
 
     @classmethod

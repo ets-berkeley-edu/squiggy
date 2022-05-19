@@ -114,7 +114,7 @@ TIMEZONE = 'America/Los_Angeles'
 VUE_LOCALHOST_BASE_URL = None
 
 # The following value is in milliseconds.
-WHITEBOARDS_REFRESH_INTERVAL = 10000
+WHITEBOARDS_REFRESH_INTERVAL = 15000
 
 # We keep these out of alphabetical sort above for readability's sake.
 HOST = '0.0.0.0'
