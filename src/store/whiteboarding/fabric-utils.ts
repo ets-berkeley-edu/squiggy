@@ -144,18 +144,16 @@ export function checkForUpdates(state: any) {
       store.dispatch('whiteboarding/setUsers', data.users)
       _.each(data.whiteboardElements, whiteboardElement => {
         // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
-        if (whiteboardElement.assetPreviewStatus === 'updated') {
-          const uuid = whiteboardElement.uuid
-          const existing = $_getCanvasElement(uuid)
-          if (existing) {
-            // Deactivate the current group if any of the updated elements are in the current group
-            $_deactivateGroupIfOverlap(whiteboardElement)
-            $_updateCanvasElement(state, uuid, whiteboardElement.element)
-            setCanvasDimensions(state)
-          }
+        const uuid = whiteboardElement.uuid
+        const existing: any = $_getCanvasElement(uuid)
+        if (existing && existing.src !== whiteboardElement.element.src) {
+          // Deactivate the current group if any of the updated elements are in the current group
+          $_deactivateGroupIfOverlap(whiteboardElement)
+          $_updateCanvasElement(state, uuid, whiteboardElement.element)
+          setCanvasDimensions(state)
         }
       })
-    },
+    }
   )
 }
 
