@@ -438,12 +438,13 @@ const $_addListeners = (state: any) => {
 
 const $_addSocketListeners = (state: any) => {
   const onWindowClose = (event: any) => {
-    if (p.$socket && p.$socket.connected) {
+    if (p.$socket) {
       p.$socket.emit('leave', {
         userId: p.$currentUser.id,
         whiteboardId: state.whiteboard.id
       })
       p.$socket.disconnect()
+      p.$socket.close()
     }
     if (event) {
       event.preventDefault()
@@ -732,7 +733,13 @@ const $_initSocket = (state: any) => {
   p.$socket = io(apiUtils.apiBaseUrl(), {
     query: {
       whiteboardId: state.whiteboard.id
-    }
+    },
+    secure: true,
+    transports: [
+      'flashsocket',
+      'polling',
+      'websocket'
+    ]
   })
   const tryReconnect = () => {
     setTimeout(() => {
