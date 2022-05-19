@@ -3,6 +3,7 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
+    max-width="500"
     width="500"
   >
     <template #activator="{on, attrs}">
@@ -46,15 +47,31 @@
             </v-btn>
           </v-list-item-action>
         </v-list-item>
-        <v-list-item v-if="assetPreviewStatuses.includes('error')" class="d-flex">
-          <font-awesome-icon icon="exclamation-triangle" class="pr-2" />
+        <v-list-item v-if="assetPreviewStatuses.includes('error')" class="align-start d-flex">
+          <div class="ml-4 mr-3 pt-1">
+            <font-awesome-icon
+              class="red--text"
+              icon="exclamation-triangle"
+              size="lg"
+            />
+          </div>
           <div class="red--text">
-            Whiteboard cannot be exported due to an asset processing error. Remove problematic assets and retry.
+            Whiteboard cannot be exported due to an asset processing error.
+            Remove problematic assets and retry.
           </div>
         </v-list-item>
-        <v-list-item v-if="assetPreviewStatuses.includes('pending')">
-          <font-awesome-icon icon="exclamation-triangle" class="pr-2" />
-          <div class="red--text">Whiteboard cannot be exported yet, assets are still processing. Try again soon.</div>
+        <v-list-item v-if="assetPreviewStatuses.includes('pending')" class="align-start d-flex pb-2">
+          <div class="ml-4 mr-3 pt-1">
+            <font-awesome-icon
+              class="red--text"
+              icon="exclamation-triangle"
+              size="lg"
+            />
+          </div>
+          <div class="red--text">
+            Whiteboard cannot be exported yet, assets are still processing.
+            Try again soon.
+          </div>
         </v-list-item>
       </v-list>
       <v-card-text v-if="!$canvas.getObjects().length">
