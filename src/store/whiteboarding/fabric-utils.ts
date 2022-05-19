@@ -744,6 +744,7 @@ const $_initSocket = (state: any) => {
     }, 2000)
   }
   p.$socket.on('close', tryReconnect)
+  p.$socket.on('connect_error', tryReconnect)
   p.$socket.on('connect', () => {
     const userId: number = p.$currentUser.id
     p.$socket.emit('join', {
