@@ -49,11 +49,13 @@
               <v-text-field
                 id="asset-url-input"
                 v-model="asset.url"
+                :error="$_.trim(asset.url) ? !isValidURL(asset.url) : false"
                 hide-details
                 maxlength="2048"
                 outlined
                 required
-                :error="$_.trim(asset.url) ? !isValidURL(asset.url) : false"
+                :rules="urlRules"
+                @blur="ensureUrlPrefix"
                 @keydown.enter="onClickSave"
               />
             </v-col>
@@ -202,6 +204,11 @@ export default {
     }
   },
   methods: {
+    ensureUrlPrefix() {
+      if (this.asset.url && this.asset.url.indexOf('://') === -1) {
+        this.asset.url = `http://${this.asset.url}`
+      }
+    },
     onClickCancel() {
       this.dialog = false
       this.$announcer.polite('Canceled')
@@ -210,6 +217,7 @@ export default {
       if (!this.disableSave) {
         this.$announcer.polite('Creating asset...')
         this.isSaving = true
+        this.ensureUrlPrefix()
         createLinkAsset(
           this.asset.categoryId,
           this.asset.description,
