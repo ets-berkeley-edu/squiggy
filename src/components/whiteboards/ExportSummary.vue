@@ -28,29 +28,36 @@
     </v-row>
     <v-row>
       <v-col>
-        <div class="d-flex pb-4">
-          <h2 id="asset-title">{{ asset.title }}</h2>
-          <div class="pl-1">
-            <a
-              id="link-to-asset"
-              :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${asset.id}`"
-              target="_blank"
-              aria-label="Open asset in new window"
-            >
-              <font-awesome-icon icon="arrow-up-right-from-square" class="pl-1" />
-            </a>
+        <h2 id="asset-title">{{ asset.title }}</h2>
+        <div class="pb-3 pt-2">
+          <a
+            id="link-to-asset"
+            class="hover-link"
+            :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${asset.id}`"
+            target="_blank"
+          >
+            Open asset in new window
+            <font-awesome-icon icon="arrow-up-right-from-square" class="pr-1" />
+          </a>
+        </div>
+        <div v-if="asset.users.length === 1">
+          <div class="align-center d-flex">
+            <div>Owned by</div>
+            <Avatar class="pr-1" :user="asset.users[0]" />
+            <UserLink :user="asset.users[0]" />
           </div>
         </div>
-        <div class="d-flex">
-          <div class="pr-2 pt-1">Created by</div>
-          <OxfordJoin v-slot="{item}" :items="asset.users">
-            <div class="align-center d-flex pr-1">
-              <Avatar :user="item" />
-              <UserLink :cross-tool-link="true" :user="item" />
+        <div v-if="asset.users.length > 1">
+          <h3 class="mb-1 subtitle-1">Owned by:</h3>
+          <div v-for="user in asset.users" :key="user.id" class="pb-1">
+            <div class="align-center d-flex">
+              <div class="pl-2">
+                <Avatar :user="user" />
+              </div>
+              <div class="pl-2">
+                <UserLink :user="user" />
+              </div>
             </div>
-          </OxfordJoin>
-          <div class="pt-1">
-            on {{ asset.createdAt | moment('LL') }}
           </div>
         </div>
       </v-col>
@@ -86,7 +93,6 @@
 
 <script>
 import Avatar from '@/components/user/Avatar'
-import OxfordJoin from '@/components/util/OxfordJoin'
 import UserLink from '@/components/util/UserLink'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
@@ -94,7 +100,7 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'ExportSummary',
   mixins: [Utils, Whiteboarding],
-  components: {Avatar, OxfordJoin, UserLink},
+  components: {Avatar, UserLink},
   props: {
     asset: {
       required: true,
