@@ -65,7 +65,7 @@
               outlined
               required
               :rules="titleRules"
-              @keydown.enter="submit"
+              @keydown.enter.prevent="upload"
             />
           </v-col>
         </v-row>
@@ -110,7 +110,7 @@
                 <v-btn
                   id="upload-file-btn"
                   color="primary"
-                  :disabled="!file || !fileAssetValid"
+                  :disabled="disableSave"
                   elevation="1"
                   @click="upload"
                 >
@@ -157,6 +157,11 @@ export default {
       uploading: false
     }
   },
+  computed: {
+    disableSave() {
+      return !this.file || !this.fileAssetValid
+    }
+  },
   created() {
     this.$loading()
     getCategories().then(data => {
@@ -182,16 +187,18 @@ export default {
         } else {
           this.file = files[0]
           this.title = this.file.name
-          this.$announcer.polite(`${this.file} added`)
+          this.$announcer.polite(`${this.file.name} added`)
         }
       }
     },
     upload() {
-      this.uploading = true
-      createFileAsset(this.categoryId, this.description, this.title, this.file).then(() => {
-        this.$announcer.polite('File uploaded. Asset created.')
-        this.go('/assets')
-      })
+      if (!this.disableSave) {
+        this.uploading = true
+        createFileAsset(this.categoryId, this.description, this.title, this.file).then(() => {
+          this.$announcer.polite('File uploaded. Asset created.')
+          this.go('/assets')
+        })
+      }
     }
   }
 }

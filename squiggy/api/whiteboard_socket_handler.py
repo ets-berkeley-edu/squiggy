@@ -186,7 +186,10 @@ def _delete_expired_sessions(active_socket_id, current_user, whiteboard_id):
     sessions = WhiteboardSession.find(user_id=current_user.user_id, whiteboard_id=whiteboard_id)
     expired_sessions = list(filter(lambda s: s.socket_id != active_socket_id, sessions))
     if expired_sessions:
-        WhiteboardSession.delete_all([s.socket_id for s in expired_sessions])
+        WhiteboardSession.delete_all(
+            older_than_minutes=app.config['WHITEBOARD_SESSION_EXPIRATION_MINUTES'],
+            socket_ids=[s.socket_id for s in expired_sessions],
+        )
 
 
 def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):

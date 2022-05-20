@@ -735,11 +735,7 @@ const $_initSocket = (state: any) => {
       whiteboardId: state.whiteboard.id
     },
     secure: true,
-    transports: [
-      'flashsocket',
-      'polling',
-      'websocket'
-    ]
+    transports: ['websocket', 'polling']
   })
   const tryReconnect = () => {
     setTimeout(() => {
