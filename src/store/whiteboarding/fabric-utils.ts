@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import apiUtils from '@/api/api-utils'
 import constants from '@/store/whiteboarding/constants'
 import store from '@/store'
 import Vue from 'vue'
@@ -453,37 +452,51 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('join', (data: any) => store.dispatch('whiteboarding/setUsers', data.users))
+  p.$socket.on('error', (error: any) => console.log(`[ERROR] socket-io.client, "${error}"`))
+  p.$socket.on('ping', () => console.log('[INFO] socket-io.client.ping'))
+  p.$socket.on('reconnect', (attempt: number) => console.log(`[WARN] socket-io.client > reconnect attempt #${attempt}`))
+  p.$socket.on('reconnect_attempt', (attempt: number) => console.log(`[WARN] socket-io.client > reconnect_attempt attempt #${attempt}`))
+  p.$socket.on('reconnect_error', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_error, "${error}"`))
+  p.$socket.on('reconnect_failed', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_failed, "${error}"`))
 
-  p.$socket.on('leave', (data: any) => store.dispatch('whiteboarding/setUsers', data.users))
-
-  p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
-
+  p.$socket.on('join', (data: any) => {
+    console.log('[INFO] socket-io.client > join')
+    store.dispatch('whiteboarding/setUsers', data.users)
+  })
+  p.$socket.on('leave', (data: any) => {
+    console.log('[INFO] socket-io.client > leave')
+    store.dispatch('whiteboarding/setUsers', data.users)
+  })
+  p.$socket.on('update_whiteboard', (data: any) => {
+    console.log('[INFO] socket-io.client > update_whiteboard')
+    _.assignIn(state.whiteboard, data.whiteboard)
+  })
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
-      const whiteboardElement = data.whiteboardElement
-      const element = whiteboardElement.element
-      const uuid = whiteboardElement.uuid
-      const existing = $_getCanvasElement(uuid)
-      if (existing) {
-        // Deactivate the current group if any of the updated elements are in the current group
-        $_deactivateGroupIfOverlap(whiteboardElement)
-        $_updateCanvasElement(state, whiteboardElement.uuid, element)
+    console.log('[INFO] socket-io.client > upsert_whiteboard_element')
+    const whiteboardElement = data.whiteboardElement
+    const element = whiteboardElement.element
+    const uuid = whiteboardElement.uuid
+    const existing = $_getCanvasElement(uuid)
+    if (existing) {
+      // Deactivate the current group if any of the updated elements are in the current group
+      $_deactivateGroupIfOverlap(whiteboardElement)
+      $_updateCanvasElement(state, whiteboardElement.uuid, element)
+      setCanvasDimensions(state)
+    } else {
+      const callback = (e: any) => {
+        // Add the element to the whiteboard canvas and move it to its appropriate index
+        p.$canvas.add(e)
+        p.$canvas.requestRenderAll()
+        // Recalculate the size of the whiteboard canvas
         setCanvasDimensions(state)
-      } else {
-        const callback = (e: any) => {
-          // Add the element to the whiteboard canvas and move it to its appropriate index
-          p.$canvas.add(e)
-          p.$canvas.requestRenderAll()
-          // Recalculate the size of the whiteboard canvas
-          setCanvasDimensions(state)
-        }
-        $_deserializeElement(state, element, element.uuid, callback)
       }
+      $_deserializeElement(state, element, element.uuid, callback)
     }
-  )
+  })
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on('delete_whiteboard_element', (data: any) => {
+    console.log('[INFO] socket-io.client > delete_whiteboard_element')
     const element = $_getCanvasElement(data.uuid)
     if (element) {
       // Deactivate the current group if any of the deleted elements are in the current group
@@ -730,17 +743,14 @@ const $_initFabricPrototypes = (state: any) => {
 }
 
 const $_initSocket = (state: any) => {
-  p.$socket = io(apiUtils.apiBaseUrl(), {
-    query: {
-      whiteboardId: state.whiteboard.id
-    },
-    secure: true,
-    transports: ['websocket', 'polling']
-  })
+  const baseUrl = _.replace(_.trim(p.$config.baseUrl), /^http/, 'ws')
+  const transports = ['websocket', 'polling']
+  p.$socket = io(baseUrl, {secure: true, transports})
   const tryReconnect = () => {
     setTimeout(() => {
       p.$socket.io.open((err) => {
         if (err) {
+          console.log(`[ERROR] During tryReconnect: ${err}`)
           tryReconnect()
         }
       })
@@ -749,6 +759,17 @@ const $_initSocket = (state: any) => {
   p.$socket.on('close', tryReconnect)
   p.$socket.on('connect_error', tryReconnect)
   p.$socket.on('connect', () => {
+    console.log(`[INFO] socket-io.client > connected (${p.$socket.disconnected}) with socket ID ${p.$socket.id}`)
+    const engine = p.$socket.io.engine
+    if (engine && engine.transport) {
+      console.log(engine.transport.name) // in most cases, prints "polling"
+      // called when the transport is upgraded (i.e. from HTTP long-polling to WebSocket)
+      engine.once('upgrade', () => console.log(engine.transport.name))
+      engine.on('packet', () => console.log('.'))
+      engine.on('packetCreate', () => console.log('+'))
+      engine.on('drain', () => console.log('-'))
+      engine.on('close', (reason: string) => console.log(`Socket.io connection closed due to "${reason}"`))
+    }
     const userId: number = p.$currentUser.id
     p.$socket.emit('join', {
       userId: userId,
