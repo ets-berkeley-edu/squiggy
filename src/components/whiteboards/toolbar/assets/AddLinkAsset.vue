@@ -54,7 +54,6 @@
                 maxlength="2048"
                 outlined
                 required
-                :rules="urlRules"
                 @blur="ensureUrlPrefix"
                 @keydown.enter="onClickSave"
               />
