@@ -3,6 +3,7 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
+    @input="onMenuChange"
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -34,17 +35,21 @@
             </v-col>
             <v-col cols="9">
               <AccessibleSelect
+                :key="menu"
                 :dense="true"
                 :hide-details="true"
                 id-prefix="tool-select-text-size"
                 :items="textSizeOptions"
                 :unclearable="true"
-                :value="14"
-                @input="value => updateSelected({fontSize: value})"
+                :value="selected.fontSize"
+                @input="fontSize => updateSelected({fontSize})"
               />
             </v-col>
           </v-row>
-          <ColorPicker :set-fill="value => updateSelected({fill: value})" />
+          <ColorPicker
+            :update-value="fill => updateSelected({fill})"
+            :value="selected.fill"
+          />
         </v-container>
       </v-card-text>
     </v-card>
@@ -54,6 +59,7 @@
 <script>
 import AccessibleSelect from '@/components/util/AccessibleSelect'
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
+import constants from '@/store/whiteboarding/constants'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
@@ -61,26 +67,26 @@ export default {
   components: {AccessibleSelect, ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
+    menu: false,
+    textSizeOptions: undefined,
     title: 'Add text to your whiteboard'
   }),
-  computed: {
-    menu: {
-      get() {
-        return this.mode === 'text'
-      },
-      set(value) {
-        if (value) {
-          this.setMode('text')
-          this.$putFocusNextTick('menu-header')
-        } else {
-          this.resetSelected()
-        }
-        this.setDisableAll(value)
-      }
-    }
+  created() {
+    this.textSizeOptions = this.$_.clone(constants.TEXT_SIZE_OPTIONS)
   },
   beforeDestroy() {
     this.setDisableAll(false)
+  },
+  methods: {
+    onMenuChange(value) {
+      if (value) {
+        this.resetSelected()
+        this.textSizeOptions = this.$_.clone(constants.TEXT_SIZE_OPTIONS)
+        this.setMode('text')
+        this.$putFocusNextTick('menu-header')
+      }
+      this.setDisableAll(value)
+    }
   }
 }
 </script>

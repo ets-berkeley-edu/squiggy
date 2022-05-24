@@ -3,6 +3,7 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
+    @input="onMenuChange"
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -43,17 +44,26 @@
                 @input="setShapeStyle"
               >
                 <template #selection="{item}">
-                  <span id="selected-shape" class="sr-only">{{ item }} shape</span>
-                  <img aria-labelledby="selected-shape" :src="shapeOptions[item]" />
+                  <img
+                    :alt="`${item} shape`"
+                    :aria-label="`${item} shape`"
+                    :src="shapeOptions[item]"
+                  />
                 </template>
-                <template slot="item" slot-scope="data">
-                  <span :id="`label-shape-${data.item}`" class="sr-only">{{ data.item }} shape</span>
-                  <img :aria-labelledby="`label-shape-${data.item}`" :src="shapeOptions[data.item]" />
+                <template #item="data">
+                  <img
+                    :alt="`${data.item} shape`"
+                    :aria-label="`${data.item} shape`"
+                    :src="shapeOptions[data.item]"
+                  />
                 </template>
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker :color="color" :set-fill="setColor" />
+          <ColorPicker
+            :update-value="setColor"
+            :value="selected.color"
+          />
         </v-container>
       </v-card-text>
     </v-card>
@@ -62,6 +72,7 @@
 
 <script>
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
+import constants from '@/store/whiteboarding/constants'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
@@ -69,55 +80,39 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
-    color: '#000000',
-    shapeStyle: 'Rect:thin',
+    menu: false,
+    shapeOptions: undefined,
+    shapeStyle: undefined,
     title: 'Add shapes to your whiteboard'
   }),
-  computed: {
-    menu: {
-      get() {
-        return this.mode === 'shape'
-      },
-      set(value) {
-        if (value) {
-          this.setMode('shape')
-          this.setColor(this.colors.black.hex)
-          this.setShapeStyle(this.shapeStyle)
-          this.$putFocusNextTick('menu-header')
-        } else {
-          this.resetSelected()
-        }
-        this.setDisableAll(value)
-      }
-    }
-  },
   created() {
-    // Initialize values in the Vuex store.
-    this.setShapeStyle(this.shapeStyle)
+    this.shapeOptions = this.$_.clone(constants.SHAPE_OPTIONS)
   },
   beforeDestroy() {
-    this.resetSelected()
     this.setDisableAll(false)
   },
   methods: {
+    onMenuChange(value) {
+      if (value) {
+        this.resetSelected()
+        this.setMode('shape')
+        this.shapeStyle = 'Rect:thin'
+        this.$putFocusNextTick('menu-header')
+      }
+      this.setDisableAll(value)
+    },
     setColor(value) {
-      this.color = value
+      const fill = this.selected.style === 'fill' ? value : 'transparent'
       this.updateSelected({
-        color: this.color,
-        fill: this.selected.style === 'fill' ? this.color : 'transparent',
-        stroke: this.color,
+        color: value,
+        fill,
+        stroke: value,
       })
     },
     setShapeStyle(value) {
       const [shape, style] = value.split(':')
-      this.updateSelected({
-        color: this.color,
-        fill: style === 'fill' ? this.color : 'transparent',
-        shape,
-        style,
-        stroke: this.color,
-        strokeWidth: style === 'thick' ? 10 : 2
-      })
+      const strokeWidth = style === 'thick' ? 10 : 2
+      this.updateSelected({shape, strokeWidth, style})
     }
   }
 }

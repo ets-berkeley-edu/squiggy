@@ -66,21 +66,20 @@ def delete_whiteboard_element(current_user, socket_id, whiteboard_element, white
 
         uuid = whiteboard_element['element']['uuid']
         whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
-        if not whiteboard_element:
-            raise ResourceNotFoundError('Whiteboard element not found.')
-        # Delete
-        if whiteboard_element.asset_id:
-            AssetWhiteboardElement.delete(
-                asset_id=whiteboard_element.asset_id,
-                uuid=whiteboard_element.uuid,
+        if whiteboard_element:
+            # Delete
+            if whiteboard_element.asset_id:
+                AssetWhiteboardElement.delete(
+                    asset_id=whiteboard_element.asset_id,
+                    uuid=whiteboard_element.uuid,
+                )
+            WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
+            update_updated_at(
+                current_user=current_user,
+                socket_id=socket_id,
+                whiteboard_id=whiteboard_id,
             )
-        WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
-        update_updated_at(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-        )
-        WhiteboardPreviewGenerator.queue(whiteboard_id)
+            WhiteboardPreviewGenerator.queue(whiteboard_id)
     else:
         raise BadRequestError('Unauthorized')
 

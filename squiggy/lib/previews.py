@@ -71,20 +71,21 @@ def generate_preview_service_signature(nonce=None):
 
 
 def generate_whiteboard_preview(whiteboard):
-    png_file = to_png_file(whiteboard)
-    now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
-    with open(png_file.name, mode='rb') as f:
-        filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
-        s3_attrs = upload_to_s3(
-            byte_stream=f.read(),
-            filename=f'{filename}_{now}.png',
-            s3_key_prefix=get_s3_key_prefix(whiteboard['courseId'], 'whiteboard'),
-        )
-        generate_previews(
-            object_id=whiteboard['id'],
-            object_type='whiteboard',
-            object_url=s3_attrs['download_url'],
-        )
+    if app.config['PREVIEWS_ENABLED']:
+        png_file = to_png_file(whiteboard)
+        now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
+        with open(png_file.name, mode='rb') as f:
+            filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
+            s3_attrs = upload_to_s3(
+                byte_stream=f.read(),
+                filename=f'{filename}_{now}.png',
+                s3_key_prefix=get_s3_key_prefix(whiteboard['courseId'], 'whiteboard'),
+            )
+            generate_previews(
+                object_id=whiteboard['id'],
+                object_type='whiteboard',
+                object_url=s3_attrs['download_url'],
+            )
 
 
 def get_s3_key_prefix(course_id, object_type):
