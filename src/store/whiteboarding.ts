@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import constants from '@/store/whiteboarding/constants'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
 import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
@@ -14,6 +15,17 @@ import {
   setMode
 } from '@/store/whiteboarding/fabric-utils'
 
+const DEFAULT_TOOL_SELECTION = {
+  color: constants.COLORS.black.hex,
+  fill: constants.COLORS.black.hex,
+  fontSize: 14,
+  shape: 'Rect',
+  stroke: constants.COLORS.black.hex,
+  strokeWidth: 2,
+  style: 'thin',
+  width: 1
+}
+
 const p = Vue.prototype
 
 const state = {
@@ -28,7 +40,7 @@ const state = {
   isModifyingElement: false,
   isScrollingCanvas: false,
   mode: 'move',
-  selected: {},
+  selected: _.clone(DEFAULT_TOOL_SELECTION),
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
   viewport: undefined,
@@ -79,7 +91,7 @@ const mutations = {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
   },
-  resetSelected: (state: any) => state.selected = {},
+  resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
   restoreWhiteboard: (state: any) => {
     state.whiteboard.isReadOnly = false
     state.whiteboard.deletedAt = null

@@ -10,39 +10,43 @@
         hide-inputs
         hide-sliders
         show-swatches
-        :swatches="[
-          [colors.black.hex, colors.grey.hex],
-          [colors.darkBlue.hex, colors.purple.hex],
-          [colors.lightBlue.hex, colors.red.hex],
-          [colors.green.hex, colors.yellow.hex]
-        ]"
-        :value="color"
+        :swatches="swatches"
+        :value="value"
         width="260"
-        @input="setFill"
+        @input="updateValue"
       />
     </v-col>
   </v-row>
 </template>
 
 <script>
+import constants from '@/store/whiteboarding/constants'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'ColorPicker',
   mixins: [Whiteboarding],
+  data: () => ({
+    swatches: undefined
+  }),
   props: {
-    color: {
-      default: '#000000',
-      required: false,
-      type: String
-    },
-    setFill: {
+    updateValue: {
       required: true,
       type: Function
+    },
+    value: {
+      required: true,
+      type: String
     }
   },
   created() {
-    this.setFill(this.color)
+    const colors = constants.COLORS
+    this.swatches = [
+      [colors.black.hex, colors.grey.hex],
+      [colors.darkBlue.hex, colors.purple.hex],
+      [colors.lightBlue.hex, colors.red.hex],
+      [colors.green.hex, colors.yellow.hex]
+    ]
   }
 }
 </script>

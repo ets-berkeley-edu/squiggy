@@ -3,6 +3,7 @@
     v-model="menu"
     :close-on-content-click="false"
     offset-y
+    @input="onMenuChange"
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -35,25 +36,33 @@
             <v-col cols="9">
               <v-combobox
                 id="select-line-width"
+                v-model="width"
                 aria-labelledby="combobox-label"
                 :hide-details="true"
                 :items="$_.keys(drawOptions)"
                 outlined
-                value="1"
-                @input="value => updateFreeDrawingBrush({width: parseInt(value, 10)})"
               >
                 <template #selection="{item}">
-                  <span id="selected-line-width" class="sr-only">{{ item }} pixel line width</span>
-                  <img aria-labelledby="selected-line-width" :src="drawOptions[item]" />
+                  <img
+                    :alt="`${item} pixel line width`"
+                    :aria-label="`${item} pixel line width`"
+                    :src="drawOptions[item]"
+                  />
                 </template>
-                <template slot="item" slot-scope="data">
-                  <span :id="`label-line-width-${data.item}`" class="sr-only">{{ data.item }} pixel line width</span>
-                  <img :aria-labelledby="`label-line-width-${data.item}`" :src="drawOptions[data.item]" />
+                <template #item="data">
+                  <img
+                    :alt="`${data.item} pixel line-width icon`"
+                    :aria-label="`${data.item} pixel line-width icon`"
+                    :src="drawOptions[data.item]"
+                  />
                 </template>
               </v-combobox>
             </v-col>
           </v-row>
-          <ColorPicker :set-fill="value => updateFreeDrawingBrush({color: value})" />
+          <ColorPicker
+            :update-value="setColor"
+            :value="color"
+          />
         </v-container>
       </v-card-text>
     </v-card>
@@ -62,31 +71,62 @@
 
 <script>
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
+import constants from '@/store/whiteboarding/constants'
 import Whiteboarding from '@/mixins/Whiteboarding'
+import Vue from 'vue'
+
+const DEFAULT_WIDTH = 1
 
 export default {
   name: 'PencilBrushTool',
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
-    title: 'Draw colorful and squiggly lines'
+    color: undefined,
+    drawOptions: undefined,
+    menu: false,
+    title: 'Draw colorful and squiggly lines',
+    width: DEFAULT_WIDTH
   }),
-  computed: {
-    menu: {
-      get() {
-        return this.mode === 'draw'
-      },
-      set(value) {
-        if (value) {
-          this.setMode('draw')
-          this.$putFocusNextTick('menu-header')
-        }
-        this.setDisableAll(value)
+  watch: {
+    width(value) {
+      if (value) {
+        this.updateFreeDrawingBrush({width: parseInt(value, 10)})
       }
     }
   },
+  created() {
+    this.color = constants.COLORS.black.hex
+    this.drawOptions = this.$_.clone(constants.DRAW_OPTIONS)
+  },
   beforeDestroy() {
     this.setDisableAll(false)
+  },
+  methods: {
+    onMenuChange(value) {
+      if (value) {
+        this.setColor(constants.COLORS.black.hex)
+        this.setWidth(DEFAULT_WIDTH)
+        this.updateFreeDrawingBrush({
+          color: this.color,
+          width: this.width
+        })
+        this.setMode('draw')
+        this.$putFocusNextTick('menu-header')
+      }
+      this.setDisableAll(value)
+    },
+    setColor(value) {
+      this.color = value
+      this.updateFreeDrawingBrush({color: this.color})
+    },
+    setWidth(value) {
+      this.width = parseInt(value, 10)
+      this.updateFreeDrawingBrush({width: this.width})
+    },
+    updateFreeDrawingBrush(properties) {
+      this.$_.assignIn(Vue.prototype.$canvas.freeDrawingBrush, properties)
+    }
   }
 }
 </script>
