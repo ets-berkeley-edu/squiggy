@@ -151,7 +151,8 @@ def _user_loader(user_id=None):
             if user_id:
                 candidate = LoginSession(user_id)
                 course = candidate.course
-                if course.canvas_api_domain == canvas_api_domain and str(course.canvas_course_id) == str(canvas_course_id):
+                is_matching_domain = course and course.canvas_api_domain == canvas_api_domain
+                if is_matching_domain and str(course.canvas_course_id) == str(canvas_course_id):
                     # User must be a member of the Canvas course site.
                     user_session = candidate
                     app.logger.info(f'User {user_id} loaded.')

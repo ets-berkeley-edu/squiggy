@@ -205,7 +205,7 @@ export default {
   methods: {
     ensureUrlPrefix() {
       if (this.asset.url && this.asset.url.indexOf('://') === -1) {
-        this.asset.url = `http://${this.asset.url}`
+        this.asset.url = `https://${this.asset.url}`
       }
     },
     onClickCancel() {

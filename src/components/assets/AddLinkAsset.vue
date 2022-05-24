@@ -161,7 +161,7 @@ export default {
   methods: {
     ensureUrlPrefix() {
       if (this.url && this.url.indexOf('://') === -1) {
-        this.url = `http://${this.url}`
+        this.url = `https://${this.url}`
       }
     },
     submit() {
