@@ -2,7 +2,8 @@
   <v-dialog
     v-model="dialog"
     :close-on-content-click="false"
-    width="800"
+    max-width="800"
+    scrollable
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -23,7 +24,7 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-text class="pt-8">
+      <v-card-text class="pt-8 scrollable-card">
         <div class="pb-4">
           <h2>Upload a File</h2>
           <div class="pt-2 subtitle-1">
@@ -287,3 +288,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.scrollable-card {
+  max-height: 75vh;
+}
+</style>

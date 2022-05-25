@@ -1,7 +1,8 @@
 <template>
   <v-dialog
     v-model="menu"
-    width="800"
+    max-width="800"
+    scrollable
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -20,7 +21,7 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-text>
+      <v-card-text class="scrollable-card">
         <RestoreWhiteboard
           v-if="whiteboard.deletedAt"
           :after-restore="close"
@@ -88,3 +89,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.scrollable-card {
+  max-height: 75vh;
+}
+</style>
