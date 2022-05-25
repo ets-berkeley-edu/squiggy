@@ -75,13 +75,15 @@
         </v-list-item>
       </v-list>
       <v-card-text v-if="!$canvas.getObjects().length">
-        <div class="pt-5 px-3 subtitle-1">
+        <div class="pt-5 px-3 text-h6">
           When this whiteboard has one or more elements, it can be:
-          <ul>
+          <ul class="py-2">
             <li>Downloaded as PNG file</li>
             <li>Exported to the Asset Library</li>
           </ul>
-          Enjoy!
+          <div class="py-2">
+            Enjoy!
+          </div>
         </div>
       </v-card-text>
     </v-card>

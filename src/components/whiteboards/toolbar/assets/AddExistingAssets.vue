@@ -47,13 +47,14 @@
               class="asset-card"
               context="whiteboard"
               :hide-engagement-counts="true"
-              :on-asset-click="asset => selectedAssetIds.push(asset.id)"
+              :on-asset-click="$_.noop"
             >
               <v-checkbox
                 :id="`asset-${asset.id}`"
                 v-model="selectedAssetIds"
                 class="mb-0 pt-0"
                 dark
+                multiple
                 :value="asset.id"
               >
                 <template #label>
