@@ -1,6 +1,6 @@
 <template>
   <div class="assetlibrary-item-preview-outer">
-    <div v-if="true || previewStatus === 'done'" class="assetlibrary-item-preview">
+    <div v-if="previewStatus === 'done'" class="assetlibrary-item-preview">
       <div v-if="asset.assetType === 'file' && !asset.pdfUrl && !videoUrl && asset.imageUrl">
         <v-img
           :id="`asset-preview-image-${asset.id}`"
@@ -75,7 +75,7 @@
       </div>
     </div>
     <div
-      v-if="false && previewStatus === 'pending'"
+      v-if="previewStatus === 'pending'"
       class="assetlibrary-item-preview-message"
     >
       <font-awesome-icon icon="spinner" spin />

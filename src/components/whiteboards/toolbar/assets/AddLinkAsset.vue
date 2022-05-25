@@ -2,7 +2,8 @@
   <v-dialog
     v-model="dialog"
     :close-on-content-click="false"
-    width="500"
+    max-width="500"
+    scrollable
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -23,7 +24,7 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-text class="pl-8 pt-8">
+      <v-card-text class="pl-8 pt-8 scrollable-card">
         <v-container fluid>
           <v-row>
             <v-col class="pb-2">
@@ -241,3 +242,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.scrollable-card {
+  max-height: 75vh;
+}
+</style>
