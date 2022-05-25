@@ -1,24 +1,24 @@
 boto3==1.20.24
 canvasapi==2.2.0
-cryptography==36.0.1
+cryptography==37.0.2
 decorator==5.1.1
 eventlet==0.33.1
-Flask-Login==0.6.0
-Flask-SocketIO==5.1.2
+Flask-Login==0.6.1
+Flask-SocketIO==5.2.0
 Flask-SQLAlchemy==2.5.1
-Flask==2.0.3
+Flask==2.1.2
 gevent-websocket==0.10.1
 lti==0.9.5
 oauthlib==3.1.1
 psycopg2-binary==2.9.3
 python-dateutil==2.8.2
-python-magic==0.4.24
-pytz==2021.3
+python-magic==0.4.26
+pytz==2022.1
 requests==2.27.1
 simplejson==3.17.6
 smart-open==4.2.0
 SQLAlchemy==1.4.36
-Werkzeug==2.0.3
+Werkzeug==2.1.2
 https://github.com/python-cas/python-cas/archive/master.zip
 
 # For testing
@@ -26,5 +26,5 @@ https://github.com/python-cas/python-cas/archive/master.zip
 moto==3.1.6
 pytest==7.1.2
 pytest-flask==1.2.0
-responses==0.20.0
+responses==0.21.0
 tox==3.25.0

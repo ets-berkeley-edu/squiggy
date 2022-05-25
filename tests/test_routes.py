@@ -45,4 +45,4 @@ class TestRoutes:
             url_path = '/assets'
             response = client.get(url_path)
             assert response.status_code == 302
-            assert response.location == f"{app.config['VUE_LOCALHOST_BASE_URL']}{url_path}"
+            assert response.location.startswith(f"{app.config['VUE_LOCALHOST_BASE_URL']}{url_path}")

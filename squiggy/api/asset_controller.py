@@ -95,7 +95,7 @@ def get_assets():
 @app.route('/api/asset/create', methods=['POST'])
 @login_required
 def create_asset():
-    params = request.get_json() or request.form
+    params = request.form or request.get_json()
     asset_type = params.get('type')
     from_bookmarklet = to_bool_or_none(params.get('bookmarklet', False))
     category_id = params.get('categoryId')

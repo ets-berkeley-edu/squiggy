@@ -46,7 +46,7 @@ def get_categories():
 @app.route('/api/category/create', methods=['POST'])
 @teacher_required
 def create_category():
-    params = request.get_json() or request.form
+    params = request.form or request.get_json()
     title = params.get('title')
     if not title:
         raise BadRequestError('Category creation requires title.')
