@@ -44,7 +44,7 @@
           <div class="align-center d-flex">
             <div>Owned by</div>
             <Avatar class="pr-1" :user="asset.users[0]" />
-            <UserLink :user="asset.users[0]" />
+            <UserLink :cross-tool-link="true" :user="asset.users[0]" />
           </div>
         </div>
         <div v-if="asset.users.length > 1">
@@ -55,7 +55,7 @@
                 <Avatar :user="user" />
               </div>
               <div class="pl-2">
-                <UserLink :user="user" />
+                <UserLink :cross-tool-link="true" :user="user" />
               </div>
             </div>
           </div>

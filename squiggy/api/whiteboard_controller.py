@@ -185,7 +185,7 @@ def get_whiteboards():
 def create_whiteboard():
     if not current_user.course:
         raise ResourceNotFoundError('Course not found.')
-    params = request.get_json() or request.form
+    params = request.form or request.get_json()
     title = params.get('title')
     user_ids = params.get('userIds')
     whiteboard = Whiteboard.create(
