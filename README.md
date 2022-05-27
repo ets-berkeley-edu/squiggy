@@ -57,6 +57,12 @@ mkdir /Volumes/XYZ/squiggy_config
 export SQUIGGY_LOCAL_CONFIGS=/Volumes/XYZ/squiggy_config
 ```
 
+In your development_local.py, set a bookmarklet encryption key
+
+```
+BOOKMARKLET_ENCRYPTION_KEY = b'<32 character string goes here>'
+```
+
 ## Run the app locally
 
 Start the back end:
