@@ -744,30 +744,27 @@ const $_initFabricPrototypes = (state: any) => {
 
 const $_initSocket = (state: any) => {
   const baseUrl = _.replace(_.trim(p.$config.baseUrl), /^http/, 'ws')
-  const transports = ['websocket', 'polling']
-  p.$socket = io(baseUrl, {secure: true, transports})
+  p.$socket = io(baseUrl, {secure: true, transports: ['websocket', 'polling']})
   const tryReconnect = () => {
     setTimeout(() => {
       p.$socket.io.open((err) => {
         if (err) {
-          console.log(`[ERROR] During tryReconnect: ${err}`)
           tryReconnect()
         }
       })
-    }, 2000)
+    }, 5000)
   }
   p.$socket.on('close', tryReconnect)
-  p.$socket.on('connect_error', tryReconnect)
+  p.$socket.on('connect_error', () => {
+    // Try again with default 'transports' setting.
+    p.$socket.io.opts.transports = ['polling', 'websocket']
+    tryReconnect()
+  })
   p.$socket.on('connect', () => {
     console.log(`[INFO] socket-io.client > connected (${p.$socket.disconnected}) with socket ID ${p.$socket.id}`)
     const engine = p.$socket.io.engine
     if (engine && engine.transport) {
-      console.log(engine.transport.name) // in most cases, prints "polling"
-      // called when the transport is upgraded (i.e. from HTTP long-polling to WebSocket)
-      engine.once('upgrade', () => console.log(engine.transport.name))
-      engine.on('packet', () => console.log('.'))
-      engine.on('packetCreate', () => console.log('+'))
-      engine.on('drain', () => console.log('-'))
+      engine.once('upgrade', () => console.log(`socket.io transport upgraded to ${engine.transport.name}`))
       engine.on('close', (reason: string) => console.log(`Socket.io connection closed due to "${reason}"`))
     }
     const userId: number = p.$currentUser.id
