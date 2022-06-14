@@ -752,7 +752,8 @@ const $_initFabricPrototypes = (state: any) => {
 }
 
 const $_initSocket = (state: any) => {
-  p.$socket = io(apiUtils.apiBaseUrl(), {
+  const baseUrl = _.replace(_.trim(apiUtils.apiBaseUrl()), /^http/, 'ws')
+  p.$socket = io(baseUrl, {
     query: {
       whiteboardId: state.whiteboard.id
     },
@@ -767,7 +768,7 @@ const $_initSocket = (state: any) => {
           tryReconnect()
         }
       })
-    }, 5000)
+    }, 2000)
   }
   p.$socket.on('close', tryReconnect)
   p.$socket.on('connect_error', () => {
@@ -777,6 +778,11 @@ const $_initSocket = (state: any) => {
   })
   p.$socket.on('connect', () => {
     console.log(`[INFO] socket-io.client > connected (${p.$socket.disconnected}) with socket ID ${p.$socket.id}`)
+    const engine: any = p.$socket.io.engine
+    if (engine && engine.transport) {
+      engine.once('upgrade', () => console.log(`socket.io transport upgraded to ${engine.transport.name}`))
+      engine.on('close', (reason: string) => console.log(`Socket.io connection closed due to "${reason}"`))
+    }
     const userId: number = p.$currentUser.id
     p.$socket.emit('join', {
       userId: userId,

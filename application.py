@@ -70,9 +70,7 @@ if __name__ == '__main__':
     socketio.run(
         app=application,
         debug=is_socket_debug_mode,
-        host=host,
         log_output=is_socket_debug_mode,
-        port=port,
     )
 elif __name__.startswith('_mod_wsgi'):
     application.logger.info('Will start WSGI server on %s:%s', host, port)

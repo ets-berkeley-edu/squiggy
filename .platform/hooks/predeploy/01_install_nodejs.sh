@@ -5,6 +5,6 @@ sudo yum install -y nodejs
 sudo npm install -g typescript
 sudo npm install -g fabric
 
-sudo pip3 install eventlet==0.33.1
+sudo pip3 install -g eventlet==0.33.1
 
 exit 0
