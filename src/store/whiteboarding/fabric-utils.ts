@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import apiUtils from '@/api/api-utils'
 import constants from '@/store/whiteboarding/constants'
 import store from '@/store'
 import Vue from 'vue'
@@ -47,6 +48,13 @@ export function addAsset(asset: any, state: any) {
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
     $_broadcastUpsert(asset.id, element, state)
+  })
+}
+
+export function setKitty(phrase: string, state: any) {
+  p.$socket.emit('kitty', {
+    phrase,
+    whiteboardId: state.whiteboard.id
   })
 }
 
@@ -452,6 +460,7 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
+  p.$socket.on('kitty', (data: any) => store.dispatch('whiteboarding/setKitty', data))
   p.$socket.on('error', (error: any) => console.log(`[ERROR] socket-io.client, "${error}"`))
   p.$socket.on('ping', () => console.log('[INFO] socket-io.client.ping'))
   p.$socket.on('reconnect', (attempt: number) => console.log(`[WARN] socket-io.client > reconnect attempt #${attempt}`))
@@ -743,12 +752,18 @@ const $_initFabricPrototypes = (state: any) => {
 }
 
 const $_initSocket = (state: any) => {
-  const baseUrl = _.replace(_.trim(p.$config.baseUrl), /^http/, 'ws')
-  p.$socket = io(baseUrl, {secure: true, transports: ['websocket', 'polling']})
+  p.$socket = io(apiUtils.apiBaseUrl(), {
+    query: {
+      whiteboardId: state.whiteboard.id
+    },
+    secure: true,
+    transports: ['websocket', 'polling']
+  })
   const tryReconnect = () => {
     setTimeout(() => {
       p.$socket.io.open((err) => {
         if (err) {
+          console.log(`Error on reconnect: ${err}`)
           tryReconnect()
         }
       })
@@ -762,11 +777,6 @@ const $_initSocket = (state: any) => {
   })
   p.$socket.on('connect', () => {
     console.log(`[INFO] socket-io.client > connected (${p.$socket.disconnected}) with socket ID ${p.$socket.id}`)
-    const engine = p.$socket.io.engine
-    if (engine && engine.transport) {
-      engine.once('upgrade', () => console.log(`socket.io transport upgraded to ${engine.transport.name}`))
-      engine.on('close', (reason: string) => console.log(`Socket.io connection closed due to "${reason}"`))
-    }
     const userId: number = p.$currentUser.id
     p.$socket.emit('join', {
       userId: userId,

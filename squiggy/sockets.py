@@ -37,6 +37,19 @@ def register_sockets(socketio):
     def _get_room(whiteboard_id):
         return f'whiteboard-{whiteboard_id}'
 
+    @socketio.on('kitty')
+    def socketio_kitty(data):
+        socket_id = request.sid
+        whiteboard_id = data.get('whiteboardId')
+        room = _get_room(whiteboard_id)
+        leave_room(room, sid=socket_id)
+        whiteboard = Whiteboard.find_by_id(current_user=None, whiteboard_id=whiteboard_id)
+        emit(
+            'kitty',
+            whiteboard,
+            to=room,
+        )
+
     @socketio.on('join')
     def socketio_join(data):
         socket_id = request.sid

@@ -12,6 +12,7 @@ import {
   moveLayer,
   refresh,
   setCanvasDimensions,
+  setKitty,
   setMode
 } from '@/store/whiteboarding/fabric-utils'
 
@@ -39,6 +40,7 @@ const state = {
   // Keep track of whether the currently selected elements are in the process of being moved, scaled or rotated.
   isModifyingElement: false,
   isScrollingCanvas: false,
+  kitty: 'Kitty',
   mode: 'move',
   selected: _.clone(DEFAULT_TOOL_SELECTION),
   // Variable that will keep track of the point at which drawing a shape started
@@ -51,6 +53,7 @@ const state = {
 
 const getters = {
   activeCanvasObject: (state: any): any => state.activeCanvasObject,
+  kitty: (state: any): string => state.kitty,
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll,
   fitToScreen: (state: any): boolean => state.fitToScreen,
@@ -98,6 +101,7 @@ const mutations = {
     refresh(state)
   },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
+  setKitty: (state: any, phrase: string) => setKitty(phrase, state),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
@@ -147,6 +151,7 @@ const actions = {
     })
   },
   setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
+  setKitty: ({commit}, phrase: string) => commit('setKitty', phrase),
   setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),

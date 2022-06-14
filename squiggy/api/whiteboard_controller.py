@@ -42,7 +42,6 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 
 @app.route('/api/whiteboard/<whiteboard_id>')
 @feature_flag_whiteboards
-@login_required
 def get_whiteboard(whiteboard_id):
     whiteboard_id = to_int(whiteboard_id)
     whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id) if whiteboard_id else None
