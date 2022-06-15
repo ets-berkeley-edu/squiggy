@@ -1,1 +1,1 @@
-web: gunicorn --worker-class eventlet -w 1 squiggy:app
+web: gunicorn -k gevent --workers=2 -b 127.0.0.1:5000 squiggy:app

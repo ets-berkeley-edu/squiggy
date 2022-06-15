@@ -67,10 +67,11 @@ port = application.config['PORT']
 if __name__ == '__main__':
     application.logger.info('Starting development server on %s:%s', host, port)
     is_socket_debug_mode = application.config['SOCKET_IO_DEBUG_MODE']
-    socketio.run(
-        app=application,
-        debug=is_socket_debug_mode,
-        log_output=is_socket_debug_mode,
-    )
+    if application.config['VUE_LOCALHOST_BASE_URL']:
+        socketio.run(
+            app=application,
+            debug=is_socket_debug_mode,
+            log_output=is_socket_debug_mode,
+        )
 elif __name__.startswith('_mod_wsgi'):
     application.logger.info('Will start WSGI server on %s:%s', host, port)

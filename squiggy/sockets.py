@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import request
+from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.api.whiteboard_socket_handler import check_for_updates, delete_whiteboard_element, join_whiteboard, \
     leave_whiteboard, update_whiteboard, upsert_whiteboard_element
@@ -191,7 +192,30 @@ def register_sockets(socketio):
             whiteboard_id=whiteboard_id,
         )
 
+    @socketio.on('message')
+    def socketio_message(data):
+        print(f'socketio_message: {data}')
+
+    @socketio.on('json')
+    def socketio_json(data):
+        print(f'socketio_json: {data}')
+
+    @socketio.on('connect')
+    @login_required
+    def socketio_connect():
+        if current_user and current_user.is_authenticated:
+            logger.debug('socketio_connect: authenticated')
+        else:
+            logger.debug('socketio_connect: NOT authenticated')
+
     @socketio.on('disconnect')
     def socketio_disconnect():
         logger.debug('socketio_disconnect')
-        pass
+
+    @socketio.on_error()
+    def socketio_error(e):
+        logger.error(f'socketio_error: {e}')
+
+    @socketio.on_error_default
+    def socketio_error_default(e):
+        logger.error(f'socketio_error_default: {e}')
