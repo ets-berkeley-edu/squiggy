@@ -51,13 +51,6 @@ export function addAsset(asset: any, state: any) {
   })
 }
 
-export function setKitty(phrase: string, state: any) {
-  p.$socket.emit('kitty', {
-    phrase,
-    whiteboardId: state.whiteboard.id
-  })
-}
-
 export function deleteActiveElements(state: any) {
   const elements = $_getActiveObjects()
   _.each(elements, (element: any) => {
@@ -460,7 +453,6 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('kitty', (data: any) => store.dispatch('whiteboarding/setKitty', data))
   p.$socket.on('error', (error: any) => console.log(`[ERROR] socket-io.client, "${error}"`))
   p.$socket.on('ping', () => console.log('[INFO] socket-io.client.ping'))
   p.$socket.on('reconnect', (attempt: number) => console.log(`[WARN] socket-io.client > reconnect attempt #${attempt}`))
@@ -753,7 +745,7 @@ const $_initFabricPrototypes = (state: any) => {
 
 const $_initSocket = (state: any) => {
   const baseUrl = _.replace(_.trim(apiUtils.apiBaseUrl()), /^http/, 'ws')
-  p.$socket = io(baseUrl, {
+  p.$socket = io(apiUtils.apiBaseUrl(), {
     query: {
       whiteboardId: state.whiteboard.id
     },

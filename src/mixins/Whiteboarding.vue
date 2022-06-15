@@ -15,7 +15,6 @@ export default {
   computed: {
     ...mapGetters('whiteboarding', [
       'activeCanvasObject',
-      'kitty',
       'categories',
       'disableAll',
       'fitToScreen',
@@ -44,7 +43,6 @@ export default {
       'moveLayer',
       'resetSelected',
       'restoreWhiteboard',
-      'setKitty',
       'setDisableAll',
       'setMode',
       'updateSelected',

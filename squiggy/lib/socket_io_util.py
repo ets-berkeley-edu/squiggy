@@ -43,4 +43,9 @@ def create_mock_socket():
     class MockSocketIO(object):
         def __init__(self, **kwargs):
             self.__dict__.update(kwargs)
-    return MockSocketIO(on=lambda *args: (lambda *args: None))
+
+    return MockSocketIO(
+        on=lambda *args: (lambda *args: None),
+        on_error=lambda *args: (lambda *args: None),
+        on_error_default=lambda *args: (lambda *args: None),
+    )
