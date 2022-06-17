@@ -43,6 +43,7 @@ def register_sockets(socketio):
     @socketio.on('join')
     @login_required
     def socketio_join(data):
+        logger.debug(f'socketio_join: {data}')
         socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
@@ -53,7 +54,6 @@ def register_sockets(socketio):
         )
         room = _get_room(whiteboard_id)
         join_room(room, sid=socket_id)
-        logger.debug(f'socketio_join: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         emit(
             'join',
             whiteboard,
@@ -195,6 +195,11 @@ def register_sockets(socketio):
     @login_required
     def socketio_connect():
         logger.debug('socketio_connect')
+        emit(
+            'foo',
+            broadcast=True,
+            include_self=True,
+        )
 
     @socketio.on('disconnect')
     def socketio_disconnect():

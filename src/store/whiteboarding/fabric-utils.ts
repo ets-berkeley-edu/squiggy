@@ -460,6 +460,9 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on('reconnect_error', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_error, "${error}"`))
   p.$socket.on('reconnect_failed', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_failed, "${error}"`))
 
+  // TODO: Remove the next line when socket debugging is done.
+  p.$socket.on('foo', () => console.log('[INFO] socket-io.client > foo'))
+
   p.$socket.on('join', (data: any) => {
     console.log('[INFO] socket-io.client > join')
     store.dispatch('whiteboarding/setUsers', data.users)
@@ -745,12 +748,13 @@ const $_initFabricPrototypes = (state: any) => {
 
 const $_initSocket = (state: any) => {
   const baseUrl = _.replace(_.trim(apiUtils.apiBaseUrl()), /^http/, 'ws')
-  p.$socket = io(apiUtils.apiBaseUrl(), {
+  p.$socket = io(baseUrl, {
     query: {
       whiteboardId: state.whiteboard.id
     },
     secure: true,
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    withCredentials: true
   })
   const tryReconnect = () => {
     setTimeout(() => {
