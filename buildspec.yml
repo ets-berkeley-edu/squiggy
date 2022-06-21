@@ -29,6 +29,7 @@ artifacts:
   files:
   - '.ebextensions/**/*'
   - '.platform/**/*'
+  - 'Procfile'
   - 'application.py'
   - 'app/**/*'
   - 'config/**/*'
