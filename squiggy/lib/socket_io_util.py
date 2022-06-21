@@ -32,7 +32,7 @@ def initialize_socket_io(app):
     vue_localhost_base_url = app.config['VUE_LOCALHOST_BASE_URL']
     socketio = SocketIO(
         app,
-        cors_allowed_origins=[vue_localhost_base_url] if vue_localhost_base_url else [],
+        cors_allowed_origins='*',
         engineio_logger=socket_logger,
         logger=socket_logger,
     )
