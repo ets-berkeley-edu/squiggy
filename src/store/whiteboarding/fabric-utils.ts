@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import apiUtils from '@/api/api-utils'
 import constants from '@/store/whiteboarding/constants'
 import store from '@/store'
 import Vue from 'vue'
@@ -459,6 +460,9 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on('reconnect_error', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_error, "${error}"`))
   p.$socket.on('reconnect_failed', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_failed, "${error}"`))
 
+  // TODO: Remove the next line when socket debugging is done.
+  p.$socket.on('foo', () => console.log('[INFO] socket-io.client > foo'))
+
   p.$socket.on('join', (data: any) => {
     console.log('[INFO] socket-io.client > join')
     store.dispatch('whiteboarding/setUsers', data.users)
@@ -743,31 +747,36 @@ const $_initFabricPrototypes = (state: any) => {
 }
 
 const $_initSocket = (state: any) => {
-  const baseUrl = _.replace(_.trim(p.$config.baseUrl), /^http/, 'ws')
-  const transports = ['websocket', 'polling']
-  p.$socket = io(baseUrl, {secure: true, transports})
+  const baseUrl = _.replace(_.trim(apiUtils.apiBaseUrl()), /^http/, 'ws')
+  p.$socket = io(baseUrl, {
+    query: {
+      whiteboardId: state.whiteboard.id
+    },
+    secure: true,
+    transports: ['websocket', 'polling'],
+    withCredentials: true
+  })
   const tryReconnect = () => {
     setTimeout(() => {
       p.$socket.io.open((err) => {
         if (err) {
-          console.log(`[ERROR] During tryReconnect: ${err}`)
+          console.log(`Error on reconnect: ${err}`)
           tryReconnect()
         }
       })
     }, 2000)
   }
   p.$socket.on('close', tryReconnect)
-  p.$socket.on('connect_error', tryReconnect)
+  p.$socket.on('connect_error', () => {
+    // Try again with default 'transports' setting.
+    p.$socket.io.opts.transports = ['polling', 'websocket']
+    tryReconnect()
+  })
   p.$socket.on('connect', () => {
     console.log(`[INFO] socket-io.client > connected (${p.$socket.disconnected}) with socket ID ${p.$socket.id}`)
-    const engine = p.$socket.io.engine
+    const engine: any = p.$socket.io.engine
     if (engine && engine.transport) {
-      console.log(engine.transport.name) // in most cases, prints "polling"
-      // called when the transport is upgraded (i.e. from HTTP long-polling to WebSocket)
-      engine.once('upgrade', () => console.log(engine.transport.name))
-      engine.on('packet', () => console.log('.'))
-      engine.on('packetCreate', () => console.log('+'))
-      engine.on('drain', () => console.log('-'))
+      engine.once('upgrade', () => console.log(`socket.io transport upgraded to ${engine.transport.name}`))
       engine.on('close', (reason: string) => console.log(`Socket.io connection closed due to "${reason}"`))
     }
     const userId: number = p.$currentUser.id

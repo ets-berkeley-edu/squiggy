@@ -6,6 +6,7 @@ import AssetUpload from '@/components/assets/AssetUpload.vue'
 import auth from './auth'
 import BasePopupView from '@/components/BasePopupView.vue'
 import BaseView from '@/components/BaseView.vue'
+import BooBooKitty from '@/components/whiteboards/BooBooKitty.vue'
 import BookmarkletPopup1 from '@/components/bookmarklet/BookmarkletPopup1.vue'
 import BookmarkletPopup2 from '@/components/bookmarklet/BookmarkletPopup2.vue'
 import BookmarkletPopup3 from '@/components/bookmarklet/BookmarkletPopup3.vue'
@@ -229,6 +230,13 @@ const router = new Router({
       path: '/',
       component: BaseView,
       children: [
+        {
+          path: '/boo-boo-kitty',
+          component: BooBooKitty,
+          meta: {
+            title: 'Boo Boo Kitty'
+          }
+        },
         {
           beforeEnter: (to: any, from: any, next: any) => Vue.prototype.$isBookmarklet ? next('/bookmarklet/error') : next(),
           path: '/squiggy',

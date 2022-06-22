@@ -29,10 +29,10 @@ from flask_socketio import SocketIO
 def initialize_socket_io(app):
     debug_socketio = app.config['SOCKET_IO_DEBUG_MODE']
     socket_logger = app.logger if debug_socketio else False
-    vue_localhost_base_url = app.config['VUE_LOCALHOST_BASE_URL']
+    # vue_localhost_base_url = app.config['VUE_LOCALHOST_BASE_URL']
     socketio = SocketIO(
         app,
-        cors_allowed_origins=[vue_localhost_base_url] if vue_localhost_base_url else [],
+        cors_allowed_origins='*',
         engineio_logger=socket_logger,
         logger=socket_logger,
     )
@@ -43,4 +43,9 @@ def create_mock_socket():
     class MockSocketIO(object):
         def __init__(self, **kwargs):
             self.__dict__.update(kwargs)
-    return MockSocketIO(on=lambda *args: (lambda *args: None))
+
+    return MockSocketIO(
+        on=lambda *args: (lambda *args: None),
+        on_error=lambda *args: (lambda *args: None),
+        on_error_default=lambda *args: (lambda *args: None),
+    )

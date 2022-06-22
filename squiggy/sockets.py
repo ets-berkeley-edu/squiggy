@@ -24,21 +24,27 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import request
+from flask_login import login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.api.whiteboard_socket_handler import check_for_updates, delete_whiteboard_element, join_whiteboard, \
     leave_whiteboard, update_whiteboard, upsert_whiteboard_element
 from squiggy.lib.login_session import LoginSession
+from squiggy.lib.util import isoformat, utc_now
+from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 
 
 def register_sockets(socketio):
-
-    def _get_room(whiteboard_id):
-        return f'whiteboard-{whiteboard_id}'
+    logger = initialize_background_logger(
+        name='whiteboard_sockets',
+        location='whiteboard_sockets.log',
+    )
 
     @socketio.on('join')
+    @login_required
     def socketio_join(data):
+        logger.debug(f'socketio_join: {data}')
         socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
@@ -64,11 +70,13 @@ def register_sockets(socketio):
         return whiteboard['users']
 
     @socketio.on('leave')
+    @login_required
     def socketio_leave(data):
         socket_id = request.sid
         user_id = data.get('userId')
         current_user = LoginSession(user_id)
         whiteboard_id = data.get('whiteboardId')
+        logger.debug(f'socketio_leave: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         leave_whiteboard(
             current_user=current_user,
             socket_id=request.sid,
@@ -86,13 +94,16 @@ def register_sockets(socketio):
         )
 
     @socketio.on('update_whiteboard')
+    @login_required
     def socketio_update_whiteboard(data):
         socket_id = request.sid
         title = data.get('title')
         users = User.find_by_ids(data.get('userIds'))
+        user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
+        logger.debug(f'socketio_update_whiteboard: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         update_whiteboard(
-            current_user=LoginSession(data.get('userId')),
+            current_user=LoginSession(user_id),
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
             title=title,
@@ -111,10 +122,12 @@ def register_sockets(socketio):
         )
 
     @socketio.on('upsert_whiteboard_element')
+    @login_required
     def socketio_upsert_whiteboard_element(data):
         socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
+        logger.debug(f'socketio_upsert_whiteboard_element: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         whiteboard_element = upsert_whiteboard_element(
             current_user=LoginSession(user_id),
             socket_id=socket_id,
@@ -133,12 +146,15 @@ def register_sockets(socketio):
         )
 
     @socketio.on('delete_whiteboard_element')
+    @login_required
     def socketio_delete(data):
         socket_id = request.sid
+        user_id = data.get('userId')
         whiteboard_element = data.get('whiteboardElement')
         whiteboard_id = data.get('whiteboardId')
+        logger.debug(f'socketio_delete: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         delete_whiteboard_element(
-            current_user=LoginSession(data.get('userId')),
+            current_user=LoginSession(user_id),
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
             whiteboard_element=whiteboard_element,
@@ -155,13 +171,56 @@ def register_sockets(socketio):
         )
 
     @socketio.on('check_for_updates')
+    @login_required
     def socketio_check_for_updates(data):
+        user_id = data.get('userId')
+        whiteboard_id = data.get('whiteboardId')
+        logger.debug(f'socketio_check_for_updates: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         return check_for_updates(
-            current_user=LoginSession(data.get('userId')),
+            current_user=LoginSession(user_id),
             socket_id=request.sid,
-            whiteboard_id=data.get('whiteboardId'),
+            whiteboard_id=whiteboard_id,
         )
+
+    @socketio.on('message')
+    @login_required
+    def socketio_message(data):
+        logger.debug(f'socketio_message: {data}')
+
+    @socketio.on('boo-boo-kitty')
+    def socketio_boo_boo_kitty(data):
+        logger.debug(f'socketio_boo_boo_kitty: {data}')
+        emit(
+            'boo-boo-kitty',
+            {
+                'message': isoformat(utc_now()),
+            },
+            broadcast=True,
+            include_self=True,
+        )
+
+    @socketio.on('json')
+    @login_required
+    def socketio_json(data):
+        logger.debug(f'socketio_json: {data}')
+
+    @socketio.on('connect')
+    @login_required
+    def socketio_connect():
+        logger.debug('socketio_connect')
 
     @socketio.on('disconnect')
     def socketio_disconnect():
-        pass
+        logger.debug('socketio_disconnect')
+
+    @socketio.on_error()
+    def socketio_error(e):
+        logger.error(f'socketio_error: {e}')
+
+    @socketio.on_error_default
+    def socketio_error_default(e):
+        logger.error(f'socketio_error_default: {e}')
+
+
+def _get_room(whiteboard_id):
+    return f'whiteboard-{whiteboard_id}'
