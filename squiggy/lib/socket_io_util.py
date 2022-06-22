@@ -31,9 +31,13 @@ def initialize_socket_io(app):
     socket_logger = app.logger if debug_socketio else False
     socketio = SocketIO(
         app,
-        cors_allowed_origins='*',
+        async_handlers=True,
+        async_mode='eventlet',
+        cors_allowed_origins=[],
         engineio_logger=socket_logger,
         logger=socket_logger,
+        ping_interval=3,
+        ping_timeout=2,
     )
     return socketio
 
