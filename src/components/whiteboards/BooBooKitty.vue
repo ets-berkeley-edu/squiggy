@@ -16,6 +16,24 @@
               />
             </div>
             <v-container class="h-100">
+              <v-row>
+                <v-col>
+                  <h1>Socket Test</h1>
+                  <div class="pb-4 pt-2 text-subtitle-1">
+                    The Socket.IO client will connect using the initialization parameters below.
+                    <div>
+                      <a
+                        id="socket-io-docs"
+                        href="https://socket.io/docs/v4/client-initialization/"
+                        target="_blank"
+                      >
+                        Read the docs
+                      </a>
+                      to understand each configuration value.
+                    </div>
+                  </div>
+                </v-col>
+              </v-row>
               <v-row no-gutters>
                 <v-col>
                   <label for="base-url" class="font-weight-bold text-no-wrap">
@@ -80,7 +98,7 @@
                   </v-combobox>
                 </v-col>
               </v-row>
-              <v-row class="pt-10" no-gutters>
+              <v-row class="pt-3" no-gutters>
                 <v-col cols="12">
                   <div class="d-flex justify-end pt-3 w-100">
                     <div class="pr-2">
@@ -132,19 +150,22 @@
           </div>
           <div class="pt-5">
             <v-divider />
-            <div class="pt-3">
-              <label for="server-message" class="font-weight-bold text-no-wrap">
-                Most recent 'boo-boo-kitty' message emitted by the server since page load.
-              </label>
+            <div class="pt-10">
+              <h2>The latest reply from server-side</h2>
               <div class="pt-3">
-                <v-textarea
-                  id="server-message"
-                  v-model="serverMessage"
-                  hide-details
-                  outlined
-                  readonly
-                  rows="2"
-                />
+                <label for="server-message" class="font-weight-bold text-no-wrap">
+                  Most recent 'boo-boo-kitty' message emitted by the server since page load.
+                </label>
+                <div class="pt-3">
+                  <v-textarea
+                    id="server-message"
+                    v-model="serverMessage"
+                    hide-details
+                    outlined
+                    readonly
+                    rows="2"
+                  />
+                </div>
               </div>
             </div>
           </div>
