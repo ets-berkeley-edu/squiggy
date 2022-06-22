@@ -93,6 +93,8 @@ SESSION_COOKIE_SECURE = True
 
 # Flask-SocketIO debug logging is verbose.
 SOCKET_IO_DEBUG_MODE = False
+SOCKET_IO_PING_INTERVAL = 3
+SOCKET_IO_PING_TIMEOUT = 2
 
 # Save DB changes at the end of a request.
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
