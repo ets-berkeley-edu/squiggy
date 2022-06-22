@@ -36,8 +36,8 @@ def initialize_socket_io(app):
         cors_allowed_origins=[],
         engineio_logger=socket_logger,
         logger=socket_logger,
-        ping_interval=3,
-        ping_timeout=2,
+        ping_interval=app.config['SOCKET_IO_PING_INTERVAL'],
+        ping_timeout=app.config['SOCKET_IO_PING_TIMEOUT'],
     )
     return socketio
 

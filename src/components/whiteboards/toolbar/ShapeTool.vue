@@ -102,7 +102,7 @@ export default {
       this.setDisableAll(value)
     },
     setColor(value) {
-      const fill = this.selected.style === 'fill' ? value : 'transparent'
+      const fill = this.shapeStyle.includes('fill') ? value : 'transparent'
       this.updateSelected({
         color: value,
         fill,

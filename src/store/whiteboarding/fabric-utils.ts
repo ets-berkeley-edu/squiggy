@@ -453,28 +453,28 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('error', (error: any) => console.log(`[ERROR] socket-io.client, "${error}"`))
-  p.$socket.on('ping', () => console.log('[INFO] socket-io.client.ping'))
-  p.$socket.on('reconnect', (attempt: number) => console.log(`[WARN] socket-io.client > reconnect attempt #${attempt}`))
-  p.$socket.on('reconnect_attempt', (attempt: number) => console.log(`[WARN] socket-io.client > reconnect_attempt attempt #${attempt}`))
-  p.$socket.on('reconnect_error', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_error, "${error}"`))
-  p.$socket.on('reconnect_failed', (error: any) => console.log(`[ERROR] socket-io.client > reconnect_failed, "${error}"`))
+  p.$socket.on('error', (error: any) => console.log(`socket-io error: "${error}"`))
+  p.$socket.on('ping', () => console.log('socket-io ping'))
+  p.$socket.on('reconnect', (attempt: number) => console.log(`reconnect attempt ${attempt}`))
+  p.$socket.on('reconnect_attempt', (attempt: number) => console.log(`reconnect_attempt ${attempt}`))
+  p.$socket.on('reconnect_error', (error: any) => console.log(`socket-io reconnect_error: "${error}"`))
+  p.$socket.on('reconnect_failed', (error: any) => console.log(`socket-io reconnect_failed: "${error}"`))
 
   p.$socket.on('join', (data: any) => {
-    console.log('[INFO] socket-io.client > join')
+    console.log(`socket-io join: ${data}`)
     store.dispatch('whiteboarding/setUsers', data.users)
   })
   p.$socket.on('leave', (data: any) => {
-    console.log('[INFO] socket-io.client > leave')
+    console.log(`socket-io leave: ${data}`)
     store.dispatch('whiteboarding/setUsers', data.users)
   })
   p.$socket.on('update_whiteboard', (data: any) => {
-    console.log('[INFO] socket-io.client > update_whiteboard')
+    console.log(`socket-io update_whiteboard: ${data}`)
     _.assignIn(state.whiteboard, data.whiteboard)
   })
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
-    console.log('[INFO] socket-io.client > upsert_whiteboard_element')
+    console.log(`socket-io upsert_whiteboard_element: ${data}`)
     const whiteboardElement = data.whiteboardElement
     const element = whiteboardElement.element
     const uuid = whiteboardElement.uuid
@@ -496,17 +496,21 @@ const $_addSocketListeners = (state: any) => {
     }
   })
   // One or multiple whiteboard canvas elements were deleted by a different user
-  p.$socket.on('delete_whiteboard_element', (data: any) => {
-    console.log('[INFO] socket-io.client > delete_whiteboard_element')
-    const element = $_getCanvasElement(data.uuid)
-    if (element) {
-      // Deactivate the current group if any of the deleted elements are in the current group
-      $_deactivateGroupIfOverlap(element)
-      p.$canvas.remove(element)
-      // Recalculate the size of the whiteboard canvas
-      setCanvasDimensions(state)
-    }
-  })
+  p.$socket.on(
+    'delete_whiteboard_element',
+    (data: any) => {
+      console.log(`socket-io delete_whiteboard_element: ${data}`)
+      const element = $_getCanvasElement(data.uuid)
+      if (element) {
+        // Deactivate the current group if any of the deleted elements are in the current group
+        $_deactivateGroupIfOverlap(element)
+        // p.$canvas.setActiveObject(element)
+        p.$canvas.remove(element)
+        p.$canvas.requestRenderAll()
+        // Recalculate the size of the whiteboard canvas
+        setCanvasDimensions(state)
+      }
+    })
 }
 
 const $_addViewportListeners = (state: any) => {
@@ -746,6 +750,7 @@ const $_initFabricPrototypes = (state: any) => {
 const $_initSocket = (state: any) => {
   const baseUrl = _.replace(_.trim(apiUtils.apiBaseUrl()), /^http/, 'ws')
   p.$socket = io(baseUrl, {
+    forceNew: true,
     query: {
       whiteboardId: state.whiteboard.id
     },
@@ -755,26 +760,28 @@ const $_initSocket = (state: any) => {
   })
   const tryReconnect = () => {
     setTimeout(() => {
-      p.$socket.io.open((err) => {
-        if (err) {
-          console.log(`Error on reconnect: ${err}`)
+      p.$socket.io.open((error: any) => {
+        if (error) {
+          console.log(`socket-io.open error: ${error}`)
           tryReconnect()
         }
       })
     }, 2000)
   }
   p.$socket.on('close', tryReconnect)
-  p.$socket.on('connect_error', () => {
+  p.$socket.on('connect_error', (error: any) => {
+    console.log(`socket-io connect_error: ${error}`)
     // Try again with default 'transports' setting.
     p.$socket.io.opts.transports = ['polling', 'websocket']
     tryReconnect()
   })
+  p.$socket.on('connect_timeout', data => console.log(`[WARN] connect_timeout: ${data}`))
   p.$socket.on('connect', () => {
-    console.log(`[INFO] socket-io.client > connected (${p.$socket.disconnected}) with socket ID ${p.$socket.id}`)
+    console.log(`socket-io connect ${p.$socket.id}`)
     const engine: any = p.$socket.io.engine
     if (engine && engine.transport) {
-      engine.once('upgrade', () => console.log(`socket.io transport upgraded to ${engine.transport.name}`))
-      engine.on('close', (reason: string) => console.log(`Socket.io connection closed due to "${reason}"`))
+      engine.once('upgrade', () => console.log(`socket-io.engine upgrade: ${engine.transport.name}`))
+      engine.on('close', (reason: string) => console.log(`socket-io.engine close: ${reason}`))
     }
     const userId: number = p.$currentUser.id
     p.$socket.emit('join', {
