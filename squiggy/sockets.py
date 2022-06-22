@@ -29,6 +29,7 @@ from flask_socketio import emit, join_room, leave_room
 from squiggy.api.whiteboard_socket_handler import check_for_updates, delete_whiteboard_element, join_whiteboard, \
     leave_whiteboard, update_whiteboard, upsert_whiteboard_element
 from squiggy.lib.login_session import LoginSession
+from squiggy.lib.util import isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -186,6 +187,18 @@ def register_sockets(socketio):
     def socketio_message(data):
         logger.debug(f'socketio_message: {data}')
 
+    @socketio.on('boo-boo-kitty')
+    def socketio_boo_boo_kitty(data):
+        logger.debug(f'socketio_boo_boo_kitty: {data}')
+        emit(
+            'boo-boo-kitty',
+            {
+                'message': isoformat(utc_now()),
+            },
+            broadcast=True,
+            include_self=True,
+        )
+
     @socketio.on('json')
     @login_required
     def socketio_json(data):
@@ -195,11 +208,6 @@ def register_sockets(socketio):
     @login_required
     def socketio_connect():
         logger.debug('socketio_connect')
-        emit(
-            'foo',
-            broadcast=True,
-            include_self=True,
-        )
 
     @socketio.on('disconnect')
     def socketio_disconnect():
