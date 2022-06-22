@@ -22,13 +22,7 @@
                   <div class="pb-4 pt-2 text-subtitle-1">
                     The Socket.IO client will connect using the initialization parameters below.
                     <div>
-                      <a
-                        id="socket-io-docs"
-                        href="https://socket.io/docs/v4/client-initialization/"
-                        target="_blank"
-                      >
-                        Read the docs
-                      </a>
+                      <a id="socket-io-docs" href="https://socket.io/docs/v4/client-initialization/" target="_blank">Read the docs</a>
                       to understand each configuration value.
                     </div>
                   </div>
@@ -233,6 +227,13 @@ export default {
         this.isConnected = false
         this.isConnecting = false
       })
+      // Watch for errors and reconnect
+      this.socket.on('error', error => console.log(`error: ${error}`))
+      this.socket.on('ping', () => console.log('ping'))
+      this.socket.on('reconnect', attempt => console.log(`reconnect: ${attempt}`))
+      this.socket.on('reconnect_attempt', attempt => console.log(`reconnect_attempt: ${attempt}`))
+      this.socket.on('reconnect_error', error => console.log(`reconnect_error: ${error}`))
+      this.socket.on('reconnect_failed', error => console.log(`reconnect_failed: ${error}`))
     },
     disconnect() {
       this.socket.disconnect()
