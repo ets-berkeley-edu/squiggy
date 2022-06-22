@@ -11,8 +11,8 @@
               <v-img
                 alt="Laverne and Shirley with stuffed animals"
                 aria-label="Laverne and Shirley with stuffed animals"
-                width="300px"
                 src="@/assets/boo-boo-kitty.jpg"
+                width="300px"
               />
             </div>
             <v-container class="h-100">
@@ -54,19 +54,19 @@
                   <v-combobox
                     id="transports"
                     v-model="transports"
+                    chips
+                    class="mt-0 pt-0"
                     :disabled="isConnected"
                     hide-details
-                    class="mt-0 pt-0"
                     :items="['websocket', 'polling']"
                     multiple
-                    chips
                   >
                     <template #selection="data">
                       <v-chip
                         :key="JSON.stringify(data.item)"
                         v-bind="data.attrs"
-                        :input-value="data.selected"
                         :disabled="data.disabled"
+                        :input-value="data.selected"
                         @click:close="data.parent.selectItem(data.item)"
                       >
                         <v-avatar
@@ -80,19 +80,6 @@
                   </v-combobox>
                 </v-col>
               </v-row>
-              <v-row no-gutters>
-                <v-col class="align-center" cols="12">
-                  <v-checkbox
-                    v-model="secure"
-                    :disabled="isConnected"
-                    hide-details
-                  >
-                    <template #label>
-                      Secure
-                    </template>
-                  </v-checkbox>
-                </v-col>
-              </v-row>
               <v-row class="pt-10" no-gutters>
                 <v-col cols="12">
                   <div class="d-flex justify-end pt-3 w-100">
@@ -101,7 +88,7 @@
                         id="connect-btn"
                         class="white--text"
                         color="green"
-                        :disabled="isConnected || isConnecting"
+                        :disabled="disableConnectButton"
                         @click="connect"
                         @keypress.enter="connect"
                       >
@@ -181,20 +168,24 @@ export default {
     isConnected: false,
     isConnecting: false,
     message: 'Boo Boo Kitty',
-    secure: false,
     serverMessage: undefined,
     socket: undefined,
     transports: ['websocket', 'polling'],
   }),
+  computed: {
+    disableConnectButton() {
+      return this.isConnected || this.isConnecting || !this.$_.trim(this.baseUrl) || !this.transports.length
+    }
+  },
   created() {
-    this.baseUrl = apiUtils.apiBaseUrl()
+    this.baseUrl = apiUtils.apiBaseUrl() || this.$config.baseUrl
     this.$ready('Web socket testing')
   },
   methods: {
     connect() {
       this.isConnecting = true
       this.socket = io(this.baseUrl, {
-        secure: this.secure,
+        forceNew: true,
         transports: this.transports,
         withCredentials: true
       })

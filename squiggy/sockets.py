@@ -182,11 +182,6 @@ def register_sockets(socketio):
             whiteboard_id=whiteboard_id,
         )
 
-    @socketio.on('message')
-    @login_required
-    def socketio_message(data):
-        logger.debug(f'socketio_message: {data}')
-
     @socketio.on('boo-boo-kitty')
     def socketio_boo_boo_kitty(data):
         logger.debug(f'socketio_boo_boo_kitty: {data}')
@@ -198,11 +193,6 @@ def register_sockets(socketio):
             broadcast=True,
             include_self=True,
         )
-
-    @socketio.on('json')
-    @login_required
-    def socketio_json(data):
-        logger.debug(f'socketio_json: {data}')
 
     @socketio.on('connect')
     @login_required
