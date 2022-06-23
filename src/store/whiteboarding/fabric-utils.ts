@@ -454,12 +454,12 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('error', (error: any) => $_log(`socket-io error: "${error}"`))
+  p.$socket.on('error', (error: any) => $_log(`socket-io error: ${error}`, true))
   p.$socket.on('ping', () => $_log('socket-io ping'))
   p.$socket.on('reconnect', (attempt: number) => $_log(`reconnect attempt ${attempt}`))
   p.$socket.on('reconnect_attempt', (attempt: number) => $_log(`reconnect_attempt ${attempt}`))
-  p.$socket.on('reconnect_error', (error: any) => $_log(`socket-io reconnect_error: "${error}"`))
-  p.$socket.on('reconnect_failed', (error: any) => $_log(`socket-io reconnect_failed: "${error}"`))
+  p.$socket.on('reconnect_error', (error: any) => $_log(`socket-io reconnect_error: ${error}`, true))
+  p.$socket.on('reconnect_failed', (error: any) => $_log(`socket-io reconnect_failed: ${error}`, true))
 
   p.$socket.on('join', (data: any) => {
     $_log(`socket-io join: ${data}`)
@@ -763,7 +763,7 @@ const $_initSocket = (state: any) => {
     setTimeout(() => {
       p.$socket.io.open((error: any) => {
         if (error) {
-          $_log(`socket-io.open error: ${error}`)
+          $_log(`socket-io.open error: ${error}`, true)
           tryReconnect()
         }
       })
@@ -771,12 +771,12 @@ const $_initSocket = (state: any) => {
   }
   p.$socket.on('close', tryReconnect)
   p.$socket.on('connect_error', (error: any) => {
-    $_log(`socket-io connect_error: ${error}`)
+    $_log(`socket-io connect_error: ${error}`, true)
     // Try again with default 'transports' setting.
     p.$socket.io.opts.transports = ['polling', 'websocket']
     tryReconnect()
   })
-  p.$socket.on('connect_timeout', data => $_log(`[WARN] connect_timeout: ${data}`))
+  p.$socket.on('connect_timeout', data => $_log(`[WARN] connect_timeout: ${data}`, true))
   p.$socket.on('connect', () => {
     $_log(`socket-io connect ${p.$socket.id}`)
     const engine: any = p.$socket.io.engine
@@ -793,8 +793,8 @@ const $_initSocket = (state: any) => {
   })
 }
 
-const $_log = (statement: string) => {
-  if (p.$config.isVueAppDebugMode) {
+const $_log = (statement: string, force?: boolean) => {
+  if (p.$config.isVueAppDebugMode || force) {
     console.log(statement)
   }
 }

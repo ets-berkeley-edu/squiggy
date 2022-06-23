@@ -31,7 +31,7 @@
                 {{ whiteboard.title }}
               </div>
               <div>
-                <span v-if="!whiteboard.deletedAt">{{ $_.filter(whiteboard.users, 'isOnline').length }} online</span>
+                <span v-if="!whiteboard.deletedAt">{{ whiteboard.onlineCount }} online</span>
                 <span v-if="whiteboard.deletedAt">Deleted</span>
               </div>
             </v-card-text>
