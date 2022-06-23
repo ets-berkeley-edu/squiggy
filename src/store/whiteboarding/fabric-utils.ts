@@ -153,6 +153,7 @@ export function checkForUpdates(state: any) {
           setCanvasDimensions(state)
         }
       })
+      $_restoreLayers(state)
     }
   )
 }
@@ -337,7 +338,7 @@ const $_addListeners = (state: any) => {
       // We use 'isHelper' to indicate that the element should NOT be persisted to Squiggy db.
       const shape = new fabric[state.selected.shape]({
         fill: state.selected.fill,
-        height: 1,
+        height: 10,
         isHelper: true,
         left: state.startShapePointer.x,
         originX: 'left',
@@ -347,7 +348,7 @@ const $_addListeners = (state: any) => {
         strokeWidth: state.selected.strokeWidth,
         top: state.startShapePointer.y,
         uuid: uuidv4(),
-        width: 1
+        width: 10
       })
       p.$canvas.add(shape)
     }
@@ -357,7 +358,7 @@ const $_addListeners = (state: any) => {
         fill: state.selected.fill,
         fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
         fontSize: state.selected.fontSize || 14,
-        height: 100, // TODO
+        height: 100,
         left: textPointer.x,
         text: '',
         selectable: true,
@@ -453,28 +454,28 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('error', (error: any) => console.log(`socket-io error: "${error}"`))
-  p.$socket.on('ping', () => console.log('socket-io ping'))
-  p.$socket.on('reconnect', (attempt: number) => console.log(`reconnect attempt ${attempt}`))
-  p.$socket.on('reconnect_attempt', (attempt: number) => console.log(`reconnect_attempt ${attempt}`))
-  p.$socket.on('reconnect_error', (error: any) => console.log(`socket-io reconnect_error: "${error}"`))
-  p.$socket.on('reconnect_failed', (error: any) => console.log(`socket-io reconnect_failed: "${error}"`))
+  p.$socket.on('error', (error: any) => $_log(`socket-io error: "${error}"`))
+  p.$socket.on('ping', () => $_log('socket-io ping'))
+  p.$socket.on('reconnect', (attempt: number) => $_log(`reconnect attempt ${attempt}`))
+  p.$socket.on('reconnect_attempt', (attempt: number) => $_log(`reconnect_attempt ${attempt}`))
+  p.$socket.on('reconnect_error', (error: any) => $_log(`socket-io reconnect_error: "${error}"`))
+  p.$socket.on('reconnect_failed', (error: any) => $_log(`socket-io reconnect_failed: "${error}"`))
 
   p.$socket.on('join', (data: any) => {
-    console.log(`socket-io join: ${data}`)
+    $_log(`socket-io join: ${data}`)
     store.dispatch('whiteboarding/setUsers', data.users)
   })
   p.$socket.on('leave', (data: any) => {
-    console.log(`socket-io leave: ${data}`)
+    $_log(`socket-io leave: ${data}`)
     store.dispatch('whiteboarding/setUsers', data.users)
   })
   p.$socket.on('update_whiteboard', (data: any) => {
-    console.log(`socket-io update_whiteboard: ${data}`)
+    $_log(`socket-io update_whiteboard: ${data}`)
     _.assignIn(state.whiteboard, data.whiteboard)
   })
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
-    console.log(`socket-io upsert_whiteboard_element: ${data}`)
+    $_log(`socket-io upsert_whiteboard_element: ${data}`)
     const whiteboardElement = data.whiteboardElement
     const element = whiteboardElement.element
     const uuid = whiteboardElement.uuid
@@ -499,7 +500,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on(
     'delete_whiteboard_element',
     (data: any) => {
-      console.log(`socket-io delete_whiteboard_element: ${data}`)
+      $_log(`socket-io delete_whiteboard_element: ${data}`)
       const element = $_getCanvasElement(data.uuid)
       if (element) {
         // Deactivate the current group if any of the deleted elements are in the current group
@@ -762,7 +763,7 @@ const $_initSocket = (state: any) => {
     setTimeout(() => {
       p.$socket.io.open((error: any) => {
         if (error) {
-          console.log(`socket-io.open error: ${error}`)
+          $_log(`socket-io.open error: ${error}`)
           tryReconnect()
         }
       })
@@ -770,18 +771,18 @@ const $_initSocket = (state: any) => {
   }
   p.$socket.on('close', tryReconnect)
   p.$socket.on('connect_error', (error: any) => {
-    console.log(`socket-io connect_error: ${error}`)
+    $_log(`socket-io connect_error: ${error}`)
     // Try again with default 'transports' setting.
     p.$socket.io.opts.transports = ['polling', 'websocket']
     tryReconnect()
   })
-  p.$socket.on('connect_timeout', data => console.log(`[WARN] connect_timeout: ${data}`))
+  p.$socket.on('connect_timeout', data => $_log(`[WARN] connect_timeout: ${data}`))
   p.$socket.on('connect', () => {
-    console.log(`socket-io connect ${p.$socket.id}`)
+    $_log(`socket-io connect ${p.$socket.id}`)
     const engine: any = p.$socket.io.engine
     if (engine && engine.transport) {
-      engine.once('upgrade', () => console.log(`socket-io.engine upgrade: ${engine.transport.name}`))
-      engine.on('close', (reason: string) => console.log(`socket-io.engine close: ${reason}`))
+      engine.once('upgrade', () => $_log(`socket-io.engine upgrade: ${engine.transport.name}`))
+      engine.on('close', (reason: string) => $_log(`socket-io.engine close: ${reason}`))
     }
     const userId: number = p.$currentUser.id
     p.$socket.emit('join', {
@@ -790,6 +791,12 @@ const $_initSocket = (state: any) => {
     })
     store.dispatch('whiteboarding/join', userId).then(_.noop)
   })
+}
+
+const $_log = (statement: string) => {
+  if (p.$config.isVueAppDebugMode) {
+    console.log(statement)
+  }
 }
 
 const $_paste = (state: any): void => {
@@ -845,9 +852,7 @@ const $_paste = (state: any): void => {
 }
 
 const $_renderWhiteboard = (state: any) => {
-  // Render the whiteboard and its elements
-  // Set the size of the whiteboard canvas once all layout changes
-  // regarding the sidebar have been applied
+  // Render whiteboard and its elements. Set canvas size once all layout changes have been applied.
   setTimeout(() => setCanvasDimensions(state), 0)
 
   // Restore the order of the layers once all elements have finished loading
@@ -877,7 +882,9 @@ const $_renderWhiteboard = (state: any) => {
 
 const $_restoreLayers = (state: any) => {
   // Ensure that all elements are ordered as specified by the element's index attribute.
-  p.$canvas.getObjects().sort((elementA: any, elementB: any) => elementA.index - elementB.index)
+  _.each(p.$canvas.getObjects(), (object: any) => {
+    p.$canvas.moveTo(object, object.index)
+  })
   p.$canvas.requestRenderAll()
   setCanvasDimensions(state)
 }
