@@ -187,7 +187,7 @@ class Whiteboard(Base):
         )
         join_clause = """
             LEFT JOIN whiteboard_users wu ON wu.whiteboard_id = w.id
-            LEFT JOIN whiteboard_sessions s ON s.user_id = wu.user_id
+            LEFT JOIN whiteboard_sessions s ON s.user_id = wu.user_id AND s.whiteboard_id = w.id
             LEFT JOIN users u ON wu.user_id = u.id AND u.canvas_enrollment_state != 'inactive'
             LEFT JOIN activities act ON act.object_type = 'whiteboard' AND w.id = act.object_id
         """
