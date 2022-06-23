@@ -23,6 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from flask import current_app as app
 from sqlalchemy import ForeignKey, Integer, text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
@@ -78,7 +79,7 @@ class WhiteboardSession(Base):
         std_commit()
 
     @classmethod
-    def delete_stale_sessions(cls, whiteboard_ids, older_than_minutes=5):
+    def delete_stale_sessions(cls, whiteboard_ids):
         db.session.execute(
             text("""
                 DELETE FROM whiteboard_sessions s
@@ -86,7 +87,7 @@ class WhiteboardSession(Base):
                   AND (updated_at < (now() - INTERVAL ':older_than_minutes minutes'))
             """),
             {
-                'older_than_minutes': older_than_minutes,
+                'older_than_minutes': app.config['SOCKET_IO_USER_SESSION_EXPIRE_MINUTES'],
                 'whiteboard_ids': whiteboard_ids,
             },
         )
