@@ -440,11 +440,7 @@ const $_addListeners = (state: any) => {
 const $_addSocketListeners = (state: any) => {
   const onWindowClose = (event: any) => {
     if (p.$socket) {
-      p.$socket.emit('leave', {
-        userId: p.$currentUser.id,
-        whiteboardId: state.whiteboard.id
-      })
-      p.$socket.disconnect()
+      $_leave(state)
       p.$socket.close()
     }
     if (event) {
@@ -454,12 +450,22 @@ const $_addSocketListeners = (state: any) => {
   window.onbeforeunload = onWindowClose
   window.onunload = onWindowClose
 
-  p.$socket.on('error', (error: any) => $_log(`socket-io error: ${error}`, true))
+  p.$socket.on('error', (error: any) => {
+    $_log(`socket-io error: ${error}`, true)
+    if (p.$socket.disconnected) {
+      $_tryReconnect(state)
+    }
+  })
   p.$socket.on('ping', () => $_log('socket-io ping'))
   p.$socket.on('reconnect', (attempt: number) => $_log(`reconnect attempt ${attempt}`))
   p.$socket.on('reconnect_attempt', (attempt: number) => $_log(`reconnect_attempt ${attempt}`))
   p.$socket.on('reconnect_error', (error: any) => $_log(`socket-io reconnect_error: ${error}`, true))
-  p.$socket.on('reconnect_failed', (error: any) => $_log(`socket-io reconnect_failed: ${error}`, true))
+  p.$socket.on('reconnect_failed', (error: any) => {
+    $_log(`socket-io reconnect_failed: ${error}`, true)
+    if (p.$socket.disconnected) {
+      $_tryReconnect(state)
+    }
+  })
 
   p.$socket.on('join', (data: any) => {
     $_log(`socket-io join: ${data}`)
@@ -544,6 +550,36 @@ const $_addViewportListeners = (state: any) => {
     }
     element.addEventListener('keydown', onKeydown, false)
   }
+}
+
+const $_broadcastDelete = (element: any, state: any): any => {
+  p.$socket.emit(
+    'delete_whiteboard_element',
+    {
+      userId: p.$currentUser.id,
+      whiteboardElement: {element},
+      whiteboardId: state.whiteboard.id
+    },
+    () => {
+      $_updateLayers(state)
+      setCanvasDimensions(state)
+    }
+  )
+}
+
+const $_broadcastUpsert = (assetId: number, element: any, state: any) => {
+  p.$socket.emit(
+    'upsert_whiteboard_element',
+    {
+      userId: p.$currentUser.id,
+      whiteboardElement: {
+        assetId,
+        element
+      },
+      whiteboardId: state.whiteboard.id
+    },
+    () => setCanvasDimensions(state)
+  )
 }
 
 const $_calculateGlobalElementPosition = (selection: any, element: any): any => {
@@ -759,22 +795,10 @@ const $_initSocket = (state: any) => {
     transports: ['websocket', 'polling'],
     withCredentials: true
   })
-  const tryReconnect = () => {
-    setTimeout(() => {
-      p.$socket.io.open((error: any) => {
-        if (error) {
-          $_log(`socket-io.open error: ${error}`, true)
-          tryReconnect()
-        }
-      })
-    }, 2000)
-  }
-  p.$socket.on('close', tryReconnect)
+  p.$socket.on('close', $_tryReconnect)
   p.$socket.on('connect_error', (error: any) => {
     $_log(`socket-io connect_error: ${error}`, true)
-    // Try again with default 'transports' setting.
-    p.$socket.io.opts.transports = ['polling', 'websocket']
-    tryReconnect()
+    $_tryReconnect(state)
   })
   p.$socket.on('connect_timeout', data => $_log(`[WARN] connect_timeout: ${data}`, true))
   p.$socket.on('connect', () => {
@@ -784,13 +808,25 @@ const $_initSocket = (state: any) => {
       engine.once('upgrade', () => $_log(`socket-io.engine upgrade: ${engine.transport.name}`))
       engine.on('close', (reason: string) => $_log(`socket-io.engine close: ${reason}`))
     }
-    const userId: number = p.$currentUser.id
-    p.$socket.emit('join', {
-      userId: userId,
-      whiteboardId: state.whiteboard.id
-    })
-    store.dispatch('whiteboarding/join', userId).then(_.noop)
+    $_join(state)
   })
+}
+
+const $_join = (state: any) => {
+  const userId: number = p.$currentUser.id
+  p.$socket.emit('join', {
+    userId: userId,
+    whiteboardId: state.whiteboard.id
+  })
+  store.dispatch('whiteboarding/join', userId).then(_.noop)
+}
+
+const $_leave = (state: any) => {
+  p.$socket.emit('leave', {
+    userId: p.$currentUser.id,
+    whiteboardId: state.whiteboard.id
+  })
+  p.$socket.disconnect()
 }
 
 const $_log = (statement: string, force?: boolean) => {
@@ -889,34 +925,18 @@ const $_restoreLayers = (state: any) => {
   setCanvasDimensions(state)
 }
 
-const $_broadcastDelete = (element: any, state: any): any => {
-  p.$socket.emit(
-    'delete_whiteboard_element',
-    {
-      userId: p.$currentUser.id,
-      whiteboardElement: {element},
-      whiteboardId: state.whiteboard.id
-    },
-    () => {
-      $_updateLayers(state)
-      setCanvasDimensions(state)
-    }
-  )
-}
-
-const $_broadcastUpsert = (assetId: number, element: any, state: any) => {
-  p.$socket.emit(
-    'upsert_whiteboard_element',
-    {
-      userId: p.$currentUser.id,
-      whiteboardElement: {
-        assetId,
-        element
-      },
-      whiteboardId: state.whiteboard.id
-    },
-    () => setCanvasDimensions(state)
-  )
+const $_tryReconnect = (state: any) => {
+  setTimeout(() => {
+    $_leave(state)
+    p.$socket.io.open((error: any) => {
+      if (error) {
+        $_log(`socket-io.open error: ${error}`, true)
+        $_tryReconnect(state)
+      } else {
+        $_join(state)
+      }
+    })
+  }, 2000)
 }
 
 const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
