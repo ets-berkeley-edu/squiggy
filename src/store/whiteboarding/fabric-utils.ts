@@ -10,43 +10,31 @@ import {v4 as uuidv4} from 'uuid'
 const p = Vue.prototype
 
 export function addAsset(asset: any, state: any) {
-  store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
-
-  // Default to a placeholder when the asset does not have a preview image
+  $_setMode('move')
   let imageUrl: any
   if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
     imageUrl = asset.imageUrl
   } else {
+    // Default to a placeholder when the asset does not have a preview image
     const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1 && _.startsWith(asset.downloadUrl, 'http')
     imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
   }
-  // Place asset at the center of the canvas.
   fabric.Image.fromURL(imageUrl, (element: any) => {
-    // SuiteC-specific attributes
     element.assetId = asset.id
+    element.src = imageUrl
     element.uuid = uuidv4()
     const zoomLevel = p.$canvas.getZoom()
     const canvasCenter = {
       x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
       y: ((state.viewport.clientHeight / 2) + state.viewport.scrollTop) / zoomLevel
     }
-
-    // Scale the element to ensure it takes up a maximum of 80% of the
-    // visible viewport width and height
-    const maxWidth = state.viewport.clientWidth * 0.8 / p.$canvas.getZoom()
-    const widthRatio = maxWidth / element.width
-    const maxHeight = state.viewport.clientHeight * 0.8 / p.$canvas.getZoom()
-    const heightRatio = maxHeight / element.height
-    // Determine which side needs the most scaling for the element to fit on the screen
-    const ratio = _.min([widthRatio, heightRatio])
-    if (ratio < 1) {
-      element.scale(ratio)
-    }
+    $_scaleImageObject(element, state)
     element.left = canvasCenter.x
     element.top = canvasCenter.y
 
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
+    p.$canvas.bringToFront(element)
     $_broadcastUpsert(asset.id, element, state)
   })
 }
@@ -323,7 +311,7 @@ const $_addListeners = (state: any) => {
       element.uuid = element.uuid || uuidv4()
       $_broadcastUpsert(element.assetId, element, state)
       setCanvasDimensions(state)
-      store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
+      $_setMode('move')
     }
   })
 
@@ -417,7 +405,7 @@ const $_addListeners = (state: any) => {
       const shape = $_getHelperObject()
       // Indicate that shape drawing has stopped
       store.dispatch('whiteboarding/setIsDrawingShape', false).then(_.noop)
-      store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
+      $_setMode('move')
       // Clone the drawn shape and add the clone to the canvas. This is caused by a bug in Fabric where it initially
       // uses the size when drawing started to position the controls. Cloning ensures that the controls are added in
       // the correct position. The origin of element is set to `center` to make it inline with the other elements.
@@ -640,12 +628,11 @@ const $_deserializeElement = (
   }
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
   if (element.type === 'image') {
-    // In order to avoid cross-domain errors when loading images from different domains, the source of the element
-    // needs to be temporarily cleared and set manually once the element has been created
-    element.realSrc = element.src
-    element.src = ''
     fabric[type].fromObject(element, (e: any) => {
-      e.setSrc(e.get('realSrc'), () => callback(e))
+      e.setSrc(element.src || constants.ASSET_PLACEHOLDERS['file'], (e: any) => {
+        $_scaleImageObject(e, state)
+        callback(e)
+      })
     })
   } else {
     fabric[type].fromObject(element, callback)
@@ -777,7 +764,7 @@ const $_initFabricPrototypes = (state: any) => {
         }
         $_broadcastUpsert(NaN, element, state)
       }
-      store.dispatch('whiteboarding/setMode', 'move').then(_.noop)
+      $_setMode('move')
     }
   })
   // Recalculate the size of the p.$canvas when the window is resized
@@ -925,6 +912,23 @@ const $_restoreLayers = (state: any) => {
   setCanvasDimensions(state)
 }
 
+const $_scaleImageObject = (element: any, state: any) => {
+  // Scale the element to ensure it takes up a maximum of 80% of the visible viewport width and height
+  const maxWidth = state.viewport.clientWidth * 0.8 / p.$canvas.getZoom()
+  const widthRatio = maxWidth / element.width
+  const maxHeight = state.viewport.clientHeight * 0.8 / p.$canvas.getZoom()
+  const heightRatio = maxHeight / element.height
+  // Determine which side needs the most scaling for the element to fit on the screen
+  const ratio = _.min([widthRatio, heightRatio])
+  if (ratio < 1) {
+    element.scale(ratio)
+  }
+}
+
+const $_setMode = (mode: string, callback?: any) => {
+  store.dispatch('whiteboarding/setMode', mode).then(callback || _.noop)
+}
+
 const $_tryReconnect = (state: any) => {
   setTimeout(() => {
     $_leave(state)
@@ -975,9 +979,9 @@ const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
 
 const $_updateLayers = (state: any) => {
   // Update the index of all elements to reflect their order in the current whiteboard.
-  p.$canvas.forEachObject((element: any) => {
+  const objects = p.$canvas.getObjects()
+  _.each(objects, (element: any) => {
     // Only update the elements for which the stored index no longer matches the current index.
-    const objects = p.$canvas.getObjects()
     const indexOf = objects.indexOf(element)
     if (element.index !== indexOf) {
       element.index = indexOf
