@@ -16,7 +16,14 @@
           <EditCommentForm :after-save="refresh" :asset-id="assetId" />
         </v-col>
       </v-row>
-      <v-row v-for="comment in comments" :id="`comment-${comment.id}`" :key="comment.id">
+    </v-container>
+    <v-container role="list" fluid>
+      <v-row
+        v-for="comment in comments"
+        :id="`comment-${comment.id}`"
+        :key="comment.id"
+        role="listitem"
+      >
         <v-col cols="2">
           <Avatar
             :id="`comment-${comment.id}-user-${comment.user.id}-avatar`"
@@ -47,42 +54,48 @@
               v-linkified
               v-html="comment.body"
             />
-            <div
-              v-for="reply in comment.replies"
-              :key="reply.id"
-              class="pt-5 px-5 w-100"
-            >
-              <div class="align-center d-flex mb-2">
-                <div class="pr-2">
-                  <Avatar
-                    :id="`comment-${reply.id}-user-${comment.user.id}-avatar`"
-                    class="float-right"
-                    :user="reply.user"
-                  />
-                </div>
-                <CommentToolbar
-                  :comment="reply"
-                  :disable-actions="disableActions"
-                  :edit="edit"
-                  :refresh="refresh"
-                />
-              </div>
-              <div class="pl-10">
-                <div v-if="reply.id === editCommentId">
-                  <EditCommentForm
-                    :after-cancel="() => editCommentId = null"
-                    :after-save="refresh"
-                    :asset-id="assetId"
-                    :comment="reply"
-                  />
-                </div>
-                <div
-                  v-if="editCommentId !== reply.id"
-                  :id="`comment-${reply.id}-body`"
-                  v-linkified
-                  v-html="reply.body"
-                />
-              </div>
+            <div v-if="comment.replies.length">
+              <h4 class="sr-only">Replies</h4>
+              <ol class="pt-5 px-5 w-100 pl-0">
+                <li
+                  v-for="(reply, index) in comment.replies"
+                  :key="reply.id"
+                  class="comment-list"
+                  :class="{'pt-2': index > 0}"
+                >
+                  <div class="align-center d-flex mb-2">
+                    <div class="pr-2">
+                      <Avatar
+                        :id="`comment-${reply.id}-user-${comment.user.id}-avatar`"
+                        class="float-right"
+                        :user="reply.user"
+                      />
+                    </div>
+                    <CommentToolbar
+                      :comment="reply"
+                      :disable-actions="disableActions"
+                      :edit="edit"
+                      :refresh="refresh"
+                    />
+                  </div>
+                  <div class="pl-10">
+                    <div v-if="reply.id === editCommentId">
+                      <EditCommentForm
+                        :after-cancel="() => editCommentId = null"
+                        :after-save="refresh"
+                        :asset-id="assetId"
+                        :comment="reply"
+                      />
+                    </div>
+                    <div
+                      v-if="editCommentId !== reply.id"
+                      :id="`comment-${reply.id}-body`"
+                      v-linkified
+                      v-html="reply.body"
+                    />
+                  </div>
+                </li>
+              </ol>
             </div>
             <div v-if="replyToCommentId === comment.id" class="pl-6 pt-5">
               <div class="d-flex">
@@ -172,3 +185,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+  .comment-list {
+    list-style: none;
+  }
+</style>
