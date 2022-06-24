@@ -51,10 +51,12 @@
               <v-text-field
                 id="asset-title-input"
                 v-model="asset.title"
+                :disabled="isExporting"
                 hide-details
                 maxlength="255"
                 outlined
                 required
+                @keypress.enter="onClickSave"
               />
               <div class="pl-1">
                 <span
@@ -76,6 +78,7 @@
             <v-col cols="10">
               <AccessibleSelect
                 id-prefix="asset-category"
+                :disabled="isExporting"
                 hide-details
                 :items="categories"
                 item-text="title"
@@ -97,6 +100,7 @@
                   <v-textarea
                     id="asset-description-textarea"
                     v-model="asset.description"
+                    :disabled="isExporting"
                     hide-details
                     outlined
                   />
@@ -110,7 +114,7 @@
                 <v-btn
                   id="save-btn"
                   color="primary"
-                  :disabled="isExporting"
+                  :disabled="disableSave"
                   @click="onClickSave"
                   @keypress.enter="onClickSave"
                 >
@@ -165,6 +169,11 @@ export default {
     isExporting: false,
     dialog: false
   }),
+  computed: {
+    disableSave() {
+      return this.isExporting || !this.$_.trim(this.asset.title).length
+    }
+  },
   created() {
     this.asset.title = this.whiteboard.title
   },
@@ -178,19 +187,21 @@ export default {
       this.$announcer.polite('Closed')
     },
     onClickSave() {
-      this.$announcer.polite('Exporting...')
-      this.isExporting = true
-      const categoryIds = this.asset.categoryId ? [this.asset.categoryId] : []
-      exportAsset(
-        categoryIds,
-        this.asset.description,
-        this.asset.title,
-        this.whiteboard.id
-      ).then(asset => {
-        this.$announcer.polite('Asset created.')
-        this.isExporting = false
-        this.asset = asset
-      })
+      if (!this.disableSave) {
+        this.$announcer.polite('Exporting...')
+        this.isExporting = true
+        const categoryIds = this.asset.categoryId ? [this.asset.categoryId] : []
+        exportAsset(
+          categoryIds,
+          this.asset.description,
+          this.asset.title,
+          this.whiteboard.id
+        ).then(asset => {
+          this.$announcer.polite('Asset created.')
+          this.isExporting = false
+          this.asset = asset
+        })
+      }
     },
   }
 }

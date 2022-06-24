@@ -106,6 +106,7 @@ class Whiteboard(Base):
         if asset_ids:
             assets = Asset.get_assets(
                 filters={'asset_ids': asset_ids},
+                include_hidden=True,
                 limit=100000,
                 offset=0,
                 order_by='id',
