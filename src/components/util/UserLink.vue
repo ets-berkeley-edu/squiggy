@@ -2,6 +2,7 @@
   <span>
     <router-link
       v-if="!$isInIframe || !crossToolLink"
+      :id="`user-${user.id}-href`"
       :to="`/assets?userId=${user.id}`"
       :aria-label="screenreaderText"
       class="hover-link"
@@ -15,6 +16,7 @@
     </router-link>
     <a
       v-if="$isInIframe && crossToolLink"
+      :id="`user-${user.id}-href`"
       :href="`${$currentUser.course.assetLibraryUrl}#suitec_userId=${user.id}`"
       :aria-label="screenreaderText"
       target="_parent"
@@ -22,6 +24,7 @@
     >
       <font-awesome-icon
         v-if="user.isAdmin || user.isTeaching"
+        :id="`user-${user.id}-graduation-cap`"
         icon="graduation-cap"
         class="ml-2"
       />

@@ -33,7 +33,7 @@
           <a
             id="link-to-asset"
             class="hover-link"
-            :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${asset.id}`"
+            :href="`${assetLibraryUrl}#suitec_assetId=${asset.id}`"
             target="_blank"
           >
             Open asset in new window
@@ -44,7 +44,22 @@
           <div class="align-center d-flex">
             <div>Owned by</div>
             <Avatar class="pr-1" :user="asset.users[0]" />
-            <UserLink :cross-tool-link="true" :user="asset.users[0]" />
+            <div>
+              <a
+                :id="`owned-by-user-${asset.users[0].id}-href`"
+                :href="`${assetLibraryUrl}#suitec_userId=${asset.users[0].id}`"
+                target="_blank"
+                class="hover-link"
+              >
+                <font-awesome-icon
+                  v-if="asset.users[0].isAdmin || asset.users[0].isTeaching"
+                  :id="`user-${asset.users[0].id}-graduation-cap`"
+                  icon="graduation-cap"
+                  class="ml-2"
+                />
+                {{ asset.users[0].canvasFullName }}
+              </a>
+            </div>
           </div>
         </div>
         <div v-if="asset.users.length > 1">
@@ -55,7 +70,20 @@
                 <Avatar :user="user" />
               </div>
               <div class="pl-2">
-                <UserLink :cross-tool-link="true" :user="user" />
+                <a
+                  :id="`owned-by-user-${user.id}-href`"
+                  :href="`${assetLibraryUrl}#suitec_userId=${user.id}`"
+                  target="_blank"
+                  class="hover-link"
+                >
+                  <font-awesome-icon
+                    v-if="user.isAdmin || user.isTeaching"
+                    :id="`user-${user.id}-graduation-cap`"
+                    icon="graduation-cap"
+                    class="ml-2"
+                  />
+                  {{ user.canvasFullName }}
+                </a>
               </div>
             </div>
           </div>
@@ -63,8 +91,8 @@
       </v-col>
     </v-row>
     <v-row v-if="asset.description" class="pt-2" no-gutters>
-      <v-col id="asset-description">
-        <h3 class="sr-only">Description</h3>
+      <v-col id="asset-description" class="pb-2 pt-3">
+        <h3 class="">Description</h3>
         {{ asset.description }}
       </v-col>
     </v-row>
@@ -93,14 +121,13 @@
 
 <script>
 import Avatar from '@/components/user/Avatar'
-import UserLink from '@/components/util/UserLink'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'ExportSummary',
   mixins: [Utils, Whiteboarding],
-  components: {Avatar, UserLink},
+  components: {Avatar},
   props: {
     asset: {
       required: true,
@@ -110,6 +137,12 @@ export default {
       required: true,
       type: Function
     }
+  },
+  data: () => ({
+    assetLibraryUrl: undefined
+  }),
+  created() {
+    this.assetLibraryUrl = this.$currentUser.course.assetLibraryUrl
   }
 }
 </script>
