@@ -39,7 +39,7 @@ from squiggy.logger import logger
 def generate_previews(object_id, object_url, object_type='asset'):
     if not app.config['PREVIEWS_ENABLED']:
         return
-    api_prefix = app.config['API_PREFIX']
+    api_prefix = app.config['PREVIEWS_CALLBACK_API_PREFIX'] or app.config['API_PREFIX']
     post_back_urls = {
         'asset': f'{api_prefix}/previews/callback',
         'whiteboard': f'{api_prefix}/previews/whiteboard/callback',
