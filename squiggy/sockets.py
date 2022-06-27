@@ -24,11 +24,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import request
-from flask_login import login_required
+from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
+from squiggy.api.api_util import whiteboard_access_required
 from squiggy.api.whiteboard_socket_handler import check_for_updates, delete_whiteboard_element, join_whiteboard, \
     leave_whiteboard, update_whiteboard, upsert_whiteboard_element
-from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
@@ -42,14 +42,13 @@ def register_sockets(socketio):
     )
 
     @socketio.on('join')
-    @login_required
+    @whiteboard_access_required
     def socketio_join(data):
-        logger.debug(f'socketio_join: {data}')
         socket_id = request.sid
-        user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
+        logger.debug(f'socketio_join: {data}')
         whiteboard = join_whiteboard(
-            current_user=LoginSession(user_id),
+            current_user=current_user,
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
         )
@@ -63,25 +62,19 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=room,
         )
-        whiteboard = Whiteboard.find_by_id(
-            current_user=LoginSession(user_id),
-            whiteboard_id=whiteboard_id,
-        )
-        return whiteboard['users']
+        whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
+        return {
+            **whiteboard['users'],
+            'status': 200,
+        }
 
     @socketio.on('leave')
-    @login_required
+    @whiteboard_access_required
     def socketio_leave(data):
         socket_id = request.sid
-        user_id = data.get('userId')
-        current_user = LoginSession(user_id)
         whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_leave: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        leave_whiteboard(
-            current_user=current_user,
-            socket_id=request.sid,
-            whiteboard_id=whiteboard_id,
-        )
+        logger.debug(f'socketio_leave: user_id = {current_user}, whiteboard_id = {whiteboard_id}')
+        leave_whiteboard(socket_id=socket_id)
         room = _get_room(whiteboard_id)
         leave_room(room, sid=socket_id)
         whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
@@ -92,9 +85,10 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=room,
         )
+        return {'status': 200}
 
     @socketio.on('update_whiteboard')
-    @login_required
+    @whiteboard_access_required
     def socketio_update_whiteboard(data):
         socket_id = request.sid
         title = data.get('title')
@@ -103,7 +97,7 @@ def register_sockets(socketio):
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_update_whiteboard: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         update_whiteboard(
-            current_user=LoginSession(user_id),
+            current_user=current_user,
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
             title=title,
@@ -120,16 +114,16 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
         )
+        return {'status': 200}
 
     @socketio.on('upsert_whiteboard_element')
-    @login_required
+    @whiteboard_access_required
     def socketio_upsert_whiteboard_element(data):
         socket_id = request.sid
-        user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_upsert_whiteboard_element: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
+        logger.debug(f'socketio_upsert_whiteboard_element: user_id = {current_user.user_id}, whiteboard_id = {whiteboard_id}')
         whiteboard_element = upsert_whiteboard_element(
-            current_user=LoginSession(user_id),
+            current_user=current_user,
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
             whiteboard_element=data.get('whiteboardElement'),
@@ -144,17 +138,18 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
         )
+        return {'status': 200}
 
     @socketio.on('delete_whiteboard_element')
     @login_required
     def socketio_delete(data):
         socket_id = request.sid
         user_id = data.get('userId')
-        whiteboard_element = data.get('whiteboardElement')
         whiteboard_id = data.get('whiteboardId')
+        whiteboard_element = data.get('whiteboardElement')
         logger.debug(f'socketio_delete: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
         delete_whiteboard_element(
-            current_user=LoginSession(user_id),
+            current_user=current_user,
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
             whiteboard_element=whiteboard_element,
@@ -169,18 +164,23 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
         )
+        return {'status': 200}
 
     @socketio.on('check_for_updates')
-    @login_required
+    @whiteboard_access_required
     def socketio_check_for_updates(data):
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_check_for_updates: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        return check_for_updates(
-            current_user=LoginSession(user_id),
+        whiteboard = check_for_updates(
+            current_user=current_user,
             socket_id=request.sid,
             whiteboard_id=whiteboard_id,
         )
+        return {
+            **whiteboard,
+            'status': 200,
+        }
 
     @socketio.on('boo-boo-kitty')
     def socketio_boo_boo_kitty(data):
@@ -193,6 +193,7 @@ def register_sockets(socketio):
             broadcast=True,
             include_self=True,
         )
+        return {'status': 200}
 
     @socketio.on('connect')
     @login_required

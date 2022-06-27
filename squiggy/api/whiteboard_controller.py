@@ -27,7 +27,7 @@ import re
 
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_whiteboard, can_view_asset, can_view_whiteboard, feature_flag_whiteboards
+from squiggy.api.api_util import can_access_whiteboard, can_view_asset, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now, to_int
@@ -45,8 +45,8 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 @login_required
 def get_whiteboard(whiteboard_id):
     whiteboard_id = to_int(whiteboard_id)
-    whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id) if whiteboard_id else None
-    if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
+    whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id)
+    if whiteboard:
         return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError('Whiteboard not found')
@@ -78,7 +78,7 @@ def remix_whiteboard(asset_id):
 @login_required
 def export_as_asset(whiteboard_id):
     whiteboard = _find_whiteboard(whiteboard_id)
-    if whiteboard and can_view_whiteboard(user=current_user, whiteboard=whiteboard):
+    if whiteboard:
         whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
         if whiteboard_elements:
             params = request.get_json()
@@ -119,8 +119,6 @@ def export_as_png(whiteboard_id):
     whiteboard = _find_whiteboard(whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
-    if not can_view_whiteboard(user=current_user, whiteboard=whiteboard):
-        raise BadRequestError('Unauthorized')
 
     key = 'assetPreviewStatus'
     asset_preview_statuses = [e[key] for e in whiteboard['whiteboardElements'] if key in e]
@@ -148,7 +146,7 @@ def export_as_png(whiteboard_id):
 @login_required
 def restore_whiteboard(whiteboard_id):
     whiteboard = _find_whiteboard(whiteboard_id)
-    if whiteboard and can_update_whiteboard(user=current_user, whiteboard=whiteboard):
+    if whiteboard:
         restored = Whiteboard.restore(whiteboard_id)
         return tolerant_jsonify(restored.to_api_json())
     else:
@@ -200,11 +198,9 @@ def create_whiteboard():
 @feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
-    whiteboard = _find_whiteboard(whiteboard_id) if whiteboard_id else None
+    whiteboard = _find_whiteboard(whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
-    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
-        raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
     whiteboard_id = whiteboard['id']
     Whiteboard.delete(whiteboard_id=whiteboard_id)
     return tolerant_jsonify({'message': f'Whiteboard {whiteboard_id} deleted'}), 200
@@ -225,13 +221,11 @@ def update_whiteboard():
     whiteboard_id = params.get('whiteboardId')
     title = params.get('title')
     user_ids = params.get('userIds')
-    whiteboard = _find_whiteboard(whiteboard_id) if whiteboard_id else None
+    whiteboard = _find_whiteboard(whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
     if whiteboard['deletedAt']:
         raise ResourceNotFoundError('Whiteboard is read-only.')
-    if not can_update_whiteboard(user=current_user, whiteboard=whiteboard):
-        raise BadRequestError('To update a whiteboard you must own it or be a teacher in the course.')
 
     whiteboard = Whiteboard.update(
         whiteboard_id=whiteboard_id,
@@ -242,8 +236,5 @@ def update_whiteboard():
 
 
 def _find_whiteboard(whiteboard_id):
-    return Whiteboard.find_by_id(
-        current_user=current_user,
-        include_deleted=current_user.is_admin or current_user.is_teaching,
-        whiteboard_id=whiteboard_id,
-    )
+    can_access = whiteboard_id and can_access_whiteboard(user=current_user, whiteboard_id=whiteboard_id)
+    return Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id) if can_access else None
