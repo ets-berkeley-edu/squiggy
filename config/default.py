@@ -76,6 +76,10 @@ LOGGING_PROPAGATION_LEVEL = logging.INFO
 NODE_EXECUTABLE = '/usr/bin/node'
 
 PREVIEWS_API_KEY = 'someKey'
+# Assign PREVIEWS_CALLBACK_API_PREFIX to override API_PREFIX in context of preview-service callbacks. E.g., if you are
+# running locally (unreachable by preview-service) then use PREVIEWS_CALLBACK_API_PREFIX to point at squiggy-dev.
+# If PREVIEWS_CALLBACK_API_PREFIX is nil then Squiggy uses API_PREFIX config value.
+PREVIEWS_CALLBACK_API_PREFIX = None
 PREVIEWS_ENABLED = True
 PREVIEWS_URL = 'https://example.com/previews'
 
