@@ -180,7 +180,7 @@ def _create_whiteboard_element(current_user, socket_id, whiteboard_element, whit
         whiteboard_id=whiteboard_id,
     )
     if asset_id:
-        AssetWhiteboardElement.create(
+        AssetWhiteboardElement.upsert(
             asset_id=asset_id,
             element=element,
             element_asset_id=element.get('assetId'),
