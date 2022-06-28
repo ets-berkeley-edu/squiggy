@@ -116,20 +116,20 @@ export default {
       this.scheduleRefreshJob()
     },
     onVisibilityChange() {
-      if (document.visibilityState === 'visible') {
+      if (!this.isRefreshing && document.visibilityState === 'visible') {
         clearTimeout(this.refreshJob)
         // We want to refresh all whiteboards visible to the user.
-        const previousOffset = this.offset
-        this.setOffset(0)
-        this.search().then(() => {
-          this.setOffset(previousOffset)
+        this.isRefreshing = true
+        this.refresh().then(() => {
           this.scheduleRefreshJob()
+          this.isRefreshing = false
         })
       }
     },
     runRefresh() {
       const run = !this.isRefreshing && (!this.isBusy || !this.$_.trim(this.keywords) || !this.orderBy || !this.userId)
       if (run) {
+        clearTimeout(this.refreshJob)
         this.isRefreshing = true
         this.refresh().then(() => {
           this.scheduleRefreshJob()
