@@ -140,7 +140,7 @@ export function checkForUpdates(state: any) {
           if (existing && existing.src !== whiteboardElement.element.src) {
             // Deactivate the current group if any of the updated elements are in the current group
             $_deactivateGroupIfOverlap(whiteboardElement)
-            $_updateCanvasElement(state, uuid, whiteboardElement.element)
+            $_updateExistingElement(whiteboardElement.element, state, uuid)
             setCanvasDimensions(state)
           }
         })
@@ -460,20 +460,22 @@ const $_addSocketListeners = (state: any) => {
   })
 
   p.$socket.on('join', (data: any) => {
-    $_log(`socket-io join: ${data}`)
+    $_log(`socket-io join: user_id = ${data.id}`)
     store.dispatch('whiteboarding/setUsers', data.users)
   })
   p.$socket.on('leave', (data: any) => {
-    $_log(`socket-io leave: ${data}`)
+    const userIds = _.map(data.users, ['id'])
+    $_log(`socket-io leave: user_ids = ${userIds}`)
     store.dispatch('whiteboarding/setUsers', data.users)
   })
   p.$socket.on('update_whiteboard', (data: any) => {
-    $_log(`socket-io update_whiteboard: ${data}`)
+    $_log(`socket-io update_whiteboard: id = ${data.id}`)
     _.assignIn(state.whiteboard, data.whiteboard)
   })
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
-    $_log(`socket-io upsert_whiteboard_element: ${data}`)
+    const type = _.get(data.whiteboardElement, 'element.type')
+    $_log(`socket-io upsert_whiteboard_element: type = ${type}`)
     const whiteboardElement = data.whiteboardElement
     const element = whiteboardElement.element
     const uuid = whiteboardElement.uuid
@@ -481,7 +483,7 @@ const $_addSocketListeners = (state: any) => {
     if (existing) {
       // Deactivate the current group if any of the updated elements are in the current group
       $_deactivateGroupIfOverlap(whiteboardElement)
-      $_updateCanvasElement(state, whiteboardElement.uuid, element)
+      $_updateExistingElement(element, state, whiteboardElement.uuid)
       setCanvasDimensions(state)
     } else {
       const callback = (e: any) => {
@@ -498,7 +500,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on(
     'delete_whiteboard_element',
     (data: any) => {
-      $_log(`socket-io delete_whiteboard_element: ${data}`)
+      $_log(`socket-io delete_whiteboard_element: uuid = ${data.uuid}`)
       const element = $_getCanvasElement(data.uuid)
       if (element) {
         // Deactivate the current group if any of the deleted elements are in the current group
@@ -947,37 +949,30 @@ const $_tryReconnect = (state: any) => {
   }, 2000)
 }
 
-const $_updateCanvasElement = (state: any, uuid: string, update: any) => {
-  const element: any = $_getCanvasElement(uuid)
-
-  const updateElementProperties = () => {
-    if (element) {
-      // Update all element properties, except for the image source. The image
-      // source is handled separately as this is an asynchronous action
-      _.each(update, function(value, property) {
-        if (property !== 'src' && value !== element.get(property)) {
-          element.set(property, value)
-        }
-      })
-      // When the source element for an asset has changed, update this last and
-      // re-render the element after it has been loaded
-      if (element.type === 'image' && element.getSrc() !== update.src) {
-        element.setSrc(update.src, () => {
-          p.$canvas.requestRenderAll()
-          // Ensure that the correct position is applied
-          $_restoreLayers(state)
-        })
-      } else {
-        $_restoreLayers(state)
-      }
+const $_updateExistingElement = (element: any, state: any, uuid: string) => {
+  const existing: any = $_getCanvasElement(uuid)
+  _.each(element, (value: any, key: any) => {
+    if (key !== 'src' && value !== existing.get(key)) {
+      existing.set(key, value)
     }
-  }
-  // If the element is an asset for which the source has changed, we preload
-  // the image to prevent flickering when the image is inserted into the element
-  if (element.type === 'image' && element.getSrc() !== update.src) {
-    fabric.util.loadImage(update.src, updateElementProperties)
+  })
+  if (existing.type === 'image' && existing.getSrc() !== element.src) {
+    // Preview image of this asset has changed. Update existing element and re-render.
+    const callback = (src: any) => {
+      existing.setSrc(src, () => {
+        $_scaleImageObject(existing, state)
+        $_broadcastUpsert(existing.assetId, existing, state)
+        p.$canvas.requestRenderAll()
+        $_restoreLayers(state)
+      })
+    }
+    if (element.src) {
+      fabric.util.loadImage(element.src, img => callback(img.currentSrc))
+    } else {
+      callback(constants.ASSET_PLACEHOLDERS['file'])
+    }
   } else {
-    updateElementProperties()
+    $_restoreLayers(state)
   }
 }
 
