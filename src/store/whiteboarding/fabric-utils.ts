@@ -133,6 +133,7 @@ export function checkForUpdates(state: any) {
         window.close()
       } else {
         store.dispatch('whiteboarding/setUsers', data.users)
+        let modified = false
         _.each(data.whiteboardElements, whiteboardElement => {
           // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
           const uuid = whiteboardElement.uuid
@@ -142,9 +143,12 @@ export function checkForUpdates(state: any) {
             $_deactivateGroupIfOverlap(whiteboardElement)
             $_updateExistingElement(whiteboardElement.element, state, uuid)
             setCanvasDimensions(state)
+            modified = true
           }
         })
-        $_restoreLayers(state)
+        if (modified) {
+          $_updateLayers(state)
+        }
       }
     }
   )
@@ -474,11 +478,10 @@ const $_addSocketListeners = (state: any) => {
   })
   // One or multiple whiteboard canvas elements were updated by a different user
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
-    const type = _.get(data.whiteboardElement, 'element.type')
-    $_log(`socket-io upsert_whiteboard_element: type = ${type}`)
     const whiteboardElement = data.whiteboardElement
     const element = whiteboardElement.element
     const uuid = whiteboardElement.uuid
+    $_log(`socket-io upsert_whiteboard_element: type = ${element.type}, uuid = ${element.uuid}`)
     const existing = $_getCanvasElement(uuid)
     if (existing) {
       // Deactivate the current group if any of the updated elements are in the current group
@@ -738,7 +741,7 @@ const $_initFabricPrototypes = (state: any) => {
       const extras = {
         assetId: this.assetId,
         height: this.height,
-        index: p.$canvas.getObjects().indexOf(this),
+        index: _.isNil(this.index) ? 0 : this.index,
         isHelper: this.isHelper,
         radius: this.radius,
         text: this.text,
@@ -881,12 +884,9 @@ const $_paste = (state: any): void => {
 }
 
 const $_renderWhiteboard = (state: any) => {
-  // Render whiteboard and its elements. Set canvas size once all layout changes have been applied.
-  setTimeout(() => setCanvasDimensions(state), 0)
-
   // Restore the order of the layers once all elements have finished loading
   const restore = _.after(state.whiteboard.whiteboardElements.length, () => {
-    $_restoreLayers(state)
+    $_updateLayers(state)
     // Deactivate all elements and element selection when the whiteboard
     // is being rendered in read only mode
     if (state.whiteboard.isReadOnly) {
@@ -895,7 +895,7 @@ const $_renderWhiteboard = (state: any) => {
     }
   })
   // Restore the layout of the whiteboard canvas
-  const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, 'element.index')
+  const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, (w: any) => `${w.element.index}-${w.element.uuid}`)
   _.each(whiteboardElements, (whiteboardElement: any) => {
     $_deserializeElement(
       state,
@@ -907,15 +907,8 @@ const $_renderWhiteboard = (state: any) => {
       }
     )
   })
-}
-
-const $_restoreLayers = (state: any) => {
-  // Ensure that all elements are ordered as specified by the element's index attribute.
-  _.each(p.$canvas.getObjects(), (object: any) => {
-    p.$canvas.moveTo(object, object.index)
-  })
-  p.$canvas.requestRenderAll()
-  setCanvasDimensions(state)
+  // Render whiteboard and its elements. Set canvas size once all layout changes have been applied.
+  setTimeout(() => setCanvasDimensions(state), 0)
 }
 
 const $_scaleImageObject = (element: any, state: any) => {
@@ -963,7 +956,7 @@ const $_updateExistingElement = (element: any, state: any, uuid: string) => {
         $_scaleImageObject(existing, state)
         $_broadcastUpsert(existing.assetId, existing, state)
         p.$canvas.requestRenderAll()
-        $_restoreLayers(state)
+        $_updateLayers(state)
       })
     }
     if (element.src) {
@@ -972,7 +965,7 @@ const $_updateExistingElement = (element: any, state: any, uuid: string) => {
       callback(constants.ASSET_PLACEHOLDERS['file'])
     }
   } else {
-    $_restoreLayers(state)
+    $_updateLayers(state)
   }
 }
 

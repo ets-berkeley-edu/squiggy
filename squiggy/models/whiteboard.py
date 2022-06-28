@@ -91,7 +91,7 @@ class Whiteboard(Base):
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
         if not whiteboard:
             return None
-        whiteboard['whiteboardElements'] = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
+        whiteboard['whiteboardElements'] = _get_sorted_whiteboard_elements(whiteboard_id)
         asset_ids = []
         for whiteboard_element in whiteboard['whiteboardElements']:
             asset_id = whiteboard_element['assetId']
@@ -395,3 +395,24 @@ def _get_whiteboards_where_clause(
             params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
             where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
     return where_clause
+
+
+def _get_element_sort_key(whiteboard_element):
+    index = whiteboard_element['element'].get('index') or 0
+    uuid = whiteboard_element['element']['uuid']
+    return f'{index}-{uuid}'
+
+
+def _get_sorted_whiteboard_elements(whiteboard_id):
+    whiteboard_elements = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
+    whiteboard_elements.sort(key=_get_element_sort_key)
+    for index, whiteboard_element in enumerate(whiteboard_elements):
+        element = whiteboard_element['element']
+        if element.get('index') != index:
+            element['index'] = index
+            WhiteboardElement.update_element_index(
+                index=index,
+                uuid=whiteboard_element['uuid'],
+                whiteboard_id=whiteboard_id,
+            )
+    return whiteboard_elements
