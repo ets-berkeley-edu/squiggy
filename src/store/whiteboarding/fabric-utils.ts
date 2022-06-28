@@ -60,18 +60,20 @@ export function emitWhiteboardUpdate(state: any, whiteboard: any) {
   state.whiteboard.title = whiteboard.title
   state.whiteboard.users = whiteboard.users
   state.whiteboard.deletedAt = whiteboard.deletedAt
-  p.$socket.emit('update_whiteboard', {
+  const args = {
     title: whiteboard.title,
     userId: p.$currentUser.id,
     users: whiteboard.users,
     whiteboardId: state.whiteboard.id
-  })
-  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-    const userIds = _.map(whiteboard.users, 'id')
-    if (!_.includes(userIds, p.$currentUser.id)) {
-      window.close()
-    }
   }
+  p.$socket.emit('update_whiteboard', args, () => {
+    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+      const userIds = _.map(whiteboard.users, 'id')
+      if (!_.includes(userIds, p.$currentUser.id)) {
+        window.close()
+      }
+    }
+  })
 }
 
 export function initialize(state: any) {
@@ -122,36 +124,33 @@ export function moveLayer(direction: string, state: any) {
 }
 
 export function checkForUpdates(state: any) {
-  p.$socket.emit(
-    'check_for_updates',
-    {
-      userId: p.$currentUser.id,
-      whiteboardId: state.whiteboard.id
-    },
-    (data: any) => {
-      if (data.status === 404) {
-        window.close()
-      } else {
-        store.dispatch('whiteboarding/setUsers', data.users)
-        let modified = false
-        _.each(data.whiteboardElements, whiteboardElement => {
-          // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
-          const uuid = whiteboardElement.uuid
-          const existing: any = $_getCanvasElement(uuid)
-          if (existing && existing.src !== whiteboardElement.element.src) {
-            // Deactivate the current group if any of the updated elements are in the current group
-            $_deactivateGroupIfOverlap(whiteboardElement)
-            $_updateExistingElement(whiteboardElement.element, state, uuid)
-            setCanvasDimensions(state)
-            modified = true
-          }
-        })
-        if (modified) {
-          $_updateLayers(state)
+  const args = {
+    userId: p.$currentUser.id,
+    whiteboardId: state.whiteboard.id
+  }
+  p.$socket.emit('check_for_updates', args, (data: any) => {
+    if (data.status === 404) {
+      window.close()
+    } else {
+      store.dispatch('whiteboarding/setUsers', data.users)
+      let modified = false
+      _.each(data.whiteboardElements, whiteboardElement => {
+        // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
+        const uuid = whiteboardElement.uuid
+        const existing: any = $_getCanvasElement(uuid)
+        if (existing && existing.src !== whiteboardElement.element.src) {
+          // Deactivate the current group if any of the updated elements are in the current group
+          $_deactivateGroupIfOverlap(whiteboardElement)
+          $_updateExistingElement(whiteboardElement.element, state, uuid)
+          setCanvasDimensions(state)
+          modified = true
         }
+      })
+      if (modified) {
+        $_updateLayers(state)
       }
     }
-  )
+  })
 }
 
 export function refresh(state: any) {
@@ -741,7 +740,7 @@ const $_initFabricPrototypes = (state: any) => {
       const extras = {
         assetId: this.assetId,
         height: this.height,
-        index: _.isNil(this.index) ? 0 : this.index,
+        index: _.isNil(this.index) ? p.$canvas.getObjects().length : this.index,
         isHelper: this.isHelper,
         radius: this.radius,
         text: this.text,
@@ -810,19 +809,19 @@ const $_initSocket = (state: any) => {
 
 const $_join = (state: any) => {
   const userId: number = p.$currentUser.id
-  p.$socket.emit('join', {
+  const args = {
     userId: userId,
     whiteboardId: state.whiteboard.id
-  })
-  store.dispatch('whiteboarding/join', userId).then(_.noop)
+  }
+  p.$socket.emit('join', args, () => store.dispatch('whiteboarding/join', userId).then(_.noop))
 }
 
 const $_leave = (state: any) => {
-  p.$socket.emit('leave', {
+  const args = {
     userId: p.$currentUser.id,
     whiteboardId: state.whiteboard.id
-  })
-  p.$socket.disconnect()
+  }
+  p.$socket.emit('leave', args, () => p.$socket.disconnect())
 }
 
 const $_log = (statement: string, force?: boolean) => {

@@ -80,6 +80,7 @@
                 maxlength="255"
                 outlined
                 required
+                @keydown.enter="onClickSave"
               />
               <div class="pl-1">
                 <span
