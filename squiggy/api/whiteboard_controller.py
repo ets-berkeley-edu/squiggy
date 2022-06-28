@@ -99,7 +99,7 @@ def export_as_asset(whiteboard_id):
             )
             for whiteboard_element in whiteboard_elements:
                 element = whiteboard_element.element
-                AssetWhiteboardElement.create(
+                AssetWhiteboardElement.upsert(
                     asset_id=asset.id,
                     element=element,
                     element_asset_id=element.get('assetId'),

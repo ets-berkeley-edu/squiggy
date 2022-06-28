@@ -51,21 +51,26 @@ class AssetWhiteboardElement(Base):
         self.uuid = uuid
 
     @classmethod
-    def create(
+    def upsert(
             cls,
             asset_id,
             element,
             element_asset_id,
             uuid,
     ):
-        db.session.add(
-            cls(
-                asset_id=asset_id,
-                element=element,
-                element_asset_id=element_asset_id,
-                uuid=uuid,
-            ),
-        )
+        existing = cls.query.filter_by(asset_id=asset_id, uuid=uuid).first()
+        if existing:
+            existing.element = element
+            existing.element_asset_id = element_asset_id
+        else:
+            db.session.add(
+                cls(
+                    asset_id=asset_id,
+                    element=element,
+                    element_asset_id=element_asset_id,
+                    uuid=uuid,
+                ),
+            )
         std_commit()
 
     @classmethod
