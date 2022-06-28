@@ -99,6 +99,13 @@ class WhiteboardElement(Base):
         std_commit()
         return whiteboard_element
 
+    @classmethod
+    def update_element_index(cls, index, uuid, whiteboard_id):
+        whiteboard_element = cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
+        element = whiteboard_element.element
+        element['index'] = index
+        std_commit()
+
     def to_api_json(self):
         return {
             'id': self.id,
