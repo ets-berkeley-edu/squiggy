@@ -81,15 +81,19 @@ export function initialize(state: any) {
   if (state.whiteboard.isReadOnly) {
     state.disableAll = true
     $_initCanvas(state)
-    $_renderWhiteboard(state)
-    $_enableCanvasElements(false)
+    $_renderWhiteboard(state, () => {
+      $_enableCanvasElements(false)
+    })
   } else {
     $_initSocket(state)
-    $_addSocketListeners(state)
     // Order matters: (1) set up Fabric prototypes, (2) initialize the canvas.
     $_initFabricPrototypes(state)
     $_initCanvas(state)
-    $_addViewportListeners(state)
+    $_addSocketListeners(state)
+    $_renderWhiteboard(state, () => {
+      $_addViewportListeners(state)
+      $_addCanvasListeners(state)
+    })
   }
 }
 
@@ -129,7 +133,7 @@ export function checkForUpdates(state: any) {
     whiteboardId: state.whiteboard.id
   }
   p.$socket.emit('check_for_updates', args, (data: any) => {
-    if (data.status === 404) {
+    if (_.get(data, 'status') === 404) {
       window.close()
     } else {
       store.dispatch('whiteboarding/setUsers', data.users)
@@ -156,9 +160,10 @@ export function checkForUpdates(state: any) {
 export function refresh(state: any) {
   const isReadOnly = state.whiteboard.isReadOnly
   state.disableAll = isReadOnly
+  const callback = () => $_enableCanvasElements(isReadOnly)
   if (isReadOnly) {
     $_initCanvas(state)
-    $_renderWhiteboard(state)
+    $_renderWhiteboard(state, callback)
   } else {
     if (!p.$socket) {
       $_initSocket(state)
@@ -169,9 +174,9 @@ export function refresh(state: any) {
       $_initFabricPrototypes(state)
       $_initCanvas(state)
       $_addViewportListeners(state)
+      $_renderWhiteboard(state, callback)
     }
   }
-  $_enableCanvasElements(isReadOnly)
 }
 
 export function setCanvasDimensions(state: any) {
@@ -256,7 +261,7 @@ export function setMode(state: any, mode: string) {
  * ---------------------------------------------------------------------------------------
  */
 
-const $_addListeners = (state: any) => {
+const $_addCanvasListeners = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
   const setModifyingElement = () => store.dispatch('whiteboarding/setIsModifyingElement', true)
   p.$canvas.on('object:moving', setModifyingElement)
@@ -574,7 +579,10 @@ const $_broadcastUpsert = (assetId: number, element: any, state: any) => {
       },
       whiteboardId: state.whiteboard.id
     },
-    () => setCanvasDimensions(state)
+    () => {
+      setCanvasDimensions(state)
+      $_log(`Finished broadcast upsert: assetId = ${assetId}, uuid = ${element.uuid}`)
+    }
   )
 }
 
@@ -637,7 +645,9 @@ const $_deserializeElement = (
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
   if (element.type === 'image') {
     fabric[type].fromObject(element, (e: any) => {
-      e.setSrc(element.src || constants.ASSET_PLACEHOLDERS['file'], (e: any) => {
+      const src = element.src || constants.ASSET_PLACEHOLDERS['file']
+      e.setSrc(src, (e: any) => {
+        $_log(`Deserialize image element: uuid = ${uuid}, src = ${src}`)
         $_scaleImageObject(e, state)
         callback(e)
       })
@@ -713,9 +723,7 @@ const $_initCanvas = (state: any) => {
     selectionBorderColor: lightBlue,
     selectionLineWidth: 2
   })
-  if (state.whiteboard.isReadOnly) {
-    $_renderWhiteboard(state)
-  } else {
+  if (!state.whiteboard.isReadOnly) {
     // Make the border dashed.
     p.$canvas.selectionDashArray = [10, 5]
     fabric.Object.prototype.borderColor = lightBlue
@@ -726,8 +734,6 @@ const $_initCanvas = (state: any) => {
     fabric.Object.prototype.rotatingPointOffset = 30
     // Set the pencil brush as the drawing brush
     p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
-    $_renderWhiteboard(state)
-    $_addListeners(state)
   }
 }
 
@@ -751,14 +757,15 @@ const $_initFabricPrototypes = (state: any) => {
     }
   }(fabric.Object.prototype.toObject))
 
-  fabric.IText.prototype.on('editing:exited', function() {
+  fabric.IText.prototype.on('editing:exited', () => {
     // An IText whiteboard canvas element was updated by the current user.
     const element:any = this
     if (element) {
       // If the text element is empty, it can be removed from the whiteboard canvas
       const text = element.text.trim()
+      const uuid = element.get('uuid')
       if (!text) {
-        if (element.get('uuid')) {
+        if (uuid) {
           $_broadcastDelete(element, state)
         }
         p.$canvas.remove(element)
@@ -770,6 +777,7 @@ const $_initFabricPrototypes = (state: any) => {
         } else if (text.toLowerCase() === 'when will teena retire?') {
           element.text = `${days_until_retirement} days until freedom`
         }
+        $_log(`IText editing:exited. Next, broadcast upsert: uuid = ${uuid}`)
         $_broadcastUpsert(NaN, element, state)
       }
       $_setMode('move')
@@ -882,7 +890,7 @@ const $_paste = (state: any): void => {
   }
 }
 
-const $_renderWhiteboard = (state: any) => {
+const $_renderWhiteboard = (state: any, callback: any) => {
   // Restore the order of the layers once all elements have finished loading
   const restore = _.after(state.whiteboard.whiteboardElements.length, () => {
     $_updateLayers(state)
@@ -892,6 +900,7 @@ const $_renderWhiteboard = (state: any) => {
       p.$canvas.discardActiveObject()
       p.$canvas.selection = false
     }
+    callback()
   })
   // Restore the layout of the whiteboard canvas
   const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, (w: any) => `${w.element.index}-${w.element.uuid}`)
@@ -919,6 +928,7 @@ const $_scaleImageObject = (element: any, state: any) => {
   // Determine which side needs the most scaling for the element to fit on the screen
   const ratio = _.min([widthRatio, heightRatio])
   if (ratio < 1) {
+    $_log(`Scale image element: ratio = ${ratio}`)
     element.scale(ratio)
   }
 }
@@ -953,6 +963,7 @@ const $_updateExistingElement = (element: any, state: any, uuid: string) => {
     const callback = (src: any) => {
       existing.setSrc(src, () => {
         $_scaleImageObject(existing, state)
+        $_log(`Update existing image element: src = ${src}, uuid = ${uuid}. Next, broadcast upsert.`)
         $_broadcastUpsert(existing.assetId, existing, state)
         p.$canvas.requestRenderAll()
         $_updateLayers(state)
@@ -973,16 +984,19 @@ const $_updateLayers = (state: any) => {
   const objects = p.$canvas.getObjects()
   _.each(objects, (element: any) => {
     // Only update the elements for which the stored index no longer matches the current index.
-    const indexOf = objects.indexOf(element)
-    if (element.index !== indexOf) {
-      element.index = indexOf
+    const position = objects.indexOf(element)
+    const previousIndex = element.index
+    if (previousIndex !== position) {
+      element.index = position
       if (element.group) {
         // If the element is part of a group, calculate its global coordinates
         const position = $_calculateGlobalElementPosition(element.group, element)
         const e = _.assignIn({}, element.toObject(), position)
+        $_log(`Update element.group index. NEW value = ${position}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
         $_broadcastUpsert(e.assetId, e, state)
       } else {
         const e = element.toObject()
+        $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
         $_broadcastUpsert(e.assetId, e, state)
       }
     }
