@@ -42,14 +42,16 @@
         </div>
         <div v-if="asset.users.length === 1">
           <div class="align-center d-flex">
-            <div>Owned by</div>
-            <Avatar class="pr-1" :user="asset.users[0]" />
+            <div class="pr-2">Owned by</div>
+            <div class="pr-2">
+              <Avatar :user="asset.users[0]" />
+            </div>
             <div>
               <a
                 :id="`owned-by-user-${asset.users[0].id}-href`"
-                :href="`${assetLibraryUrl}#suitec_userId=${asset.users[0].id}`"
-                target="_blank"
                 class="hover-link"
+                :href="`${assetLibraryUrl}#suitec_userId=${asset.users[0].id}`"
+                target="_parent"
               >
                 <font-awesome-icon
                   v-if="asset.users[0].isAdmin || asset.users[0].isTeaching"
@@ -72,9 +74,9 @@
               <div class="pl-2">
                 <a
                   :id="`owned-by-user-${user.id}-href`"
-                  :href="`${assetLibraryUrl}#suitec_userId=${user.id}`"
-                  target="_blank"
                   class="hover-link"
+                  :href="`${assetLibraryUrl}#suitec_orderBy=recent&suitec_userId=${user.id}`"
+                  target="_parent"
                 >
                   <font-awesome-icon
                     v-if="user.isAdmin || user.isTeaching"
