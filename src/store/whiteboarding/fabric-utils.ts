@@ -650,7 +650,6 @@ const $_deserializeElement = (
       const src = element.src || constants.ASSET_PLACEHOLDERS['file']
       e.setSrc(src, (e: any) => {
         $_log(`Deserialize image element: uuid = ${uuid}, src = ${src}`)
-        $_scaleImageObject(e, state)
         callback(e)
       })
     })
