@@ -285,10 +285,11 @@ class Asset(Base):
         def _to_api_json(row):
             return {
                 'id': row['id'],
-                'title': row['title'],
                 'description': row['description'],
+                'title': row['title'],
+                'visible': row['visible'],
             }
-        sql = text("""SELECT DISTINCT a.id, a.title, a.description
+        sql = text("""SELECT DISTINCT a.id, a.title, a.description, a.visible
             FROM assets a
             JOIN asset_whiteboard_elements e ON a.id = e.asset_id
             WHERE e.element_asset_id = :element_asset_id AND a.deleted_at IS NULL
