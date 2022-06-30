@@ -172,7 +172,7 @@ class Asset(Base):
         std_commit()
 
         preview_url = download_url if asset_type == 'file' else url
-        generate_previews(asset.id, preview_url)
+        _generate_previews(asset, preview_url)
 
         # Invisible assets generate no activities.
         if visible and create_activity is not False:
@@ -379,7 +379,7 @@ class Asset(Base):
         if self.asset_type != 'link':
             return
         self.update_preview(preview_status='pending')
-        generate_previews(self.id, self.url)
+        _generate_previews(self, self.url)
 
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
@@ -522,3 +522,8 @@ def _build_where_clause(filters, include_hidden, params, session):
         where_clause += ' AND a.views > 0'
 
     return where_clause
+
+
+def _generate_previews(asset, preview_url):
+    if not generate_previews(asset.id, preview_url):
+        asset.update_preview(preview_status='error')
