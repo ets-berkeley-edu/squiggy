@@ -266,18 +266,20 @@ export function setMode(state: any, mode: string) {
 
 const $_addCanvasListeners = (state: any) => {
   // Indicate that the currently selected elements are in the process of being moved, scaled or rotated
-  const setModifyingElement = () => store.dispatch('whiteboarding/setIsModifyingElement', true)
-  p.$canvas.on('object:moving', setModifyingElement)
-  p.$canvas.on('object:scaling', setModifyingElement)
-  p.$canvas.on('object:rotating', setModifyingElement)
-  p.$canvas.on('object:moving', $_ensureWithinCanvas)
+  p.$canvas.on('object:scaling', () => $_setModifyingElement(true))
+  p.$canvas.on('object:rotating', () => $_setModifyingElement(true))
+  p.$canvas.on('object:moving', (event: any) => {
+    $_setModifyingElement(true).then(() => {
+      $_ensureWithinCanvas(event)
+    })
+  })
 
   p.$canvas.on('object:modified', (event: any) => {
-    // Ensure that none of the modified objects are positioned off-screen.
-    $_ensureWithinCanvas(event)
-    const objects = $_getActiveObjects()
-    const done = _.after(objects.length, () => store.dispatch('whiteboarding/setIsModifyingElement', false))
-    _.each(objects, (element: any) => $_broadcastUpsert(element.assetId, element, state, done))
+    $_setModifyingElement(false).then(() => {
+      // Ensure that none of the modified objects are positioned off-screen.
+      $_ensureWithinCanvas(event)
+      _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state, _.noop))
+    })
   })
 
   p.$canvas.on('after:render', () => {
@@ -438,7 +440,9 @@ const $_addCanvasListeners = (state: any) => {
   })
 
   const setActiveCanvasObject = (object: any) => store.dispatch('whiteboarding/setActiveCanvasObject', object).then(_.noop)
-  p.$canvas.on('selection:created', () => setActiveCanvasObject(p.$canvas.getActiveObject()))
+  p.$canvas.on('selection:created', () => {
+    setActiveCanvasObject(p.$canvas.getActiveObject()).then(() => $_setModifyingElement(false))
+  })
   p.$canvas.on('selection:cleared', () => setActiveCanvasObject(null))
   p.$canvas.on('selection:updated', () => setActiveCanvasObject(p.$canvas.getActiveObject()))
 }
@@ -941,9 +945,9 @@ const $_scaleImageObject = (element: any, state: any) => {
   }
 }
 
-const $_setMode = (mode: string, callback?: any) => {
-  store.dispatch('whiteboarding/setMode', mode).then(callback || _.noop)
-}
+const $_setMode = (mode: string, callback?: any) => store.dispatch('whiteboarding/setMode', mode).then(callback || _.noop)
+
+const $_setModifyingElement = (value: boolean) => store.dispatch('whiteboarding/setIsModifyingElement', value)
 
 const $_tryReconnect = (state: any) => {
   setTimeout(() => {
