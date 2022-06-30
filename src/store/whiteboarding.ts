@@ -76,10 +76,6 @@ const mutations = {
   },
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
-  init: (state: any, whiteboard: any) => {
-    state.whiteboard = whiteboard
-    initialize(state)
-  },
   join: (state: any, userId: number) => {
     const user = _.find(state.whiteboard.users, ['id', userId])
     if (user) {
@@ -107,6 +103,13 @@ const mutations = {
   setMode: (state: any, mode: string) => setMode(state, mode),
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
+  setViewport: (state: any, viewport: any) => state.viewport = viewport,
+  setWhiteboard: (state: any, whiteboard: any) => {
+    state.whiteboard = whiteboard
+    if (state.whiteboard.isReadOnly) {
+      state.disableAll = true
+    }
+  },
   toggleZoom: (state: any) => {
     setMode(state, 'zoom')
     state.fitToScreen = !state.fitToScreen
@@ -125,8 +128,9 @@ const actions = {
     return new Promise(resolve => {
       getCategories(false).then(categories => {
         commit('setCategories', categories)
-        commit('init', whiteboard)
-        resolve(whiteboard)
+        commit('setWhiteboard', whiteboard)
+        commit('setViewport', document.getElementById(constants.VIEWPORT_ELEMENT_ID))
+        initialize(state).then(() => resolve(whiteboard))
       })
     })
   },
