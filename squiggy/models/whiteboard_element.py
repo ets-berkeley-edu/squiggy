@@ -71,6 +71,7 @@ class WhiteboardElement(Base):
     def get_id_per_uuid(cls, uuid):
         query = text('SELECT id FROM whiteboard_elements WHERE uuid = :uuid')
         result = db.session.execute(query, {'uuid': uuid}).first()
+        std_commit()
         return result and result['id']
 
     @classmethod

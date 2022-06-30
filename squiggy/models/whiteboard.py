@@ -254,6 +254,7 @@ class Whiteboard(Base):
                     'isStudent': is_student(row),
                     'isTeaching': is_teaching(row),
                 }
+        std_commit()
 
         for whiteboard_id, users_by_id in users_by_whiteboard_id.items():
             whiteboard = whiteboards_by_id[whiteboard_id]
@@ -324,6 +325,7 @@ class Whiteboard(Base):
             'whiteboard_id': whiteboard_id,
         }
         db.session.execute(text(sql), params)
+        std_commit()
 
     @classmethod
     def update(cls, title, users, whiteboard_id):

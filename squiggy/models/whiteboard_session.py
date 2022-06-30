@@ -107,6 +107,7 @@ class WhiteboardSession(Base):
             text('UPDATE whiteboard_sessions SET updated_at = now() WHERE socket_id = :socket_id'),
             {'socket_id': socket_id},
         )
+        std_commit()
 
     def to_api_json(self):
         return {
