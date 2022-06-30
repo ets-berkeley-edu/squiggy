@@ -111,6 +111,7 @@ class ActivityType(Base):
                 activity_config['enabled'] = per_course_config.enabled
                 activity_config['points'] = per_course_config.points
             activity_configs.append(activity_config)
+        std_commit()
         return activity_configs
 
     @classmethod

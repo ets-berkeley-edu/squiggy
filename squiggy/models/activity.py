@@ -127,6 +127,7 @@ class Activity(Base):
             user.last_activity = utc_now()
             db.session.add(user)
         cls.recalculate_points(course_id=course_id, user_ids=[user_id])
+        std_commit()
         return activity
 
     @classmethod
