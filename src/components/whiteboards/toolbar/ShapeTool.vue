@@ -80,6 +80,7 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
+    color: undefined,
     menu: false,
     shapeOptions: undefined,
     shapeStyle: undefined,
@@ -102,17 +103,22 @@ export default {
       this.setDisableAll(value)
     },
     setColor(value) {
-      const fill = this.shapeStyle.includes('fill') ? value : 'transparent'
+      this.color = value
       this.updateSelected({
-        color: value,
-        fill,
-        stroke: value,
+        color: this.color,
+        fill: this.shapeStyle.includes('fill') ? this.color : 'transparent',
+        stroke: this.color
       })
     },
     setShapeStyle(value) {
+      this.shapeStyle = value
       const [shape, style] = value.split(':')
-      const strokeWidth = style === 'thick' ? 10 : 2
-      this.updateSelected({shape, strokeWidth, style})
+      this.updateSelected({
+        fill: this.shapeStyle.includes('fill') ? this.color : 'transparent',
+        shape,
+        strokeWidth: style === 'thick' ? 10 : 2,
+        style
+      })
     }
   }
 }
