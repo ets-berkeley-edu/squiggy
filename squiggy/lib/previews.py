@@ -38,7 +38,7 @@ from squiggy.logger import logger
 
 def generate_previews(object_id, object_url, object_type='asset'):
     if not app.config['PREVIEWS_ENABLED']:
-        return
+        return True
     api_prefix = app.config['PREVIEWS_CALLBACK_API_PREFIX'] or app.config['API_PREFIX']
     post_back_urls = {
         'asset': f'{api_prefix}/previews/callback',
@@ -81,11 +81,13 @@ def generate_whiteboard_preview(whiteboard):
                 filename=f'{filename}_{now}.png',
                 s3_key_prefix=get_s3_key_prefix(whiteboard['courseId'], 'whiteboard'),
             )
-            generate_previews(
+            if not generate_previews(
                 object_id=whiteboard['id'],
                 object_type='whiteboard',
                 object_url=s3_attrs['download_url'],
-            )
+            ):
+                # TODO: If preview-image status is needed then the 'whiteboards' table needs 'preview_status' column.
+                pass
 
 
 def get_s3_key_prefix(course_id, object_type):
