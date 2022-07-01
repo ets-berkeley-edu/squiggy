@@ -422,7 +422,6 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('mouse:up', () => {
     if (state.isDrawingShape) {
       const shape = $_getHelperObject()
-      // Indicate that shape drawing has stopped
       store.dispatch('whiteboarding/setIsDrawingShape', false).then(_.noop)
       $_setMode('move')
       // Clone the drawn shape and add the clone to the canvas. This is caused by a bug in Fabric where it initially

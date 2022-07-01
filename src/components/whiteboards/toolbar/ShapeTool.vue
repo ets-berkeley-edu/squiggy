@@ -93,11 +93,15 @@ export default {
     this.setDisableAll(false)
   },
   methods: {
+    calculateFill() {
+      return this.shapeStyle.includes('fill') ? this.color : 'transparent'
+    },
     onMenuChange(value) {
       if (value) {
         this.resetSelected()
         this.setMode('shape')
         this.shapeStyle = 'Rect:thin'
+        this.updateSelected({fill: this.calculateFill()})
         this.$putFocusNextTick('menu-header')
       }
       this.setDisableAll(value)
@@ -106,7 +110,7 @@ export default {
       this.color = value
       this.updateSelected({
         color: this.color,
-        fill: this.shapeStyle.includes('fill') ? this.color : 'transparent',
+        fill: this.calculateFill(),
         stroke: this.color
       })
     },
@@ -114,7 +118,7 @@ export default {
       this.shapeStyle = value
       const [shape, style] = value.split(':')
       this.updateSelected({
-        fill: this.shapeStyle.includes('fill') ? this.color : 'transparent',
+        fill: this.calculateFill(),
         shape,
         strokeWidth: style === 'thick' ? 10 : 2,
         style

@@ -3,35 +3,18 @@
     v-if="whiteboard"
     app
     class="whiteboard-app-bar pl-0"
-    :collapse="collapse"
-    :collapse-on-scroll="false"
     color="white"
   >
     <v-container class="px-0" fluid>
       <v-row justify="space-between" no-gutters>
         <v-col class="align-center d-flex" cols="8">
           <h1 id="whiteboard-title" class="sr-only">{{ whiteboard.title }}</h1>
-          <v-btn
-            id="collapse-and-expand-the-app-bar"
-            color="green"
-            fab
-            input-value="collapse"
-            :small="!collapse"
-            :x-small="collapse"
-            @click="() => collapse = !collapse"
-          >
-            <font-awesome-icon
-              color="white"
-              :icon="collapse ? 'chevron-right' : 'chevron-left'"
-              size="lg"
-            />
-          </v-btn>
           <v-btn-toggle
-            v-if="!collapse && !whiteboard.isReadOnly"
+            v-if="!whiteboard.isReadOnly"
             v-model="modeProxy"
             active-class="primary"
             background-color="white"
-            class="ml-6"
+            class="ml-3"
           >
             <MoveTool />
             <ZoomTool />
@@ -45,10 +28,10 @@
         </v-col>
         <v-col cols="4">
           <div class="align-center d-flex justify-end">
-            <Users :collapse="collapse" />
-            <ExportTool v-if="!collapse" />
+            <Users />
+            <ExportTool />
             <SettingsTool
-              v-if="!collapse && (!whiteboard.isReadOnly || $currentUser.isAdmin || $currentUser.isTeaching)"
+              v-if="!whiteboard.isReadOnly || $currentUser.isAdmin || $currentUser.isTeaching"
               :open-delete-dialog="openDeleteDialog"
             />
           </div>
@@ -107,7 +90,6 @@ export default {
     }
   },
   data: () => ({
-    collapse: false,
     isDeleteDialogOpen: false
   }),
   methods: {
