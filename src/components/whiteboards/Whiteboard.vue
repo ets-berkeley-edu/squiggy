@@ -2,7 +2,8 @@
   <v-app>
     <Toolbar />
     <EditActiveFabricObject v-if="!isLoading && !whiteboard.isReadOnly" />
-    <v-main id="whiteboard-container" class="whiteboard-container">
+    <Spinner v-if="isLoading" />
+    <v-main v-show="!isLoading" id="whiteboard-container" class="whiteboard-container">
       <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
       <div id="whiteboard-viewport" class="whiteboard-viewport" tabindex="0">
         <canvas id="canvas"></canvas>
@@ -14,6 +15,7 @@
 <script>
 import Context from '@/mixins/Context'
 import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
+import Spinner from '@/components/util/Spinner'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
@@ -22,13 +24,13 @@ import {getWhiteboard} from '@/api/whiteboards'
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {EditActiveFabricObject, Toolbar},
+  components: {EditActiveFabricObject, Spinner, Toolbar},
   data: () => ({
     isSnackbarOpen: false,
     refreshJob: undefined
   }),
   created() {
-    this.$loading()
+    this.$loading(true)
     const whiteboardId = parseInt(this.$route.params.id, 10)
     getWhiteboard(whiteboardId).then(whiteboard => {
       this.init(whiteboard).then(whiteboard => {
