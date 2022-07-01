@@ -4,7 +4,7 @@
       v-if="!$isInIframe || !crossToolLink"
       :id="`user-${user.id}-href`"
       :to="`/assets?userId=${user.id}`"
-      :aria-label="screenreaderText"
+      :aria-label="`View assets, filtered by ${user.isAdmin || user.isTeaching ? 'instructor' : 'user'} ${user.canvasFullName}`"
       class="hover-link"
     >
       <font-awesome-icon
@@ -14,28 +14,16 @@
       />
       {{ user.canvasFullName }}
     </router-link>
-    <a
-      v-if="$isInIframe && crossToolLink"
-      :id="`user-${user.id}-href`"
-      :href="`${$currentUser.course.assetLibraryUrl}#suitec_userId=${user.id}`"
-      :aria-label="screenreaderText"
-      target="_parent"
-      class="hover-link"
-    >
-      <font-awesome-icon
-        v-if="user.isAdmin || user.isTeaching"
-        :id="`user-${user.id}-graduation-cap`"
-        icon="graduation-cap"
-        class="ml-2"
-      />
-      {{ user.canvasFullName }}
-    </a>
+    <CrossToolUserLink v-if="$isInIframe && crossToolLink" :user="user" />
   </span>
 </template>
 
 <script>
+import CrossToolUserLink from '@/components/util/CrossToolUserLink'
+
 export default {
   name: 'UserLink',
+  components: {CrossToolUserLink},
   props: {
     crossToolLink: {
       required: false,
@@ -44,11 +32,6 @@ export default {
     user: {
       required: true,
       type: Object
-    }
-  },
-  data() {
-    return {
-      screenreaderText: `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
     }
   }
 }
