@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import constants from '@/store/whiteboarding/constants'
+import store from '@/store'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
 import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
@@ -52,7 +53,7 @@ const state = {
 const getters = {
   activeCanvasObject: (state: any): any => state.activeCanvasObject,
   categories: (state: any): any[] => state.categories,
-  disableAll: (state: any): boolean => state.disableAll,
+  disableAll: (state: any): boolean => state.disableAll || store.getters['context/isLoading'],
   fitToScreen: (state: any): boolean => state.fitToScreen,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   isScrollingCanvas: (state: any): boolean => state.isScrollingCanvas,
