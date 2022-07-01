@@ -42,25 +42,12 @@
         </div>
         <div v-if="asset.users.length === 1">
           <div class="align-center d-flex">
-            <div class="pr-2">Owned by</div>
-            <div class="pr-2">
+            <div>Owned by</div>
+            <div class="pl-2">
               <Avatar :user="asset.users[0]" />
             </div>
-            <div>
-              <a
-                :id="`owned-by-user-${asset.users[0].id}-href`"
-                class="hover-link"
-                :href="`${assetLibraryUrl}#suitec_userId=${asset.users[0].id}`"
-                target="_parent"
-              >
-                <font-awesome-icon
-                  v-if="asset.users[0].isAdmin || asset.users[0].isTeaching"
-                  :id="`user-${asset.users[0].id}-graduation-cap`"
-                  icon="graduation-cap"
-                  class="ml-2"
-                />
-                {{ asset.users[0].canvasFullName }}
-              </a>
+            <div class="pl-2">
+              <CrossToolUserLink :user="asset.users[0]" />
             </div>
           </div>
         </div>
@@ -72,20 +59,7 @@
                 <Avatar :user="user" />
               </div>
               <div class="pl-2">
-                <a
-                  :id="`owned-by-user-${user.id}-href`"
-                  class="hover-link"
-                  :href="`${assetLibraryUrl}#suitec_orderBy=recent&suitec_userId=${user.id}`"
-                  target="_parent"
-                >
-                  <font-awesome-icon
-                    v-if="user.isAdmin || user.isTeaching"
-                    :id="`user-${user.id}-graduation-cap`"
-                    icon="graduation-cap"
-                    class="ml-2"
-                  />
-                  {{ user.canvasFullName }}
-                </a>
+                <CrossToolUserLink :user="user" />
               </div>
             </div>
           </div>
@@ -123,13 +97,14 @@
 
 <script>
 import Avatar from '@/components/user/Avatar'
+import CrossToolUserLink from '@/components/util/CrossToolUserLink'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'ExportSummary',
   mixins: [Utils, Whiteboarding],
-  components: {Avatar},
+  components: {Avatar, CrossToolUserLink},
   props: {
     asset: {
       required: true,

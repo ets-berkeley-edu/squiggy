@@ -70,7 +70,12 @@ const router = new Router({
                 if (params.assetId) {
                   next(`/asset/${params.assetId}`)
                 } else {
-                  next()
+                  next({
+                    query: {
+                      ...params,
+                      ...(to.query || {})
+                    }
+                  })
                 }
               })
             }

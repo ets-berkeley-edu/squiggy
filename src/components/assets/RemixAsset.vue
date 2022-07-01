@@ -10,7 +10,6 @@
         id="remix-asset-whiteboard-btn"
         class="justify-start w-100"
         :disabled="isRemixing"
-        elevation="0"
         v-bind="attrs"
         v-on="on"
       >

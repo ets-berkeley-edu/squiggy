@@ -63,7 +63,7 @@
             <div>
               <Avatar :user="asset.users[0]" />
             </div>
-            <div class="pl-2">
+            <div class="pl-1">
               <UserLink :user="asset.users[0]" />
             </div>
           </div>
