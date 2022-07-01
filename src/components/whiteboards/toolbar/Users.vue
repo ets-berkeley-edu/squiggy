@@ -9,7 +9,7 @@
     <template #activator="{on, attrs}">
       <div
         id="show-whiteboard-collaborators-btn"
-        :class="{'mx-2': !collapse}"
+        class="mx-2"
         tabindex="0"
         v-bind="attrs"
         v-on="on"
@@ -19,14 +19,14 @@
           bottom
           :color="usersOnline.length ? 'green' : 'grey'"
           :content="`${usersOnline.length}`"
-          :offset-x="collapse ? 20 : 10"
-          :offset-y="collapse ? 20 : 10"
+          offset-x="10"
+          offset-y="10"
         >
           <v-avatar
             v-if="primary"
             :aria-label="getAvatarLabel(primary)"
             color="green lighten-4"
-            :size="collapse ? '36px' : '48px'"
+            size="48px"
           >
             <img
               v-if="!primary.isTeaching && !primary.isAdmin"
@@ -123,12 +123,6 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'Users',
   mixins: [Utils, Whiteboarding],
-  props: {
-    collapse: {
-      required: true,
-      type: Boolean
-    }
-  },
   data: () => ({
     primary: undefined
   }),

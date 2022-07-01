@@ -22,20 +22,6 @@
       <v-card-text class="pl-8 pt-8 scrollable-card">
         <v-container v-if="!asset.id" fluid>
           <v-row>
-            <v-col class="py-2" cols="12">
-              <div class="align-center d-flex" :class="{'flex-column': whiteboard.thumbnailUrl}">
-                <img v-if="whiteboard.thumbnailUrl" alt="Whiteboard thumbnail image" :src="whiteboard.thumbnailUrl" />
-                <font-awesome-icon
-                  v-if="!whiteboard.thumbnailUrl"
-                  color="primary"
-                  icon="images"
-                  size="2x"
-                />
-                <h2 id="modal-header" class="pl-2">Export to Asset Library</h2>
-              </div>
-            </v-col>
-          </v-row>
-          <v-row>
             <v-col class="pt-5" cols="2">
               <label class="float-right" for="asset-title-input">
                 Title
