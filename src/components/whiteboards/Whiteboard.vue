@@ -2,8 +2,8 @@
   <v-app>
     <Toolbar />
     <EditActiveFabricObject v-if="!isLoading && !whiteboard.isReadOnly" />
-    <Spinner v-if="isLoading" />
-    <v-main v-show="!isLoading" id="whiteboard-container" class="whiteboard-container">
+    <Spinner v-if="isLoading" class="spinner" />
+    <v-main id="whiteboard-container" class="whiteboard-container">
       <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
       <div id="whiteboard-viewport" class="whiteboard-viewport" tabindex="0">
         <canvas id="canvas"></canvas>
@@ -37,7 +37,7 @@ export default {
         this.setDisableAll(false)
         this.$ready(whiteboard.title)
         if (!this.whiteboard.isReadOnly) {
-          this.refresh()
+          this.scheduleRefresh()
         }
       })
     })
@@ -46,16 +46,22 @@ export default {
     clearTimeout(this.refreshJob)
   },
   methods: {
-    refresh() {
+    scheduleRefresh() {
       clearTimeout(this.refreshJob)
-      this.checkForUpdates()
-      this.refreshJob = setTimeout(this.refresh, this.$config.whiteboardsRefreshInterval)
+      this.refreshJob = setTimeout(() => {
+        this.checkForUpdates().then(() => {
+          this.scheduleRefresh()
+        })
+      }, this.$config.whiteboardsRefreshInterval)
     }
   }
 }
 </script>
 
 <style scoped>
+.spinner {
+  z-index: 1200;
+}
 .whiteboard-container {
   background-color: #fdfbf7;
   bottom: 0;

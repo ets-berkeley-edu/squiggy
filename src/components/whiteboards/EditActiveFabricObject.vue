@@ -39,6 +39,16 @@
         <span class="sr-only">Delete</span>
         <font-awesome-icon icon="trash" />
       </v-btn>
+      <v-btn
+        v-if="$config.isVueAppDebugMode"
+        id="debug-btn"
+        color="red"
+        icon
+        @click="debug"
+      >
+        <span class="sr-only">Debug</span>
+        <font-awesome-icon icon="bug" />
+      </v-btn>
     </div>
   </div>
 </template>
@@ -48,7 +58,14 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'EditActiveFabricObject',
-  mixins: [Whiteboarding]
+  mixins: [Whiteboarding],
+  methods: {
+    debug() {
+      if (this.activeCanvasObject && !this.isModifyingElement) {
+        console.log('\n---\n' + JSON.stringify(this.activeCanvasObject) + '\n---\n')
+      }
+    }
+  }
 }
 </script>
 

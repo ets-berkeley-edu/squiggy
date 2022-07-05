@@ -16,15 +16,25 @@
             <v-btn
               id="confirm-delete-btn"
               color="primary"
+              :disabled="isDeleting"
               @click="confirm"
               @keypress.enter.prevent="confirm"
             >
-              Confirm
+              <span v-if="isDeleting">
+                <font-awesome-icon
+                  class="mr-2"
+                  icon="spinner"
+                  :spin="true"
+                />
+                Deleting...
+              </span>
+              <span v-if="!isDeleting">Confirm</span>
             </v-btn>
           </div>
           <div>
             <v-btn
               id="cancel-delete-btn"
+              :disabled="isDeleting"
               @click="cancel"
               @keypress.enter.prevent="cancel"
             >
@@ -45,6 +55,10 @@ export default {
   name: 'DeleteWhiteboardDialog',
   mixins: [Utils, Whiteboarding],
   props: {
+    isDeleting: {
+      required: true,
+      type: Boolean
+    },
     onCancel: {
       required: true,
       type: Function

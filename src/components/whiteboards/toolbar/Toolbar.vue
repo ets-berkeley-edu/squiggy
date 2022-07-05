@@ -39,6 +39,7 @@
       </v-row>
     </v-container>
     <DeleteWhiteboardDialog
+      :is-deleting="isDeleting"
       :on-cancel="cancelDelete"
       :on-confirm-delete="deleteConfirmed"
       :open="isDeleteDialogOpen"
@@ -63,7 +64,7 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 
 export default {
-  name: 'Toolbar2',
+  name: 'Toolbar',
   mixins: [Context, Whiteboarding],
   components: {
     AddExistingAssets,
@@ -85,12 +86,13 @@ export default {
         return this.mode
       },
       set(value) {
-        this.setMode(value)
+        this.setMode(value || 'move')
       }
     }
   },
   data: () => ({
-    isDeleteDialogOpen: false
+    isDeleteDialogOpen: false,
+    isDeleting: false
   }),
   methods: {
     cancelDelete() {
@@ -98,8 +100,11 @@ export default {
       this.isDeleteDialogOpen = false
     },
     deleteConfirmed() {
-      this.isDeleteDialogOpen = false
-      this.deleteWhiteboard()
+      this.isDeleting = true
+      this.deleteWhiteboard().then(() => {
+        this.isDeleteDialogOpen = false
+        this.isDeleting = false
+      })
     },
     openDeleteDialog() {
       this.isDeleteDialogOpen = true
