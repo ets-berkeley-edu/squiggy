@@ -6,14 +6,14 @@ import {getCategories} from '@/api/categories'
 import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
+  afterChangeMode,
   checkForUpdates,
   deleteActiveElements,
   emitWhiteboardUpdate,
   initialize,
   moveLayer,
   refresh,
-  setCanvasDimensions,
-  setMode
+  setCanvasDimensions
 } from '@/store/whiteboarding/fabric-utils'
 
 const DEFAULT_TOOL_SELECTION = {
@@ -28,6 +28,12 @@ const DEFAULT_TOOL_SELECTION = {
 }
 
 const p = Vue.prototype
+
+const $_log = (statement: string, force?: boolean) => {
+  if (p.$config.isVueAppDebugMode || force) {
+    console.log(`🪲 ${statement}`)
+  }
+}
 
 const state = {
   activeCanvasObject: undefined,
@@ -69,11 +75,6 @@ const mutations = {
   afterWhiteboardDelete: (state: any) => {
     state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
-    if (p.$currentUser.isAdmin || p.$currentUser.isTeaching) {
-      refresh(state)
-    } else {
-      window.close()
-    }
   },
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
@@ -92,7 +93,6 @@ const mutations = {
   restoreWhiteboard: (state: any) => {
     state.whiteboard.isReadOnly = false
     state.whiteboard.deletedAt = null
-    refresh(state)
   },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
@@ -101,7 +101,11 @@ const mutations = {
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
-  setMode: (state: any, mode: string) => setMode(state, mode),
+  setMode: (state: any, mode: string) => {
+    $_log(`Set mode: ${mode}`)
+    state.mode = mode
+    afterChangeMode(state)
+  },
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
   setViewport: (state: any, viewport: any) => state.viewport = viewport,
@@ -112,7 +116,6 @@ const mutations = {
     }
   },
   toggleZoom: (state: any) => {
-    setMode(state, 'zoom')
     state.fitToScreen = !state.fitToScreen
     setCanvasDimensions(state)
   },
@@ -123,7 +126,19 @@ const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
   checkForUpdates: ({state}) => checkForUpdates(state),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
-  deleteWhiteboard: ({commit, state}) => deleteWhiteboard(state.whiteboard.id).then(() => commit('afterWhiteboardDelete')),
+  deleteWhiteboard: ({commit, state}) => {
+    return new Promise<void>(resolve => {
+      deleteWhiteboard(state.whiteboard.id).then(() => {
+        commit('afterWhiteboardDelete')
+        if (p.$currentUser.isAdmin || p.$currentUser.isTeaching) {
+          refresh(state).then(resolve)
+        } else {
+          window.close()
+          resolve()
+        }
+      })
+    })
+  },
   emitWhiteboardUpdate: ({commit}, whiteboard: any) => commit('emitWhiteboardUpdate', whiteboard),
   init: ({commit}, whiteboard: any) => {
     return new Promise(resolve => {
@@ -144,7 +159,7 @@ const actions = {
         restoreWhiteboard(state.whiteboard.id).then(function() {
           // Update local state
           commit('restoreWhiteboard')
-          resolve()
+          refresh(state).then(resolve)
         })
       } else {
         resolve()
@@ -160,7 +175,10 @@ const actions = {
   setMode: ({commit}, mode: string) => commit('setMode', mode),
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   setUsers: ({commit}, users: any[]) => commit('setUsers', users),
-  toggleZoom: ({commit}) => commit('toggleZoom'),
+  toggleZoom: ({commit}) => {
+    commit('setMode', 'zoom')
+    commit('toggleZoom')
+  },
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties)
 }
 
