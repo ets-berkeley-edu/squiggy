@@ -141,12 +141,12 @@ const actions = {
   },
   emitWhiteboardUpdate: ({commit}, whiteboard: any) => commit('emitWhiteboardUpdate', whiteboard),
   init: ({commit}, whiteboard: any) => {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       getCategories(false).then(categories => {
         commit('setCategories', categories)
         commit('setWhiteboard', whiteboard)
         commit('setViewport', document.getElementById(constants.VIEWPORT_ELEMENT_ID))
-        initialize(state).then(() => resolve(whiteboard))
+        initialize(state).then(resolve)
       })
     })
   },

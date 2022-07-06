@@ -33,9 +33,9 @@ export default {
     this.$loading(true)
     const whiteboardId = parseInt(this.$route.params.id, 10)
     getWhiteboard(whiteboardId).then(whiteboard => {
-      this.init(whiteboard).then(whiteboard => {
+      this.init(whiteboard).then(() => {
         this.setDisableAll(false)
-        this.$ready(whiteboard.title)
+        this.$ready(this.whiteboard.title)
         if (!this.whiteboard.isReadOnly) {
           this.scheduleRefresh()
         }
