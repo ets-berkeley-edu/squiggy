@@ -547,8 +547,8 @@ const $_addSocketListeners = (state: any) => {
       // Deactivate the current group if any of the updated elements are in the current group
       $_deactivateGroupIfOverlap(whiteboardElement)
       $_assignInto($_getCanvasElement(uuid), element)
-      $_updatePreviewImage(element, state, whiteboardElement.uuid).then((updatedElement) => {
-        $_updateLayers(state).then(() => $_ensureWithinCanvas(updatedElement))
+      $_updatePreviewImage(element, state, whiteboardElement.uuid).then(() => {
+        $_updateLayers(state).then(() => $_ensureWithinCanvas($_getCanvasElement(uuid)))
       })
     } else {
       $_deserializeElement(state, element, element.uuid).then((e: any) => {
@@ -708,16 +708,16 @@ const $_enableCanvasElements = (enabled: boolean) => {
   _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
 }
 
-const $_ensureWithinCanvas = (element: any) => {
+const $_ensureWithinCanvas = (object: any) => {
   $_log('Ensure within canvas')
   // Ensure that active object or group cannot be positioned off-screen.
-  element.setCoords()
-  const bound = element.getBoundingRect()
+  object.setCoords()
+  const bound = object.getBoundingRect()
   if (bound.left < 0) {
-    element.left -= bound.left / p.$canvas.getZoom()
+    object.left -= bound.left / p.$canvas.getZoom()
   }
   if (bound.top < 0) {
-    element.top -= bound.top / p.$canvas.getZoom()
+    object.top -= bound.top / p.$canvas.getZoom()
   }
 }
 
@@ -900,39 +900,36 @@ const $_log = (statement: string, force?: boolean) => {
 const $_paste = (state: any): void => {
   $_log('Paste')
   const elements: any[] = []
+  let cloneCount = 0
 
   // Activate the pasted element(s)
-  const selectPasted = _.after(state.clipboard.length, () => {
-    // When only a single element was pasted, simply select it
-    if (elements.length === 1) {
-      p.$canvas.setActiveObject(elements[0])
-    // When multiple elements were pasted, create a new group
-    // for those elements and select them
-    } else {
-      const selection = new fabric.ActiveSelection(elements)
-      selection.isHelper = true
-      p.$canvas.setActiveObject(selection)
+  const after = () => {
+    cloneCount++
+    if (cloneCount === state.clipboard.length) {
+      // When only a single element was pasted, simply select it
+      if (elements.length === 1) {
+        p.$canvas.setActiveObject(elements[0])
+        $_ensureWithinCanvas($_getCanvasElement(elements[0].uuid))
+      } else {
+        // When multiple elements were pasted, create a new group for those elements and select them
+        const selection = new fabric.ActiveSelection(elements)
+        selection.isHelper = true
+        p.$canvas.setActiveObject(selection)
+        $_ensureWithinCanvas(selection)
+      }
+      $_renderWhiteboard(state).then(() => store.dispatch('whiteboarding/setClipboard', undefined))
     }
-    p.$canvas.requestRenderAll()
-    // Set the size of the whiteboard canvas
-    setCanvasDimensions(state)
-    store.dispatch('whiteboarding/setClipboard', undefined).then(_.noop)
-  })
-
+  }
   if (state.clipboard.length > 0) {
     // Clear the current selection
-    const selection = p.$canvas.getActiveObject()
-    if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-      p.$canvas.remove(selection)
+    const object = p.$canvas.getActiveObject()
+    if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+      p.$canvas.remove(object)
     }
-    p.$canvas.discardActiveObject().requestRenderAll()
-
-    // Duplicate each copied element. In order to do this, remove
-    // the index and unique id from the element and alter the position
-    // to ensure its visibility
-    _.each(state.clipboard, (element: any) => {
-      element.clone((clone: any) => {
-        delete clone.index
+    // Duplicate copied elements by setting new index and uuid values. Also, position to ensure its visibility.
+    _.each(state.clipboard, (object: any) => {
+      object.clone((clone: any) => {
+        clone.index = state.whiteboard.whiteboardElements.length + clone.index
         clone.uuid = uuidv4()
         clone.left += 25
         clone.top += 25
@@ -942,7 +939,7 @@ const $_paste = (state: any): void => {
           p.$canvas.requestRenderAll()
           // Keep track of the added elements to allow them to be selected
           elements.push(e)
-          selectPasted()
+          after()
         })
       })
     })
@@ -953,10 +950,12 @@ const $_renderWhiteboard = (state: any) => {
   return new Promise<void>(resolve => {
     $_log('Render whiteboard')
     const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, (w: any) => `${w.element.index}-${w.element.uuid}`)
+    let deserializeCount = 0
     const after = (element: any, index: number) => {
+      deserializeCount++
       p.$canvas.insertAt(element, index, false)
       // Restore the order of the layers once all elements have finished loading
-      if (index === whiteboardElements.length - 1) {
+      if (deserializeCount === whiteboardElements.length) {
         $_updateLayers(state).then(() => {
           // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
           if (state.whiteboard.isReadOnly) {
