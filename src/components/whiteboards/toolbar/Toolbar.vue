@@ -15,6 +15,7 @@
             active-class="primary"
             background-color="white"
             class="ml-3"
+            mandatory
           >
             <MoveTool />
             <ZoomTool />
