@@ -314,14 +314,14 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('object:rotating', () => $_setModifyingElement(true))
   p.$canvas.on('object:moving', (event: any) => {
     $_setModifyingElement(true).then(() => {
-      $_ensureWithinCanvas(event)
+      $_ensureWithinCanvas(event.target)
     })
   })
 
   p.$canvas.on('object:modified', (event: any) => {
     $_setModifyingElement(false).then(() => {
       // Ensure that none of the modified objects are positioned off-screen.
-      $_ensureWithinCanvas(event)
+      $_ensureWithinCanvas(event.target)
       _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state))
     })
   })
@@ -547,8 +547,8 @@ const $_addSocketListeners = (state: any) => {
       // Deactivate the current group if any of the updated elements are in the current group
       $_deactivateGroupIfOverlap(whiteboardElement)
       $_assignInto($_getCanvasElement(uuid), element)
-      $_updatePreviewImage(element, state, whiteboardElement.uuid).then(() => {
-        $_updateLayers(state).then(() => setCanvasDimensions(state))
+      $_updatePreviewImage(element, state, whiteboardElement.uuid).then((updatedElement) => {
+        $_updateLayers(state).then(() => $_ensureWithinCanvas(updatedElement))
       })
     } else {
       $_deserializeElement(state, element, element.uuid).then((e: any) => {
@@ -708,10 +708,9 @@ const $_enableCanvasElements = (enabled: boolean) => {
   _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
 }
 
-const $_ensureWithinCanvas = (event: any) => {
+const $_ensureWithinCanvas = (element: any) => {
   $_log('Ensure within canvas')
   // Ensure that active object or group cannot be positioned off-screen.
-  const element = event.target
   element.setCoords()
   const bound = element.getBoundingRect()
   if (bound.left < 0) {
@@ -1030,7 +1029,7 @@ const $_assignInto = (existing: any, updated: any) => {
 }
 
 const $_updatePreviewImage = (element: any, state: any, uuid: string) => {
-  return new Promise<void>(resolve => {
+  return new Promise<Object>(resolve => {
     $_log('Update preview image')
     const existing: any = $_getCanvasElement(uuid)
     if (existing.type === 'image' && existing.getSrc() !== element.src) {
@@ -1041,7 +1040,7 @@ const $_updatePreviewImage = (element: any, state: any, uuid: string) => {
           $_log(`Update existing image element: src = ${src}, uuid = ${uuid}. Next, broadcast upsert.`)
           $_broadcastUpsert(element.assetId, element, state)
           p.$canvas.requestRenderAll()
-          resolve()
+          resolve(existing)
         })
       }
       const src = element.src || existing.getSrc()
@@ -1051,7 +1050,7 @@ const $_updatePreviewImage = (element: any, state: any, uuid: string) => {
         done(constants.ASSET_PLACEHOLDERS['file'])
       }
     } else {
-      resolve()
+      resolve(existing)
     }
   })
 }
