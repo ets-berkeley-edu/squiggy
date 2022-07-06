@@ -87,7 +87,7 @@ export default {
         return this.mode
       },
       set(value) {
-        if (value) {
+        if (value instanceof String) {
           this.setMode(value)
         }
       }
