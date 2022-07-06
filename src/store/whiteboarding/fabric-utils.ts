@@ -948,7 +948,7 @@ const $_renderWhiteboard = (state: any) => {
     const after = (element: any, index: number) => {
       p.$canvas.insertAt(element, index, false)
       // Restore the order of the layers once all elements have finished loading
-      if (index === p.$canvas.getObjects().length - 1) {
+      if (index === whiteboardElements.length - 1) {
         $_updateLayers(state).then(() => {
           // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
           if (state.whiteboard.isReadOnly) {
