@@ -27,8 +27,6 @@ const DEFAULT_TOOL_SELECTION = {
   width: 1
 }
 
-const VALID_MODES = ['assets', 'draw', 'link', 'move', 'shape', 'upload', 'zoom']
-
 const p = Vue.prototype
 
 const $_log = (statement: string, force?: boolean) => {
@@ -106,12 +104,8 @@ const mutations = {
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
   setMode: (state: any, mode: string) => {
     $_log(`Set mode: ${mode}`)
-    if (VALID_MODES.includes(mode)) {
-      state.mode = mode
-      afterChangeMode(state)
-    } else {
-      throw new Error(`Invalid mode: ${mode}`)
-    }
+    state.mode = mode
+    afterChangeMode(state)
   },
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setUsers: (state: any, users: any[]) => state.whiteboard.users = users,

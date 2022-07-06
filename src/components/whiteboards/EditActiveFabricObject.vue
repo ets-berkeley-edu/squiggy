@@ -17,6 +17,7 @@
       </v-btn>
       <v-btn
         id="move-layer-back-btn"
+        color="primary"
         icon
         @click="moveLayer('back')"
       >
@@ -25,6 +26,7 @@
       </v-btn>
       <v-btn
         id="move-layer-front-btn"
+        color="primary"
         icon
         @click="moveLayer('front')"
       >
@@ -33,6 +35,7 @@
       </v-btn>
       <v-btn
         id="delete-btn"
+        color="primary"
         icon
         @click="deleteActiveElements"
       >
