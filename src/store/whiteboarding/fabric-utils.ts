@@ -167,30 +167,39 @@ export function checkForUpdates(state: any) {
         resolve()
       } else {
         store.dispatch('whiteboarding/setUsers', data.users).then(_.noop)
-        let modified = false
-        const after = (index) => {
-          if (index === data.whiteboardElements.length) {
-            if (modified) {
-              $_updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
-            } else {
-              resolve()
+        const whiteboardElements = data.whiteboardElements
+        const count = whiteboardElements.length
+
+        if (count) {
+          let modified = false
+          const after = (index) => {
+            if (index === count - 1) {
+              if (modified) {
+                $_updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
+              } else {
+                resolve()
+              }
             }
           }
-        }
-        _.each(data.whiteboardElements, (whiteboardElement: any, index: number) => {
-          // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
-          const src = whiteboardElement.element.src
-          const uuid = whiteboardElement.uuid
-          const existing: any = $_getCanvasElement(uuid)
-          if (existing && existing.src !== src) {
-            // Deactivate the current group if any of the updated elements are in the current group
-            $_deactivateGroupIfOverlap(whiteboardElement)
-            $_updatePreviewImage(whiteboardElement.element, state, uuid).then(() => {
-              modified = true
+          _.each(whiteboardElements, (whiteboardElement: any, index: number) => {
+            // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
+            const src = whiteboardElement.element.src
+            const uuid = whiteboardElement.uuid
+            const existing: any = $_getCanvasElement(uuid)
+            if (existing && existing.src !== src) {
+              // Deactivate the current group if any of the updated elements are in the current group
+              $_deactivateGroupIfOverlap(whiteboardElement)
+              $_updatePreviewImage(whiteboardElement.element, state, uuid).then(() => {
+                modified = true
+                after(index)
+              })
+            } else {
               after(index)
-            })
-          }
-        })
+            }
+          })
+        } else {
+          resolve()
+        }
       }
     })
   })
@@ -1035,8 +1044,9 @@ const $_updatePreviewImage = (element: any, state: any, uuid: string) => {
           resolve()
         })
       }
-      if (element.src) {
-        fabric.util.loadImage(element.src, img => done(img.currentSrc))
+      const src = element.src || existing.getSrc()
+      if (src) {
+        fabric.util.loadImage(src, img => done(img.currentSrc))
       } else {
         done(constants.ASSET_PLACEHOLDERS['file'])
       }
