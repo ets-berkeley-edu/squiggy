@@ -98,6 +98,7 @@ const mutations = {
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
+  setFitToScreen: (state: any, fitToScreen: boolean) => state.fitToScreen = fitToScreen,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
@@ -114,10 +115,6 @@ const mutations = {
     if (state.whiteboard.isReadOnly) {
       state.disableAll = true
     }
-  },
-  toggleZoom: (state: any) => {
-    state.fitToScreen = !state.fitToScreen
-    setCanvasDimensions(state)
   },
   updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties)
 }
@@ -175,9 +172,10 @@ const actions = {
   setMode: ({commit}, mode: string) => commit('setMode', mode),
   setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
   setUsers: ({commit}, users: any[]) => commit('setUsers', users),
-  toggleZoom: ({commit}) => {
+  toggleZoom: ({commit, state}) => {
     commit('setMode', 'zoom')
-    commit('toggleZoom')
+    commit('setFitToScreen', !state.fitToScreen)
+    setCanvasDimensions(state)
   },
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties)
 }
