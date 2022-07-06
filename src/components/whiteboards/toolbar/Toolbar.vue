@@ -86,7 +86,9 @@ export default {
         return this.mode
       },
       set(value) {
-        this.setMode(value || 'move')
+        if (value) {
+          this.setMode(value)
+        }
       }
     }
   },

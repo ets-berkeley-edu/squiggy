@@ -3,9 +3,9 @@
     <Toolbar />
     <EditActiveFabricObject v-if="!isLoading && !whiteboard.isReadOnly" />
     <Spinner v-if="isLoading" class="spinner" />
-    <v-main id="whiteboard-container" class="whiteboard-container">
+    <v-main id="whiteboard-container" class="h-100 whiteboard-container">
       <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
-      <div id="whiteboard-viewport" class="whiteboard-viewport" tabindex="0">
+      <div id="whiteboard-viewport" class="h-100 whiteboard-viewport" tabindex="0">
         <canvas id="canvas"></canvas>
       </div>
     </v-main>
@@ -72,8 +72,7 @@ export default {
   z-index: 1000;
 }
 .whiteboard-viewport {
-  height: 100vh;
-  overflow: scroll;
+  overflow: hidden;
   position: relative;
 }
 </style>

@@ -93,7 +93,7 @@
         Description:
       </v-col>
       <v-col id="asset-description" align-self="center">
-        {{ asset.description }} XXX
+        {{ asset.description || '&mdash;' }}
       </v-col>
     </v-row>
     <v-row v-if="!['file', 'whiteboard'].includes(asset.assetType)" class="mt-3" no-gutters>
