@@ -893,42 +893,29 @@ const $_log = (statement: string, force?: boolean) => {
 
 const $_paste = (state: any): void => {
   $_log('Paste')
-  const elements: any[] = []
-  const copiedElements = state.clipboard
+  const copies = state.clipboard
   store.commit('whiteboarding/clearClipboard')
 
-  const after = () => {
-    if (elements.length === copiedElements.length) {
-      // When only a single element was pasted, simply select it
-      if (elements.length === 1) {
-        p.$canvas.setActiveObject(elements[0])
-        $_ensureWithinCanvas($_getCanvasElement(elements[0].uuid))
-      } else {
-        // When multiple elements were pasted, create a new group for those elements and select them
-        const selection = new fabric.ActiveSelection(elements)
-        selection.isHelper = true
-        p.$canvas.setActiveObject(selection)
-        $_ensureWithinCanvas(selection)
-      }
-      $_renderWhiteboard(state).then(_.noop)
-    }
-  }
-  if (copiedElements.length) {
+  if (copies.length) {
     // Clear the current selection
     const object = p.$canvas.getActiveObject()
     if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(object)
     }
-    // Duplicate copied elements by setting new index and uuid values. Also, position to ensure its visibility.
-    _.each(copiedElements, (clone: any) => {
-      // Add the element to the whiteboard canvas
-      $_deserializeElement(state, clone, clone.uuid).then((e: any) => {
-        p.$canvas.add(e)
-        // Keep track of the added elements to allow them to be selected
-        elements.push(e)
-        after()
-      })
-    })
+    _.each(copies, (copy: any) => p.$canvas.add(copy))
+    setCanvasDimensions(state)
+    _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))
+    if (copies.length === 1) {
+      const object = $_getCanvasElement(copies[0].uuid)
+      p.$canvas.setActiveObject(object).requestRenderAll()
+    } else {
+      // When multiple elements were pasted, create a new group for those elements and select them
+      const selection = new fabric.ActiveSelection(copies)
+      selection.isHelper = true
+      p.$canvas.setActiveObject(selection)
+      $_ensureWithinCanvas(selection)
+      p.$canvas.requestRenderAll()
+    }
   }
 }
 
