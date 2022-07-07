@@ -35,12 +35,12 @@ export default {
   methods: {
     ...mapActions('whiteboarding', [
       'addAsset',
-      'checkForUpdates',
       'deleteActiveElements',
       'deleteWhiteboard',
       'emitWhiteboardUpdate',
       'init',
       'moveLayer',
+      'refreshPreviewImages',
       'resetSelected',
       'restoreWhiteboard',
       'setDisableAll',

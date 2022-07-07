@@ -7,12 +7,12 @@ import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   afterChangeMode,
-  checkForUpdates,
   deleteActiveElements,
   emitWhiteboardUpdate,
   initialize,
   moveLayer,
-  refresh,
+  refreshPreviewImages,
+  reload,
   setCanvasDimensions
 } from '@/store/whiteboarding/fabric-utils'
 
@@ -121,14 +121,14 @@ const mutations = {
 
 const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
-  checkForUpdates: ({state}) => checkForUpdates(state),
+  refreshPreviewImages: ({state}) => refreshPreviewImages(state),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       deleteWhiteboard(state.whiteboard.id).then(() => {
         commit('afterWhiteboardDelete')
         if (p.$currentUser.isAdmin || p.$currentUser.isTeaching) {
-          refresh(state).then(resolve)
+          reload(state).then(resolve)
         } else {
           window.close()
           resolve()
@@ -156,7 +156,7 @@ const actions = {
         restoreWhiteboard(state.whiteboard.id).then(function() {
           // Update local state
           commit('restoreWhiteboard')
-          refresh(state).then(resolve)
+          reload(state).then(resolve)
         })
       } else {
         resolve()

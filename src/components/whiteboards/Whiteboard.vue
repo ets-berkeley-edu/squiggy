@@ -49,7 +49,7 @@ export default {
     scheduleRefresh() {
       clearTimeout(this.refreshJob)
       this.refreshJob = setTimeout(() => {
-        this.checkForUpdates().then(() => {
+        this.refreshPreviewImages().then(() => {
           this.scheduleRefresh()
         })
       }, this.$config.whiteboardsRefreshInterval)
