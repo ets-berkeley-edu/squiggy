@@ -43,7 +43,7 @@ export function addAsset(asset: any, state: any) {
 export function afterChangeMode(state: any) {
   p.$canvas.discardActiveObject().requestRenderAll()
   p.$canvas.isDrawingMode = state.mode === 'draw'
-  if (state.mode === 'shape') {
+  if (['text', 'shape'].includes(state.mode)) {
     p.$canvas.forEachObject(object => {
       object.selectable = false
       object.evented = false
@@ -69,11 +69,9 @@ export function deleteActiveElements(state: any) {
   })
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
-  if (activeObject) {
-    if (activeObject.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-      p.$canvas.remove(activeObject)
-      p.$canvas.discardActiveObject().requestRenderAll()
-    }
+  if (activeObject && activeObject.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+    p.$canvas.remove(activeObject)
+    p.$canvas.discardActiveObject().requestRenderAll()
   }
 }
 
@@ -256,30 +254,10 @@ export function setCanvasDimensions(state: any) {
 
   _.each(p.$canvas.getObjects(), (element: any) => {
     const bound = element.group ? element.group.getBoundingRect() : element.getBoundingRect()
-    maxRight = Math.max(maxRight, _.get(bound, 'left') + _.get(bound, 'width'))
-    maxBottom = Math.max(maxBottom, _.get(bound, 'top') + _.get(bound, 'height'))
+    maxRight = Math.max(maxRight, bound.left + bound.width)
+    maxBottom = Math.max(maxBottom, bound.top + bound.height)
   })
 
-  // Keep track of whether the canvas can currently be scrolled.
-  const adjustZoom = () => {
-    // When the entire whiteboard content should fit within the screen, adjust the zoom level to make it fit.
-    if (state.fitToScreen) {
-      // Calculate the actual un-zoomed width of the whiteboard.
-      const realWidth = maxRight / p.$canvas.getZoom()
-      const realHeight = maxBottom / p.$canvas.getZoom()
-      // Zoom the canvas based on whether the height or width needs the largest zoom out.
-      const widthRatio = viewportWidth / realWidth
-      const heightRatio = viewportHeight / realHeight
-      const ratio = Math.min(widthRatio, heightRatio)
-      p.$canvas.setZoom(ratio)
-      p.$canvas.setHeight(viewportHeight)
-      p.$canvas.setWidth(viewportWidth)
-    } else {
-      // Adjust the value for rounding issues to prevent scrollbars from incorrectly showing up.
-      p.$canvas.setHeight(maxBottom - 1)
-      p.$canvas.setWidth(maxRight - 1)
-    }
-  }
   if (maxRight > viewportWidth || maxBottom > viewportHeight) {
     store.dispatch('whiteboarding/setIsScrollingCanvas', true).then(() => {
       // Add padding when the canvas can be scrolled
@@ -289,10 +267,27 @@ export function setCanvasDimensions(state: any) {
       if (maxBottom > viewportHeight) {
         maxBottom += constants.CANVAS_PADDING
       }
-      adjustZoom()
     })
   } else {
-    store.dispatch('whiteboarding/setIsScrollingCanvas', false).then(adjustZoom)
+    store.dispatch('whiteboarding/setIsScrollingCanvas', false).then(_.noop)
+  }
+  // When the entire whiteboard content should fit within the screen, adjust the zoom level to make it fit.
+  if (state.fitToScreen) {
+    // Calculate the actual un-zoomed width of the whiteboard.
+    const realWidth = maxRight / p.$canvas.getZoom()
+    const realHeight = maxBottom / p.$canvas.getZoom()
+    // Zoom the canvas based on whether the height or width needs the largest zoom out.
+    const widthRatio = viewportWidth / realWidth
+    const heightRatio = viewportHeight / realHeight
+    const ratio = Math.min(widthRatio, heightRatio)
+    p.$canvas.setZoom(ratio)
+
+    p.$canvas.setHeight(viewportHeight)
+    p.$canvas.setWidth(viewportWidth)
+  } else {
+    // Adjust the value for rounding issues to prevent scrollbars from incorrectly showing up.
+    p.$canvas.setHeight(maxBottom - 1)
+    p.$canvas.setWidth(maxRight - 1)
   }
 }
 
@@ -363,11 +358,10 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('selection:cleared', () => setCanvasDimensions(state))
 
   p.$canvas.on('object:added', (event: any) => {
-    // A new element was added to the whiteboard canvas by the current user
+    $_log(`canvas object:added (mode = ${state.mode})`)
     const element = event.target
-    const isIncompleteIText = element.type === 'i-text' && !element.text.trim()
-
-    if (!isIncompleteIText && !element.isHelper) {
+    if ((element.type !== 'i-text' || element.text.trim()) && !element.isHelper) {
+      $_enableCanvasElements(true)
       element.uuid = element.uuid || uuidv4()
       $_broadcastUpsert(element.assetId, element, state)
       setCanvasDimensions(state)
@@ -376,6 +370,7 @@ const $_addCanvasListeners = (state: any) => {
   })
 
   p.$canvas.on('mouse:down', (event: any) => {
+    $_log(`canvas mouse:down (mode = ${state.mode})`)
     if (state.mode === 'shape') {
       store.dispatch('whiteboarding/setIsDrawingShape', true).then(() => {
         // Keep track of the point where drawing the shape started
@@ -386,6 +381,7 @@ const $_addCanvasListeners = (state: any) => {
           const shape = new fabric[state.selected.shape]({
             fill: state.selected.fill,
             height: 10,
+            index: $_getNextAvailableObjectIndex(),
             isHelper: true,
             left: state.startShapePointer.x,
             originX: 'left',
@@ -406,8 +402,9 @@ const $_addCanvasListeners = (state: any) => {
       const iText = new fabric.IText('', {
         fill: state.selected.fill,
         fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
-        fontSize: state.selected.fontSize || 14,
+        fontSize: state.selected.fontSize || constants.TEXT_SIZE_OPTIONS[0].value,
         height: 100,
+        index: $_getNextAvailableObjectIndex(),
         left: textPointer.x,
         text: '',
         selectable: true,
@@ -463,13 +460,15 @@ const $_addCanvasListeners = (state: any) => {
   })
 
   p.$canvas.on('mouse:up', () => {
+    $_log(`canvas mouse:up (mode = ${state.mode})`)
     if (state.isDrawingShape) {
       const shape = $_getHelperObject()
-      store.dispatch('whiteboarding/setIsDrawingShape', false).then(_.noop)
+
       // Clone the drawn shape and add the clone to the canvas. This is caused by a bug in Fabric where it initially
       // uses the size when drawing started to position the controls. Cloning ensures that the controls are added in
       // the correct position. The origin of element is set to `center` to make it inline with the other elements.
       if (shape) {
+        store.dispatch('whiteboarding/setIsDrawingShape', false).then(_.noop)
         shape.left += shape.width / 2
         shape.top += shape.height / 2
         shape.originX = shape.originY = 'center'
@@ -480,6 +479,7 @@ const $_addCanvasListeners = (state: any) => {
       }
       setMode('move')
     }
+    $_enableCanvasElements(true)
   })
 
   const setActiveCanvasObject = (object: any) => store.dispatch('whiteboarding/setActiveCanvasObject', object).then(_.noop)
@@ -592,6 +592,10 @@ const $_addViewportListeners = (state: any) => {
           const clones: any[] = []
           _.each(activeObjects, (object: any, index: number) => {
             object.clone((clone: any) => {
+              clone.index = $_getNextAvailableObjectIndex()
+              clone.uuid = uuidv4()
+              clone.left += 25
+              clone.top += 25
               clones.push(clone)
               if (index === activeObjects.length - 1) {
                 store.dispatch('whiteboarding/setClipboard', clones).then(_.noop)
@@ -703,7 +707,7 @@ const $_deserializeElement = (
 }
 
 const $_enableCanvasElements = (enabled: boolean) => {
-  $_log('Enable canvas elements')
+  $_log(`Enable canvas elements (enabled = ${enabled})`)
   p.$canvas.selection = enabled
   _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
 }
@@ -761,6 +765,8 @@ const $_getDaysUntilRetirement = () => {
 
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
+const $_getNextAvailableObjectIndex = () => _.max(_.map(p.$canvas.getObjects(), 'index')) + 1
+
 const $_initCanvas = (state: any) => {
   $_log('Init canvas')
   // Ensure that the horizontal and vertical origins of objects are set to center.
@@ -793,7 +799,7 @@ const $_initFabricPrototypes = (state: any) => {
     // uniquely identifies an object on the canvas, as well as a property containing the index
     // of the object relative to the other items on the canvas.
     return function() {
-      const index = _.isNil(this.index) ? _.max(_.map(p.$canvas.getObjects(), 'index')) + 1 : this.index
+      const index = _.isNil(this.index) ? $_getNextAvailableObjectIndex() : this.index
       const extras = {
         assetId: this.assetId,
         height: this.height,
@@ -825,11 +831,11 @@ const $_initFabricPrototypes = (state: any) => {
           element.text = `${days_until_retirement} days until freedom`
         }
         $_broadcastUpsert(NaN, element, state)
+        setMode('move')
       } else if (uuid) {
         $_broadcastDelete(element, state).then(() => {
           p.$canvas.remove(element)
           $_updateLayers(state).then(() => {
-            setCanvasDimensions(state)
             setMode('move')
           })
         })
@@ -900,12 +906,11 @@ const $_log = (statement: string, force?: boolean) => {
 const $_paste = (state: any): void => {
   $_log('Paste')
   const elements: any[] = []
-  let cloneCount = 0
 
   // Activate the pasted element(s)
+  const copiedElements = state.clipboard
   const after = () => {
-    cloneCount++
-    if (cloneCount === state.clipboard.length) {
+    if (elements.length === copiedElements.length) {
       // When only a single element was pasted, simply select it
       if (elements.length === 1) {
         p.$canvas.setActiveObject(elements[0])
@@ -920,27 +925,20 @@ const $_paste = (state: any): void => {
       $_renderWhiteboard(state).then(() => store.dispatch('whiteboarding/setClipboard', undefined))
     }
   }
-  if (state.clipboard.length > 0) {
+  if (copiedElements.length) {
     // Clear the current selection
     const object = p.$canvas.getActiveObject()
     if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(object)
     }
     // Duplicate copied elements by setting new index and uuid values. Also, position to ensure its visibility.
-    _.each(state.clipboard, (object: any) => {
-      object.clone((clone: any) => {
-        clone.index = state.whiteboard.whiteboardElements.length + clone.index
-        clone.uuid = uuidv4()
-        clone.left += 25
-        clone.top += 25
-        // Add the element to the whiteboard canvas
-        $_deserializeElement(state, clone, clone.uuid).then((e: any) => {
-          p.$canvas.add(e)
-          p.$canvas.requestRenderAll()
-          // Keep track of the added elements to allow them to be selected
-          elements.push(e)
-          after()
-        })
+    _.each(copiedElements, (clone: any) => {
+      // Add the element to the whiteboard canvas
+      $_deserializeElement(state, clone, clone.uuid).then((e: any) => {
+        p.$canvas.add(e)
+        // Keep track of the added elements to allow them to be selected
+        elements.push(e)
+        after()
       })
     })
   }

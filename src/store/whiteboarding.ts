@@ -19,7 +19,7 @@ import {
 const DEFAULT_TOOL_SELECTION = {
   color: constants.COLORS.black.hex,
   fill: constants.COLORS.black.hex,
-  fontSize: 14,
+  fontSize: constants.TEXT_SIZE_OPTIONS[0].value,
   shape: 'Rect',
   stroke: constants.COLORS.black.hex,
   strokeWidth: 2,
