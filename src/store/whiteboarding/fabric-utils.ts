@@ -159,7 +159,7 @@ export function refreshPreviewImages(state: any) {
       userId: p.$currentUser.id,
       whiteboardId: state.whiteboard.id
     }
-    p.$socket.emit('check_for_updates', args, (data: any) => {
+    p.$socket.emit('fetch_whiteboard', args, (data: any) => {
       if (_.get(data, 'status') === 404) {
         window.close()
         resolve()
@@ -181,19 +181,11 @@ export function refreshPreviewImages(state: any) {
           }
           _.each(whiteboardElements, (whiteboardElement: any, index: number) => {
             // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
-            const src = whiteboardElement.element.src
             const uuid = whiteboardElement.uuid
-            const existing: any = $_getCanvasElement(uuid)
-            if (existing && existing.src !== src) {
-              // Deactivate the current group if any of the updated elements are in the current group
-              $_deactivateGroupIfOverlap(whiteboardElement)
-              $_updatePreviewImage(whiteboardElement.element, state, uuid).then(() => {
-                modified = true
-                after(index)
-              })
-            } else {
+            $_updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
+              modified = wasUpdated
               after(index)
-            }
+            })
           })
         } else {
           resolve()
@@ -360,7 +352,9 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('object:added', (event: any) => {
     $_log(`canvas object:added (mode = ${state.mode})`)
     const element = event.target
-    if ((element.type !== 'i-text' || element.text.trim()) && !element.isHelper) {
+    const isNonEmptyIText = element.type !== 'i-text' || element.text.trim()
+    const wasAddedByRemote = state.remoteUUIDs.includes(element.uuid)
+    if (isNonEmptyIText && !wasAddedByRemote && !element.isHelper) {
       $_enableCanvasElements(true)
       element.uuid = element.uuid || uuidv4()
       $_broadcastUpsert(element.assetId, element, state)
@@ -545,14 +539,18 @@ const $_addSocketListeners = (state: any) => {
     const existing = $_getCanvasElement(uuid)
     if (existing) {
       // Deactivate the current group if any of the updated elements are in the current group
-      $_deactivateGroupIfOverlap(whiteboardElement)
-      $_assignInto(existing, element)
-      $_updatePreviewImage(element, state, uuid).then(() => {
-        $_renderWhiteboard(state).then(() => $_ensureWithinCanvas(existing))
+      $_deactivateGroupIfOverlap(uuid)
+      $_updatePreviewImage(element.src, state, uuid).then((modified) => {
+        modified ||= $_assignIn(existing, element)
+        if (modified) {
+          $_ensureWithinCanvas(existing)
+          setCanvasDimensions(state)
+        }
       })
     } else {
       $_deserializeElement(state, element, uuid).then((e: any) => {
         // Add the element to the whiteboard canvas and move it to its appropriate index
+        store.commit('whiteboarding/pushRemoteUUID', e.uuid)
         p.$canvas.add(e)
         p.$canvas.requestRenderAll()
         // Recalculate the size of the whiteboard canvas
@@ -563,10 +561,11 @@ const $_addSocketListeners = (state: any) => {
 
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on('delete_whiteboard_element', (data: any) => {
-    const element = $_getCanvasElement(data.uuid)
+    const uuid = data.uuid
+    const element = $_getCanvasElement(uuid)
     if (element) {
       // Deactivate the current group if any of the deleted elements are in the current group
-      $_deactivateGroupIfOverlap(element)
+      $_deactivateGroupIfOverlap(uuid)
       // p.$canvas.setActiveObject(element)
       p.$canvas.remove(element)
       p.$canvas.requestRenderAll()
@@ -669,15 +668,14 @@ const $_calculateGlobalElementPosition = (selection: any, element: any): any => 
   return {left, top}
 }
 
-const $_deactivateGroupIfOverlap = (element: any) => {
+const $_deactivateGroupIfOverlap = (uuid: string) => {
   $_log('Deactivate group if overlap')
   // CONCURRENT EDITING
   // Deactivate the active group if any of the provided elements are a part of the active group
   // elements: The elements that should be checked for presence in the active group
   const selection = p.$canvas.getActiveObject()
   if (selection && selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-    const intersection = _.intersection(_.map(selection.objects, 'uuid'), [element.uuid])
-    if (intersection.length > 0) {
+    if (_.map(selection.objects, 'uuid').includes(uuid)) {
       p.$canvas.discardActiveGroup().requestRenderAll()
     }
   }
@@ -1017,38 +1015,41 @@ const $_tryReconnect = (state: any) => {
   }, 2000)
 }
 
-const $_assignInto = (existing: any, updated: any) => {
-  $_log('Assign into')
-  _.each(updated, (value: any, key: any) => {
-    if (key !== 'src') {
-      existing.set(key, updated[key])
-    }
+const $_assignIn = (object: any, source: any) => {
+  $_log('Assign in')
+  let modified = false
+  _.each(constants.MUTABLE_ELEMENT_ATTRIBUTES, (key: string) => {
+    const value = source[key]
+    modified ||= value !== object.get(key)
+    object.set(key, value)
   })
+  return modified
 }
 
-const $_updatePreviewImage = (element: any, state: any, uuid: string) => {
-  return new Promise<Object>(resolve => {
+const $_updatePreviewImage = (src: any, state: any, uuid: string) => {
+  return new Promise<boolean>(resolve => {
     $_log('Update preview image')
     const existing: any = $_getCanvasElement(uuid)
-    if (existing.type === 'image' && existing.getSrc() !== element.src) {
+    if (existing.type === 'image' && existing.getSrc() !== src) {
       // Preview image of this asset has changed. Update existing element and re-render.
       const done = (src: any) => {
         existing.setSrc(src, () => {
           $_scaleImageObject(existing, state)
           $_log(`Update existing image element: src = ${src}, uuid = ${uuid}. Next, broadcast upsert.`)
-          $_broadcastUpsert(element.assetId, element, state)
-          p.$canvas.requestRenderAll()
-          resolve(existing)
+          $_renderWhiteboard(state).then(() => {
+            $_ensureWithinCanvas(existing)
+            resolve(true)
+          })
         })
       }
-      const src = element.src || existing.getSrc()
+      $_deactivateGroupIfOverlap(uuid)
       if (src) {
         fabric.util.loadImage(src, img => done(img.currentSrc))
       } else {
-        done(constants.ASSET_PLACEHOLDERS['file'])
+        done(existing.getSrc() || constants.ASSET_PLACEHOLDERS['file'])
       }
     } else {
-      resolve(existing)
+      resolve(false)
     }
   })
 }

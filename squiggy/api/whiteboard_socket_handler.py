@@ -35,7 +35,7 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
-def check_for_updates(current_user, socket_id, whiteboard_id):
+def fetch_whiteboard(current_user, socket_id, whiteboard_id):
     update_updated_at(
         current_user=current_user,
         socket_id=socket_id,
