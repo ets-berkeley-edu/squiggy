@@ -152,9 +152,9 @@ export function moveLayer(direction: string, state: any) {
   })
 }
 
-export function checkForUpdates(state: any) {
+export function refreshPreviewImages(state: any) {
   return new Promise<void>(resolve => {
-    $_log('Check for updates')
+    $_log('Refresh preview images')
     const args = {
       userId: p.$currentUser.id,
       whiteboardId: state.whiteboard.id
@@ -203,9 +203,9 @@ export function checkForUpdates(state: any) {
   })
 }
 
-export function refresh(state: any) {
+export function reload(state: any) {
   return new Promise<void>(resolve => {
-    $_log('Refresh')
+    $_log('Reload')
     const isReadOnly = state.whiteboard.isReadOnly
     store.dispatch('whiteboarding/setDisableAll', isReadOnly).then(_.noop)
     if (isReadOnly) {
