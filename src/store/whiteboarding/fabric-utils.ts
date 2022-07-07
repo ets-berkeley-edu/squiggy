@@ -164,7 +164,7 @@ export function refreshPreviewImages(state: any) {
         window.close()
         resolve()
       } else {
-        store.dispatch('whiteboarding/setUsers', data.users).then(_.noop)
+        store.commit('whiteboarding/setUsers', data.users)
         const whiteboardElements = data.whiteboardElements
         const count = whiteboardElements.length
 
@@ -251,17 +251,16 @@ export function setCanvasDimensions(state: any) {
   })
 
   if (maxRight > viewportWidth || maxBottom > viewportHeight) {
-    store.dispatch('whiteboarding/setIsScrollingCanvas', true).then(() => {
-      // Add padding when the canvas can be scrolled
-      if (maxRight > viewportWidth) {
-        maxRight += constants.CANVAS_PADDING
-      }
-      if (maxBottom > viewportHeight) {
-        maxBottom += constants.CANVAS_PADDING
-      }
-    })
+    store.commit('whiteboarding/setIsScrollingCanvas', true)
+    // Add padding when the canvas can be scrolled
+    if (maxRight > viewportWidth) {
+      maxRight += constants.CANVAS_PADDING
+    }
+    if (maxBottom > viewportHeight) {
+      maxBottom += constants.CANVAS_PADDING
+    }
   } else {
-    store.dispatch('whiteboarding/setIsScrollingCanvas', false).then(_.noop)
+    store.commit('whiteboarding/setIsScrollingCanvas', false)
   }
   // When the entire whiteboard content should fit within the screen, adjust the zoom level to make it fit.
   if (state.fitToScreen) {
@@ -300,17 +299,15 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('object:scaling', () => $_setModifyingElement(true))
   p.$canvas.on('object:rotating', () => $_setModifyingElement(true))
   p.$canvas.on('object:moving', (event: any) => {
-    $_setModifyingElement(true).then(() => {
-      $_ensureWithinCanvas(event.target)
-    })
+    $_setModifyingElement(true)
+    $_ensureWithinCanvas(event.target)
   })
 
   p.$canvas.on('object:modified', (event: any) => {
-    $_setModifyingElement(false).then(() => {
-      // Ensure that none of the modified objects are positioned off-screen.
-      $_ensureWithinCanvas(event.target)
-      _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state))
-    })
+    $_setModifyingElement(false)
+    // Ensure that none of the modified objects are positioned off-screen.
+    $_ensureWithinCanvas(event.target)
+    _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state))
   })
 
   p.$canvas.on('after:render', () => {
@@ -366,30 +363,28 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('mouse:down', (event: any) => {
     $_log(`canvas mouse:down (mode = ${state.mode})`)
     if (state.mode === 'shape') {
-      store.dispatch('whiteboarding/setIsDrawingShape', true).then(() => {
-        // Keep track of the point where drawing the shape started
-        store.dispatch('whiteboarding/setStartShapePointer', p.$canvas.getPointer(event.e)).then(() => {
-          // Create selected shape to use as the drawing guide. The originX and originY of the helper element are set to
-          // left and top to make it easier to map the top left corner of the drawing guide with original cursor position.
-          // We use 'isHelper' to indicate that the element should NOT be persisted to Squiggy db.
-          const shape = new fabric[state.selected.shape]({
-            fill: state.selected.fill,
-            height: 10,
-            index: $_getNextAvailableObjectIndex(),
-            isHelper: true,
-            left: state.startShapePointer.x,
-            originX: 'left',
-            originY: 'top',
-            radius: 1,
-            stroke: state.selected.color,
-            strokeWidth: state.selected.strokeWidth,
-            top: state.startShapePointer.y,
-            uuid: uuidv4(),
-            width: 10
-          })
-          p.$canvas.add(shape)
-        })
+      store.commit('whiteboarding/setIsDrawingShape', true)
+      // Keep track of the point where drawing the shape started
+      store.commit('whiteboarding/setStartShapePointer', p.$canvas.getPointer(event.e))
+      // Create selected shape to use as the drawing guide. The originX and originY of the helper element are set to
+      // left and top to make it easier to map the top left corner of the drawing guide with original cursor position.
+      // We use 'isHelper' to indicate that the element should NOT be persisted to Squiggy db.
+      const shape = new fabric[state.selected.shape]({
+        fill: state.selected.fill,
+        height: 10,
+        index: $_getNextAvailableObjectIndex(),
+        isHelper: true,
+        left: state.startShapePointer.x,
+        originX: 'left',
+        originY: 'top',
+        radius: 1,
+        stroke: state.selected.color,
+        strokeWidth: state.selected.strokeWidth,
+        top: state.startShapePointer.y,
+        uuid: uuidv4(),
+        width: 10
       })
+      p.$canvas.add(shape)
     }
     if (state.mode === 'text') {
       const textPointer = p.$canvas.getPointer(event.e)
@@ -457,12 +452,12 @@ const $_addCanvasListeners = (state: any) => {
     $_log(`canvas mouse:up (mode = ${state.mode})`)
     if (state.isDrawingShape) {
       const shape = $_getHelperObject()
-
+      store.commit('whiteboarding/setStartShapePointer', undefined)
       // Clone the drawn shape and add the clone to the canvas. This is caused by a bug in Fabric where it initially
       // uses the size when drawing started to position the controls. Cloning ensures that the controls are added in
       // the correct position. The origin of element is set to `center` to make it inline with the other elements.
       if (shape) {
-        store.dispatch('whiteboarding/setIsDrawingShape', false).then(_.noop)
+        store.commit('whiteboarding/setIsDrawingShape', false)
         shape.left += shape.width / 2
         shape.top += shape.height / 2
         shape.originX = shape.originY = 'center'
@@ -476,9 +471,10 @@ const $_addCanvasListeners = (state: any) => {
     $_enableCanvasElements(true)
   })
 
-  const setActiveCanvasObject = (object: any) => store.dispatch('whiteboarding/setActiveCanvasObject', object).then(_.noop)
+  const setActiveCanvasObject = (object: any) => store.commit('whiteboarding/setActiveCanvasObject', object)
   p.$canvas.on('selection:created', () => {
-    setActiveCanvasObject(p.$canvas.getActiveObject()).then(() => $_setModifyingElement(false))
+    setActiveCanvasObject(p.$canvas.getActiveObject())
+    $_setModifyingElement(false)
   })
   p.$canvas.on('selection:cleared', () => setActiveCanvasObject(null))
   p.$canvas.on('selection:updated', () => setActiveCanvasObject(p.$canvas.getActiveObject()))
@@ -517,16 +513,13 @@ const $_addSocketListeners = (state: any) => {
   })
 
   p.$socket.on('join', (data: any) => {
-    store.dispatch('whiteboarding/setUsers', data.users).then(() => {
-      $_log(`socket.on join: user_id = ${data.id}`)
-    })
+    store.commit('whiteboarding/setUsers', data.users)
+    $_log(`socket.on join: user_id = ${data.id}`)
   })
 
   p.$socket.on('leave', (data: any) => {
-    store.dispatch('whiteboarding/setUsers', data.users).then(() => {
-      const userIds = _.map(data.users, ['id'])
-      $_log(`socket.on leave: user_ids = ${userIds}`)
-    })
+    store.commit('whiteboarding/setUsers', data.users)
+    $_log(`socket.on leave: user_ids = ${_.map(data.users, ['id'])}`)
   })
 
   p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
@@ -589,17 +582,13 @@ const $_addViewportListeners = (state: any) => {
         } else if (event.keyCode === 67 && event.metaKey) {
           // Copy
           const activeObjects = p.$canvas.getActiveObjects()
-          const clones: any[] = []
-          _.each(activeObjects, (object: any, index: number) => {
+          _.each(activeObjects, (object: any) => {
             object.clone((clone: any) => {
               clone.index = $_getNextAvailableObjectIndex()
               clone.uuid = uuidv4()
               clone.left += 25
               clone.top += 25
-              clones.push(clone)
-              if (index === activeObjects.length - 1) {
-                store.dispatch('whiteboarding/setClipboard', clones).then(_.noop)
-              }
+              store.commit('whiteboarding/copy', clone)
             })
           })
         } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
@@ -884,7 +873,7 @@ const $_join = (state: any) => {
     userId: userId,
     whiteboardId: state.whiteboard.id
   }
-  p.$socket.emit('join', args, () => store.dispatch('whiteboarding/join', userId).then(_.noop))
+  p.$socket.emit('join', args, () => store.commit('whiteboarding/join', userId))
 }
 
 const $_leave = (state: any) => {
@@ -905,9 +894,9 @@ const $_log = (statement: string, force?: boolean) => {
 const $_paste = (state: any): void => {
   $_log('Paste')
   const elements: any[] = []
-
-  // Activate the pasted element(s)
   const copiedElements = state.clipboard
+  store.commit('whiteboarding/clearClipboard')
+
   const after = () => {
     if (elements.length === copiedElements.length) {
       // When only a single element was pasted, simply select it
@@ -921,7 +910,7 @@ const $_paste = (state: any): void => {
         p.$canvas.setActiveObject(selection)
         $_ensureWithinCanvas(selection)
       }
-      $_renderWhiteboard(state).then(() => store.dispatch('whiteboarding/setClipboard', undefined))
+      $_renderWhiteboard(state).then(_.noop)
     }
   }
   if (copiedElements.length) {
@@ -998,7 +987,7 @@ const $_scaleImageObject = (element: any, state: any) => {
   }
 }
 
-const $_setModifyingElement = (value: boolean) => store.dispatch('whiteboarding/setIsModifyingElement', value)
+const $_setModifyingElement = (value: boolean) => store.commit('whiteboarding/setIsModifyingElement', value)
 
 const $_tryReconnect = (state: any) => {
   $_log('Try reconnect')

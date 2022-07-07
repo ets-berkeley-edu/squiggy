@@ -38,7 +38,7 @@ const $_log = (statement: string, force?: boolean) => {
 const state = {
   activeCanvasObject: undefined,
   categories: undefined,
-  clipboard: undefined,
+  clipboard: [],
   disableAll: true,
   fitToScreen: true,
   // Variable that will keep track of whether a shape is currently being drawn
@@ -77,6 +77,8 @@ const mutations = {
     state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
   },
+  clearClipboard: (state: any) => state.clipboard = [],
+  copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
   join: (state: any, userId: number) => {
@@ -98,7 +100,6 @@ const mutations = {
   },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
-  setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setFitToScreen: (state: any, fitToScreen: boolean) => state.fitToScreen = fitToScreen,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
@@ -149,7 +150,6 @@ const actions = {
       })
     })
   },
-  join: ({commit}, userId: any) => commit('join', userId),
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
@@ -165,15 +165,8 @@ const actions = {
       }
     })
   },
-  setActiveCanvasObject: ({commit}, activeCanvasObject: any) => commit('setActiveCanvasObject', activeCanvasObject),
-  setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
-  setIsDrawingShape: ({commit}, isDrawingShape: boolean) => commit('setIsDrawingShape', isDrawingShape),
-  setIsModifyingElement: ({commit}, isModifyingElement: boolean) => commit('setIsModifyingElement', isModifyingElement),
-  setIsScrollingCanvas: ({commit}, isScrollingCanvas: boolean) => commit('setIsScrollingCanvas', isScrollingCanvas),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
-  setStartShapePointer: ({commit}, startShapePointer: any) => commit('setStartShapePointer', startShapePointer),
-  setUsers: ({commit}, users: any[]) => commit('setUsers', users),
   toggleZoom: ({commit, state}) => {
     commit('setMode', 'zoom')
     commit('setFitToScreen', !state.fitToScreen)
