@@ -17,7 +17,7 @@ export default {
   // The base width of the canvas
   CANVAS_BASE_WIDTH: 1000,
   // The padding that will be enforced on the canvas when it can be scrolled
-  CANVAS_PADDING: 60,
+  CANVAS_PADDING: 100,
   COLORS: {
     black: {
       hex: '#000000',
@@ -74,8 +74,8 @@ export default {
     'Circle:fill': require('@/assets/whiteboard/shape-circle-fill.png')
   },
   TEXT_SIZE_OPTIONS: [
-    {text: 'Normal', value: 14},
-    {text: 'Title', value: 36}
+    {text: 'Normal', value: 24},
+    {text: 'Title', value: 48}
   ],
   VIEWPORT_ELEMENT_ID: 'whiteboard-viewport',
   WHITEBOARD_ELEMENT_EDIT_ID: 'whiteboard-element-edit'
