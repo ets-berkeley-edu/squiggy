@@ -27,7 +27,7 @@ from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.api.api_util import whiteboard_access_required
-from squiggy.api.whiteboard_socket_handler import check_for_updates, delete_whiteboard_element, join_whiteboard, \
+from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, fetch_whiteboard, join_whiteboard, \
     leave_whiteboard, update_whiteboard, upsert_whiteboard_element
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.logger import initialize_background_logger
@@ -166,20 +166,20 @@ def register_sockets(socketio):
         )
         return {'status': 200}
 
-    @socketio.on('check_for_updates')
+    @socketio.on('fetch_whiteboard')
     @whiteboard_access_required
-    def socketio_check_for_updates(data):
+    def socketio_fetch_whiteboard(data):
         socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_check_for_updates: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        whiteboard = check_for_updates(
+        logger.debug(f'socketio_fetch_whiteboard: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
+        whiteboard = fetch_whiteboard(
             current_user=current_user,
             socket_id=request.sid,
             whiteboard_id=whiteboard_id,
         )
         emit(
-            'check_for_updates',
+            'fetch_whiteboard',
             whiteboard,
             include_self=False,
             skip_sid=socket_id,

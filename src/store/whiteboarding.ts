@@ -47,6 +47,7 @@ const state = {
   isModifyingElement: false,
   isScrollingCanvas: false,
   mode: 'move',
+  remoteUUIDs: [],
   selected: _.clone(DEFAULT_TOOL_SELECTION),
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
@@ -89,6 +90,7 @@ const mutations = {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
   },
+  pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
   restoreWhiteboard: (state: any) => {
     state.whiteboard.isReadOnly = false
