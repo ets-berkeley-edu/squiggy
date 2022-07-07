@@ -169,6 +169,7 @@ def register_sockets(socketio):
     @socketio.on('check_for_updates')
     @whiteboard_access_required
     def socketio_check_for_updates(data):
+        socket_id = request.sid
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_check_for_updates: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
@@ -176,6 +177,13 @@ def register_sockets(socketio):
             current_user=current_user,
             socket_id=request.sid,
             whiteboard_id=whiteboard_id,
+        )
+        emit(
+            'check_for_updates',
+            whiteboard,
+            include_self=False,
+            skip_sid=socket_id,
+            to=_get_room(whiteboard_id),
         )
         return {
             **whiteboard,
