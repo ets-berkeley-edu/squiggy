@@ -541,17 +541,17 @@ const $_addSocketListeners = (state: any) => {
     const whiteboardElement = data.whiteboardElement
     const element = whiteboardElement.element
     const uuid = whiteboardElement.uuid
-    $_log(`socket.on upsert_whiteboard_element: type = ${element.type}, uuid = ${element.uuid}`)
+    $_log(`socket.on upsert_whiteboard_element: type = ${element.type}, uuid = ${uuid}`)
     const existing = $_getCanvasElement(uuid)
     if (existing) {
       // Deactivate the current group if any of the updated elements are in the current group
       $_deactivateGroupIfOverlap(whiteboardElement)
-      $_assignInto($_getCanvasElement(uuid), element)
-      $_updatePreviewImage(element, state, whiteboardElement.uuid).then(() => {
-        $_updateLayers(state).then(() => $_ensureWithinCanvas($_getCanvasElement(uuid)))
+      $_assignInto(existing, element)
+      $_updatePreviewImage(element, state, uuid).then(() => {
+        $_renderWhiteboard(state).then(() => $_ensureWithinCanvas(existing))
       })
     } else {
-      $_deserializeElement(state, element, element.uuid).then((e: any) => {
+      $_deserializeElement(state, element, uuid).then((e: any) => {
         // Add the element to the whiteboard canvas and move it to its appropriate index
         p.$canvas.add(e)
         p.$canvas.requestRenderAll()
@@ -560,6 +560,7 @@ const $_addSocketListeners = (state: any) => {
       })
     }
   })
+
   // One or multiple whiteboard canvas elements were deleted by a different user
   p.$socket.on('delete_whiteboard_element', (data: any) => {
     const element = $_getCanvasElement(data.uuid)
