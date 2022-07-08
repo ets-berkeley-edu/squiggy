@@ -24,12 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from canvasapi import Canvas
-from flask import current_app as app
 
 
-def get_canvas(api_url=None, access_token=None):
-    if not api_url:
-        api_url = app.config['CANVAS_API_URL']
-    if not access_token:
-        access_token = app.config['CANVAS_ACCESS_TOKEN']
+def get_canvas(api_url, access_token):
     return Canvas(base_url=api_url, access_token=access_token)
