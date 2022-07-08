@@ -102,6 +102,10 @@ SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
 # Override in local configs.
 SQLALCHEMY_DATABASE_URI = 'postgresql://squiggy:squiggy@localhost:5432/squiggy'
+SQLALCHEMY_ECHO = False
+SQLALCHEMY_POOL_SIZE = None
+SQLALCHEMY_POOL_TIMEOUT = None
+SQLALCHEMY_RECORD_QUERIES = None
 
 # Disable an expensive bit of the ORM.
 SQLALCHEMY_TRACK_MODIFICATIONS = False
