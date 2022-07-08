@@ -171,7 +171,7 @@ class Asset(Base):
         db.session.add(asset)
         std_commit()
 
-        preview_url = download_url if asset_type == 'file' else url
+        preview_url = download_url if asset_type in ['file', 'whiteboard'] else url
         _generate_previews(asset, preview_url)
 
         # Invisible assets generate no activities.
