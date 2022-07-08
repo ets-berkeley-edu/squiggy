@@ -924,11 +924,8 @@ const $_renderWhiteboard = (state: any) => {
     $_log('Render whiteboard')
     const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, (w: any) => `${w.element.index}-${w.element.uuid}`)
     let deserializeCount = 0
-    const after = (element: any, index: number) => {
-      deserializeCount++
-      p.$canvas.insertAt(element, index, false)
-      // Restore the order of the layers once all elements have finished loading
-      if (deserializeCount === whiteboardElements.length) {
+    const done = () => {
+      return new Promise<void>(resolve => {
         $_updateLayers(state).then(() => {
           // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
           if (state.whiteboard.isReadOnly) {
@@ -941,7 +938,7 @@ const $_renderWhiteboard = (state: any) => {
             resolve()
           }, 0)
         })
-      }
+      })
     }
     if (whiteboardElements.length) {
       _.each(whiteboardElements, (whiteboardElement: any, index: number) => {
@@ -950,11 +947,16 @@ const $_renderWhiteboard = (state: any) => {
           whiteboardElement.element,
           whiteboardElement.uuid
         ).then((e: any) => {
-          after(e, index)
+          deserializeCount++
+          p.$canvas.insertAt(e, index, false)
+          // Restore the order of the layers once all elements have finished loading
+          if (deserializeCount === whiteboardElements.length) {
+            done().then(resolve)
+          }
         })
       })
     } else {
-      resolve()
+      done().then(resolve)
     }
   })
 }
@@ -1006,7 +1008,7 @@ const $_updatePreviewImage = (src: any, state: any, uuid: string) => {
   return new Promise<boolean>(resolve => {
     $_log('Update preview image')
     const existing: any = $_getCanvasElement(uuid)
-    if (existing.type === 'image' && existing.getSrc() !== src) {
+    if (existing && (existing.type === 'image') && (existing.getSrc() !== src)) {
       // Preview image of this asset has changed. Update existing element and re-render.
       const done = (src: any) => {
         existing.setSrc(src, () => {
