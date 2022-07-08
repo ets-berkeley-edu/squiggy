@@ -10,7 +10,7 @@
         <a
           :id="`canvas-course-site-${course.canvasCourseId}`"
           aria-label="Open Canvas course site in a new window"
-          :href="`${$config.canvasBaseUrl}/courses/${course.canvasCourseId}`"
+          :href="`https://${course.canvasApiDomain}/courses/${course.canvasCourseId}`"
           target="_blank"
         >
           Canvas Course <span id="canvas-course-site-id">{{ course.canvasCourseId }}</span>

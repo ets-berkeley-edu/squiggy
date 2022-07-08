@@ -38,10 +38,6 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 BOOKMARKLET_ENCRYPTION_KEY = b'32 url-safe base64-encoded bytes'
 
-CANVAS_ACCESS_TOKEN = None
-CANVAS_API_URL = 'https://foo.instructure.com'
-CANVAS_BASE_URL = 'https://ucberkeley.foo.instructure.com'
-
 CAS_SERVER = 'https://auth-test.berkeley.edu/cas/'
 CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'
 
