@@ -26,11 +26,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, update_whiteboard, \
-    upsert_whiteboard_element
+from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
+from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
@@ -92,13 +92,7 @@ def register_sockets(socketio):
         user_id = data.get('userId')
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_update_whiteboard: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        update_whiteboard(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-            title=title,
-            users=users,
-        )
+        Whiteboard.update(title=title, users=users, whiteboard_id=whiteboard_id)
         emit(
             'update_whiteboard',
             {
@@ -110,6 +104,12 @@ def register_sockets(socketio):
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
         )
+        if is_student(current_user):
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
         return {'status': 200}
 
     @socketio.on('upsert_whiteboard_element')

@@ -547,7 +547,10 @@ const $_addSocketListeners = (state: any) => {
     $_log(`socket.on leave: user_id = ${userId}`)
   })
 
-  p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
+  p.$socket.on('update_whiteboard', (data: any) => {
+    store.commit('whiteboarding/onUpdateWhiteboard', data)
+    $_log('socket.on update_whiteboard')
+  })
 
   p.$socket.on('upsert_whiteboard_element', (data: any) => {
     const whiteboardElement = data.whiteboardElement
