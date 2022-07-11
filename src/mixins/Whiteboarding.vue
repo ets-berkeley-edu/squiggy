@@ -40,7 +40,7 @@ export default {
       'emitWhiteboardUpdate',
       'init',
       'moveLayer',
-      'refreshPreviewImages',
+      'refreshWhiteboard',
       'resetSelected',
       'restoreWhiteboard',
       'setDisableAll',

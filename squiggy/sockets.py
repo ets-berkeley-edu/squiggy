@@ -26,9 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.api_util import whiteboard_access_required
-from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, fetch_whiteboard, join_whiteboard, \
-    leave_whiteboard, update_whiteboard, upsert_whiteboard_element
+from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, join_whiteboard, leave_whiteboard, \
+    update_whiteboard, upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
@@ -42,7 +41,7 @@ def register_sockets(socketio):
     )
 
     @socketio.on('join')
-    @whiteboard_access_required
+    @login_required
     def socketio_join(data):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
@@ -62,7 +61,7 @@ def register_sockets(socketio):
         return {'status': 200}
 
     @socketio.on('leave')
-    @whiteboard_access_required
+    @login_required
     def socketio_leave(data):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
@@ -81,7 +80,7 @@ def register_sockets(socketio):
         return {'status': 200}
 
     @socketio.on('update_whiteboard')
-    @whiteboard_access_required
+    @login_required
     def socketio_update_whiteboard(data):
         socket_id = request.sid
         title = data.get('title')
@@ -110,7 +109,7 @@ def register_sockets(socketio):
         return {'status': 200}
 
     @socketio.on('upsert_whiteboard_element')
-    @whiteboard_access_required
+    @login_required
     def socketio_upsert_whiteboard_element(data):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
@@ -134,7 +133,7 @@ def register_sockets(socketio):
         return {'status': 200}
 
     @socketio.on('delete_whiteboard_element')
-    @whiteboard_access_required
+    @login_required
     def socketio_delete(data):
         socket_id = request.sid
         user_id = data.get('userId')
@@ -158,30 +157,6 @@ def register_sockets(socketio):
             to=_get_room(whiteboard_id),
         )
         return {'status': 200}
-
-    @socketio.on('fetch_whiteboard')
-    @whiteboard_access_required
-    def socketio_fetch_whiteboard(data):
-        socket_id = request.sid
-        user_id = data.get('userId')
-        whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_fetch_whiteboard: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        whiteboard = fetch_whiteboard(
-            current_user=current_user,
-            socket_id=request.sid,
-            whiteboard_id=whiteboard_id,
-        )
-        emit(
-            'fetch_whiteboard',
-            whiteboard,
-            include_self=False,
-            skip_sid=socket_id,
-            to=_get_room(whiteboard_id),
-        )
-        return {
-            **whiteboard,
-            'status': 200,
-        }
 
     @socketio.on('boo-boo-kitty')
     def socketio_boo_boo_kitty(data):

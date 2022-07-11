@@ -144,54 +144,11 @@ export function moveLayer(direction: string, state: any) {
       }
     }
   })
-  $_updateLayers(state).then(() => {
+  updateLayers(state).then(() => {
     if (elements.length === 1) {
       // When only a single item was selected, re-select it
       p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
     }
-  })
-}
-
-export function refreshPreviewImages(state: any) {
-  return new Promise<void>(resolve => {
-    $_log('Refresh preview images')
-    const args = {
-      userId: p.$currentUser.id,
-      whiteboardId: state.whiteboard.id
-    }
-    p.$socket.emit('fetch_whiteboard', args, (data: any) => {
-      if (_.get(data, 'status') === 404) {
-        window.close()
-        resolve()
-      } else {
-        store.commit('whiteboarding/setUsers', data.users)
-        const whiteboardElements = data.whiteboardElements
-        const count = whiteboardElements.length
-
-        if (count) {
-          let modified = false
-          const after = (index) => {
-            if (index === count - 1) {
-              if (modified) {
-                $_updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
-              } else {
-                resolve()
-              }
-            }
-          }
-          _.each(whiteboardElements, (whiteboardElement: any, index: number) => {
-            // We have an annotated whiteboard. Whiteboard-element objects are tagged per remote changes.
-            const uuid = whiteboardElement.uuid
-            $_updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
-              modified = wasUpdated
-              after(index)
-            })
-          })
-        } else {
-          resolve()
-        }
-      }
-    })
   })
 }
 
@@ -285,6 +242,74 @@ export function setCanvasDimensions(state: any) {
 export function setMode(mode: string) {
   $_log(`Set mode: ${mode}`)
   store.dispatch('whiteboarding/setMode', mode).then(_.noop)
+}
+
+export function updateLayers(state: any) {
+  return new Promise<void>(resolve => {
+    $_log('Update layers')
+    // Update the index of all elements to reflect their order in the current whiteboard.
+    const objects = p.$canvas.getObjects()
+    if (objects.length) {
+      const after = (index: number) => {
+        if (index === objects.length - 1) {
+          resolve()
+        }
+      }
+      _.each(objects, (element: any, index: number) => {
+        // Only update the elements for which the stored index no longer matches the current index.
+        const position = objects.indexOf(element)
+        const previousIndex = element.index
+        if (previousIndex !== position) {
+          element.index = position
+          if (element.group) {
+            // If the element is part of a group, calculate its global coordinates
+            const coordinates = $_calculateGlobalElementPosition(element.group, element)
+            const e = _.assignIn({}, element.toObject(), coordinates)
+            $_log(`Update element.group index. NEW value = ${coordinates}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
+            $_broadcastUpsert(e.assetId, e, state)
+            after(index)
+          } else {
+            const e = element.toObject()
+            $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
+            $_broadcastUpsert(e.assetId, e, state)
+            after(index)
+          }
+        } else {
+          after(index)
+        }
+      })
+    } else {
+      resolve()
+    }
+  })
+}
+
+export function updatePreviewImage(src: any, state: any, uuid: string) {
+  return new Promise<boolean>(resolve => {
+    $_log('Update preview image')
+    const existing: any = $_getCanvasElement(uuid)
+    if (existing && (existing.type === 'image') && (existing.getSrc() !== src)) {
+      // Preview image of this asset has changed. Update existing element and re-render.
+      const done = (src: any) => {
+        existing.setSrc(src, () => {
+          $_scaleImageObject(existing, state)
+          $_log(`Update existing image element: src = ${src}, uuid = ${uuid}. Next, broadcast upsert.`)
+          $_renderWhiteboard(state).then(() => {
+            $_ensureWithinCanvas(existing)
+            resolve(true)
+          })
+        })
+      }
+      $_deactivateGroupIfOverlap(uuid)
+      if (src) {
+        fabric.util.loadImage(src, img => done(img.currentSrc))
+      } else {
+        done(existing.getSrc() || constants.ASSET_PLACEHOLDERS['file'])
+      }
+    } else {
+      resolve(false)
+    }
+  })
 }
 
 /**
@@ -534,7 +559,7 @@ const $_addSocketListeners = (state: any) => {
     if (existing) {
       // Deactivate the current group if any of the updated elements are in the current group
       $_deactivateGroupIfOverlap(uuid)
-      $_updatePreviewImage(element.src, state, uuid).then((modified) => {
+      updatePreviewImage(element.src, state, uuid).then((modified) => {
         modified ||= $_assignIn(existing, element)
         if (modified) {
           $_ensureWithinCanvas(existing)
@@ -824,7 +849,7 @@ const $_initFabricPrototypes = (state: any) => {
       } else if (uuid) {
         $_broadcastDelete(element, state).then(() => {
           p.$canvas.remove(element)
-          $_updateLayers(state).then(() => {
+          updateLayers(state).then(() => {
             setMode('move')
           })
         })
@@ -927,7 +952,7 @@ const $_renderWhiteboard = (state: any) => {
     let deserializeCount = 0
     const done = () => {
       return new Promise<void>(resolve => {
-        $_updateLayers(state).then(() => {
+        updateLayers(state).then(() => {
           // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
           if (state.whiteboard.isReadOnly) {
             p.$canvas.discardActiveObject()
@@ -1003,72 +1028,4 @@ const $_assignIn = (object: any, source: any) => {
     object.set(key, value)
   })
   return modified
-}
-
-const $_updatePreviewImage = (src: any, state: any, uuid: string) => {
-  return new Promise<boolean>(resolve => {
-    $_log('Update preview image')
-    const existing: any = $_getCanvasElement(uuid)
-    if (existing && (existing.type === 'image') && (existing.getSrc() !== src)) {
-      // Preview image of this asset has changed. Update existing element and re-render.
-      const done = (src: any) => {
-        existing.setSrc(src, () => {
-          $_scaleImageObject(existing, state)
-          $_log(`Update existing image element: src = ${src}, uuid = ${uuid}. Next, broadcast upsert.`)
-          $_renderWhiteboard(state).then(() => {
-            $_ensureWithinCanvas(existing)
-            resolve(true)
-          })
-        })
-      }
-      $_deactivateGroupIfOverlap(uuid)
-      if (src) {
-        fabric.util.loadImage(src, img => done(img.currentSrc))
-      } else {
-        done(existing.getSrc() || constants.ASSET_PLACEHOLDERS['file'])
-      }
-    } else {
-      resolve(false)
-    }
-  })
-}
-
-const $_updateLayers = (state: any) => {
-  return new Promise<void>(resolve => {
-    $_log('Update layers')
-    // Update the index of all elements to reflect their order in the current whiteboard.
-    const objects = p.$canvas.getObjects()
-    if (objects.length) {
-      const after = (index: number) => {
-        if (index === objects.length - 1) {
-          resolve()
-        }
-      }
-      _.each(objects, (element: any, index: number) => {
-        // Only update the elements for which the stored index no longer matches the current index.
-        const position = objects.indexOf(element)
-        const previousIndex = element.index
-        if (previousIndex !== position) {
-          element.index = position
-          if (element.group) {
-            // If the element is part of a group, calculate its global coordinates
-            const coordinates = $_calculateGlobalElementPosition(element.group, element)
-            const e = _.assignIn({}, element.toObject(), coordinates)
-            $_log(`Update element.group index. NEW value = ${coordinates}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
-            $_broadcastUpsert(e.assetId, e, state)
-            after(index)
-          } else {
-            const e = element.toObject()
-            $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
-            $_broadcastUpsert(e.assetId, e, state)
-            after(index)
-          }
-        } else {
-          after(index)
-        }
-      })
-    } else {
-      resolve()
-    }
-  })
 }
