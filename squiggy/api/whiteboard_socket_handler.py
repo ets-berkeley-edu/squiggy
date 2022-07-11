@@ -65,10 +65,6 @@ def join_whiteboard(current_user, socket_id, whiteboard_id):
     )
 
 
-def leave_whiteboard(socket_id):
-    WhiteboardSession.delete_all([socket_id])
-
-
 def update_updated_at(current_user, socket_id, whiteboard_id):
     if is_student(current_user):
         WhiteboardSession.create(
