@@ -105,6 +105,16 @@ const mutations = {
       }
     })
   },
+  onUpdateWhiteboard: (state: any, whiteboard: any) => {
+    state.whiteboard.title = whiteboard.title
+    const usersPrevious = {}
+    _.each(state.whiteboard.users, u => usersPrevious[u.id] = u)
+    _.each(whiteboard.users, user => {
+      const existingUser = usersPrevious[user.id]
+      user.isOnline = existingUser && existingUser.isOnline
+    })
+    state.whiteboard.users = whiteboard.users
+  },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
