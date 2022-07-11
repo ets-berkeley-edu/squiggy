@@ -48,7 +48,6 @@ const state = {
   isModifyingElement: false,
   isScrollingCanvas: false,
   mode: 'move',
-  remoteUUIDs: [],
   selected: _.clone(DEFAULT_TOOL_SELECTION),
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
@@ -72,7 +71,6 @@ const getters = {
 }
 
 const mutations = {
-  add: (state: any, whiteboardElement: any) => state.whiteboard.whiteboardElements.push(whiteboardElement),
   addAsset: (state: any, asset: any) => addAsset(asset, state),
   afterWhiteboardDelete: (state: any) => {
     state.whiteboard.deletedAt = new Date()
@@ -115,11 +113,22 @@ const mutations = {
     })
     state.whiteboard.users = whiteboard.users
   },
+  onWhiteboardElementDelete: (state: any, uuid: string) => {
+    state.whiteboard.whiteboardElements = _.filter(state.whiteboard.whiteboardElements, w => w.uuid !== uuid)
+  },
+  onWhiteboardElementUpsert: (state: any, {assetId, element, uuid}) => {
+    const existing = _.find(state.whiteboard.whiteboardElements, ['uuid', uuid])
+    if (existing) {
+      existing.assetId = assetId
+      existing.element = element
+    } else {
+      state.whiteboard.whiteboardElements.push({assetId, element, uuid})
+    }
+  },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
   },
-  pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
   refreshWhiteboard: (state: any, data: any) => {
     state.whiteboard.deletedAt = data.deletedAt
     state.whiteboard.title = data.title

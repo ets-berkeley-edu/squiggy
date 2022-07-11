@@ -45,6 +45,7 @@ def app_config():
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],
         'orderByOptions': assets_sort_by_options,
         's3PreviewUrlPattern': S3_PREVIEW_URL_PATTERN,
+        'socketIoDebugMode': app.config['SOCKET_IO_DEBUG_MODE'],
         'squiggyEnv': app.config['SQUIGGY_ENV'],
         'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],
