@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 from sqlalchemy import ForeignKey, Integer, text
 from squiggy import db, std_commit
-from squiggy.lib.util import isoformat, utc_now
+from squiggy.lib.util import isoformat
 from squiggy.models.base import Base
 
 
@@ -46,21 +46,6 @@ class WhiteboardSession(Base):
         self.socket_id = socket_id
         self.user_id = user_id
         self.whiteboard_id = whiteboard_id
-
-    @classmethod
-    def create(cls, socket_id, user_id, whiteboard_id):
-        whiteboard_session = cls.query.filter_by(socket_id=socket_id).first()
-        if whiteboard_session:
-            whiteboard_session.updated_at = utc_now()
-        else:
-            whiteboard_session = cls(
-                socket_id=str(socket_id),
-                user_id=user_id,
-                whiteboard_id=whiteboard_id,
-            )
-            db.session.add(whiteboard_session)
-        std_commit()
-        return whiteboard_session
 
     @classmethod
     def delete_all(cls, socket_ids, older_than_minutes=5):
@@ -98,11 +83,18 @@ class WhiteboardSession(Base):
         return filter_by.all()
 
     @classmethod
-    def update_updated_at(cls, socket_id):
-        db.session.execute(
-            text('UPDATE whiteboard_sessions SET updated_at = now() WHERE socket_id = :socket_id'),
-            {'socket_id': socket_id},
-        )
+    def update_updated_at(cls, socket_id, user_id, whiteboard_id):
+        sql = """
+            INSERT INTO whiteboard_sessions AS s (socket_id, user_id, whiteboard_id)
+            VALUES (:socket_id, :user_id, :whiteboard_id)
+            ON CONFLICT (socket_id) DO UPDATE SET updated_at = now() WHERE s.socket_id = :socket_id
+        """
+        params = {
+            'socket_id': socket_id,
+            'user_id': user_id,
+            'whiteboard_id': whiteboard_id,
+        }
+        db.session.execute(text(sql), params)
         std_commit()
 
     def to_api_json(self):

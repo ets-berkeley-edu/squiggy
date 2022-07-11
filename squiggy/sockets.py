@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, join_whiteboard, update_whiteboard, \
+from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, update_whiteboard, \
     upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
@@ -47,7 +47,11 @@ def register_sockets(socketio):
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_join: {data}')
         if is_student(current_user):
-            join_whiteboard(current_user=current_user, socket_id=socket_id, whiteboard_id=whiteboard_id)
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
             room = _get_room(whiteboard_id)
             join_room(room, sid=socket_id)
             emit(
