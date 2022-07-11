@@ -217,9 +217,6 @@ class Whiteboard(Base):
         users_by_whiteboard_id = {}
         rows = list(db.session.execute(sql, params))
 
-        # Delete stale sessions
-        WhiteboardSession.delete_stale_sessions([row['id'] for row in rows])
-
         for row in rows:
             whiteboard_id = int(row['id'])
             deleted_at = row['deleted_at']

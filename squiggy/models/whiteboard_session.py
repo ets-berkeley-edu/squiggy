@@ -79,17 +79,13 @@ class WhiteboardSession(Base):
         std_commit()
 
     @classmethod
-    def delete_stale_sessions(cls, whiteboard_ids):
+    def delete_stale_sessions(cls):
         db.session.execute(
             text("""
                 DELETE FROM whiteboard_sessions s
-                WHERE whiteboard_id = ANY(:whiteboard_ids)
-                  AND (updated_at < (now() - INTERVAL ':older_than_minutes minutes'))
+                WHERE (updated_at < (now() - INTERVAL ':older_than_minutes minutes'))
             """),
-            {
-                'older_than_minutes': app.config['SOCKET_IO_USER_SESSION_EXPIRE_MINUTES'],
-                'whiteboard_ids': whiteboard_ids,
-            },
+            {'older_than_minutes': app.config['SOCKET_IO_USER_SESSION_EXPIRE_MINUTES']},
         )
         std_commit()
 
