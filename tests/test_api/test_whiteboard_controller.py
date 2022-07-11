@@ -30,8 +30,6 @@ from uuid import uuid4
 from flask import current_app as app
 from flask_login import logout_user
 from squiggy import db, std_commit
-from squiggy.api.whiteboard_socket_handler import join_whiteboard
-from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.activity import Activity
 from squiggy.models.course import Course
@@ -170,10 +168,12 @@ class TestGetWhiteboards:
             assert user
             fake_auth.login(user.id)
             # Simulate a visit to /whiteboard page
-            join_whiteboard(
-                current_user=LoginSession(user.id),
-                socket_id=str(randint(1, 9999999)),
-                whiteboard_id=whiteboard['id'],
+            socket_id = str(randint(1, 9999999))
+            whiteboard_id = whiteboard['id']
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=user.id,
+                whiteboard_id=whiteboard_id,
             )
             std_commit(allow_test_environment=True)
 
@@ -184,13 +184,6 @@ class TestGetWhiteboards:
             )
             whiteboards = api_json['results']
             assert len(whiteboards) == api_json['total']
-
-            whiteboard_sessions = WhiteboardSession.find(whiteboard['id'])
-            my_whiteboard_session = next((s for s in whiteboard_sessions if s.user_id == user.id), None)
-            if user.canvas_course_role == 'Student':
-                assert my_whiteboard_session
-            else:
-                assert not my_whiteboard_session
 
             whiteboards_deleted = next((w for w in whiteboards if w['deletedAt']), [])
             if is_admin(user) or is_teaching(user):

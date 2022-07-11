@@ -42,42 +42,19 @@ def delete_whiteboard_element(current_user, socket_id, whiteboard_element, white
     uuid = whiteboard_element['element']['uuid']
     whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
     if whiteboard_element:
-        # Delete
         if whiteboard_element.asset_id:
             AssetWhiteboardElement.delete(
                 asset_id=whiteboard_element.asset_id,
                 uuid=whiteboard_element.uuid,
             )
         WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
-        update_updated_at(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-        )
         WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
-
-
-def join_whiteboard(current_user, socket_id, whiteboard_id):
-    return update_updated_at(
-        current_user=current_user,
-        socket_id=socket_id,
-        whiteboard_id=whiteboard_id,
-    )
-
-
-def update_updated_at(current_user, socket_id, whiteboard_id):
-    if is_student(current_user):
-        WhiteboardSession.create(
-            socket_id=socket_id,
-            user_id=current_user.user_id,
-            whiteboard_id=whiteboard_id,
-        )
-    whiteboard = Whiteboard.find_by_id(
-        current_user=current_user,
-        include_deleted=True,
-        whiteboard_id=whiteboard_id,
-    )
-    return whiteboard
+        if is_student(current_user):
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
 
 
 def update_whiteboard(current_user, socket_id, title, users, whiteboard_id):
@@ -86,11 +63,12 @@ def update_whiteboard(current_user, socket_id, title, users, whiteboard_id):
         users=users,
         whiteboard_id=whiteboard_id,
     )
-    update_updated_at(
-        current_user=current_user,
-        socket_id=socket_id,
-        whiteboard_id=whiteboard_id,
-    )
+    if is_student(current_user):
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
 
 
 def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
@@ -126,11 +104,12 @@ def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whit
         uuid=element['uuid'],
         whiteboard_id=whiteboard_id,
     )
-    update_updated_at(
-        current_user=current_user,
-        socket_id=socket_id,
-        whiteboard_id=whiteboard_id,
-    )
+    if is_student(current_user):
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
     return result.to_api_json()
 
 
@@ -175,11 +154,12 @@ def _create_whiteboard_element(current_user, socket_id, whiteboard_element, whit
                     object_id=whiteboard_id,
                     asset_id=asset.id,
                 )
-    update_updated_at(
-        current_user=current_user,
-        socket_id=socket_id,
-        whiteboard_id=whiteboard_id,
-    )
+    if is_student(current_user):
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
     return whiteboard_element.to_api_json()
 
 
