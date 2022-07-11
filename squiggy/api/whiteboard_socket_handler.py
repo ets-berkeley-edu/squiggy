@@ -35,19 +35,6 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
-def fetch_whiteboard(current_user, socket_id, whiteboard_id):
-    update_updated_at(
-        current_user=current_user,
-        socket_id=socket_id,
-        whiteboard_id=whiteboard_id,
-    )
-    return Whiteboard.find_by_id(
-        current_user=current_user,
-        include_deleted=True,
-        whiteboard_id=whiteboard_id,
-    )
-
-
 def delete_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
     if not whiteboard_element:
         raise BadRequestError('One or more whiteboard-elements required')

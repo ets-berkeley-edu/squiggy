@@ -85,7 +85,7 @@ class WhiteboardSession(Base):
                 DELETE FROM whiteboard_sessions s
                 WHERE (updated_at < (now() - INTERVAL ':older_than_minutes minutes'))
             """),
-            {'older_than_minutes': app.config['SOCKET_IO_USER_SESSION_EXPIRE_MINUTES']},
+            {'older_than_minutes': app.config['WHITEBOARD_SESSION_EXPIRATION_MINUTES']},
         )
         std_commit()
 

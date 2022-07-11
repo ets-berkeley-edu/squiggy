@@ -27,10 +27,10 @@ import re
 
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_access_whiteboard, can_view_asset, feature_flag_whiteboards
+from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import local_now, to_int
+from squiggy.lib.util import local_now
 from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -44,9 +44,8 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 @feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
-    whiteboard_id = to_int(whiteboard_id)
-    whiteboard = _find_whiteboard(whiteboard_id=whiteboard_id)
-    if whiteboard:
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
+    if whiteboard and (not whiteboard['deletedAt'] or current_user.is_admin or current_user.is_teaching):
         return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError('Whiteboard not found')
@@ -77,7 +76,7 @@ def remix_whiteboard(asset_id):
 @feature_flag_whiteboards
 @login_required
 def export_as_asset(whiteboard_id):
-    whiteboard = _find_whiteboard(whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
     if whiteboard:
         whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
         if whiteboard_elements:
@@ -117,7 +116,7 @@ def export_as_asset(whiteboard_id):
 @feature_flag_whiteboards
 @login_required
 def export_as_png(whiteboard_id):
-    whiteboard = _find_whiteboard(whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
 
@@ -146,7 +145,7 @@ def export_as_png(whiteboard_id):
 @feature_flag_whiteboards
 @login_required
 def restore_whiteboard(whiteboard_id):
-    whiteboard = _find_whiteboard(whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
     if whiteboard:
         restored = Whiteboard.restore(whiteboard_id)
         return tolerant_jsonify(restored.to_api_json())
@@ -199,7 +198,7 @@ def create_whiteboard():
 @feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
-    whiteboard = _find_whiteboard(whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
     whiteboard_id = whiteboard['id']
@@ -222,7 +221,7 @@ def update_whiteboard():
     whiteboard_id = params.get('whiteboardId')
     title = params.get('title')
     user_ids = params.get('userIds')
-    whiteboard = _find_whiteboard(whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
     if whiteboard['deletedAt']:
@@ -234,8 +233,3 @@ def update_whiteboard():
         users=User.find_by_ids(user_ids),
     )
     return tolerant_jsonify(whiteboard.to_api_json())
-
-
-def _find_whiteboard(whiteboard_id):
-    can_access = whiteboard_id and can_access_whiteboard(user=current_user, whiteboard_id=whiteboard_id)
-    return Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id) if can_access else None

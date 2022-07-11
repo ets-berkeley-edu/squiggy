@@ -3,7 +3,7 @@ import constants from '@/store/whiteboarding/constants'
 import store from '@/store'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
-import {deleteWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
+import {deleteWhiteboard, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
   addAsset,
   afterChangeMode,
@@ -11,9 +11,10 @@ import {
   emitWhiteboardUpdate,
   initialize,
   moveLayer,
-  refreshPreviewImages,
   reload,
-  setCanvasDimensions
+  setCanvasDimensions,
+  updateLayers,
+  updatePreviewImage
 } from '@/store/whiteboarding/fabric-utils'
 
 const DEFAULT_TOOL_SELECTION = {
@@ -101,6 +102,11 @@ const mutations = {
     state.windowWidth = window.innerWidth
   },
   pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
+  refreshWhiteboard: (state: any, data: any) => {
+    state.whiteboard.deletedAt = data.deletedAt
+    state.whiteboard.title = data.title
+    state.whiteboard.users = data.users
+  },
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
   restoreWhiteboard: (state: any) => {
     state.whiteboard.isReadOnly = false
@@ -126,13 +132,18 @@ const mutations = {
     if (state.whiteboard.isReadOnly) {
       state.disableAll = true
     }
+    _.each(whiteboard.users, user => {
+      if (user.id === p.$currentUser.id) {
+        user.isOnline = true
+        return false
+      }
+    })
   },
   updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties)
 }
 
 const actions = {
   addAsset: ({commit}, asset: any) => commit('addAsset', asset),
-  refreshPreviewImages: ({state}) => refreshPreviewImages(state),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
@@ -159,6 +170,33 @@ const actions = {
     })
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
+  refreshWhiteboard: ({commit, state}) => {
+    return new Promise<void>(resolve => {
+      getWhiteboard(state.whiteboard.id).then((data: any) => {
+        commit('refreshWhiteboard', data)
+        const count = data.whiteboardElements.length
+        if (count) {
+          let modified = false
+          _.each(data.whiteboardElements, (whiteboardElement: any, index: number) => {
+            const uuid = whiteboardElement.uuid
+            const after = (index) => {
+              if (index === count - 1) {
+                if (modified) {
+                  updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
+                } else {
+                  resolve()
+                }
+              }
+            }
+            updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
+              modified = wasUpdated
+              after(index)
+            })
+          })
+        }
+      })
+    })
+  },
   resetSelected: ({commit}) => commit('resetSelected'),
   restoreWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {

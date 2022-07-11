@@ -86,6 +86,8 @@ class Whiteboard(Base):
         whiteboards = cls.get_whiteboards(
             current_user=current_user,
             include_deleted=include_deleted,
+            limit=1000,
+            offset=0,
             whiteboard_id=whiteboard_id,
         )
         whiteboard = whiteboards['results'][0] if whiteboards['total'] else None
@@ -386,13 +388,12 @@ def _get_whiteboards_where_clause(
         where_clause += ' AND (w.title ILIKE :keywords)'
     if user_id:
         where_clause += ' AND u.id = :user_id'
-    if whiteboard_id:
+    if current_user and (current_user.is_student or current_user.is_observer):
+        sql = 'SELECT whiteboard_id FROM whiteboard_users WHERE user_id = :current_user_id'
+        params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
+        where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
+    elif whiteboard_id:
         where_clause += ' AND w.id = :whiteboard_id'
-    if current_user:
-        if current_user.is_student or current_user.is_observer:
-            sql = 'SELECT whiteboard_id FROM whiteboard_users WHERE user_id = :current_user_id'
-            params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
-            where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
     return where_clause
 
 

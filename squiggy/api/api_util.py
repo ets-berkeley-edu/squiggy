@@ -27,8 +27,6 @@ from functools import wraps
 
 from flask import current_app as app, redirect, request
 from flask_login import current_user, login_user
-from sqlalchemy.sql import text
-from squiggy import db
 from squiggy.lib.errors import UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_admin, is_teaching
@@ -72,18 +70,6 @@ def teacher_required(func):
     return _teacher_required
 
 
-def whiteboard_access_required(func):
-    @wraps(func)
-    def _whiteboard_access_required(*args, **kw):
-        whiteboard_id = args[0].get('whiteboardId') if len(args) else None
-        if can_access_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
-            return func(*args, **kw)
-        else:
-            logger.warning(f'Unauthorized request to {request.path}')
-            return {'status': 404}
-    return _whiteboard_access_required
-
-
 def activities_type_enums():
     return _filter_per_feature_flag(activities_type.enums)
 
@@ -104,40 +90,6 @@ def can_view_asset(asset, user):
     if not user or user.course.id != asset.course_id:
         return False
     return asset.visible or (asset.id in [a.id for a in current_user.user.assets])
-
-
-def can_access_whiteboard(user, whiteboard_id):
-    if not app.config['FEATURE_FLAG_WHITEBOARDS']:
-        return False
-    if is_admin(user):
-        return True
-
-    user_id = _get_user_id(user)
-    if user_id:
-        sql = """
-            SELECT COUNT(DISTINCT(u.id))::int FROM users u
-            JOIN whiteboards w ON w.id = :whiteboard_id
-            WHERE
-              u.id = :user_id
-              AND w.course_id = :course_id
-              AND (
-                u.id IN (SELECT user_id FROM whiteboard_users WHERE whiteboard_id = :whiteboard_id)
-                OR u.canvas_course_role ILIKE '%admin%'
-                OR u.canvas_course_role ILIKE '%instructor%'
-                OR u.canvas_course_role ILIKE '%teacher%'
-              )
-        """
-        if not is_teaching(user):
-            sql += ' AND w.deleted_at IS NULL'
-        params = {
-            'course_id': user.course.id,
-            'user_id': user_id,
-            'whiteboard_id': whiteboard_id,
-        }
-        count_result = db.session.execute(text(sql), params).fetchone()
-        return count_result and count_result[0] > 0
-    else:
-        return False
 
 
 def can_delete_comment(comment, user):
