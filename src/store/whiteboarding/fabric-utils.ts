@@ -23,7 +23,6 @@ export function addAsset(asset: any, state: any) {
   fabric.Image.fromURL(imageUrl, (element: any) => {
     element.assetId = asset.id
     element.src = imageUrl
-    element.uuid = uuidv4()
     const zoomLevel = p.$canvas.getZoom()
     const canvasCenter = {
       x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
@@ -36,7 +35,7 @@ export function addAsset(asset: any, state: any) {
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
     p.$canvas.bringToFront(element)
-    $_broadcastUpsert(asset.id, element, state)
+    $_broadcastUpsert([{assetId: asset.id, element}], state)
   })
 }
 
@@ -249,9 +248,13 @@ export function updateLayers(state: any) {
     $_log('Update layers')
     // Update the index of all elements to reflect their order in the current whiteboard.
     const objects = p.$canvas.getObjects()
+    const upserts: {assetId: number, element: any}[] = []
     if (objects.length) {
       const after = (index: number) => {
         if (index === objects.length - 1) {
+          if (upserts.length) {
+            $_broadcastUpsert(upserts, state)
+          }
           resolve()
         }
       }
@@ -265,13 +268,13 @@ export function updateLayers(state: any) {
             // If the element is part of a group, calculate its global coordinates
             const coordinates = $_calculateGlobalElementPosition(element.group, element)
             const e = _.assignIn({}, element.toObject(), coordinates)
-            $_log(`Update element.group index. NEW value = ${coordinates}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
-            $_broadcastUpsert(e.assetId, e, state)
+            upserts.push({assetId: e.assetId, element: e})
+            $_log(`Update element.group index. NEW value = ${coordinates}, OLD value = ${previousIndex}`)
             after(index)
           } else {
             const e = element.toObject()
-            $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}. Next, broadcast upsert.`)
-            $_broadcastUpsert(e.assetId, e, state)
+            $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}`)
+            upserts.push({assetId: e.assetId, element: e})
             after(index)
           }
         } else {
@@ -293,7 +296,7 @@ export function updatePreviewImage(src: any, state: any, uuid: string) {
       const done = (src: any) => {
         existing.setSrc(src, () => {
           $_scaleImageObject(existing, state)
-          $_log(`Update existing image element: src = ${src}, uuid = ${uuid}. Next, broadcast upsert.`)
+          $_log(`Update existing image element: src = ${src}, uuid = ${uuid}`)
           $_renderWhiteboard(state).then(() => {
             $_ensureWithinCanvas(existing)
             resolve(true)
@@ -332,7 +335,7 @@ const $_addCanvasListeners = (state: any) => {
     $_setModifyingElement(false)
     // Ensure that none of the modified objects are positioned off-screen.
     $_ensureWithinCanvas(event.target)
-    _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert(element.assetId, element, state))
+    _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert([{assetId: element.assetId, element}], state))
   })
 
   p.$canvas.on('after:render', () => {
@@ -375,11 +378,10 @@ const $_addCanvasListeners = (state: any) => {
     $_log(`canvas object:added (mode = ${state.mode})`)
     const element = event.target
     const isNonEmptyIText = element.type !== 'i-text' || element.text.trim()
-    const wasAddedByRemote = state.remoteUUIDs.includes(element.uuid)
-    if (isNonEmptyIText && !wasAddedByRemote && !element.isHelper) {
+    if (isNonEmptyIText && !element.uuid && !element.isHelper) {
       $_enableCanvasElements(true)
-      element.uuid = element.uuid || uuidv4()
-      $_broadcastUpsert(element.assetId, element, state)
+      element.uuid = uuidv4()
+      $_broadcastUpsert([{assetId: element.assetId, element}], state)
       setCanvasDimensions(state)
       setMode('move')
     }
@@ -406,7 +408,6 @@ const $_addCanvasListeners = (state: any) => {
         stroke: state.selected.color,
         strokeWidth: state.selected.strokeWidth,
         top: state.startShapePointer.y,
-        uuid: uuidv4(),
         width: 10
       })
       p.$canvas.add(shape)
@@ -423,8 +424,7 @@ const $_addCanvasListeners = (state: any) => {
         text: '',
         selectable: true,
         selected: true,
-        top: textPointer.y,
-        uuid: uuidv4()
+        top: textPointer.y
       })
       p.$canvas.add(iText)
 
@@ -489,7 +489,7 @@ const $_addCanvasListeners = (state: any) => {
         shape.isHelper = false
         // Save the added shape and make it active.
         p.$canvas.bringToFront(shape)
-        $_broadcastUpsert(NaN, shape, state)
+        $_broadcastUpsert([{assetId: undefined, element: shape}], state)
       }
       setMode('move')
     }
@@ -552,32 +552,53 @@ const $_addSocketListeners = (state: any) => {
     $_log('socket.on update_whiteboard')
   })
 
-  p.$socket.on('upsert_whiteboard_element', (data: any) => {
-    const whiteboardElement = data.whiteboardElement
-    const element = whiteboardElement.element
-    const uuid = whiteboardElement.uuid
-    $_log(`socket.on upsert_whiteboard_element: type = ${element.type}, uuid = ${uuid}`)
-    const existing = $_getCanvasElement(uuid)
-    if (existing) {
-      // Deactivate the current group if any of the updated elements are in the current group
-      $_deactivateGroupIfOverlap(uuid)
-      updatePreviewImage(element.src, state, uuid).then((modified) => {
-        modified ||= $_assignIn(existing, element)
-        if (modified) {
-          $_ensureWithinCanvas(existing)
-          setCanvasDimensions(state)
-        }
+  p.$socket.on('upsert_whiteboard_elements', (data: any) => {
+    const totalCount = data.length
+    let updateCount = 0
+    const after = (whiteboardElement: any) => {
+      store.commit('whiteboarding/onWhiteboardElementUpsert', {
+        assetId: whiteboardElement.assetId,
+        element: whiteboardElement.element,
+        uuid: whiteboardElement.uuid
       })
-    } else {
-      $_deserializeElement(state, element, uuid).then((e: any) => {
-        // Add the element to the whiteboard canvas and move it to its appropriate index
-        store.commit('whiteboarding/pushRemoteUUID', e.uuid)
-        p.$canvas.add(e)
+      if (updateCount === totalCount) {
         p.$canvas.requestRenderAll()
-        // Recalculate the size of the whiteboard canvas
         setCanvasDimensions(state)
-      })
+      }
     }
+    _.each(data, (whiteboardElement: any) => {
+      const element = whiteboardElement.element
+      const uuid = whiteboardElement.uuid
+      $_log(`socket.on upsert_whiteboard_elements: type = ${element.type}, uuid = ${uuid}`)
+      const existing = $_getCanvasElement(uuid)
+      if (existing) {
+        // Deactivate the current group if any of the updated elements are in the current group
+        $_deactivateGroupIfOverlap(uuid)
+        updatePreviewImage(element.src, state, uuid).then((modified) => {
+          modified ||= $_assignIn(existing, element)
+          if (modified) {
+            $_ensureWithinCanvas(existing)
+            updateCount++
+            after({
+              assetId: whiteboardElement.assetId,
+              element: modified,
+              uuid
+            })
+          }
+        })
+      } else {
+        $_deserializeElement(state, element, uuid).then((e: any) => {
+          // Add the element to the whiteboard canvas and move it to its appropriate index
+          p.$canvas.add(e)
+          updateCount++
+          after({
+            assetId: whiteboardElement.assetId,
+            element: e,
+            uuid
+          })
+        })
+      }
+    })
   })
 
   // One or multiple whiteboard canvas elements were deleted by a different user
@@ -587,8 +608,8 @@ const $_addSocketListeners = (state: any) => {
     if (element) {
       // Deactivate the current group if any of the deleted elements are in the current group
       $_deactivateGroupIfOverlap(uuid)
-      // p.$canvas.setActiveObject(element)
       p.$canvas.remove(element)
+      store.commit('whiteboarding/onWhiteboardElementDelete')
       p.$canvas.requestRenderAll()
       // Recalculate the size of the whiteboard canvas
       setCanvasDimensions(state)
@@ -613,14 +634,12 @@ const $_addViewportListeners = (state: any) => {
           _.each(activeObjects, (object: any) => {
             object.clone((clone: any) => {
               clone.index = $_getNextAvailableObjectIndex()
-              clone.uuid = uuidv4()
               clone.left += 25
               clone.top += 25
               store.commit('whiteboarding/copy', clone)
             })
           })
         } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
-          // Paste
           $_paste(state)
         }
       }
@@ -630,27 +649,38 @@ const $_addViewportListeners = (state: any) => {
 }
 
 const $_broadcastDelete = (element: any, state: any) => {
+  $_log('Delete whiteboard elements')
   return new Promise<void>(resolve => {
     const args = {
       userId: p.$currentUser.id,
       whiteboardElement: {element},
       whiteboardId: state.whiteboard.id
     }
-    p.$socket.emit('delete_whiteboard_element', args, resolve)
+    p.$socket.emit('delete_whiteboard_element', args, (uuid: string) => {
+      store.commit('whiteboarding/onWhiteboardElementDelete', uuid)
+      resolve()
+    })
   })
 }
 
-const $_broadcastUpsert = (assetId: number, element: any, state: any) => {
-  $_log('Broadcast upsert')
-  const args = {
-    userId: p.$currentUser.id,
-    whiteboardElement: {
-      assetId,
-      element
+const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
+  $_log('Upsert whiteboard elements')
+  p.$socket.emit(
+    'upsert_whiteboard_elements',
+    {
+      userId: p.$currentUser.id,
+      whiteboardElements,
+      whiteboardId: state.whiteboard.id
     },
-    whiteboardId: state.whiteboard.id
-  }
-  p.$socket.emit('upsert_whiteboard_element', args)
+    (updated: any[]) => {
+      _.each(updated, whiteboardElement => {
+        const assetId = whiteboardElement.assetId
+        const element = _.cloneDeep(whiteboardElement.element)
+        const uuid = whiteboardElement.uuid
+        store.commit('whiteboarding/onWhiteboardElementUpsert', {assetId, element, uuid})
+      })
+    }
+  )
 }
 
 const $_calculateGlobalElementPosition = (selection: any, element: any): any => {
@@ -846,7 +876,7 @@ const $_initFabricPrototypes = (state: any) => {
         } else if (text.toLowerCase() === 'when will teena retire?') {
           element.text = `${days_until_retirement} days until freedom`
         }
-        $_broadcastUpsert(NaN, element, state)
+        $_broadcastUpsert([{assetId: undefined, element}], state)
         setMode('move')
       } else if (uuid) {
         $_broadcastDelete(element, state).then(() => {
@@ -918,7 +948,7 @@ const $_leave = (state: any) => {
 }
 
 const $_log = (statement: string, force?: boolean) => {
-  if (p.$config.isVueAppDebugMode || force) {
+  if (p.$config.socketIoDebugMode || force) {
     console.log(`🪲 ${statement}`)
   }
 }
@@ -934,7 +964,10 @@ const $_paste = (state: any): void => {
     if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(object)
     }
+    _.each(copies, (copy: any) => copy.uuid = uuidv4())
+    $_broadcastUpsert(copies, state)
     _.each(copies, (copy: any) => p.$canvas.add(copy))
+
     setCanvasDimensions(state)
     _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))
     if (copies.length === 1) {

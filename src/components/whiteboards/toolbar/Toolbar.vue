@@ -26,6 +26,18 @@
             <AddLinkAsset />
             <UploadNewAsset />
           </v-btn-toggle>
+          <div v-if="$config.socketIoDebugMode && !isLoading">
+            <v-chip
+              v-if="canvasObjectsCountChip"
+              class="ml-5"
+              close
+              color="green"
+              outlined
+              @click:close="canvasObjectsCountChip = false"
+            >
+              {{ pluralize('whiteboard element', whiteboard.whiteboardElements.length, {0: 'No', 1: 'One'}) }}
+            </v-chip>
+          </div>
         </v-col>
         <v-col cols="4">
           <div class="align-center d-flex justify-end">
@@ -61,12 +73,13 @@ import ShapeTool from '@/components/whiteboards/toolbar/ShapeTool'
 import TextTool from '@/components/whiteboards/toolbar/TextTool'
 import UploadNewAsset from '@/components/whiteboards/toolbar/assets/UploadNewAsset'
 import Users from '@/components/whiteboards/toolbar/Users'
+import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
 
 export default {
   name: 'Toolbar',
-  mixins: [Context, Whiteboarding],
+  mixins: [Context, Utils, Whiteboarding],
   components: {
     AddExistingAssets,
     AddLinkAsset,
@@ -94,6 +107,7 @@ export default {
     }
   },
   data: () => ({
+    canvasObjectsCountChip: true,
     isDeleteDialogOpen: false,
     isDeleting: false
   }),

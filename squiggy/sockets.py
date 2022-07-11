@@ -112,29 +112,30 @@ def register_sockets(socketio):
             )
         return {'status': 200}
 
-    @socketio.on('upsert_whiteboard_element')
+    @socketio.on('upsert_whiteboard_elements')
     @login_required
-    def socketio_upsert_whiteboard_element(data):
+    def socketio_upsert_whiteboard_elements(data):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_upsert_whiteboard_element: user_id = {current_user.user_id}, whiteboard_id = {whiteboard_id}')
-        whiteboard_element = upsert_whiteboard_element(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-            whiteboard_element=data.get('whiteboardElement'),
-        )
+        logger.debug(f'socketio_upsert_whiteboard_elements: user_id = {current_user.user_id}, whiteboard_id = {whiteboard_id}')
+        whiteboard_elements = []
+        for whiteboard_element in data.get('whiteboardElements'):
+            whiteboard_elements.append(
+                upsert_whiteboard_element(
+                    current_user=current_user,
+                    socket_id=socket_id,
+                    whiteboard_id=whiteboard_id,
+                    whiteboard_element=whiteboard_element,
+                ),
+            )
         emit(
-            'upsert_whiteboard_element',
-            {
-                'whiteboardElement': whiteboard_element,
-                'whiteboardId': whiteboard_id,
-            },
+            'upsert_whiteboard_elements',
+            whiteboard_elements,
             include_self=False,
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
         )
-        return {'status': 200}
+        return whiteboard_elements
 
     @socketio.on('delete_whiteboard_element')
     @login_required
@@ -150,17 +151,18 @@ def register_sockets(socketio):
             whiteboard_id=whiteboard_id,
             whiteboard_element=whiteboard_element,
         )
+        uuid = whiteboard_element['element']['uuid']
         emit(
             'delete_whiteboard_element',
             {
-                'uuid': whiteboard_element['element']['uuid'],
+                'uuid': uuid,
                 'whiteboardId': whiteboard_id,
             },
             include_self=False,
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),
         )
-        return {'status': 200}
+        return uuid
 
     @socketio.on('boo-boo-kitty')
     def socketio_boo_boo_kitty(data):
