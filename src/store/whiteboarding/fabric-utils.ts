@@ -542,10 +542,9 @@ const $_addSocketListeners = (state: any) => {
     $_log(`socket.on join. user_id = ${userId}`)
   })
 
-  p.$socket.on('leave', (data: any) => {
-    // TODO: The server-side needs only to return userId of student leaving session.
-    store.commit('whiteboarding/setUsers', data.users)
-    $_log(`socket.on leave: user_ids = ${_.map(data.users, ['id'])}`)
+  p.$socket.on('leave', (userId: number) => {
+    store.commit('whiteboarding/onLeave', userId)
+    $_log(`socket.on leave: user_id = ${userId}`)
   })
 
   p.$socket.on('update_whiteboard', (data: any) => _.assignIn(state.whiteboard, data.whiteboard))
@@ -893,22 +892,26 @@ const $_initSocket = (state: any) => {
 }
 
 const $_join = (state: any) => {
-  $_log('Join')
-  const userId: number = p.$currentUser.id
-  const args = {
-    userId: userId,
-    whiteboardId: state.whiteboard.id
+  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+    $_log('Join')
+    const userId: number = p.$currentUser.id
+    const args = {
+      userId: userId,
+      whiteboardId: state.whiteboard.id
+    }
+    p.$socket.emit('join', args, () => store.commit('whiteboarding/join', userId))
   }
-  p.$socket.emit('join', args, () => store.commit('whiteboarding/join', userId))
 }
 
 const $_leave = (state: any) => {
-  $_log('Leave')
-  const args = {
-    userId: p.$currentUser.id,
-    whiteboardId: state.whiteboard.id
+  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+    $_log('Leave')
+    const args = {
+      userId: p.$currentUser.id,
+      whiteboardId: state.whiteboard.id
+    }
+    p.$socket.emit('leave', args, () => p.$socket.disconnect())
   }
-  p.$socket.emit('leave', args, () => p.$socket.disconnect())
 }
 
 const $_log = (statement: string, force?: boolean) => {

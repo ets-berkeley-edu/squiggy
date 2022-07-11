@@ -97,6 +97,14 @@ const mutations = {
       }
     })
   },
+  onLeave: (state: any, userId: string) => {
+    _.each(state.whiteboard.users, user => {
+      if (user.id === userId) {
+        user.isOnline = false
+        return false
+      }
+    })
+  },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
@@ -125,7 +133,6 @@ const mutations = {
     afterChangeMode(state)
   },
   setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
-  setUsers: (state: any, users: any[]) => state.whiteboard.users = users,
   setViewport: (state: any, viewport: any) => state.viewport = viewport,
   setWhiteboard: (state: any, whiteboard: any) => {
     state.whiteboard = whiteboard
