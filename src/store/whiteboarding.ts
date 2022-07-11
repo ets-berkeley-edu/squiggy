@@ -88,6 +88,14 @@ const mutations = {
     }
   },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
+  onJoin: (state: any, userId: string) => {
+    _.each(state.whiteboard.users, user => {
+      if (user.id === userId) {
+        user.isOnline = true
+        return false
+      }
+    })
+  },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth

@@ -512,12 +512,13 @@ const $_addSocketListeners = (state: any) => {
     }
   })
 
-  p.$socket.on('join', (data: any) => {
-    store.commit('whiteboarding/setUsers', data.users)
-    $_log(`socket.on join: user_id = ${data.id}`)
+  p.$socket.on('join', (userId: number) => {
+    store.commit('whiteboarding/onJoin', userId)
+    $_log(`socket.on join. user_id = ${userId}`)
   })
 
   p.$socket.on('leave', (data: any) => {
+    // TODO: The server-side needs only to return userId of student leaving session.
     store.commit('whiteboarding/setUsers', data.users)
     $_log(`socket.on leave: user_ids = ${_.map(data.users, ['id'])}`)
   })

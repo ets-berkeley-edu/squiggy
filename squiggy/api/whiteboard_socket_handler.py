@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 from squiggy.lib.errors import BadRequestError
 from squiggy.lib.util import is_student, safe_strip
-from squiggy.lib.whiteboard_preview_generator import WhiteboardPreviewGenerator
+from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -67,7 +67,7 @@ def delete_whiteboard_element(current_user, socket_id, whiteboard_element, white
             socket_id=socket_id,
             whiteboard_id=whiteboard_id,
         )
-        WhiteboardPreviewGenerator.queue(whiteboard_id)
+        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
 
 
 def join_whiteboard(current_user, socket_id, whiteboard_id):
@@ -83,11 +83,6 @@ def leave_whiteboard(socket_id):
 
 
 def update_updated_at(current_user, socket_id, whiteboard_id):
-    _delete_expired_sessions(
-        active_socket_id=socket_id,
-        current_user=current_user,
-        whiteboard_id=whiteboard_id,
-    )
     if is_student(current_user):
         WhiteboardSession.create(
             socket_id=socket_id,
@@ -131,18 +126,8 @@ def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, white
             whiteboard_element=whiteboard_element,
             whiteboard_id=whiteboard_id,
         )
-    WhiteboardPreviewGenerator.queue(whiteboard_id)
+    WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
     return whiteboard_element
-
-
-def _delete_expired_sessions(active_socket_id, current_user, whiteboard_id):
-    sessions = WhiteboardSession.find(user_id=current_user.user_id, whiteboard_id=whiteboard_id)
-    expired_sessions = list(filter(lambda s: s.socket_id != active_socket_id, sessions))
-    if expired_sessions:
-        WhiteboardSession.delete_all(
-            older_than_minutes=app.config['WHITEBOARD_SESSION_EXPIRATION_MINUTES'],
-            socket_ids=[s.socket_id for s in expired_sessions],
-        )
 
 
 def _update_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):

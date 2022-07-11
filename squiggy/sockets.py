@@ -29,7 +29,7 @@ from flask_socketio import emit, join_room, leave_room
 from squiggy.api.api_util import whiteboard_access_required
 from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, fetch_whiteboard, join_whiteboard, \
     leave_whiteboard, update_whiteboard, upsert_whiteboard_element
-from squiggy.lib.util import isoformat, utc_now
+from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -47,26 +47,19 @@ def register_sockets(socketio):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_join: {data}')
-        whiteboard = join_whiteboard(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-        )
-        room = _get_room(whiteboard_id)
-        join_room(room, sid=socket_id)
-        emit(
-            'join',
-            whiteboard,
-            broadcast=True,
-            include_self=False,
-            skip_sid=socket_id,
-            to=room,
-        )
-        whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
-        return {
-            **whiteboard['users'],
-            'status': 200,
-        }
+        if is_student(current_user):
+            join_whiteboard(current_user=current_user, socket_id=socket_id, whiteboard_id=whiteboard_id)
+            room = _get_room(whiteboard_id)
+            join_room(room, sid=socket_id)
+            emit(
+                'join',
+                current_user.user_id,
+                broadcast=True,
+                include_self=False,
+                skip_sid=socket_id,
+                to=room,
+            )
+        return {'status': 200}
 
     @socketio.on('leave')
     @whiteboard_access_required
@@ -141,7 +134,7 @@ def register_sockets(socketio):
         return {'status': 200}
 
     @socketio.on('delete_whiteboard_element')
-    @login_required
+    @whiteboard_access_required
     def socketio_delete(data):
         socket_id = request.sid
         user_id = data.get('userId')
