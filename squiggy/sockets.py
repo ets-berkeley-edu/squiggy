@@ -26,7 +26,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.logger import initialize_background_logger
@@ -119,16 +118,13 @@ def register_sockets(socketio):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_upsert_whiteboard_elements: user_id = {current_user.user_id}, whiteboard_id = {whiteboard_id}')
-        whiteboard_elements = []
-        for whiteboard_element in data.get('whiteboardElements'):
-            whiteboard_elements.append(
-                upsert_whiteboard_element(
-                    current_user=current_user,
-                    socket_id=socket_id,
-                    whiteboard_id=whiteboard_id,
-                    whiteboard_element=whiteboard_element,
-                ),
-            )
+        whiteboard_elements = data.get('whiteboardElements')
+        _queue_whiteboard_elements_transaction(
+            socket_id=socket_id,
+            transaction_type='upsert',
+            whiteboard_elements=whiteboard_elements,
+            whiteboard_id=whiteboard_id,
+        )
         emit(
             'upsert_whiteboard_elements',
             whiteboard_elements,
@@ -144,10 +140,7 @@ def register_sockets(socketio):
         socket_id = request.sid
         whiteboard_element = data.get('whiteboardElement')
         whiteboard_id = data.get('whiteboardId')
-        WhiteboardHousekeeping.queue_whiteboard_elements_transaction(
-            course_id=current_user.course.id,
-            current_user_id=current_user.user_id,
-            is_student=is_student(current_user),
+        _queue_whiteboard_elements_transaction(
             socket_id=socket_id,
             transaction_type='delete',
             whiteboard_elements=[whiteboard_element],
@@ -196,3 +189,15 @@ def register_sockets(socketio):
 
 def _get_room(whiteboard_id):
     return f'whiteboard-{whiteboard_id}'
+
+
+def _queue_whiteboard_elements_transaction(socket_id, transaction_type, whiteboard_elements, whiteboard_id):
+    WhiteboardHousekeeping.queue_whiteboard_elements_transaction(
+        course_id=current_user.course.id,
+        current_user_id=current_user.user_id,
+        is_student=is_student(current_user),
+        socket_id=socket_id,
+        transaction_type=transaction_type,
+        whiteboard_elements=whiteboard_elements,
+        whiteboard_id=whiteboard_id,
+    )

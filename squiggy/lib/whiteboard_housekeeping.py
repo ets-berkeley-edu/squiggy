@@ -29,6 +29,7 @@ import time
 
 from sqlalchemy import text
 from squiggy import db
+from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
@@ -105,7 +106,6 @@ class WhiteboardHousekeeping(BackgroundJob):
     def _execute_whiteboard_element_transactions(self):
         while not self.whiteboard_element_transaction_queue.empty():
             transaction = Namespace(**self.whiteboard_element_transaction_queue.get())
-            logger.debug(f'Queue whiteboard_elements transaction: {transaction}')
             if transaction.type == 'delete':
                 for whiteboard_element in transaction.whiteboard_elements:
                     _delete_whiteboard_element(
@@ -116,8 +116,16 @@ class WhiteboardHousekeeping(BackgroundJob):
                         whiteboard_element=whiteboard_element,
                     )
             elif transaction.type == 'upsert':
-                # TODO
-                pass
+                for whiteboard_element in transaction.whiteboard_elements:
+                    upsert_whiteboard_element(
+                        course_id=transaction.course_id,
+                        is_student=transaction.is_student,
+                        user_id=transaction.user_id,
+                        socket_id=transaction.socket_id,
+                        whiteboard_id=transaction.whiteboard_id,
+                        whiteboard_element=whiteboard_element,
+                    )
+                self.queue_for_preview_image(transaction.whiteboard_id)
             else:
                 raise ValueError(f'Invalid whiteboard_element transaction type: {transaction.type}')
 
