@@ -23,20 +23,16 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from argparse import Namespace
 from queue import Queue
-import time
+from time import sleep
 
 from sqlalchemy import text
 from squiggy import db
-from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
 from squiggy.logger import initialize_background_logger, logger
-from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard import Whiteboard
-from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
@@ -46,8 +42,7 @@ def launch_whiteboard_housekeeping():
 
 class WhiteboardHousekeeping(BackgroundJob):
 
-    whiteboard_id_queue = Queue()
-    whiteboard_element_transaction_queue = Queue()
+    generate_previews_queue = Queue(maxsize=-1)
     whiteboard_housekeeping = None
 
     def __init__(self, **kwargs):
@@ -66,18 +61,16 @@ class WhiteboardHousekeeping(BackgroundJob):
 
     def run(self):
         while True:
-            epoch_time = int(time.time())
             if not self.is_running:
                 self.is_running = True
-                self._execute_whiteboard_element_transactions()
-                if epoch_time % 15 == 0:
-                    self._generate_whiteboard_previews()
-                    WhiteboardSession.delete_stale_sessions()
+                self._generate_whiteboard_previews()
+                WhiteboardSession.delete_stale_sessions()
                 self.is_running = False
+            sleep(15)
 
     def _generate_whiteboard_previews(self):
-        while not self.whiteboard_id_queue.empty():
-            whiteboard_id = self.whiteboard_id_queue.get()
+        while not self.generate_previews_queue.empty():
+            whiteboard_id = self.generate_previews_queue.get()
             # First, find user authorized to render whiteboard.
             sql = text("""
                 SELECT u.id FROM users u
@@ -103,31 +96,18 @@ class WhiteboardHousekeeping(BackgroundJob):
             else:
                 self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
 
-    def _execute_whiteboard_element_transactions(self):
-        while not self.whiteboard_element_transaction_queue.empty():
-            transaction = Namespace(**self.whiteboard_element_transaction_queue.get())
-            if transaction.type == 'delete':
-                for whiteboard_element in transaction.whiteboard_elements:
-                    _delete_whiteboard_element(
-                        is_student=transaction.is_student,
-                        user_id=transaction.user_id,
-                        socket_id=transaction.socket_id,
-                        whiteboard_id=transaction.whiteboard_id,
-                        whiteboard_element=whiteboard_element,
-                    )
-            elif transaction.type == 'upsert':
-                for whiteboard_element in transaction.whiteboard_elements:
-                    upsert_whiteboard_element(
-                        course_id=transaction.course_id,
-                        is_student=transaction.is_student,
-                        user_id=transaction.user_id,
-                        socket_id=transaction.socket_id,
-                        whiteboard_id=transaction.whiteboard_id,
-                        whiteboard_element=whiteboard_element,
-                    )
-                self.queue_for_preview_image(transaction.whiteboard_id)
-            else:
-                raise ValueError(f'Invalid whiteboard_element transaction type: {transaction.type}')
+    @classmethod
+    def get_status(cls):
+        if not cls.whiteboard_element_processor:
+            return False
+        return {
+            'generatePreviewsQueue': {
+                'isEmpty': cls.generate_previews_queue.empty(),
+                'isFull': cls.generate_previews_queue.full(),
+                'size': cls.generate_previews_queue.qsize(),
+                'unfinished_tasks': cls.generate_previews_queue.unfinished_tasks,
+            },
+        }
 
     @classmethod
     def start(cls):
@@ -136,51 +116,4 @@ class WhiteboardHousekeeping(BackgroundJob):
 
     @classmethod
     def queue_for_preview_image(cls, whiteboard_id):
-        cls.whiteboard_id_queue.put(whiteboard_id)
-
-    @classmethod
-    def queue_whiteboard_elements_transaction(
-            cls,
-            course_id,
-            current_user_id,
-            is_student,
-            socket_id,
-            transaction_type,
-            whiteboard_elements,
-            whiteboard_id,
-    ):
-        transaction = {
-            'course_id': course_id,
-            'is_student': is_student,
-            'socket_id': socket_id,
-            'type': transaction_type,
-            'user_id': current_user_id,
-            'whiteboard_elements': whiteboard_elements,
-            'whiteboard_id': whiteboard_id,
-        }
-        cls.whiteboard_element_transaction_queue.put(transaction)
-
-
-def _delete_whiteboard_element(
-        is_student,
-        socket_id,
-        user_id,
-        whiteboard_element,
-        whiteboard_id,
-):
-    uuid = whiteboard_element['element']['uuid']
-    whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
-    if whiteboard_element:
-        if whiteboard_element.asset_id:
-            AssetWhiteboardElement.delete(
-                asset_id=whiteboard_element.asset_id,
-                uuid=whiteboard_element.uuid,
-            )
-        WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
-        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
-        if is_student:
-            WhiteboardSession.update_updated_at(
-                socket_id=socket_id,
-                user_id=user_id,
-                whiteboard_id=whiteboard_id,
-            )
+        cls.generate_previews_queue.put(whiteboard_id)

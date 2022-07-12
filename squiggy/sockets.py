@@ -27,7 +27,7 @@ from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.lib.util import is_student, isoformat, utc_now
-from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
+from squiggy.lib.whiteboard_element_processor_job import WhiteboardElementProcessor
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -192,7 +192,7 @@ def _get_room(whiteboard_id):
 
 
 def _queue_whiteboard_elements_transaction(socket_id, transaction_type, whiteboard_elements, whiteboard_id):
-    WhiteboardHousekeeping.queue_whiteboard_elements_transaction(
+    WhiteboardElementProcessor.queue_whiteboard_elements_transaction(
         course_id=current_user.course.id,
         current_user_id=current_user.user_id,
         is_student=is_student(current_user),
