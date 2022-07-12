@@ -31,6 +31,7 @@ from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now
+from squiggy.lib.whiteboard_element_processor_job import WhiteboardElementProcessor
 from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -233,3 +234,13 @@ def update_whiteboard():
         users=User.find_by_ids(user_ids),
     )
     return tolerant_jsonify(whiteboard.to_api_json())
+
+
+@app.route('/api/whiteboard/jobs/status')
+@feature_flag_whiteboards
+@login_required
+def get_housekeeping_status():
+    return tolerant_jsonify({
+        **WhiteboardElementProcessor.get_status(),
+        **WhiteboardElementProcessor.get_status(),
+    })
