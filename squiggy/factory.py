@@ -30,7 +30,6 @@ from squiggy import db
 from squiggy.configs import load_configs
 from squiggy.lib.canvas_poller import launch_pollers
 from squiggy.lib.socket_io_util import create_mock_socket, initialize_socket_io
-from squiggy.lib.whiteboard_element_processor_job import launch_whiteboard_element_processor
 from squiggy.lib.whiteboard_housekeeping import launch_whiteboard_housekeeping
 from squiggy.logger import initialize_app_logger
 from squiggy.routes import register_routes
@@ -54,7 +53,6 @@ def create_app():
             if app.config['CANVAS_POLLER']:
                 launch_pollers()
             if app.config['FEATURE_FLAG_WHITEBOARDS']:
-                launch_whiteboard_element_processor()
                 launch_whiteboard_housekeeping()
 
     return app, socketio

@@ -29,14 +29,14 @@ from queue import Queue
 from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
-from squiggy.logger import initialize_background_logger, logger
+from squiggy.logger import initialize_background_logger
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
 def launch_whiteboard_element_processor():
-    WhiteboardElementProcessor().launch()
+    WhiteboardElementProcessor.start()
 
 
 class WhiteboardElementProcessor(BackgroundJob):
@@ -55,7 +55,7 @@ class WhiteboardElementProcessor(BackgroundJob):
 
     def launch(self):
         if not self.whiteboard_element_processor:
-            logger.info('Launching whiteboard_element_processor')
+            self.logger.info('Launching whiteboard_element_processor')
         WhiteboardElementProcessor.start()
 
     def run(self):

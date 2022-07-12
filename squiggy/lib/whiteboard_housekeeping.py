@@ -31,13 +31,13 @@ from squiggy import db
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
-from squiggy.logger import initialize_background_logger, logger
+from squiggy.logger import initialize_background_logger
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
 def launch_whiteboard_housekeeping():
-    WhiteboardHousekeeping().launch()
+    WhiteboardHousekeeping.start()
 
 
 class WhiteboardHousekeeping(BackgroundJob):
@@ -53,11 +53,6 @@ class WhiteboardHousekeeping(BackgroundJob):
         )
         self.is_running = False
         super().__init__(thread_name=thread_name, **kwargs)
-
-    def launch(self):
-        if not self.whiteboard_housekeeping:
-            logger.info('Launching whiteboard preview generator')
-        WhiteboardHousekeeping.start()
 
     def run(self):
         while True:

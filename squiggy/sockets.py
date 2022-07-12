@@ -27,7 +27,7 @@ from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.lib.util import is_student, isoformat, utc_now
-from squiggy.lib.whiteboard_element_processor_job import WhiteboardElementProcessor
+from squiggy.lib.whiteboard_element_processor_job import launch_whiteboard_element_processor, WhiteboardElementProcessor
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -172,6 +172,9 @@ def register_sockets(socketio):
     @socketio.on('connect')
     @login_required
     def socketio_connect():
+        if not WhiteboardElementProcessor.get_status():
+            # Lazy-start of background thread. We expect to perform this 'launch' only once.
+            launch_whiteboard_element_processor()
         logger.debug('socketio_connect')
 
     @socketio.on('disconnect')
