@@ -483,10 +483,11 @@ const $_addCanvasListeners = (state: any) => {
       // the correct position. The origin of element is set to `center` to make it inline with the other elements.
       if (shape) {
         store.commit('whiteboarding/setIsDrawingShape', false)
-        shape.left += shape.width / 2
-        shape.top += shape.height / 2
-        shape.originX = shape.originY = 'center'
         shape.isHelper = false
+        shape.left += shape.width / 2
+        shape.originX = shape.originY = 'center'
+        shape.top += shape.height / 2
+        shape.uuid = shape.uuid || uuidv4()
         // Save the added shape and make it active.
         p.$canvas.bringToFront(shape)
         $_broadcastUpsert([{assetId: undefined, element: shape}], state)
@@ -877,6 +878,7 @@ const $_initFabricPrototypes = (state: any) => {
         } else if (text.toLowerCase() === 'when will teena retire?') {
           element.text = `${days_until_retirement} days until freedom`
         }
+        element.uuid = uuid || uuidv4()
         $_broadcastUpsert([{assetId: undefined, element}], state)
         setMode('move')
       } else if (uuid) {

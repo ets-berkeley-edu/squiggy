@@ -26,7 +26,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app
 from squiggy.lib.errors import BadRequestError
 from squiggy.lib.util import safe_strip
-from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -61,7 +60,6 @@ def upsert_whiteboard_element(
             user_id=user_id,
             whiteboard_id=whiteboard_id,
         )
-    WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
     return whiteboard_element
 
 
