@@ -26,8 +26,9 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, upsert_whiteboard_element
+from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
+from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
@@ -141,23 +142,21 @@ def register_sockets(socketio):
     @login_required
     def socketio_delete(data):
         socket_id = request.sid
-        user_id = data.get('userId')
-        whiteboard_id = data.get('whiteboardId')
         whiteboard_element = data.get('whiteboardElement')
-        logger.debug(f'socketio_delete: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        delete_whiteboard_element(
-            current_user=current_user,
+        whiteboard_id = data.get('whiteboardId')
+        WhiteboardHousekeeping.queue_whiteboard_elements_transaction(
+            course_id=current_user.course.id,
+            current_user_id=current_user.user_id,
+            is_student=is_student(current_user),
             socket_id=socket_id,
+            transaction_type='delete',
+            whiteboard_elements=[whiteboard_element],
             whiteboard_id=whiteboard_id,
-            whiteboard_element=whiteboard_element,
         )
-        uuid = whiteboard_element['element']['uuid']
+        uuid = whiteboard_element['uuid']
         emit(
             'delete_whiteboard_element',
-            {
-                'uuid': uuid,
-                'whiteboardId': whiteboard_id,
-            },
+            uuid,
             include_self=False,
             skip_sid=socket_id,
             to=_get_room(whiteboard_id),

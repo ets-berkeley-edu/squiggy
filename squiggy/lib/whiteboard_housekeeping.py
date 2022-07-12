@@ -23,7 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from time import sleep
+from argparse import Namespace
+from queue import Queue
+import time
 
 from sqlalchemy import text
 from squiggy import db
@@ -31,7 +33,9 @@ from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
 from squiggy.logger import initialize_background_logger, logger
+from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
@@ -41,7 +45,8 @@ def launch_whiteboard_housekeeping():
 
 class WhiteboardHousekeeping(BackgroundJob):
 
-    whiteboard_id_queue = set()
+    whiteboard_id_queue = Queue()
+    whiteboard_element_transaction_queue = Queue()
     whiteboard_housekeeping = None
 
     def __init__(self, **kwargs):
@@ -60,19 +65,18 @@ class WhiteboardHousekeeping(BackgroundJob):
 
     def run(self):
         while True:
+            epoch_time = int(time.time())
             if not self.is_running:
                 self.is_running = True
-                self._generate_whiteboard_previews()
-                WhiteboardSession.delete_stale_sessions()
+                self._execute_whiteboard_element_transactions()
+                if epoch_time % 15 == 0:
+                    self._generate_whiteboard_previews()
+                    WhiteboardSession.delete_stale_sessions()
                 self.is_running = False
-            sleep(15)
 
     def _generate_whiteboard_previews(self):
-        # Copy and clear
-        whiteboard_id_set = self.whiteboard_id_queue.copy()
-        self.whiteboard_id_queue.clear()
-
-        for whiteboard_id in whiteboard_id_set:
+        while not self.whiteboard_id_queue.empty():
+            whiteboard_id = self.whiteboard_id_queue.get()
             # First, find user authorized to render whiteboard.
             sql = text("""
                 SELECT u.id FROM users u
@@ -98,6 +102,25 @@ class WhiteboardHousekeeping(BackgroundJob):
             else:
                 self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
 
+    def _execute_whiteboard_element_transactions(self):
+        while not self.whiteboard_element_transaction_queue.empty():
+            transaction = Namespace(**self.whiteboard_element_transaction_queue.get())
+            logger.debug(f'Queue whiteboard_elements transaction: {transaction}')
+            if transaction.type == 'delete':
+                for whiteboard_element in transaction.whiteboard_elements:
+                    _delete_whiteboard_element(
+                        is_student=transaction.is_student,
+                        user_id=transaction.user_id,
+                        socket_id=transaction.socket_id,
+                        whiteboard_id=transaction.whiteboard_id,
+                        whiteboard_element=whiteboard_element,
+                    )
+            elif transaction.type == 'upsert':
+                # TODO
+                pass
+            else:
+                raise ValueError(f'Invalid whiteboard_element transaction type: {transaction.type}')
+
     @classmethod
     def start(cls):
         cls.whiteboard_housekeeping = WhiteboardHousekeeping()
@@ -105,4 +128,51 @@ class WhiteboardHousekeeping(BackgroundJob):
 
     @classmethod
     def queue_for_preview_image(cls, whiteboard_id):
-        cls.whiteboard_id_queue.add(whiteboard_id)
+        cls.whiteboard_id_queue.put(whiteboard_id)
+
+    @classmethod
+    def queue_whiteboard_elements_transaction(
+            cls,
+            course_id,
+            current_user_id,
+            is_student,
+            socket_id,
+            transaction_type,
+            whiteboard_elements,
+            whiteboard_id,
+    ):
+        transaction = {
+            'course_id': course_id,
+            'is_student': is_student,
+            'socket_id': socket_id,
+            'type': transaction_type,
+            'user_id': current_user_id,
+            'whiteboard_elements': whiteboard_elements,
+            'whiteboard_id': whiteboard_id,
+        }
+        cls.whiteboard_element_transaction_queue.put(transaction)
+
+
+def _delete_whiteboard_element(
+        is_student,
+        socket_id,
+        user_id,
+        whiteboard_element,
+        whiteboard_id,
+):
+    uuid = whiteboard_element['element']['uuid']
+    whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
+    if whiteboard_element:
+        if whiteboard_element.asset_id:
+            AssetWhiteboardElement.delete(
+                asset_id=whiteboard_element.asset_id,
+                uuid=whiteboard_element.uuid,
+            )
+        WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
+        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
+        if is_student:
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=user_id,
+                whiteboard_id=whiteboard_id,
+            )

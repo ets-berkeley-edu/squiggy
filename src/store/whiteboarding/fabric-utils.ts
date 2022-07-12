@@ -601,9 +601,7 @@ const $_addSocketListeners = (state: any) => {
     })
   })
 
-  // One or multiple whiteboard canvas elements were deleted by a different user
-  p.$socket.on('delete_whiteboard_element', (data: any) => {
-    const uuid = data.uuid
+  p.$socket.on('delete_whiteboard_element', (uuid: string) => {
     const element = $_getCanvasElement(uuid)
     if (element) {
       // Deactivate the current group if any of the deleted elements are in the current group
@@ -653,7 +651,10 @@ const $_broadcastDelete = (element: any, state: any) => {
   return new Promise<void>(resolve => {
     const args = {
       userId: p.$currentUser.id,
-      whiteboardElement: {element},
+      whiteboardElement: {
+        element,
+        uuid: element.uuid
+      },
       whiteboardId: state.whiteboard.id
     }
     p.$socket.emit('delete_whiteboard_element', args, (uuid: string) => {
