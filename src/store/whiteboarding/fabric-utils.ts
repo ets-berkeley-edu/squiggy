@@ -483,11 +483,10 @@ const $_addCanvasListeners = (state: any) => {
       // the correct position. The origin of element is set to `center` to make it inline with the other elements.
       if (shape) {
         store.commit('whiteboarding/setIsDrawingShape', false)
-        shape.isHelper = false
         shape.left += shape.width / 2
-        shape.originX = shape.originY = 'center'
         shape.top += shape.height / 2
-        shape.uuid = shape.uuid || uuidv4()
+        shape.originX = shape.originY = 'center'
+        shape.isHelper = false
         // Save the added shape and make it active.
         p.$canvas.bringToFront(shape)
         $_broadcastUpsert([{assetId: undefined, element: shape}], state)
@@ -602,7 +601,9 @@ const $_addSocketListeners = (state: any) => {
     })
   })
 
-  p.$socket.on('delete_whiteboard_element', (uuid: string) => {
+  // One or multiple whiteboard canvas elements were deleted by a different user
+  p.$socket.on('delete_whiteboard_element', (data: any) => {
+    const uuid = data.uuid
     const element = $_getCanvasElement(uuid)
     if (element) {
       // Deactivate the current group if any of the deleted elements are in the current group
@@ -652,10 +653,7 @@ const $_broadcastDelete = (element: any, state: any) => {
   return new Promise<void>(resolve => {
     const args = {
       userId: p.$currentUser.id,
-      whiteboardElement: {
-        element,
-        uuid: element.uuid
-      },
+      whiteboardElement: {element},
       whiteboardId: state.whiteboard.id
     }
     p.$socket.emit('delete_whiteboard_element', args, (uuid: string) => {
@@ -878,7 +876,6 @@ const $_initFabricPrototypes = (state: any) => {
         } else if (text.toLowerCase() === 'when will teena retire?') {
           element.text = `${days_until_retirement} days until freedom`
         }
-        element.uuid = uuid || uuidv4()
         $_broadcastUpsert([{assetId: undefined, element}], state)
         setMode('move')
       } else if (uuid) {

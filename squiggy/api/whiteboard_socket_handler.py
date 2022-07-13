@@ -25,7 +25,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app
 from squiggy.lib.errors import BadRequestError
-from squiggy.lib.util import safe_strip
+from squiggy.lib.util import is_student, safe_strip
+from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -33,14 +34,29 @@ from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
-def upsert_whiteboard_element(
-        course_id,
-        is_student,
-        socket_id,
-        user_id,
-        whiteboard_element,
-        whiteboard_id,
-):
+def delete_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
+    if not whiteboard_element:
+        raise BadRequestError('One or more whiteboard-elements required')
+
+    uuid = whiteboard_element['element']['uuid']
+    whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
+    if whiteboard_element:
+        if whiteboard_element.asset_id:
+            AssetWhiteboardElement.delete(
+                asset_id=whiteboard_element.asset_id,
+                uuid=whiteboard_element.uuid,
+            )
+        WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
+        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
+        if is_student(current_user):
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
+
+
+def upsert_whiteboard_element(current_user, socket_id, whiteboard_element, whiteboard_id):
     element = whiteboard_element['element']
     if WhiteboardElement.get_id_per_uuid(element['uuid']):
         whiteboard_element = _update_whiteboard_element(
@@ -49,17 +65,17 @@ def upsert_whiteboard_element(
         )
     else:
         whiteboard_element = _create_whiteboard_element(
-            course_id=course_id,
-            user_id=user_id,
+            current_user=current_user,
             whiteboard_element=whiteboard_element,
             whiteboard_id=whiteboard_id,
         )
-    if is_student:
+    if is_student(current_user):
         WhiteboardSession.update_updated_at(
             socket_id=socket_id,
-            user_id=user_id,
+            user_id=current_user.user_id,
             whiteboard_id=whiteboard_id,
         )
+    WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
     return whiteboard_element
 
 
@@ -79,12 +95,7 @@ def _update_whiteboard_element(whiteboard_element, whiteboard_id):
     return result.to_api_json()
 
 
-def _create_whiteboard_element(
-        course_id,
-        user_id,
-        whiteboard_element,
-        whiteboard_id,
-):
+def _create_whiteboard_element(current_user, whiteboard_element, whiteboard_id):
     if not whiteboard_element:
         raise BadRequestError('Whiteboard element required')
 
@@ -105,7 +116,9 @@ def _create_whiteboard_element(
             uuid=element['uuid'],
         )
         asset = Asset.find_by_id(asset_id)
+        user_id = current_user.user_id
         if user_id not in [user.id for user in asset.users]:
+            course_id = current_user.course.id
             Activity.create(
                 activity_type='whiteboard_add_asset',
                 course_id=course_id,

@@ -23,7 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from queue import Queue
 from time import sleep
 
 from sqlalchemy import text
@@ -31,18 +30,18 @@ from squiggy import db
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
-from squiggy.logger import initialize_background_logger
+from squiggy.logger import initialize_background_logger, logger
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
 def launch_whiteboard_housekeeping():
-    WhiteboardHousekeeping.start()
+    WhiteboardHousekeeping().launch()
 
 
 class WhiteboardHousekeeping(BackgroundJob):
 
-    generate_previews_queue = Queue(maxsize=-1)
+    whiteboard_id_queue = set()
     whiteboard_housekeeping = None
 
     def __init__(self, **kwargs):
@@ -54,6 +53,11 @@ class WhiteboardHousekeeping(BackgroundJob):
         self.is_running = False
         super().__init__(thread_name=thread_name, **kwargs)
 
+    def launch(self):
+        if not self.whiteboard_housekeeping:
+            logger.info('Launching whiteboard preview generator')
+        WhiteboardHousekeeping.start()
+
     def run(self):
         while True:
             if not self.is_running:
@@ -64,8 +68,11 @@ class WhiteboardHousekeeping(BackgroundJob):
             sleep(15)
 
     def _generate_whiteboard_previews(self):
-        while not self.generate_previews_queue.empty():
-            whiteboard_id = self.generate_previews_queue.get()
+        # Copy and clear
+        whiteboard_id_set = self.whiteboard_id_queue.copy()
+        self.whiteboard_id_queue.clear()
+
+        for whiteboard_id in whiteboard_id_set:
             # First, find user authorized to render whiteboard.
             sql = text("""
                 SELECT u.id FROM users u
@@ -92,23 +99,10 @@ class WhiteboardHousekeeping(BackgroundJob):
                 self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
 
     @classmethod
-    def get_status(cls):
-        if not cls.whiteboard_element_processor:
-            return False
-        return {
-            'generatePreviewsQueue': {
-                'isEmpty': cls.generate_previews_queue.empty(),
-                'isFull': cls.generate_previews_queue.full(),
-                'size': cls.generate_previews_queue.qsize(),
-                'unfinished_tasks': cls.generate_previews_queue.unfinished_tasks,
-            },
-        }
-
-    @classmethod
     def start(cls):
         cls.whiteboard_housekeeping = WhiteboardHousekeeping()
         cls.whiteboard_housekeeping.run_async()
 
     @classmethod
     def queue_for_preview_image(cls, whiteboard_id):
-        cls.generate_previews_queue.put(whiteboard_id)
+        cls.whiteboard_id_queue.add(whiteboard_id)

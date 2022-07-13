@@ -46,9 +46,8 @@ class TestCreateWhiteboardElement:
         """Denies anonymous user."""
         with pytest.raises(BadRequestError):
             upsert_whiteboard_element(
-                course_id=None,
+                current_user=LoginSession(user_id=None),
                 socket_id=_get_mock_socket_id(),
-                user_id=None,
                 whiteboard_element=_mock_whiteboard_element(),
                 whiteboard_id=mock_whiteboard['id'],
             )
@@ -56,11 +55,9 @@ class TestCreateWhiteboardElement:
     def test_unauthorized(self, mock_whiteboard):
         """Denies unauthorized user."""
         with pytest.raises(ResourceNotFoundError):
-            current_user = _get_non_collaborator(mock_whiteboard)
             upsert_whiteboard_element(
-                course_id=current_user.course.id,
+                current_user=_get_non_collaborator(mock_whiteboard),
                 socket_id=_get_mock_socket_id(),
-                user_id=current_user.user_id,
                 whiteboard_element=_mock_whiteboard_element(),
                 whiteboard_id=mock_whiteboard['id'],
             )
@@ -74,9 +71,8 @@ class TestCreateWhiteboardElement:
         with mock_s3_bucket(app):
             current_user = _get_authorized_user(mock_whiteboard)
             api_json = upsert_whiteboard_element(
-                course_id=current_user.course.id,
+                current_user=current_user,
                 socket_id=_get_mock_socket_id(),
-                user_id=current_user.user_id,
                 whiteboard_element=whiteboard_element,
                 whiteboard_id=mock_whiteboard['id'],
             )
@@ -105,9 +101,8 @@ class TestUpdateWhiteboardElements:
             current_user = LoginSession(user_id=None)
             for whiteboard_element in mock_whiteboard['whiteboardElements']:
                 upsert_whiteboard_element(
-                    course_id=current_user.course.id,
+                    current_user=current_user,
                     socket_id=_get_mock_socket_id(),
-                    user_id=current_user.user_id,
                     whiteboard_element=whiteboard_element,
                     whiteboard_id=mock_whiteboard['id'],
                 )
@@ -118,9 +113,8 @@ class TestUpdateWhiteboardElements:
             current_user = LoginSession(user_id=None)
             for whiteboard_element in mock_whiteboard['whiteboardElements']:
                 upsert_whiteboard_element(
-                    course_id=current_user.course.id,
+                    current_user=current_user,
                     socket_id=_get_mock_socket_id(),
-                    user_id=current_user.user_id,
                     whiteboard_element=whiteboard_element,
                     whiteboard_id=mock_whiteboard['id'],
                 )
@@ -139,9 +133,8 @@ class TestUpdateWhiteboardElements:
             for whiteboard_element in mock_whiteboard['whiteboardElements']:
                 results.append(
                     upsert_whiteboard_element(
-                        course_id=current_user.course.id,
+                        current_user=current_user,
                         socket_id=_get_mock_socket_id(),
-                        user_id=current_user.user_id,
                         whiteboard_element=whiteboard_element,
                         whiteboard_id=mock_whiteboard['id'],
                     ),
