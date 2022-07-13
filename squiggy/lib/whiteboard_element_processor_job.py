@@ -29,7 +29,7 @@ from queue import Queue
 from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
-from squiggy.logger import initialize_background_logger
+from squiggy.logger import initialize_background_logger, logger
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
@@ -46,17 +46,12 @@ class WhiteboardElementProcessor(BackgroundJob):
 
     def __init__(self, **kwargs):
         thread_name = 'whiteboard_element_processor'
-        self.logger = initialize_background_logger(
+        initialize_background_logger(
             name=thread_name,
             location='whiteboard_element_processor.log',
         )
         self.is_running = False
         super().__init__(thread_name=thread_name, **kwargs)
-
-    def launch(self):
-        if not self.whiteboard_element_processor:
-            self.logger.info('Launching whiteboard_element_processor')
-        WhiteboardElementProcessor.start()
 
     def run(self):
         while True:
@@ -68,9 +63,10 @@ class WhiteboardElementProcessor(BackgroundJob):
     def _execute_whiteboard_element_transactions(self):
         while not self.whiteboard_element_transaction_queue.empty():
             transaction = Namespace(**self.whiteboard_element_transaction_queue.get())
+            logger.info(f'Execute transaction: {transaction}')
             if transaction.type == 'delete':
                 for whiteboard_element in transaction.whiteboard_elements:
-                    self.logger.info(f'Delete whiteboard_element where UUID = {whiteboard_element}')
+                    logger.info(f'Delete whiteboard_element where UUID = {whiteboard_element}')
                     _delete_whiteboard_element(
                         is_student=transaction.is_student,
                         user_id=transaction.user_id,
@@ -80,7 +76,7 @@ class WhiteboardElementProcessor(BackgroundJob):
                     )
             elif transaction.type == 'upsert':
                 for whiteboard_element in transaction.whiteboard_elements:
-                    self.logger.info(f'Upsert whiteboard_element where UUID = {whiteboard_element}')
+                    logger.info(f'Upsert whiteboard_element where UUID = {whiteboard_element}')
                     upsert_whiteboard_element(
                         course_id=transaction.course_id,
                         is_student=transaction.is_student,
