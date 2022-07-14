@@ -6,7 +6,7 @@ import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
 import {v4 as uuidv4} from 'uuid'
-import {deleteWhiteboardElement} from '@/api/whiteboard-elements'
+import {deleteWhiteboardElement, upsertWhiteboardElements} from '@/api/whiteboard-elements'
 
 const p = Vue.prototype
 
@@ -486,6 +486,7 @@ const $_addCanvasListeners = (state: any) => {
       // the correct position. The origin of element is set to `center` to make it inline with the other elements.
       if (shape) {
         store.commit('whiteboarding/setIsDrawingShape', false)
+        shape.uuid = shape.uuid || uuidv4()
         shape.left += shape.width / 2
         shape.top += shape.height / 2
         shape.originX = shape.originY = 'center'
@@ -657,22 +658,18 @@ const $_broadcastDelete = (uuid: string, state: any) => {
 
 const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
   $_log('Upsert whiteboard elements')
-  p.$socket.emit(
-    'upsert_whiteboard_elements',
-    {
-      userId: p.$currentUser.id,
-      whiteboardElements,
-      whiteboardId: state.whiteboard.id
-    },
-    (updated: any[]) => {
-      _.each(updated, whiteboardElement => {
-        const assetId = whiteboardElement.assetId
-        const element = _.cloneDeep(whiteboardElement.element)
-        const uuid = whiteboardElement.uuid
-        store.commit('whiteboarding/onWhiteboardElementUpsert', {assetId, element, uuid})
+  return new Promise<void>(resolve => {
+    upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
+      _.each(data, whiteboardElement => {
+        store.commit('whiteboarding/onWhiteboardElementUpsert', {
+          assetId: whiteboardElement.assetId,
+          element: whiteboardElement.element,
+          uuid: whiteboardElement.uuid
+        })
       })
-    }
-  )
+      resolve()
+    })
+  })
 }
 
 const $_calculateGlobalElementPosition = (selection: any, element: any): any => {
@@ -859,7 +856,7 @@ const $_initFabricPrototypes = (state: any) => {
     if (element) {
       // If the text element is empty, it can be removed from the whiteboard canvas
       const text = element.text.trim()
-      const uuid = element.get('uuid')
+      // const uuid = element.get('uuid')
       if (text) {
         // The text element existed before. Notify the server that the element was updated
         const days_until_retirement = $_getDaysUntilRetirement()
@@ -868,18 +865,21 @@ const $_initFabricPrototypes = (state: any) => {
         } else if (text.toLowerCase() === 'when will teena retire?') {
           element.text = `${days_until_retirement} days until freedom`
         }
-        $_broadcastUpsert([{assetId: undefined, element}], state)
-        setMode('move')
-      } else if (uuid) {
-        p.$canvas.remove(element)
-        $_broadcastDelete(uuid, state).then(() => {
-          updateLayers(state).then(() => {
-            setMode('move')
-          })
-        })
+        element.uuid = element.uuid || uuidv4()
+        $_broadcastUpsert([{assetId: undefined, element}], state).then(() => setMode('move'))
       } else {
-        p.$canvas.remove(element)
-        setMode('move')
+        const uuid = element.get('uuid')
+        if (uuid) {
+          p.$canvas.remove(element)
+          $_broadcastDelete(uuid, state).then(() => {
+            updateLayers(state).then(() => {
+              setMode('move')
+            })
+          })
+        } else {
+          p.$canvas.remove(element)
+          setMode('move')
+        }
       }
     }
   })

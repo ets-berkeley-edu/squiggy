@@ -27,20 +27,50 @@ from flask import current_app as app, request
 from flask_login import current_user, login_required
 from flask_socketio import emit
 from squiggy.api.api_util import feature_flag_whiteboards, get_socket_io_room
-from squiggy.lib.errors import BadRequestError
+from squiggy.lib.errors import BadRequestError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import is_student
+from squiggy.lib.util import is_student, safe_strip
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
+from squiggy.models.activity import Activity
+from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
+from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
-@app.route('/api/<whiteboard_id>/element/<uuid>/create', methods=['POST'])
+@app.route('/api/whiteboard_elements/upsert', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def create_whiteboard_element():
-    pass
+def upsert_whiteboard_elements():
+    params = request.form or request.get_json()
+    socket_id = params.get('socketId')
+    whiteboard_elements = params.get('whiteboardElements')
+    whiteboard_id = params.get('whiteboardId')
+    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        raise UnauthorizedRequestError('Unauthorized')
+    if not socket_id:
+        raise BadRequestError('socket_id is required')
+
+    results = []
+    for whiteboard_element in whiteboard_elements:
+        results.append(
+            _upsert_whiteboard_element(
+                socket_id=socket_id,
+                whiteboard_id=whiteboard_id,
+                whiteboard_element=whiteboard_element,
+            ),
+        )
+    if not app.config['TESTING']:
+        emit(
+            'upsert_whiteboard_elements',
+            whiteboard_elements,
+            include_self=False,
+            namespace='/',
+            skip_sid=socket_id,
+            to=get_socket_io_room(whiteboard_id),
+        )
+    return tolerant_jsonify(results)
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/element/<uuid>/delete', methods=['DELETE'])
@@ -78,8 +108,96 @@ def delete_whiteboard_element(whiteboard_id, uuid):
     return tolerant_jsonify(uuid)
 
 
-@app.route('/api/<whiteboard_id>/element/<uuid>/update', methods=['POST'])
-@feature_flag_whiteboards
-@login_required
-def update_whiteboard_element():
-    pass
+def _create_whiteboard_element(whiteboard_element, whiteboard_id):
+    if not whiteboard_element:
+        raise BadRequestError('Whiteboard element required')
+
+    _validate_whiteboard_element(whiteboard_element)
+    asset_id = whiteboard_element.get('assetId')
+    element = whiteboard_element['element']
+    whiteboard_element = WhiteboardElement.create(
+        asset_id=asset_id,
+        element=element,
+        uuid=element['uuid'],
+        whiteboard_id=whiteboard_id,
+    )
+    if asset_id:
+        AssetWhiteboardElement.upsert(
+            asset_id=asset_id,
+            element=element,
+            element_asset_id=element.get('assetId'),
+            uuid=element['uuid'],
+        )
+        asset = Asset.find_by_id(asset_id)
+        user_id = current_user.user_id
+        if user_id not in [user.id for user in asset.users]:
+            course_id = current_user.course.id
+            Activity.create(
+                activity_type='whiteboard_add_asset',
+                course_id=course_id,
+                user_id=user_id,
+                object_type='whiteboard',
+                object_id=whiteboard_id,
+                asset_id=asset.id,
+            )
+            for asset_user in asset.users:
+                Activity.create(
+                    activity_type='get_whiteboard_add_asset',
+                    course_id=course_id,
+                    user_id=asset_user.id,
+                    object_type='whiteboard',
+                    object_id=whiteboard_id,
+                    asset_id=asset.id,
+                )
+    return whiteboard_element.to_api_json()
+
+
+def _upsert_whiteboard_element(socket_id, whiteboard_element, whiteboard_id):
+    element = whiteboard_element['element']
+    if WhiteboardElement.get_id_per_uuid(element['uuid']):
+        whiteboard_element = _update_whiteboard_element(
+            whiteboard_element=whiteboard_element,
+            whiteboard_id=whiteboard_id,
+        )
+    else:
+        whiteboard_element = _create_whiteboard_element(
+            whiteboard_element=whiteboard_element,
+            whiteboard_id=whiteboard_id,
+        )
+    if is_student(current_user):
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
+    WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
+    return whiteboard_element
+
+
+def _update_whiteboard_element(whiteboard_element, whiteboard_id):
+    if not whiteboard_element:
+        raise BadRequestError('Element required')
+
+    _validate_whiteboard_element(whiteboard_element, True)
+
+    element = whiteboard_element['element']
+    result = WhiteboardElement.update(
+        asset_id=whiteboard_element.get('assetId'),
+        element=element,
+        uuid=element['uuid'],
+        whiteboard_id=whiteboard_id,
+    )
+    return result.to_api_json()
+
+
+def _validate_whiteboard_element(whiteboard_element, is_update=False):
+    element = whiteboard_element['element']
+    error_message = None
+    if element['type'] == 'i-text' and not safe_strip(element.get('text')):
+        error_message = f'Invalid Fabric i-text element: {element}.'
+    if is_update:
+        if 'uuid' not in element:
+            error_message = 'uuid is required when updating existing whiteboard_element.'
+    if error_message:
+        app.logger.error(error_message)
+        raise BadRequestError(error_message)

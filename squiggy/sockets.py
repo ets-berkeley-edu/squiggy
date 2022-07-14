@@ -27,7 +27,6 @@ from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.api.api_util import get_socket_io_room
-from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
@@ -112,31 +111,6 @@ def register_sockets(socketio):
                 whiteboard_id=whiteboard_id,
             )
         return {'status': 200}
-
-    @socketio.on('upsert_whiteboard_elements')
-    @login_required
-    def socketio_upsert_whiteboard_elements(data):
-        socket_id = request.sid
-        whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_upsert_whiteboard_elements: user_id = {current_user.user_id}, whiteboard_id = {whiteboard_id}')
-        whiteboard_elements = []
-        for whiteboard_element in data.get('whiteboardElements'):
-            whiteboard_elements.append(
-                upsert_whiteboard_element(
-                    current_user=current_user,
-                    socket_id=socket_id,
-                    whiteboard_id=whiteboard_id,
-                    whiteboard_element=whiteboard_element,
-                ),
-            )
-        emit(
-            'upsert_whiteboard_elements',
-            whiteboard_elements,
-            include_self=False,
-            skip_sid=socket_id,
-            to=get_socket_io_room(whiteboard_id),
-        )
-        return whiteboard_elements
 
     @socketio.on('boo-boo-kitty')
     def socketio_boo_boo_kitty(data):

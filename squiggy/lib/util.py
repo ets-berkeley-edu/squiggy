@@ -53,6 +53,10 @@ def db_row_to_dict(row):
     return json_obj
 
 
+def get_user_id(user):
+    return user and (user.id if hasattr(user, 'id') else user.user_id)
+
+
 def is_admin(user):
     canvas_course_role = _get_canvas_course_role(user)
     return 'admin' in (canvas_course_role or '').lower()
