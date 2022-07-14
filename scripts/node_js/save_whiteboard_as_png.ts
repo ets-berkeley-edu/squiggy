@@ -2,24 +2,22 @@ import _ from 'lodash'
 const fs = require('fs')
 import {fabric} from 'fabric'
 
-const WHITEBOARD_PADDING = 10
-
 /**
+ * NOTE: The steps below are automated for you in 'scripts/developer_debug_whiteboard_as_png.sh'.
+ *
  * USAGE:
- * 1. IMPORTANT:
- *    (a) Changes to this Typescript file must be compiled with `scripts/compile_whiteboard_to_png.sh`
- *    (b) Use `scripts/developer_debug_whiteboard_as_png.sh` to test PNG generation without running Squiggy webapp.
- * 2. Create mock data in elements.json (array of serialized fabric objects, as seen in Squiggy database).
- * 3. cd to Squiggy base directory
- * 4. Run command
+ *  1. Create mock data in elements.json (array of serialized fabric objects, as seen in Squiggy database).
+ *  2. cd to Squiggy base directory
+ *  3. Run command
  *      node \
  *        ./scripts/node_js/save_whiteboard_as_png.js
  *        -b /path/to/squiggy \
- *        -p "/path/to/output/whiteboard.png"
- *        -v true
- *        -w "/path/to/elements.json" \
- * 5. [OPTIONAL] Put the node command above into a script named 'scripts/run_whiteboard_as_png_local.sh' (git-ignored)
+ *        -p "/path/to/output/whiteboard.png" \
+ *        -v true \
+ *        -w "/path/to/elements.json"
  */
+
+const WHITEBOARD_PADDING = 10
 
 // @ts-ignore
 const args = process.argv
@@ -57,6 +55,8 @@ let deserializedElements: any[] = []
 
 $_log('Begin')
 
+let countProcessed = 0
+
 _.each(elements, (element: any) => {
   // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
   // of font family names. It seems that the only way to render custom fonts is to only specify one
@@ -65,10 +65,7 @@ _.each(elements, (element: any) => {
   }
   // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
-
-  const $_after = _.after(elements.length, () => $_render())
-
-  const $_push = (e: any) => {
+  $_createFabricObject(element, type).then((e: any) => {
     $_log(`${_.capitalize(e.type)} element deserialized (uuid: ${e.uuid})`, false)
     deserializedElements.push(e)
     const bound = e.getBoundingRect()
@@ -77,16 +74,26 @@ _.each(elements, (element: any) => {
     top = Math.min(top, bound.top)
     right = Math.max(right, bound.left + bound.width)
     bottom = Math.max(bottom, bound.top + bound.height)
-    $_after()
-  }
-  if (element.type === 'image') {
-    fabric[type].fromObject(element, (e: any) => {
-      e.setSrc(element.src, (e: any) => $_push(e))
-    })
-  } else {
-    fabric[type].fromObject(element, (e: any) => $_push(e))
-  }
+
+    countProcessed++
+    $_log(`Processed ${countProcessed} of ${elements.length}`)
+    if (countProcessed === elements.length) {
+      $_render()
+    }
+  })
 })
+
+function $_createFabricObject(element, type) {
+  return new Promise<any>(resolve => {
+    fabric[type].fromObject(element, (e: any) => {
+      if (element.type === 'image') {
+        e.setSrc(element.src, resolve)
+      } else {
+        resolve(e)
+      }
+    })
+  })
+}
 
 function $_log(statement: string, force?: boolean) {
   if (verbose.toLowerCase() === 'true' || force) {
@@ -94,7 +101,8 @@ function $_log(statement: string, force?: boolean) {
   }
 }
 
-const $_render = () => {
+function $_render() {
+  $_log('Finally, render the Fabric.js canvas.')
   // At this point we've figured out what the left-most and right-most element is. By subtracting
   // their X-coordinates we get the desired width of the canvas. The height can be calculated in
   // a similar way by using the Y-coordinates
@@ -112,7 +120,7 @@ const $_render = () => {
     width = width * scale_factor
     height = height * scale_factor
     // Next, scale and reposition each element against top left corner of the canvas.
-    _.each(deserializedElements, function(element) {
+    _.each(deserializedElements, (element) => {
       element.scaleX = element.scaleX * scale_factor
       element.scaleY = element.scaleY * scale_factor
       element.left = left + ((element.left - left) * scale_factor)
@@ -122,8 +130,6 @@ const $_render = () => {
   // Add a bit of padding so elements don't stick to the side
   width += (2 * WHITEBOARD_PADDING)
   height += (2 * WHITEBOARD_PADDING)
-
-  $_log(`Begin render with:\n width=${width} \n height=${height} \n scale_factor=${scale_factor} \n width=${width} \n width=${width}`)
 
   // Create a canvas and pan it to the top-left corner
   const canvas = new fabric.Canvas(null, {backgroundColor: '#fff', width, height})
@@ -135,14 +141,12 @@ const $_render = () => {
   deserializedElements = _.sortBy(deserializedElements, (e: any) => `${e.index}-${e.uuid}`)
 
   // Add each element to the canvas
-  const $_after = _.after(deserializedElements.length, () => {
-    canvas.renderAll()
-    canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
-    $_log('Done.')
-  })
-
-  _.each(deserializedElements, (deserializedElement: any) => {
+  _.each(deserializedElements, (deserializedElement: any, index: number) => {
     canvas.add(deserializedElement)
-    $_after()
+    if (index + 1 === deserializedElements.length) {
+      canvas.renderAll()
+      canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
+      $_log('Done.')
+    }
   })
 }
