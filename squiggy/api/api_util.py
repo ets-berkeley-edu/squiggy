@@ -29,7 +29,7 @@ from flask import current_app as app, redirect, request
 from flask_login import current_user, login_user
 from squiggy.lib.errors import UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import is_admin, is_teaching
+from squiggy.lib.util import get_user_id, is_admin, is_teaching
 from squiggy.logger import logger
 from squiggy.models.activity_type import activities_type
 from squiggy.models.asset import assets_type
@@ -79,7 +79,7 @@ def assets_type_enums():
 
 
 def can_update_asset(user, asset):
-    user_id = _get_user_id(user)
+    user_id = get_user_id(user)
     user_ids = [user.id for user in asset.users]
     return user.course.id == asset.course_id and (is_teaching(user) or is_admin(user) or user_id in user_ids)
 
@@ -93,12 +93,12 @@ def can_view_asset(asset, user):
 
 
 def can_delete_comment(comment, user):
-    user_id = _get_user_id(user)
+    user_id = get_user_id(user)
     return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
 
 
 def can_update_comment(comment, user):
-    user_id = _get_user_id(user)
+    user_id = get_user_id(user)
     return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
 
 
@@ -141,7 +141,3 @@ def start_login_session(login_session, redirect_path=None, tool_id=None):
 def _filter_per_feature_flag(enums):
     feature_flag = app.config['FEATURE_FLAG_WHITEBOARDS']
     return enums if feature_flag else list(filter(lambda enum: 'whiteboard' not in enum, enums))
-
-
-def _get_user_id(user):
-    return user and (user.id if hasattr(user, 'id') else user.user_id)

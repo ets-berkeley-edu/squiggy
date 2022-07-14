@@ -29,7 +29,7 @@ from uuid import uuid4
 from sqlalchemy import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
-from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, utc_now
+from squiggy.lib.util import get_user_id, is_admin, is_observer, is_student, is_teaching, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -80,6 +80,18 @@ class Whiteboard(Base):
             updated_at={self.updated_at}>,
             users={self.users},
         """
+
+    @classmethod
+    def can_update_whiteboard(cls, user, whiteboard_id):
+        if is_admin(user) or is_teaching(user):
+            return True
+        sql = 'SELECT user_id FROM whiteboard_users WHERE whiteboard_id = :whiteboard_id AND user_id = :user_id'
+        args = {
+            'user_id': get_user_id(user),
+            'whiteboard_id': whiteboard_id,
+        }
+        result = db.session.execute(text(sql), args).first()
+        return bool(result and result['user_id'])
 
     @classmethod
     def find_by_id(cls, current_user, whiteboard_id, include_deleted=True):
