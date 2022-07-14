@@ -7,6 +7,8 @@ echo; echo "Hello! Well what an excellent day for a PNG."
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 BASE_DIR="${SCRIPT_DIR}/.."
+
+mkdir -p "${BASE_DIR}/tmp"
 TARGET_JSON="${BASE_DIR}/tmp/elements.json"
 
 cd "$BASE_DIR"
@@ -32,11 +34,12 @@ psql -c "${SQL}" \
 
 # Convert db result-set to valid JSON.
 TMP_JSON="${BASE_DIR}/tmp/tmp.json"
-echo -e "[$(cat "$TARGET_JSON")]" > "${TMP_JSON}"
-sed '$!s/$/,/' "${TMP_JSON}" > "${TARGET_JSON}"
 echo -e "[$(cat "${TARGET_JSON}")]" > "${TMP_JSON}"
-mv "${TMP_JSON}" "${TARGET_JSON}"
+sed '$!s/$/,/' "${TMP_JSON}" > "${TARGET_JSON}"
+rm "${TMP_JSON}"
 # The TARGET_JSON file is now valid JSON.
+
+echo; echo "Generated JSON file: ${TARGET_JSON}"; echo
 
 echo; echo 'Finally, run the 'save_whiteboard_as_png.js' script.'; echo
 
