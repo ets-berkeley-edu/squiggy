@@ -6,6 +6,7 @@ import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
 import {v4 as uuidv4} from 'uuid'
+import {deleteWhiteboardElement} from '@/api/whiteboard-elements'
 
 const p = Vue.prototype
 
@@ -64,7 +65,9 @@ export function afterChangeMode(state: any) {
 export function deleteActiveElements(state: any) {
   $_log('Delete active elements')
   _.each($_getActiveObjects(), (element: any) => {
-    $_broadcastDelete(element, state).then(() => p.$canvas.remove($_getCanvasElement(element.uuid)))
+    const uuid = element.uuid
+    p.$canvas.remove($_getCanvasElement(uuid))
+    $_broadcastDelete(uuid, state).then(_.noop)
   })
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
@@ -601,9 +604,7 @@ const $_addSocketListeners = (state: any) => {
     })
   })
 
-  // One or multiple whiteboard canvas elements were deleted by a different user
-  p.$socket.on('delete_whiteboard_element', (data: any) => {
-    const uuid = data.uuid
+  p.$socket.on('delete_whiteboard_element', (uuid: any) => {
     const element = $_getCanvasElement(uuid)
     if (element) {
       // Deactivate the current group if any of the deleted elements are in the current group
@@ -648,19 +649,10 @@ const $_addViewportListeners = (state: any) => {
   }
 }
 
-const $_broadcastDelete = (element: any, state: any) => {
-  $_log('Delete whiteboard elements')
-  return new Promise<void>(resolve => {
-    const args = {
-      userId: p.$currentUser.id,
-      whiteboardElement: {element},
-      whiteboardId: state.whiteboard.id
-    }
-    p.$socket.emit('delete_whiteboard_element', args, (uuid: string) => {
-      store.commit('whiteboarding/onWhiteboardElementDelete', uuid)
-      resolve()
-    })
-  })
+const $_broadcastDelete = (uuid: string, state: any) => {
+  $_log(`Delete whiteboard element ${uuid}`)
+  store.commit('whiteboarding/onWhiteboardElementDelete', uuid)
+  return new Promise<any>(resolve => deleteWhiteboardElement(p.$socket.id, uuid, state.whiteboard.id).then(resolve))
 }
 
 const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
@@ -879,8 +871,8 @@ const $_initFabricPrototypes = (state: any) => {
         $_broadcastUpsert([{assetId: undefined, element}], state)
         setMode('move')
       } else if (uuid) {
-        $_broadcastDelete(element, state).then(() => {
-          p.$canvas.remove(element)
+        p.$canvas.remove(element)
+        $_broadcastDelete(uuid, state).then(() => {
           updateLayers(state).then(() => {
             setMode('move')
           })
@@ -927,12 +919,9 @@ const $_initSocket = (state: any) => {
 const $_join = (state: any) => {
   if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
     $_log('Join')
-    const userId: number = p.$currentUser.id
-    const args = {
-      userId: userId,
-      whiteboardId: state.whiteboard.id
-    }
-    p.$socket.emit('join', args, () => store.commit('whiteboarding/join', userId))
+    store.dispatch('whiteboarding/onJoin', p.$currentUser.id).then(() => {
+      p.$socket.emit('join', {whiteboardId: state.whiteboard.id})
+    })
   }
 }
 

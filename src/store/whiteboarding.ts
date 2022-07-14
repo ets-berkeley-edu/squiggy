@@ -80,12 +80,6 @@ const mutations = {
   copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
-  join: (state: any, userId: number) => {
-    const user = _.find(state.whiteboard.users, ['id', userId])
-    if (user) {
-      user.isOnline = true
-    }
-  },
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onJoin: (state: any, userId: string) => {
     _.each(state.whiteboard.users, user => {
@@ -196,6 +190,7 @@ const actions = {
     })
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
+  onJoin: ({commit}, userId: number) => commit('onJoin', userId),
   refreshWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       getWhiteboard(state.whiteboard.id).then((data: any) => {
