@@ -102,6 +102,10 @@ def can_update_comment(comment, user):
     return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
 
 
+def get_socket_io_room(whiteboard_id):
+    return f'whiteboard-{whiteboard_id}'
+
+
 def start_login_session(login_session, redirect_path=None, tool_id=None):
     authenticated = login_user(login_session, remember=True) and current_user.is_authenticated
     if authenticated:

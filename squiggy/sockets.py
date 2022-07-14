@@ -26,7 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.whiteboard_socket_handler import delete_whiteboard_element, upsert_whiteboard_element
+from squiggy.api.api_util import get_socket_io_room
+from squiggy.api.whiteboard_socket_handler import upsert_whiteboard_element
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.user import User
@@ -52,7 +53,7 @@ def register_sockets(socketio):
                 user_id=current_user.user_id,
                 whiteboard_id=whiteboard_id,
             )
-            room = _get_room(whiteboard_id)
+            room = get_socket_io_room(whiteboard_id)
             join_room(room, sid=socket_id)
             emit(
                 'join',
@@ -72,7 +73,7 @@ def register_sockets(socketio):
         if is_student(current_user):
             socket_id = request.sid
             WhiteboardSession.delete_all([socket_id], older_than_minutes=1440)
-            room = _get_room(whiteboard_id)
+            room = get_socket_io_room(whiteboard_id)
             leave_room(room, sid=socket_id)
             emit(
                 'leave',
@@ -102,7 +103,7 @@ def register_sockets(socketio):
             },
             include_self=False,
             skip_sid=socket_id,
-            to=_get_room(whiteboard_id),
+            to=get_socket_io_room(whiteboard_id),
         )
         if is_student(current_user):
             WhiteboardSession.update_updated_at(
@@ -133,36 +134,9 @@ def register_sockets(socketio):
             whiteboard_elements,
             include_self=False,
             skip_sid=socket_id,
-            to=_get_room(whiteboard_id),
+            to=get_socket_io_room(whiteboard_id),
         )
         return whiteboard_elements
-
-    @socketio.on('delete_whiteboard_element')
-    @login_required
-    def socketio_delete(data):
-        socket_id = request.sid
-        user_id = data.get('userId')
-        whiteboard_id = data.get('whiteboardId')
-        whiteboard_element = data.get('whiteboardElement')
-        logger.debug(f'socketio_delete: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        delete_whiteboard_element(
-            current_user=current_user,
-            socket_id=socket_id,
-            whiteboard_id=whiteboard_id,
-            whiteboard_element=whiteboard_element,
-        )
-        uuid = whiteboard_element['element']['uuid']
-        emit(
-            'delete_whiteboard_element',
-            {
-                'uuid': uuid,
-                'whiteboardId': whiteboard_id,
-            },
-            include_self=False,
-            skip_sid=socket_id,
-            to=_get_room(whiteboard_id),
-        )
-        return uuid
 
     @socketio.on('boo-boo-kitty')
     def socketio_boo_boo_kitty(data):
@@ -193,7 +167,3 @@ def register_sockets(socketio):
     @socketio.on_error_default
     def socketio_error_default(e):
         logger.error(f'socketio_error_default: {e}')
-
-
-def _get_room(whiteboard_id):
-    return f'whiteboard-{whiteboard_id}'
