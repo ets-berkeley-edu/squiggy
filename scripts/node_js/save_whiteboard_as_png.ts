@@ -6,15 +6,18 @@ const WHITEBOARD_PADDING = 10
 
 /**
  * USAGE:
- * 1. IMPORTANT: Changes to this Typescript file must be compiled with `scripts/compile_whiteboard_to_png.sh`
- * 2. Create mock data in whiteboardElements.json (array of serialized fabric objects, as seen in Squiggy database).
+ * 1. IMPORTANT:
+ *    (a) Changes to this Typescript file must be compiled with `scripts/compile_whiteboard_to_png.sh`
+ *    (b) Use `scripts/developer_debug_whiteboard_as_png.sh` to test PNG generation without running Squiggy webapp.
+ * 2. Create mock data in elements.json (array of serialized fabric objects, as seen in Squiggy database).
  * 3. cd to Squiggy base directory
  * 4. Run command
  *      node \
  *        ./scripts/node_js/save_whiteboard_as_png.js
  *        -b /path/to/squiggy \
- *        -w "/path/to/elements.json" \
  *        -p "/path/to/output/whiteboard.png"
+ *        -v true
+ *        -w "/path/to/elements.json" \
  * 5. [OPTIONAL] Put the node command above into a script named 'scripts/run_whiteboard_as_png_local.sh' (git-ignored)
  */
 
@@ -25,6 +28,7 @@ const getArg = (flag: string) => {
   return (index > -1 && index < args.length - 1) ? args[index + 1] : null
 }
 const baseDir = getArg('-b')
+const verbose = getArg('-v')
 const pngFile = getArg('-p')
 let elements = require(getArg('-w'))
 
@@ -49,15 +53,53 @@ let top = Number.MAX_VALUE
 let right = Number.MIN_VALUE
 let bottom = Number.MIN_VALUE
 
-const deserializedElements: any[] = []
+let deserializedElements: any[] = []
 
-const render = () => {
+$_log('Begin')
+
+_.each(elements, (element: any) => {
+  // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
+  // of font family names. It seems that the only way to render custom fonts is to only specify one
+  if (element.fontFamily) {
+    element.fontFamily = 'HelveticaNeue-Light'
+  }
+  // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
+  const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
+
+  const $_after = _.after(elements.length, () => $_render())
+
+  const $_push = (e: any) => {
+    $_log(`${_.capitalize(e.type)} element deserialized (uuid: ${e.uuid})`, false)
+    deserializedElements.push(e)
+    const bound = e.getBoundingRect()
+    // The values below determine canvas size during render.
+    left = Math.min(left, bound.left)
+    top = Math.min(top, bound.top)
+    right = Math.max(right, bound.left + bound.width)
+    bottom = Math.max(bottom, bound.top + bound.height)
+    $_after()
+  }
+  if (element.type === 'image') {
+    fabric[type].fromObject(element, (e: any) => {
+      e.setSrc(element.src, (e: any) => $_push(e))
+    })
+  } else {
+    fabric[type].fromObject(element, (e: any) => $_push(e))
+  }
+})
+
+function $_log(statement: string, force?: boolean) {
+  if (verbose.toLowerCase() === 'true' || force) {
+    console.log(`🪲 ${statement}`)
+  }
+}
+
+const $_render = () => {
   // At this point we've figured out what the left-most and right-most element is. By subtracting
   // their X-coordinates we get the desired width of the canvas. The height can be calculated in
   // a similar way by using the Y-coordinates
   let width = right - left
   let height = bottom - top
-
   // Neither width nor height should exceed 2048px.
   let scale_factor = 1
   if (width > 2048 && width >= height) {
@@ -81,6 +123,8 @@ const render = () => {
   width += (2 * WHITEBOARD_PADDING)
   height += (2 * WHITEBOARD_PADDING)
 
+  $_log(`Begin render with:\n width=${width} \n height=${height} \n scale_factor=${scale_factor} \n width=${width} \n width=${width}`)
+
   // Create a canvas and pan it to the top-left corner
   const canvas = new fabric.Canvas(null, {backgroundColor: '#fff', width, height})
   canvas.absolutePan(new fabric.Point(left - WHITEBOARD_PADDING, top - WHITEBOARD_PADDING))
@@ -88,52 +132,17 @@ const render = () => {
   // Render canvas AFTER all elements have been added. This is significantly faster
   canvas.renderOnAddRemove = false
 
-  const finishRender = _.after(deserializedElements.length, function() {
-    // Ensure each element is placed at the right index.
-    canvas.getObjects().sort(function(elementA, elementB) {
-      return elementA.index - elementB.index
-    })
-    canvas.renderAll()
-    canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
-    return
-  })
+  deserializedElements = _.sortBy(deserializedElements, (e: any) => `${e.index}-${e.uuid}`)
 
   // Add each element to the canvas
-  _.each(deserializedElements, function(deserializedElement) {
+  const $_after = _.after(deserializedElements.length, () => {
+    canvas.renderAll()
+    canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
+    $_log('Done.')
+  })
+
+  _.each(deserializedElements, (deserializedElement: any) => {
     canvas.add(deserializedElement)
-    finishRender()
+    $_after()
   })
 }
-
-// Track the number of elements processed.
-let count = 0
-
-_.each(elements, (element: any) => {
-  console.log(element)
-  // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
-  // of font family names. It seems that the only way to render custom fonts is to only specify one
-  if (element.fontFamily) {
-    element.fontFamily = 'HelveticaNeue-Light'
-  }
-  // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
-  const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
-  const push = (e: any) => {
-    deserializedElements.push(e)
-    const bound = e.getBoundingRect()
-    left = Math.min(left, bound.left)
-    top = Math.min(top, bound.top)
-    right = Math.max(right, bound.left + bound.width)
-    bottom = Math.max(bottom, bound.top + bound.height)
-    count++
-    if (count === elements.length - 1) {
-      render()
-    }
-  }
-  if (element.type === 'image') {
-    fabric[type].fromObject(element, (e: any) => {
-      e.setSrc(element.src, (e: any) => push(e))
-    })
-  } else {
-    fabric[type].fromObject(element, (e: any) => push(e))
-  }
-})
