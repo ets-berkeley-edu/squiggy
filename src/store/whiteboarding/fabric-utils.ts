@@ -256,9 +256,10 @@ export function updateLayers(state: any) {
       const after = (index: number) => {
         if (index === objects.length - 1) {
           if (upserts.length) {
-            $_broadcastUpsert(upserts, state)
+            $_broadcastUpsert(upserts, state).then(resolve)
+          } else {
+            resolve()
           }
-          resolve()
         }
       }
       _.each(objects, (element: any, index: number) => {
