@@ -52,6 +52,6 @@ node \
   -w "${BASE_DIR}/tmp/elements.json" \
   -v true
 
-echo -e "\nPNG file: ${PNG_FILE}\nDone.\n"
+echo -e "\nPNG file: ${PNG_FILE}\n\nBye!\n"
 
 exit 0
