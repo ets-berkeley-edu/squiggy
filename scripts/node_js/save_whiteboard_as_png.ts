@@ -13,7 +13,7 @@ const WHITEBOARD_PADDING = 10
  *      node \
  *        ./scripts/node_js/save_whiteboard_as_png.js
  *        -b /path/to/squiggy \
- *        -w "/path/to/whiteboardElements.json" \
+ *        -w "/path/to/elements.json" \
  *        -p "/path/to/output/whiteboard.png"
  * 5. [OPTIONAL] Put the node command above into a script named 'scripts/run_whiteboard_as_png_local.sh' (git-ignored)
  */
@@ -26,11 +26,13 @@ const getArg = (flag: string) => {
 }
 const baseDir = getArg('-b')
 const pngFile = getArg('-p')
-const whiteboardElements = require(getArg('-w'))
+let elements = require(getArg('-w'))
 
-if (!baseDir || !pngFile || !whiteboardElements) {
-  throw new Error('Required arg(s) are missing. baseDir=' + baseDir + '; pngFile=' + pngFile + '; whiteboardElements=' + whiteboardElements + ';')
+if (!baseDir || !pngFile || !elements) {
+  throw new Error('Required arg(s) are missing. baseDir=' + baseDir + '; pngFile=' + pngFile + '; elements=' + elements + ';')
 }
+
+elements = _.sortBy(elements, (e: any) => `${e.index}-${e.uuid}`)
 
 // Initialize fabric
 fabric.nodeCanvas.registerFont(`${baseDir}/dist/static/fonts/HelveticaNeueuLight.ttf`, {
@@ -49,7 +51,7 @@ let bottom = Number.MIN_VALUE
 
 const deserializedElements: any[] = []
 
-const render = _.after(whiteboardElements.length, function() {
+const render = () => {
   // At this point we've figured out what the left-most and right-most element is. By subtracting
   // their X-coordinates we get the desired width of the canvas. The height can be calculated in
   // a similar way by using the Y-coordinates
@@ -80,11 +82,7 @@ const render = _.after(whiteboardElements.length, function() {
   height += (2 * WHITEBOARD_PADDING)
 
   // Create a canvas and pan it to the top-left corner
-  const canvas = new fabric.Canvas(null, {
-    backgroundColor: '#fff',
-    width: width,
-    height: height,
-  })
+  const canvas = new fabric.Canvas(null, {backgroundColor: '#fff', width, height})
   canvas.absolutePan(new fabric.Point(left - WHITEBOARD_PADDING, top - WHITEBOARD_PADDING))
 
   // Render canvas AFTER all elements have been added. This is significantly faster
@@ -105,26 +103,37 @@ const render = _.after(whiteboardElements.length, function() {
     canvas.add(deserializedElement)
     finishRender()
   })
-})
+}
 
-_.each(whiteboardElements, function(whiteboardElement) {
+// Track the number of elements processed.
+let count = 0
+
+_.each(elements, (element: any) => {
+  console.log(element)
   // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
   // of font family names. It seems that the only way to render custom fonts is to only specify one
-  if (whiteboardElement.fontFamily) {
-    whiteboardElement.fontFamily = 'HelveticaNeue-Light'
+  if (element.fontFamily) {
+    element.fontFamily = 'HelveticaNeue-Light'
   }
   // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
-  const type = fabric.util.string.camelize(fabric.util.string.capitalize(whiteboardElement.type))
-  fabric[type].fromObject(whiteboardElement, (deserializedElement: any) => {
-    // When all elements have been added to the canvas, we will make sure each has its proper index.
-    deserializedElements.push(deserializedElement)
-
-    const bound = deserializedElement.getBoundingRect()
+  const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
+  const push = (e: any) => {
+    deserializedElements.push(e)
+    const bound = e.getBoundingRect()
     left = Math.min(left, bound.left)
     top = Math.min(top, bound.top)
     right = Math.max(right, bound.left + bound.width)
     bottom = Math.max(bottom, bound.top + bound.height)
-
-    render()
-  })
+    count++
+    if (count === elements.length - 1) {
+      render()
+    }
+  }
+  if (element.type === 'image') {
+    fabric[type].fromObject(element, (e: any) => {
+      e.setSrc(element.src, (e: any) => push(e))
+    })
+  } else {
+    fabric[type].fromObject(element, (e: any) => push(e))
+  }
 })
