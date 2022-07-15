@@ -33,10 +33,10 @@ export function addAsset(asset: any, state: any) {
     element.left = canvasCenter.x
     element.top = canvasCenter.y
 
-    p.$canvas.add(element)
+    store.commit('whiteboarding/canvasAdd', element)
     p.$canvas.setActiveObject(element)
     p.$canvas.bringToFront(element)
-    $_broadcastUpsert([{assetId: asset.id, element}], state)
+    $_broadcastUpsert([{assetId: asset.id, element}], state).then(_.noop)
   })
 }
 
@@ -101,11 +101,13 @@ export function emitWhiteboardUpdate(state: any, whiteboard: any) {
 
 export function initialize(state: any) {
   $_log('Initialize')
+  store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
     if (state.whiteboard.isReadOnly) {
       $_initCanvas(state)
       $_renderWhiteboard(state).then(() => {
         $_enableCanvasElements(false)
+        store.commit('whiteboarding/setIsInitialized', true)
         resolve()
       })
     } else {
@@ -117,6 +119,7 @@ export function initialize(state: any) {
       $_renderWhiteboard(state).then(() => {
         $_addSocketListeners(state)
         $_addCanvasListeners(state)
+        store.commit('whiteboarding/setIsInitialized', true)
         resolve()
       })
     }
@@ -155,6 +158,7 @@ export function moveLayer(direction: string, state: any) {
 }
 
 export function reload(state: any) {
+  store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
     $_log('Reload')
     const isReadOnly = state.whiteboard.isReadOnly
@@ -163,6 +167,7 @@ export function reload(state: any) {
       $_initCanvas(state)
       $_renderWhiteboard(state).then(() => {
         $_enableCanvasElements(isReadOnly)
+        store.commit('whiteboarding/setIsInitialized', true)
         resolve()
       })
     } else {
@@ -177,6 +182,7 @@ export function reload(state: any) {
         $_addViewportListeners(state)
         $_renderWhiteboard(state).then(() => {
           $_enableCanvasElements(isReadOnly)
+          store.commit('whiteboarding/setIsInitialized', true)
           resolve()
         })
       }
@@ -194,7 +200,8 @@ export function setCanvasDimensions(state: any) {
   // Zoom the canvas to accommodate the base width within the viewport.
   const viewportWidth = state.viewport.clientWidth
   const ratio = viewportWidth / constants.CANVAS_BASE_WIDTH
-  p.$canvas.setZoom(ratio)
+  store.commit('whiteboarding/canvasSetZoom', ratio)
+  // p.$canvas.setZoom(ratio)
 
   // Calculate the position of the elements that are the most right and the most bottom. When all elements fit within
   // the viewport, the canvas is made the same size as the viewport. When any elements overflow the viewport, the
@@ -230,10 +237,11 @@ export function setCanvasDimensions(state: any) {
     const widthRatio = viewportWidth / realWidth
     const heightRatio = viewportHeight / realHeight
     const ratio = Math.min(widthRatio, heightRatio)
-    p.$canvas.setZoom(ratio)
-
-    p.$canvas.setHeight(viewportHeight)
-    p.$canvas.setWidth(viewportWidth)
+    store.commit('whiteboarding/canvasSetZoom', ratio)
+    store.commit('whiteboarding/canvasSetDimensions', {
+      height: viewportHeight,
+      width: viewportWidth
+    })
   } else {
     // Adjust the value for rounding issues to prevent scrollbars from incorrectly showing up.
     p.$canvas.setHeight(maxBottom - 1)
@@ -252,7 +260,7 @@ export function updateLayers(state: any) {
     // Update the index of all elements to reflect their order in the current whiteboard.
     const objects = p.$canvas.getObjects()
     const upserts: {assetId: number, element: any}[] = []
-    if (objects.length) {
+    if (state.isInitialized && objects.length) {
       const after = (index: number) => {
         if (index === objects.length - 1) {
           if (upserts.length) {
@@ -382,12 +390,14 @@ const $_addCanvasListeners = (state: any) => {
     $_log(`canvas object:added (mode = ${state.mode})`)
     const element = event.target
     const isNonEmptyIText = element.type !== 'i-text' || element.text.trim()
-    if (isNonEmptyIText && !element.uuid && !element.isHelper) {
+    const wasAddedByRemote = state.remoteUUIDs.includes(element.uuid)
+    if (!wasAddedByRemote && isNonEmptyIText && !element.uuid && !element.isHelper) {
       $_enableCanvasElements(true)
       element.uuid = uuidv4()
-      $_broadcastUpsert([{assetId: element.assetId, element}], state)
-      setCanvasDimensions(state)
-      setMode('move')
+      $_broadcastUpsert([{assetId: element.assetId, element}], state).then(() => {
+        setCanvasDimensions(state)
+        setMode('move')
+      })
     }
   })
 
@@ -414,7 +424,7 @@ const $_addCanvasListeners = (state: any) => {
         top: state.startShapePointer.y,
         width: 10
       })
-      p.$canvas.add(shape)
+      store.commit('whiteboarding/canvasAdd', shape)
     }
     if (state.mode === 'text') {
       const textPointer = p.$canvas.getPointer(event.e)
@@ -430,7 +440,7 @@ const $_addCanvasListeners = (state: any) => {
         selected: true,
         top: textPointer.y
       })
-      p.$canvas.add(iText)
+      store.commit('whiteboarding/canvasAdd', iText)
 
       // Put the editable text field in edit mode straight away
       setTimeout(function() {
@@ -494,9 +504,12 @@ const $_addCanvasListeners = (state: any) => {
         shape.isHelper = false
         // Save the added shape and make it active.
         p.$canvas.bringToFront(shape)
-        $_broadcastUpsert([{assetId: undefined, element: shape}], state)
+        $_broadcastUpsert([{assetId: undefined, element: shape}], state).then(() => {
+          setMode('move')
+        })
+      } else {
+        setMode('move')
       }
-      setMode('move')
     }
     $_enableCanvasElements(true)
   })
@@ -594,7 +607,8 @@ const $_addSocketListeners = (state: any) => {
       } else {
         $_deserializeElement(state, element, uuid).then((e: any) => {
           // Add the element to the whiteboard canvas and move it to its appropriate index
-          p.$canvas.add(e)
+          store.commit('whiteboarding/pushRemoteUUID', e.uuid)
+          store.commit('whiteboarding/canvasAdd', e)
           updateCount++
           after({
             assetId: whiteboardElement.assetId,
@@ -954,23 +968,33 @@ const $_paste = (state: any): void => {
     if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(object)
     }
-    _.each(copies, (copy: any) => copy.uuid = uuidv4())
-    $_broadcastUpsert(copies, state)
-    _.each(copies, (copy: any) => p.$canvas.add(copy))
+    const whiteboardElements: any[] = []
+    _.each(copies, (copy: any) => {
+      const uuid = uuidv4()
+      copy.uuid = uuid
+      whiteboardElements.push({
+        assetId: copy.assetId,
+        element: copy,
+        uuid
+      })
+    })
+    $_broadcastUpsert(whiteboardElements, state).then(() => {
+      _.each(copies, (copy: any) => store.commit('whiteboarding/canvasAdd', copy))
 
-    setCanvasDimensions(state)
-    _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))
-    if (copies.length === 1) {
-      const object = $_getCanvasElement(copies[0].uuid)
-      p.$canvas.setActiveObject(object).requestRenderAll()
-    } else {
-      // When multiple elements were pasted, create a new group for those elements and select them
-      const selection = new fabric.ActiveSelection(copies)
-      selection.isHelper = true
-      p.$canvas.setActiveObject(selection)
-      $_ensureWithinCanvas(selection)
-      p.$canvas.requestRenderAll()
-    }
+      setCanvasDimensions(state)
+      _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))
+      if (copies.length === 1) {
+        const object = $_getCanvasElement(copies[0].uuid)
+        p.$canvas.setActiveObject(object).requestRenderAll()
+      } else {
+        // When multiple elements were pasted, create a new group for those elements and select them
+        const selection = new fabric.ActiveSelection(copies)
+        selection.isHelper = true
+        p.$canvas.setActiveObject(selection)
+        $_ensureWithinCanvas(selection)
+        p.$canvas.requestRenderAll()
+      }
+    })
   }
 }
 

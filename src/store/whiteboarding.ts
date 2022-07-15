@@ -44,10 +44,12 @@ const state = {
   fitToScreen: true,
   // Variable that will keep track of whether a shape is currently being drawn
   isDrawingShape: false,
+  isInitialized: false,
   // Keep track of whether the currently selected elements are in the process of being moved, scaled or rotated.
   isModifyingElement: false,
   isScrollingCanvas: false,
   mode: 'move',
+  remoteUUIDs: [],
   selected: _.clone(DEFAULT_TOOL_SELECTION),
   // Variable that will keep track of the point at which drawing a shape started
   startShapePointer: null,
@@ -76,6 +78,12 @@ const mutations = {
     state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
   },
+  canvasAdd: (state: any, object: any) => p.$canvas.add(object),
+  canvasSetDimensions: (state: any, {height, width}: any) => {
+    p.$canvas.setHeight(height)
+    p.$canvas.setWidth(width)
+  },
+  canvasSetZoom: (state: any, ratio: any) => p.$canvas.setZoom(ratio),
   clearClipboard: (state: any) => state.clipboard = [],
   copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
@@ -123,6 +131,7 @@ const mutations = {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
   },
+  pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
   refreshWhiteboard: (state: any, data: any) => {
     state.whiteboard.deletedAt = data.deletedAt
     state.whiteboard.title = data.title
@@ -137,6 +146,7 @@ const mutations = {
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setFitToScreen: (state: any, fitToScreen: boolean) => state.fitToScreen = fitToScreen,
+  setIsInitialized: (state: any, isInitialized: boolean) => state.isInitialized = isInitialized,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
