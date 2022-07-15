@@ -34,6 +34,9 @@ from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
+SOCKET_IO_NAMESPACE = '/'
+
+
 def register_sockets(socketio):
     logger = initialize_background_logger(
         name='whiteboard_sockets',
@@ -59,6 +62,7 @@ def register_sockets(socketio):
                 current_user.user_id,
                 broadcast=True,
                 include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
                 skip_sid=socket_id,
                 to=room,
             )
@@ -78,6 +82,7 @@ def register_sockets(socketio):
                 'leave',
                 current_user.user_id,
                 include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
                 skip_sid=socket_id,
                 to=room,
             )
@@ -101,6 +106,7 @@ def register_sockets(socketio):
                 'whiteboardId': whiteboard_id,
             },
             include_self=False,
+            namespace=SOCKET_IO_NAMESPACE,
             skip_sid=socket_id,
             to=get_socket_io_room(whiteboard_id),
         )
@@ -122,6 +128,7 @@ def register_sockets(socketio):
             },
             broadcast=True,
             include_self=True,
+            namespace=SOCKET_IO_NAMESPACE,
         )
         return {'status': 200}
 

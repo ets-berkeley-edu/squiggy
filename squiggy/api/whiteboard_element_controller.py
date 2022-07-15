@@ -31,12 +31,14 @@ from squiggy.lib.errors import BadRequestError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_student, safe_strip
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
+from squiggy.logger import logger
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
+from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 
 @app.route('/api/whiteboard_elements/upsert', methods=['POST'])
@@ -62,11 +64,12 @@ def upsert_whiteboard_elements():
             ),
         )
     if not app.config['TESTING']:
+        logger.info(f'socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_id} AND socket_id = {socket_id}')
         emit(
             'upsert_whiteboard_elements',
             whiteboard_elements,
             include_self=False,
-            namespace='/',
+            namespace=SOCKET_IO_NAMESPACE,
             skip_sid=socket_id,
             to=get_socket_io_room(whiteboard_id),
         )
@@ -83,12 +86,13 @@ def delete_whiteboard_element(whiteboard_id, uuid):
         raise BadRequestError('socket_id is required')
 
     whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
-    if whiteboard_element:
+    if whiteboard_element and not app.config['TESTING']:
+        logger.info(f'socketio: Emit delete_whiteboard_element where whiteboard_id = {whiteboard_id} AND socket_id = {socket_id}')
         emit(
             'delete_whiteboard_element',
             uuid,
             include_self=False,
-            namespace='/',
+            namespace=SOCKET_IO_NAMESPACE,
             skip_sid=socket_id,
             to=get_socket_io_room(whiteboard_id),
         )
