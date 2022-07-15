@@ -33,7 +33,7 @@ export function addAsset(asset: any, state: any) {
     element.left = canvasCenter.x
     element.top = canvasCenter.y
 
-    store.commit('whiteboarding/canvasAdd', element)
+    p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
     p.$canvas.bringToFront(element)
     $_broadcastUpsert([{assetId: asset.id, element}], state).then(_.noop)
@@ -424,7 +424,7 @@ const $_addCanvasListeners = (state: any) => {
         top: state.startShapePointer.y,
         width: 10
       })
-      store.commit('whiteboarding/canvasAdd', shape)
+      p.$canvas.add(shape)
     }
     if (state.mode === 'text') {
       const textPointer = p.$canvas.getPointer(event.e)
@@ -440,7 +440,7 @@ const $_addCanvasListeners = (state: any) => {
         selected: true,
         top: textPointer.y
       })
-      store.commit('whiteboarding/canvasAdd', iText)
+      p.$canvas.add(iText)
 
       // Put the editable text field in edit mode straight away
       setTimeout(function() {
@@ -586,7 +586,7 @@ const $_addSocketListeners = (state: any) => {
     }
     _.each(data, (whiteboardElement: any) => {
       const element = whiteboardElement.element
-      const uuid = whiteboardElement.uuid
+      const uuid = element.uuid
       $_log(`socket.on upsert_whiteboard_elements: type = ${element.type}, uuid = ${uuid}`)
       const existing = $_getCanvasElement(uuid)
       if (existing) {
@@ -608,7 +608,7 @@ const $_addSocketListeners = (state: any) => {
         $_deserializeElement(state, element, uuid).then((e: any) => {
           // Add the element to the whiteboard canvas and move it to its appropriate index
           store.commit('whiteboarding/pushRemoteUUID', e.uuid)
-          store.commit('whiteboarding/canvasAdd', e)
+          p.$canvas.add(_.cloneDeep(e))
           updateCount++
           after({
             assetId: whiteboardElement.assetId,
@@ -979,7 +979,7 @@ const $_paste = (state: any): void => {
       })
     })
     $_broadcastUpsert(whiteboardElements, state).then(() => {
-      _.each(copies, (copy: any) => store.commit('whiteboarding/canvasAdd', copy))
+      _.each(copies, (copy: any) => p.$canvas.add(_.deepClone(copy)))
 
       setCanvasDimensions(state)
       _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))

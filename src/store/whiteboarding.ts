@@ -78,7 +78,6 @@ const mutations = {
     state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
   },
-  canvasAdd: (state: any, object: any) => p.$canvas.add(object),
   canvasSetDimensions: (state: any, {height, width}: any) => {
     p.$canvas.setHeight(height)
     p.$canvas.setWidth(width)
