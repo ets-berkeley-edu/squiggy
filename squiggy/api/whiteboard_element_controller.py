@@ -157,8 +157,7 @@ def _create_whiteboard_element(whiteboard_element, whiteboard_id):
 
 
 def _upsert_whiteboard_element(socket_id, whiteboard_element, whiteboard_id):
-    element = whiteboard_element['element']
-    if WhiteboardElement.get_id_per_uuid(element['uuid']):
+    if WhiteboardElement.get_id_per_uuid(whiteboard_element['uuid']):
         whiteboard_element = _update_whiteboard_element(
             whiteboard_element=whiteboard_element,
             whiteboard_id=whiteboard_id,

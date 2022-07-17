@@ -26,7 +26,7 @@ const getArg = (flag: string) => {
   return (index > -1 && index < args.length - 1) ? args[index + 1] : null
 }
 const baseDir = getArg('-b')
-const verbose = getArg('-v')
+const verbose = _.trim(getArg('-v'))
 const pngFile = getArg('-p')
 let elements = require(getArg('-w'))
 
