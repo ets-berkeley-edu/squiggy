@@ -6,7 +6,7 @@ import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
 import {v4 as uuidv4} from 'uuid'
-import {deleteWhiteboardElement, upsertWhiteboardElements} from '@/api/whiteboard-elements'
+import {deleteWhiteboardElement, updateWhiteboardElementsOrder, upsertWhiteboardElements} from '@/api/whiteboard-elements'
 
 const p = Vue.prototype
 
@@ -67,7 +67,7 @@ export function deleteActiveElements(state: any) {
   _.each($_getActiveObjects(), (element: any) => {
     const uuid = element.uuid
     p.$canvas.remove($_getCanvasElement(uuid))
-    $_broadcastDelete(uuid, state).then(_.noop)
+    $_broadcastDelete(uuid, state)
   })
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
@@ -138,23 +138,35 @@ export function moveLayer(direction: string, state: any) {
   if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
     p.$canvas.remove(selection)
   }
-  p.$canvas.discardActiveObject().requestRenderAll()
   _.each(elements, (e: any) => {
-    const element:any = $_getCanvasElement(e.uuid)
-    if (element) {
-      if (direction === 'back') {
-        p.$canvas.sendToBack(element)
-      } else if (direction === 'front') {
-        p.$canvas.bringToFront(element)
+    if (e.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+      p.$canvas.remove(e)
+    } else {
+      const element:any = $_getCanvasElement(e.uuid)
+      if (element) {
+        if (direction === 'back') {
+          if (element.index > 0) {
+            element.index = element.index - 1
+          }
+          p.$canvas.sendToBack(element)
+        } else if (direction === 'front') {
+          element.index = element.index + 1
+          p.$canvas.bringToFront(element)
+        }
       }
     }
   })
-  updateLayers(state).then(() => {
-    if (elements.length === 1) {
-      // When only a single item was selected, re-select it
-      p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
-    }
-  })
+  const apiCall = () => {
+    const uuids: string[] = _.map(p.$canvas.getObjects(), 'uuid')
+    updateWhiteboardElementsOrder(p.$socket.id, uuids, state.whiteboard.id).then(() => {
+      p.$canvas.discardActiveObject().requestRenderAll()
+      if (elements.length === 1) {
+        // When only a single item was selected, re-select it
+        p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
+      }
+    })
+  }
+  $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
 }
 
 export function reload(state: any) {
@@ -250,53 +262,6 @@ export function setCanvasDimensions(state: any) {
 export function setMode(mode: string) {
   $_log(`Set mode: ${mode}`)
   store.dispatch('whiteboarding/setMode', mode).then(_.noop)
-}
-
-export function updateLayers(state: any) {
-  return new Promise<void>(resolve => {
-    $_log('Update layers')
-    // Update the index of all elements to reflect their order in the current whiteboard.
-    const objects = p.$canvas.getObjects()
-    const upserts: {assetId: number, element: any, uuid: string}[] = []
-    if (state.isInitialized && objects.length) {
-      const after = (index: number) => {
-        if (index === objects.length - 1) {
-          if (upserts.length) {
-            // TODO: Fix needed here? If user A adds an element then user B should not be invoking this method.
-            // TODO: However, if user A moves an element front or back then we do want to invoke this upsert.
-            $_broadcastUpsert(upserts, state).then(resolve)
-          } else {
-            resolve()
-          }
-        }
-      }
-      _.each(objects, (element: any, index: number) => {
-        // Only update the elements for which the stored index no longer matches the current index.
-        const position = objects.indexOf(element)
-        const previousIndex = element.index
-        if (previousIndex !== position) {
-          element.index = position
-          if (element.group) {
-            // If the element is part of a group, calculate its global coordinates
-            const coordinates = $_calculateGlobalElementPosition(element.group, element)
-            const e = _.assignIn({}, element.toObject(), coordinates)
-            upserts.push($_translateIntoWhiteboardElement(e))
-            $_log(`Update element.group index. NEW value = ${coordinates}, OLD value = ${previousIndex}`)
-            after(index)
-          } else {
-            const e = element.toObject()
-            $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}`)
-            upserts.push($_translateIntoWhiteboardElement(e))
-            after(index)
-          }
-        } else {
-          after(index)
-        }
-      })
-    } else {
-      resolve()
-    }
-  })
 }
 
 export function updatePreviewImage(src: any, state: any, uuid: string) {
@@ -568,6 +533,14 @@ const $_addSocketListeners = (state: any) => {
     $_log(`socket.on leave: user_id = ${userId}`)
   })
 
+  p.$socket.on('order_whiteboard_elements', (uuids: string[]) => {
+    _.each(uuids, (uuid: string, index: number) => {
+      const object = $_getCanvasElement(uuid)
+      p.$canvas.moveTo(object, index)
+    })
+    $_log('socket.on order_whiteboard_elements')
+  })
+
   p.$socket.on('update_whiteboard', (data: any) => {
     store.commit('whiteboarding/onUpdateWhiteboard', data)
     $_log('socket.on update_whiteboard')
@@ -682,13 +655,14 @@ const $_assignIn = (object: any, source: any) => {
 const $_broadcastDelete = (uuid: string, state: any) => {
   $_log(`Delete whiteboard element ${uuid}`)
   store.commit('whiteboarding/onWhiteboardElementDelete', uuid)
-  return new Promise<any>(resolve => deleteWhiteboardElement(p.$socket.id, uuid, state.whiteboard.id).then(resolve))
+  const apiCall = () => deleteWhiteboardElement(p.$socket.id, uuid, state.whiteboard.id)
+  $_invokeWithSocketConnectRetry('whiteboard element delete', apiCall, state)
 }
 
 const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
   $_log('Upsert whiteboard elements')
   return new Promise<void>(resolve => {
-    const upsert = () => {
+    const apiCall = () => {
       upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
         _.each(data, whiteboardElement => {
           store.commit('whiteboarding/onWhiteboardElementUpsert', {
@@ -700,11 +674,7 @@ const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
         resolve()
       })
     }
-    if (p.$socket.connected && p.$socket.id) {
-      upsert()
-    } else {
-      $_tryReconnect(state).then(upsert)
-    }
+    $_invokeWithSocketConnectRetry('whiteboard elements upsert', apiCall, state)
   })
 }
 
@@ -903,9 +873,8 @@ const $_initFabricPrototypes = (state: any) => {
         const uuid = element.get('uuid')
         if (uuid) {
           p.$canvas.remove(element)
-          $_broadcastDelete(uuid, state).then(() => {
-            updateLayers(state).then(() => setMode('move'))
-          })
+          $_broadcastDelete(uuid, state)
+          setMode('move')
         } else {
           p.$canvas.remove(element)
           setMode('move')
@@ -946,6 +915,21 @@ const $_initSocket = (state: any) => {
   })
 }
 
+function $_invokeWithSocketConnectRetry(description: string, operation: () => void, state: any) {
+  const isConnected = () => p.$socket.connected && p.$socket.id
+  if (isConnected()) {
+    return operation()
+  } else {
+    $_tryReconnect(state).then(() => {
+      if (isConnected()) {
+        return operation()
+      } else {
+        throw `Socket.io reconnect failed prior to ${description}.`
+      }
+    })
+  }
+}
+
 const $_join = (state: any) => {
   return new Promise<void>(resolve => {
     if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
@@ -967,7 +951,7 @@ const $_leave = (state: any) => {
       userId: p.$currentUser.id,
       whiteboardId: state.whiteboard.id
     }
-    p.$socket.emit('leave', args, () => p.$socket.disconnect())
+    p.$socket.emit('leave', args, () => p.$socket = p.$socket.disconnect())
   }
 }
 
@@ -1025,25 +1009,23 @@ const $_renderWhiteboard = (state: any) => {
     let deserializeCount = 0
     const done = () => {
       return new Promise<void>(resolve => {
-        updateLayers(state).then(() => {
-          // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
-          if (state.whiteboard.isReadOnly) {
-            p.$canvas.discardActiveObject()
-            p.$canvas.selection = false
-          }
-          // Render whiteboard and its elements. Set canvas size once all layout changes have been applied.
-          setTimeout(() => {
-            setCanvasDimensions(state)
-            resolve()
-          }, 0)
-        })
+        // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
+        if (state.whiteboard.isReadOnly) {
+          p.$canvas.discardActiveObject()
+          p.$canvas.selection = false
+        }
+        // Render whiteboard and its elements. Set canvas size once all layout changes have been applied.
+        setTimeout(() => {
+          setCanvasDimensions(state)
+          resolve()
+        }, 0)
       })
     }
     if (whiteboardElements.length) {
-      _.each(whiteboardElements, (whiteboardElement: any, index: number) => {
+      _.each(whiteboardElements, (whiteboardElement: any) => {
         $_deserializeElement(state, whiteboardElement.element).then((e: any) => {
           deserializeCount++
-          p.$canvas.insertAt(e, index, false)
+          p.$canvas.insertAt(e, whiteboardElement.element.index, false)
           // Restore the order of the layers once all elements have finished loading
           if (deserializeCount === whiteboardElements.length) {
             done().then(resolve)
@@ -1086,9 +1068,9 @@ const $_tryReconnect = (state: any) => {
     $_log('Try reconnect')
     setTimeout(() => {
       $_leave(state)
-      p.$socket.io.open((error: any) => {
+      p.$socket.connect((error: any) => {
         if (error) {
-          $_log(`socket-io.open error: ${error}`, true)
+          $_log(`socket.connect error: ${error}`, true)
           $_tryReconnect(state).then(() => $_join(state).then(resolve))
         } else {
           $_join(state).then(resolve)

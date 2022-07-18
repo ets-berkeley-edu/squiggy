@@ -53,6 +53,9 @@ def order_whiteboard_elements():
         raise UnauthorizedRequestError('Unauthorized')
     if not socket_id:
         raise BadRequestError('socket_id is required')
+    if len(uuids or []) == 0:
+        raise BadRequestError('uuids required')
+
     # Order the whiteboard_elements
     WhiteboardElement.update_order(uuids=uuids, whiteboard_id=whiteboard_id)
 

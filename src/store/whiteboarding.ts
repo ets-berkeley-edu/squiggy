@@ -13,7 +13,6 @@ import {
   moveLayer,
   reload,
   setCanvasDimensions,
-  updateLayers,
   updatePreviewImage
 } from '@/store/whiteboarding/fabric-utils'
 
@@ -140,10 +139,9 @@ const mutations = {
         const after = (index) => {
           if (index === count - 1) {
             if (modified) {
-              updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
-            } else {
-              resolve()
+              setCanvasDimensions(state)
             }
+            resolve()
           }
         }
         updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
