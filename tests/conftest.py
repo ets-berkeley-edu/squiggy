@@ -241,6 +241,7 @@ def mock_whiteboard(app, db_session):
         {
             'assetId': asset.id,
             'height': 600,
+            'index': 2,
             'type': 'asset',
             'uuid': str(uuid4()),
             'width': 800,
@@ -248,6 +249,7 @@ def mock_whiteboard(app, db_session):
         {
             'fill': 'rgb(0,0,0)',
             'fontSize': 14,
+            'index': 1,
             'text': '',
             'type': 'text',
             'uuid': str(uuid4()),

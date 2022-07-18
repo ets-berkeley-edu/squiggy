@@ -409,22 +409,12 @@ def _get_whiteboards_where_clause(
     return where_clause
 
 
-def _get_element_sort_key(whiteboard_element):
-    index = whiteboard_element['element'].get('index') or 0
-    uuid = whiteboard_element['element']['uuid']
-    return f'{index}-{uuid}'
-
-
 def _get_sorted_whiteboard_elements(whiteboard_id):
+    def _get_element_sort_key(whiteboard_element):
+        index = whiteboard_element['element'].get('index') or 0
+        uuid = whiteboard_element['element']['uuid']
+        return f'{index}-{uuid}'
+
     whiteboard_elements = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
     whiteboard_elements.sort(key=_get_element_sort_key)
-    for index, whiteboard_element in enumerate(whiteboard_elements):
-        element = whiteboard_element['element']
-        if element.get('index') != index:
-            element['index'] = index
-            WhiteboardElement.update_element_index(
-                index=index,
-                uuid=whiteboard_element['uuid'],
-                whiteboard_id=whiteboard_id,
-            )
     return whiteboard_elements

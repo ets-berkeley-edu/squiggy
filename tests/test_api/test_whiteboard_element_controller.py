@@ -164,6 +164,81 @@ class TestUpsertWhiteboardElement:
             assert updated_whiteboard_element['element']['fill'] == updated_fill
 
 
+class TestOrderUpsertWhiteboards:
+
+    @classmethod
+    def _api_order_whiteboard_elements(
+            cls,
+            client,
+            uuids,
+            whiteboard_id,
+            expected_status_code=200,
+    ):
+        params = {
+            'socketId': _get_mock_socket_id(),
+            'uuids': uuids,
+            'whiteboardId': whiteboard_id,
+        }
+        response = client.post(
+            '/api/whiteboard_elements/order',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous_create(self, client, mock_whiteboard):
+        """Denies anonymous user."""
+        self._api_order_whiteboard_elements(
+            client=client,
+            expected_status_code=401,
+            uuids=[e['uuid'] for e in mock_whiteboard['whiteboardElements']],
+            whiteboard_id=mock_whiteboard['id'],
+        )
+
+    def test_unauthorized_create(self, client, fake_auth, mock_whiteboard):
+        """Denies unauthorized user."""
+        user_id = _get_non_collaborator_user_id(mock_whiteboard)
+        fake_auth.login(user_id)
+        self._api_order_whiteboard_elements(
+            client=client,
+            expected_status_code=401,
+            uuids=[e['uuid'] for e in mock_whiteboard['whiteboardElements']],
+            whiteboard_id=mock_whiteboard['id'],
+        )
+
+    @mock_s3
+    def test_authorized_create(self, app, client, fake_auth, mock_whiteboard):
+        """Authorized user orders whiteboard elements."""
+        with mock_s3_bucket(app):
+            user_id = _get_authorized_user_id(mock_whiteboard)
+            fake_auth.login(user_id)
+            whiteboard_id = mock_whiteboard['id']
+            api_json = _api_get_whiteboard(client, whiteboard_id)
+
+            previous_index = -1
+            uuids = []
+            # Assert that /api/whiteboard/<id> returns elements ordered by index.
+            for whiteboard_element in api_json['whiteboardElements']:
+                next_index = whiteboard_element['element']['index']
+                assert next_index > previous_index
+                previous_index = next_index
+                uuids.append(whiteboard_element['uuid'])
+
+            assert len(uuids) > 1
+            # Move first element to the end of the list
+            uuids.append(uuids.pop(0))
+
+            self._api_order_whiteboard_elements(
+                client=client,
+                uuids=uuids,
+                whiteboard_id=whiteboard_id,
+            )
+            api_json = _api_get_whiteboard(client, whiteboard_id)
+            ordered_uuids = [e['uuid'] for e in api_json['whiteboardElements']]
+            assert ordered_uuids == uuids
+
+
 def _get_authorized_user_id(whiteboard):
     student = next((u for u in whiteboard['users'] if is_student(u) and u['canvasEnrollmentState'] == 'active'), None)
     assert student
