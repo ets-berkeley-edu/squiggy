@@ -23,8 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import and_, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
@@ -101,11 +102,13 @@ class WhiteboardElement(Base):
         return whiteboard_element
 
     @classmethod
-    def update_element_index(cls, index, uuid, whiteboard_id):
-        whiteboard_element = cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
-        element = whiteboard_element.element
-        element['index'] = index
-        std_commit()
+    def update_order(cls, uuids, whiteboard_id):
+        whiteboard_elements = cls.query.filter(and_(cls.whiteboard_id == whiteboard_id, cls.uuid.in_(uuids))).all()
+        for (index, uuid) in enumerate(uuids):
+            whiteboard_element = next((w for w in whiteboard_elements if w.uuid == uuid), None)
+            whiteboard_element.element['index'] = index
+            flag_modified(whiteboard_element, 'element')
+            std_commit()
 
     def to_api_json(self):
         return {

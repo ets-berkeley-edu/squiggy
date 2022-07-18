@@ -41,6 +41,40 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 
+@app.route('/api/whiteboard_elements/order', methods=['POST'])
+@feature_flag_whiteboards
+@login_required
+def order_whiteboard_elements():
+    params = request.form or request.get_json()
+    socket_id = params.get('socketId')
+    uuids = params.get('uuids')
+    whiteboard_id = params.get('whiteboardId')
+    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        raise UnauthorizedRequestError('Unauthorized')
+    if not socket_id:
+        raise BadRequestError('socket_id is required')
+    # Order the whiteboard_elements
+    WhiteboardElement.update_order(uuids=uuids, whiteboard_id=whiteboard_id)
+
+    if not app.config['TESTING']:
+        logger.info(f'socketio: Emit order_whiteboard_elements where uuids = {uuids}')
+        emit(
+            'order_whiteboard_elements',
+            uuids,
+            include_self=False,
+            namespace=SOCKET_IO_NAMESPACE,
+            skip_sid=socket_id,
+            to=get_socket_io_room(whiteboard_id),
+        )
+    if is_student(current_user):
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
+    return tolerant_jsonify(uuids)
+
+
 @app.route('/api/whiteboard_elements/upsert', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
@@ -72,6 +106,12 @@ def upsert_whiteboard_elements():
             namespace=SOCKET_IO_NAMESPACE,
             skip_sid=socket_id,
             to=get_socket_io_room(whiteboard_id),
+        )
+    if is_student(current_user):
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
         )
     return tolerant_jsonify(results)
 
@@ -165,12 +205,6 @@ def _upsert_whiteboard_element(socket_id, whiteboard_element, whiteboard_id):
     else:
         whiteboard_element = _create_whiteboard_element(
             whiteboard_element=whiteboard_element,
-            whiteboard_id=whiteboard_id,
-        )
-    if is_student(current_user):
-        WhiteboardSession.update_updated_at(
-            socket_id=socket_id,
-            user_id=current_user.user_id,
             whiteboard_id=whiteboard_id,
         )
     WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
