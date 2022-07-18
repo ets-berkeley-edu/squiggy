@@ -78,15 +78,11 @@ const mutations = {
     state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
   },
-  canvasSetDimensions: (state: any, {height, width}: any) => {
-    p.$canvas.setHeight(height)
-    p.$canvas.setWidth(width)
-  },
-  canvasSetZoom: (state: any, ratio: any) => p.$canvas.setZoom(ratio),
   clearClipboard: (state: any) => state.clipboard = [],
   copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
+  initialize: (state: any, resolve: any) => initialize(state).then(resolve),
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onJoin: (state: any, userId: string) => {
     _.each(state.whiteboard.users, user => {
@@ -119,6 +115,7 @@ const mutations = {
   },
   onWhiteboardElementUpsert: (state: any, {assetId, element, uuid}) => {
     const existing = _.find(state.whiteboard.whiteboardElements, ['uuid', uuid])
+    element = _.cloneDeep(element)
     if (existing) {
       existing.assetId = assetId
       existing.element = element
@@ -131,17 +128,39 @@ const mutations = {
     state.windowWidth = window.innerWidth
   },
   pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
-  refreshWhiteboard: (state: any, data: any) => {
-    state.whiteboard.deletedAt = data.deletedAt
-    state.whiteboard.title = data.title
-    state.whiteboard.users = data.users
+  refreshWhiteboard: (state: any, {resolve, whiteboard}) => {
+    state.whiteboard.deletedAt = whiteboard.deletedAt
+    state.whiteboard.title = whiteboard.title
+    state.whiteboard.users = whiteboard.users
+    const count = whiteboard.whiteboardElements.length
+    if (count) {
+      let modified = false
+      _.each(whiteboard.whiteboardElements, (whiteboardElement: any, index: number) => {
+        const uuid = whiteboardElement.uuid
+        const after = (index) => {
+          if (index === count - 1) {
+            if (modified) {
+              updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
+            } else {
+              resolve()
+            }
+          }
+        }
+        updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
+          modified = wasUpdated
+          after(index)
+        })
+      })
+    }
   },
+  reload: (state, resolve) => reload(state).then(resolve),
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
   restoreWhiteboard: (state: any) => {
     state.whiteboard.isReadOnly = false
     state.whiteboard.deletedAt = null
   },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
+  setCanvasDimensions: (state) => setCanvasDimensions(state),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setFitToScreen: (state: any, fitToScreen: boolean) => state.fitToScreen = fitToScreen,
@@ -179,7 +198,7 @@ const actions = {
       deleteWhiteboard(state.whiteboard.id).then(() => {
         commit('afterWhiteboardDelete')
         if (p.$currentUser.isAdmin || p.$currentUser.isTeaching) {
-          reload(state).then(resolve)
+          commit('reload', resolve)
         } else {
           window.close()
           resolve()
@@ -194,7 +213,7 @@ const actions = {
         commit('setCategories', categories)
         commit('setWhiteboard', whiteboard)
         commit('setViewport', document.getElementById(constants.VIEWPORT_ELEMENT_ID))
-        initialize(state).then(resolve)
+        commit('initialize', resolve)
       })
     })
   },
@@ -203,27 +222,7 @@ const actions = {
   refreshWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       getWhiteboard(state.whiteboard.id).then((data: any) => {
-        commit('refreshWhiteboard', data)
-        const count = data.whiteboardElements.length
-        if (count) {
-          let modified = false
-          _.each(data.whiteboardElements, (whiteboardElement: any, index: number) => {
-            const uuid = whiteboardElement.uuid
-            const after = (index) => {
-              if (index === count - 1) {
-                if (modified) {
-                  updateLayers(state).then(() => setCanvasDimensions(state)).then(resolve)
-                } else {
-                  resolve()
-                }
-              }
-            }
-            updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
-              modified = wasUpdated
-              after(index)
-            })
-          })
-        }
+        commit('refreshWhiteboard', {resolve, whiteboard: data})
       })
     })
   },
@@ -234,7 +233,7 @@ const actions = {
         restoreWhiteboard(state.whiteboard.id).then(function() {
           // Update local state
           commit('restoreWhiteboard')
-          reload(state).then(resolve)
+          commit('reload', resolve)
         })
       } else {
         resolve()
@@ -246,7 +245,7 @@ const actions = {
   toggleZoom: ({commit, state}) => {
     commit('setMode', 'zoom')
     commit('setFitToScreen', !state.fitToScreen)
-    setCanvasDimensions(state)
+    commit('setCanvasDimensions')
   },
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties)
 }

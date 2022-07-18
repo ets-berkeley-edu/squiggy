@@ -36,7 +36,7 @@ export function addAsset(asset: any, state: any) {
     p.$canvas.add(element)
     p.$canvas.setActiveObject(element)
     p.$canvas.bringToFront(element)
-    $_broadcastUpsert([{assetId: asset.id, element}], state).then(_.noop)
+    $_broadcastUpsert($_translateIntoWhiteboardElements([element]), state).then(_.noop)
   })
 }
 
@@ -200,7 +200,7 @@ export function setCanvasDimensions(state: any) {
   // Zoom the canvas to accommodate the base width within the viewport.
   const viewportWidth = state.viewport.clientWidth
   const ratio = viewportWidth / constants.CANVAS_BASE_WIDTH
-  store.commit('whiteboarding/canvasSetZoom', ratio)
+  p.$canvas.setZoom(ratio)
   // p.$canvas.setZoom(ratio)
 
   // Calculate the position of the elements that are the most right and the most bottom. When all elements fit within
@@ -237,11 +237,9 @@ export function setCanvasDimensions(state: any) {
     const widthRatio = viewportWidth / realWidth
     const heightRatio = viewportHeight / realHeight
     const ratio = Math.min(widthRatio, heightRatio)
-    store.commit('whiteboarding/canvasSetZoom', ratio)
-    store.commit('whiteboarding/canvasSetDimensions', {
-      height: viewportHeight,
-      width: viewportWidth
-    })
+    p.$canvas.setZoom(ratio)
+    p.$canvas.setHeight(viewportHeight)
+    p.$canvas.setWidth(viewportWidth)
   } else {
     // Adjust the value for rounding issues to prevent scrollbars from incorrectly showing up.
     p.$canvas.setHeight(maxBottom - 1)
@@ -259,11 +257,13 @@ export function updateLayers(state: any) {
     $_log('Update layers')
     // Update the index of all elements to reflect their order in the current whiteboard.
     const objects = p.$canvas.getObjects()
-    const upserts: {assetId: number, element: any}[] = []
+    const upserts: {assetId: number, element: any, uuid: string}[] = []
     if (state.isInitialized && objects.length) {
       const after = (index: number) => {
         if (index === objects.length - 1) {
           if (upserts.length) {
+            // TODO: Fix needed here? If user A adds an element then user B should not be invoking this method.
+            // TODO: However, if user A moves an element front or back then we do want to invoke this upsert.
             $_broadcastUpsert(upserts, state).then(resolve)
           } else {
             resolve()
@@ -280,13 +280,13 @@ export function updateLayers(state: any) {
             // If the element is part of a group, calculate its global coordinates
             const coordinates = $_calculateGlobalElementPosition(element.group, element)
             const e = _.assignIn({}, element.toObject(), coordinates)
-            upserts.push({assetId: e.assetId, element: e})
+            upserts.push($_translateIntoWhiteboardElement(e))
             $_log(`Update element.group index. NEW value = ${coordinates}, OLD value = ${previousIndex}`)
             after(index)
           } else {
             const e = element.toObject()
             $_log(`Update element index. NEW value = ${position}, OLD value = ${previousIndex}`)
-            upserts.push({assetId: e.assetId, element: e})
+            upserts.push($_translateIntoWhiteboardElement(e))
             after(index)
           }
         } else {
@@ -347,7 +347,8 @@ const $_addCanvasListeners = (state: any) => {
     $_setModifyingElement(false)
     // Ensure that none of the modified objects are positioned off-screen.
     $_ensureWithinCanvas(event.target)
-    _.each($_getActiveObjects(), (element: any) => $_broadcastUpsert([{assetId: element.assetId, element}], state))
+    const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
+    $_broadcastUpsert(whiteboardElements, state).then(_.noop)
   })
 
   p.$canvas.on('after:render', () => {
@@ -394,7 +395,8 @@ const $_addCanvasListeners = (state: any) => {
     if (!wasAddedByRemote && isNonEmptyIText && !element.uuid && !element.isHelper) {
       $_enableCanvasElements(true)
       element.uuid = uuidv4()
-      $_broadcastUpsert([{assetId: element.assetId, element}], state).then(() => {
+      const whiteboardElements = $_translateIntoWhiteboardElements([element])
+      $_broadcastUpsert(whiteboardElements, state).then(() => {
         setCanvasDimensions(state)
         setMode('move')
       })
@@ -504,7 +506,8 @@ const $_addCanvasListeners = (state: any) => {
         shape.isHelper = false
         // Save the added shape and make it active.
         p.$canvas.bringToFront(shape)
-        $_broadcastUpsert([{assetId: undefined, element: shape}], state).then(() => {
+        const whiteboardElements = $_translateIntoWhiteboardElements([shape])
+        $_broadcastUpsert(whiteboardElements, state).then(() => {
           setMode('move')
         })
       } else {
@@ -586,7 +589,7 @@ const $_addSocketListeners = (state: any) => {
     }
     _.each(data, (whiteboardElement: any) => {
       const element = whiteboardElement.element
-      const uuid = element.uuid
+      const uuid = whiteboardElement.uuid
       $_log(`socket.on upsert_whiteboard_elements: type = ${element.type}, uuid = ${uuid}`)
       const existing = $_getCanvasElement(uuid)
       if (existing) {
@@ -599,13 +602,13 @@ const $_addSocketListeners = (state: any) => {
             updateCount++
             after({
               assetId: whiteboardElement.assetId,
-              element: modified,
+              element: existing,
               uuid
             })
           }
         })
       } else {
-        $_deserializeElement(state, element, uuid).then((e: any) => {
+        $_deserializeElement(state, element).then((e: any) => {
           // Add the element to the whiteboard canvas and move it to its appropriate index
           store.commit('whiteboarding/pushRemoteUUID', e.uuid)
           p.$canvas.add(_.cloneDeep(e))
@@ -665,6 +668,17 @@ const $_addViewportListeners = (state: any) => {
   }
 }
 
+const $_assignIn = (object: any, source: any) => {
+  $_log('Assign in')
+  let modified = false
+  _.each(constants.MUTABLE_ELEMENT_ATTRIBUTES, (key: string) => {
+    const value = source[key]
+    modified ||= value !== object.get(key)
+    object.set(key, value)
+  })
+  return modified
+}
+
 const $_broadcastDelete = (uuid: string, state: any) => {
   $_log(`Delete whiteboard element ${uuid}`)
   store.commit('whiteboarding/onWhiteboardElementDelete', uuid)
@@ -674,16 +688,23 @@ const $_broadcastDelete = (uuid: string, state: any) => {
 const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
   $_log('Upsert whiteboard elements')
   return new Promise<void>(resolve => {
-    upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
-      _.each(data, whiteboardElement => {
-        store.commit('whiteboarding/onWhiteboardElementUpsert', {
-          assetId: whiteboardElement.assetId,
-          element: whiteboardElement.element,
-          uuid: whiteboardElement.uuid
+    const upsert = () => {
+      upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
+        _.each(data, whiteboardElement => {
+          store.commit('whiteboarding/onWhiteboardElementUpsert', {
+            assetId: whiteboardElement.assetId,
+            element: whiteboardElement.element,
+            uuid: whiteboardElement.uuid
+          })
         })
+        resolve()
       })
-      resolve()
-    })
+    }
+    if (p.$socket.connected && p.$socket.id) {
+      upsert()
+    } else {
+      $_tryReconnect(state).then(upsert)
+    }
   })
 }
 
@@ -732,15 +753,10 @@ const $_deactivateGroupIfOverlap = (uuid: string) => {
   }
 }
 
-const $_deserializeElement = (
-  state: any,
-  element: any,
-  uuid: string
-) => {
+const $_deserializeElement = (state: any, element: any) => {
   return new Promise<Object>(resolve => {
     element = _.cloneDeep(element)
-    element.uuid = uuid
-    $_log(`Deserialize ${element.type} element (uuid: ${uuid})`)
+    $_log(`Deserialize ${element.type} element (uuid: ${element.uuid})`)
     if (state.whiteboard.isReadOnly) {
       element.selectable = false
     }
@@ -881,15 +897,14 @@ const $_initFabricPrototypes = (state: any) => {
           element.text = `${days_until_retirement} days until freedom`
         }
         element.uuid = element.uuid || uuidv4()
-        $_broadcastUpsert([{assetId: undefined, element}], state).then(() => setMode('move'))
+        const whiteboardElements = $_translateIntoWhiteboardElements([element])
+        $_broadcastUpsert(whiteboardElements, state).then(() => setMode('move'))
       } else {
         const uuid = element.get('uuid')
         if (uuid) {
           p.$canvas.remove(element)
           $_broadcastDelete(uuid, state).then(() => {
-            updateLayers(state).then(() => {
-              setMode('move')
-            })
+            updateLayers(state).then(() => setMode('move'))
           })
         } else {
           p.$canvas.remove(element)
@@ -932,12 +947,17 @@ const $_initSocket = (state: any) => {
 }
 
 const $_join = (state: any) => {
-  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-    $_log('Join')
-    store.dispatch('whiteboarding/onJoin', p.$currentUser.id).then(() => {
-      p.$socket.emit('join', {whiteboardId: state.whiteboard.id})
-    })
-  }
+  return new Promise<void>(resolve => {
+    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+      $_log('Join')
+      store.dispatch('whiteboarding/onJoin', p.$currentUser.id).then(() => {
+        p.$socket.emit('join', {whiteboardId: state.whiteboard.id})
+        resolve()
+      })
+    } else {
+      resolve()
+    }
+  })
 }
 
 const $_leave = (state: any) => {
@@ -1021,11 +1041,7 @@ const $_renderWhiteboard = (state: any) => {
     }
     if (whiteboardElements.length) {
       _.each(whiteboardElements, (whiteboardElement: any, index: number) => {
-        $_deserializeElement(
-          state,
-          whiteboardElement.element,
-          whiteboardElement.uuid
-        ).then((e: any) => {
+        $_deserializeElement(state, whiteboardElement.element).then((e: any) => {
           deserializeCount++
           p.$canvas.insertAt(e, index, false)
           // Restore the order of the layers once all elements have finished loading
@@ -1057,28 +1073,27 @@ const $_scaleImageObject = (element: any, state: any) => {
 
 const $_setModifyingElement = (value: boolean) => store.commit('whiteboarding/setIsModifyingElement', value)
 
-const $_tryReconnect = (state: any) => {
-  $_log('Try reconnect')
-  setTimeout(() => {
-    $_leave(state)
-    p.$socket.io.open((error: any) => {
-      if (error) {
-        $_log(`socket-io.open error: ${error}`, true)
-        $_tryReconnect(state)
-      } else {
-        $_join(state)
-      }
-    })
-  }, 2000)
+const $_translateIntoWhiteboardElement = (fabricObject: any) => {
+  return {assetId: fabricObject.assetId, element: fabricObject, uuid: fabricObject.uuid}
 }
 
-const $_assignIn = (object: any, source: any) => {
-  $_log('Assign in')
-  let modified = false
-  _.each(constants.MUTABLE_ELEMENT_ATTRIBUTES, (key: string) => {
-    const value = source[key]
-    modified ||= value !== object.get(key)
-    object.set(key, value)
+const $_translateIntoWhiteboardElements = (fabricObjects: any) => {
+  return _.map(fabricObjects, (fabricObject: any) => $_translateIntoWhiteboardElement(fabricObject))
+}
+
+const $_tryReconnect = (state: any) => {
+  return new Promise<void>(resolve => {
+    $_log('Try reconnect')
+    setTimeout(() => {
+      $_leave(state)
+      p.$socket.io.open((error: any) => {
+        if (error) {
+          $_log(`socket-io.open error: ${error}`, true)
+          $_tryReconnect(state).then(() => $_join(state).then(resolve))
+        } else {
+          $_join(state).then(resolve)
+        }
+      })
+    }, 2000)
   })
-  return modified
 }
