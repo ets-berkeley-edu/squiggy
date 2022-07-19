@@ -78,7 +78,7 @@ We use [Tox](https://tox.readthedocs.io) for continuous integration. Under the h
 # Run all tests and linters
 tox
 
-# Pytest
+# Pytest only
 tox -e test
 
 # Run specific test(s)
