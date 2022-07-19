@@ -127,6 +127,8 @@ def delete_whiteboard_element(whiteboard_id, uuid):
     socket_id = params.get('socketId')
     if not socket_id:
         raise BadRequestError('socket_id is required')
+    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        raise UnauthorizedRequestError('Unauthorized')
 
     whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
     if whiteboard_element and not app.config['TESTING']:
