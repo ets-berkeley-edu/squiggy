@@ -68,6 +68,9 @@
         </v-card>
       </v-card-text>
       <v-card-actions v-if="isDialogReady" class="pt-5">
+        <div class="font-weight-bold pl-3 text--secondary">
+          {{ selectedAssetIds.length }} selected
+        </div>
         <v-spacer></v-spacer>
         <div class="pb-3 pr-2">
           <v-btn
@@ -76,7 +79,7 @@
             :disabled="disableSave"
             @click="save"
           >
-            <span v-if="isSaving">
+            <span v-if="isSaving" class="mt-1">
               <v-progress-circular
                 class="mr-1"
                 :indeterminate="true"
@@ -84,7 +87,7 @@
                 size="18"
                 width="2"
               />
-              Saving {{ dialog }}
+              Saving
             </span>
             <span v-if="!isSaving">Save</span>
           </v-btn>
@@ -194,14 +197,16 @@ export default {
       if (this.selectedAssetIds.length) {
         this.isSaving = true
         const assetIds = this.$_.uniq(this.selectedAssetIds)
-        this.$_.each(assetIds, (assetId, index) => {
-          const asset = this.$_.find(this.assets, ['id', assetId])
-          this.addAsset(asset)
-          if (index === assetIds.length - 1) {
-            this.$announcer.polite('Assets added')
-            this.isSaving = false
-            this.dialog = false
-            this.reset()
+        const assets = []
+        this.$_.each(assetIds, assetId => {
+          assets.push(this.$_.find(this.assets, ['id', assetId]))
+          if (assetIds.length === this.selectedAssetIds.length) {
+            this.addAssets(assets).then(() => {
+              this.$announcer.polite('Assets added')
+              this.isSaving = false
+              this.dialog = false
+              this.reset()
+            })
           }
         })
       }

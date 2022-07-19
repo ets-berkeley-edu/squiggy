@@ -226,7 +226,7 @@ export default {
           this.asset.url,
           this.asset.visible
         ).then(asset => {
-          this.addAsset(asset).then(() => {
+          this.addAssets([asset]).then(() => {
             this.$announcer.polite('Link asset created.')
             this.asset = {
               categoryId: undefined,

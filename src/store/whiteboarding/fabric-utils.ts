@@ -10,33 +10,42 @@ import {deleteWhiteboardElement, updateWhiteboardElementsOrder, upsertWhiteboard
 
 const p = Vue.prototype
 
-export function addAsset(asset: any, state: any) {
-  $_log('Add asset')
-  setMode('move')
-  let imageUrl: any
-  if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
-    imageUrl = asset.imageUrl
-  } else {
-    // Default to a placeholder when the asset does not have a preview image
-    const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1 && _.startsWith(asset.downloadUrl, 'http')
-    imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
-  }
-  fabric.Image.fromURL(imageUrl, (element: any) => {
-    element.assetId = asset.id
-    element.src = imageUrl
-    const zoomLevel = p.$canvas.getZoom()
-    const canvasCenter = {
-      x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
-      y: ((state.viewport.clientHeight / 2) + state.viewport.scrollTop) / zoomLevel
-    }
-    $_scaleImageObject(element, state)
-    element.left = canvasCenter.x
-    element.top = canvasCenter.y
+export function addAssets(assets: any[], state: any) {
+  return new Promise<void>(resolve => {
+    $_log(`Add ${assets.length} assets`)
+    setMode('move')
+    const elements: any[] = []
+    _.each(assets, asset => {
+      let imageUrl: any
+      if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
+        imageUrl = asset.imageUrl
+      } else {
+        // Default to a placeholder when the asset does not have a preview image
+        const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1 && _.startsWith(asset.downloadUrl, 'http')
+        imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
+      }
+      fabric.Image.fromURL(imageUrl, (element: any) => {
+        element.assetId = asset.id
+        element.src = imageUrl
+        element.uuid = uuidv4()
+        const zoomLevel = p.$canvas.getZoom()
+        const canvasCenter = {
+          x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
+          y: ((state.viewport.clientHeight / 2) + state.viewport.scrollTop) / zoomLevel
+        }
+        $_scaleImageObject(element, state)
+        element.left = canvasCenter.x
+        element.top = canvasCenter.y
+        elements.push(element)
 
-    p.$canvas.add(element)
-    p.$canvas.setActiveObject(element)
-    p.$canvas.bringToFront(element)
-    $_broadcastUpsert($_translateIntoWhiteboardElements([element]), state).then(_.noop)
+        p.$canvas.add(element)
+        p.$canvas.bringToFront(element)
+        if (elements.length === assets.length) {
+          p.$canvas.setActiveObject(element)
+          $_broadcastUpsert($_translateIntoWhiteboardElements(elements), state).then(resolve)
+        }
+      })
+    })
   })
 }
 
@@ -357,7 +366,7 @@ const $_addCanvasListeners = (state: any) => {
     const element = event.target
     const isNonEmptyIText = element.type !== 'i-text' || element.text.trim()
     const wasAddedByRemote = state.remoteUUIDs.includes(element.uuid)
-    if (!wasAddedByRemote && isNonEmptyIText && !element.uuid && !element.isHelper) {
+    if (!wasAddedByRemote && isNonEmptyIText && !element.assetId && !element.uuid && !element.isHelper) {
       $_enableCanvasElements(true)
       element.uuid = uuidv4()
       const whiteboardElements = $_translateIntoWhiteboardElements([element])
