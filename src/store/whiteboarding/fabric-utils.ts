@@ -105,7 +105,7 @@ export function initialize(state: any) {
   return new Promise<void>(resolve => {
     if (state.whiteboard.isReadOnly) {
       $_initCanvas(state)
-      $_renderWhiteboard(state).then(() => {
+      $_renderWhiteboard(state, true).then(() => {
         $_enableCanvasElements(false)
         store.commit('whiteboarding/setIsInitialized', true)
         resolve()
@@ -116,7 +116,7 @@ export function initialize(state: any) {
       $_initFabricPrototypes(state)
       $_initCanvas(state)
       $_addViewportListeners(state)
-      $_renderWhiteboard(state).then(() => {
+      $_renderWhiteboard(state, true).then(() => {
         $_addSocketListeners(state)
         $_addCanvasListeners(state)
         store.commit('whiteboarding/setIsInitialized', true)
@@ -177,7 +177,7 @@ export function reload(state: any) {
     store.dispatch('whiteboarding/setDisableAll', isReadOnly).then(_.noop)
     if (isReadOnly) {
       $_initCanvas(state)
-      $_renderWhiteboard(state).then(() => {
+      $_renderWhiteboard(state, true).then(() => {
         $_enableCanvasElements(isReadOnly)
         store.commit('whiteboarding/setIsInitialized', true)
         resolve()
@@ -192,7 +192,7 @@ export function reload(state: any) {
         $_initFabricPrototypes(state)
         $_initCanvas(state)
         $_addViewportListeners(state)
-        $_renderWhiteboard(state).then(() => {
+        $_renderWhiteboard(state, true).then(() => {
           $_enableCanvasElements(isReadOnly)
           store.commit('whiteboarding/setIsInitialized', true)
           resolve()
@@ -983,7 +983,7 @@ const $_paste = (state: any): void => {
       })
     })
     $_broadcastUpsert(whiteboardElements, state).then(() => {
-      _.each(copies, (copy: any) => p.$canvas.add(_.deepClone(copy)))
+      _.each(copies, (copy: any) => p.$canvas.add(_.cloneDeep(copy)))
 
       setCanvasDimensions(state)
       _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))
@@ -1002,7 +1002,7 @@ const $_paste = (state: any): void => {
   }
 }
 
-const $_renderWhiteboard = (state: any) => {
+const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
   return new Promise<void>(resolve => {
     $_log('Render whiteboard')
     const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, (w: any) => `${w.element.index}-${w.element.uuid}`)
@@ -1021,12 +1021,11 @@ const $_renderWhiteboard = (state: any) => {
         }, 0)
       })
     }
-    if (whiteboardElements.length) {
+    if (redrawElements && whiteboardElements.length) {
       _.each(whiteboardElements, (whiteboardElement: any) => {
         $_deserializeElement(state, whiteboardElement.element).then((e: any) => {
           deserializeCount++
           p.$canvas.insertAt(e, whiteboardElement.element.index, false)
-          // Restore the order of the layers once all elements have finished loading
           if (deserializeCount === whiteboardElements.length) {
             done().then(resolve)
           }
