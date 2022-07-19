@@ -26,7 +26,7 @@
             <AddLinkAsset />
             <UploadNewAsset />
           </v-btn-toggle>
-          <div v-if="$config.socketIoDebugMode && !isLoading">
+          <div v-if="$config.isVueAppDebugMode && !isLoading">
             <v-chip
               v-if="canvasObjectsCountChip"
               class="ml-5"

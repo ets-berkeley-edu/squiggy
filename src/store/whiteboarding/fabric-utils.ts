@@ -973,32 +973,26 @@ const $_paste = (state: any): void => {
       p.$canvas.remove(object)
     }
     const whiteboardElements: any[] = []
-    _.each(copies, (copy: any) => {
+    _.each(copies, (element: any) => {
+      const copy = _.cloneDeep(element)
       const uuid = uuidv4()
+      $_log(`Paste element ${copy.uuid}. Copy has uuid ${uuid}`)
       copy.uuid = uuid
       whiteboardElements.push({
         assetId: copy.assetId,
         element: copy,
         uuid
       })
+      p.$canvas.add(copy)
+      $_ensureWithinCanvas(copy)
     })
-    $_broadcastUpsert(whiteboardElements, state).then(() => {
-      _.each(copies, (copy: any) => p.$canvas.add(_.cloneDeep(copy)))
-
-      setCanvasDimensions(state)
-      _.each(copies, (copy: any) => $_ensureWithinCanvas(copy))
-      if (copies.length === 1) {
-        const object = $_getCanvasElement(copies[0].uuid)
-        p.$canvas.setActiveObject(object).requestRenderAll()
-      } else {
-        // When multiple elements were pasted, create a new group for those elements and select them
-        const selection = new fabric.ActiveSelection(copies)
-        selection.isHelper = true
-        p.$canvas.setActiveObject(selection)
-        $_ensureWithinCanvas(selection)
-        p.$canvas.requestRenderAll()
-      }
-    })
+    if (whiteboardElements.length === 1) {
+      const uuid = whiteboardElements[0].uuid
+      p.$canvas.setActiveObject($_getCanvasElement(uuid))
+    } else {
+      $_log('TODO: If multiple elements were pasted then create a "group" for those elements and select it.')
+    }
+    $_broadcastUpsert(whiteboardElements, state).then(() => setCanvasDimensions(state))
   }
 }
 
