@@ -276,7 +276,7 @@ export default {
           this.file,
           this.visible
         ).then(asset => {
-          this.addAsset(asset).then(() => {
+          this.addAssets([asset]).then(() => {
             this.$announcer.polite('File uploaded. Asset created.')
             this.dialog = false
             this.isSaving = false

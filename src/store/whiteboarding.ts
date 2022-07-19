@@ -5,7 +5,7 @@ import Vue from 'vue'
 import {getCategories} from '@/api/categories'
 import {deleteWhiteboard, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
 import {
-  addAsset,
+  addAssets,
   afterChangeMode,
   deleteActiveElements,
   emitWhiteboardUpdate,
@@ -72,7 +72,7 @@ const getters = {
 }
 
 const mutations = {
-  addAsset: (state: any, asset: any) => addAsset(asset, state),
+  addAssets: (state: any, assets: any[]) => addAssets(assets, state),
   afterWhiteboardDelete: (state: any) => {
     state.whiteboard.deletedAt = new Date()
     state.whiteboard.isReadOnly = true
@@ -189,7 +189,12 @@ const mutations = {
 }
 
 const actions = {
-  addAsset: ({commit}, asset: any) => commit('addAsset', asset),
+  addAssets: ({commit}, assets: any[]) => {
+    return new Promise<void>(resolve => {
+      commit('addAssets', assets)
+      resolve()
+    })
+  },
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {

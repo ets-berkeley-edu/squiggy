@@ -34,7 +34,7 @@ export default {
   },
   methods: {
     ...mapActions('whiteboarding', [
-      'addAsset',
+      'addAssets',
       'deleteActiveElements',
       'deleteWhiteboard',
       'emitWhiteboardUpdate',
