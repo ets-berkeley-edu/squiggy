@@ -51,24 +51,21 @@ export function addAssets(assets: any[], state: any) {
 
 export function afterChangeMode(state: any) {
   p.$canvas.discardActiveObject().requestRenderAll()
-  if (!state.whiteboard.deletedAt) {
-    p.$canvas.isDrawingMode = state.mode === 'draw'
-    if (['text', 'shape'].includes(state.mode)) {
-      p.$canvas.forEachObject(object => {
-        object.selectable = false
-        object.evented = false
-      })
-    } else {
-      p.$canvas.forEachObject(object => {
-        object.selectable = true
-        object.evented = true
-      })
-    }
+  if (state.whiteboard.deletedAt) {
+    $_enableCanvasElements(false)
+  } else {
+    const selectable = !['text', 'shape'].includes(state.mode)
+    p.$canvas.forEachObject(object => {
+      object.selectable = selectable
+      object.evented = selectable
+    })
     if (state.mode === 'move') {
       $_enableCanvasElements(true)
       store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
     } else if (state.mode === 'text') {
       p.$canvas.cursor = 'text'
+    } else if (state.mode === 'draw') {
+      p.$canvas.isDrawingMode = true
     }
   }
 }
@@ -189,7 +186,7 @@ export function reload(state: any) {
     if (isReadOnly) {
       $_initCanvas(state)
       $_renderWhiteboard(state, true).then(() => {
-        $_enableCanvasElements(isReadOnly)
+        $_enableCanvasElements(false)
         store.commit('whiteboarding/setIsInitialized', true)
         resolve()
       })
@@ -198,13 +195,15 @@ export function reload(state: any) {
         $_initSocket(state)
         $_addSocketListeners(state)
       }
-      if (!p.$canvas) {
+      if (p.$canvas) {
+        resolve()
+      } else {
         // Order matters: (1) set up Fabric prototypes, (2) initialize the canvas.
         $_initFabricPrototypes(state)
         $_initCanvas(state)
         $_addViewportListeners(state)
         $_renderWhiteboard(state, true).then(() => {
-          $_enableCanvasElements(isReadOnly)
+          $_enableCanvasElements(true)
           store.commit('whiteboarding/setIsInitialized', true)
           resolve()
         })
@@ -756,7 +755,10 @@ const $_deserializeElement = (state: any, element: any) => {
 const $_enableCanvasElements = (enabled: boolean) => {
   $_log(`Enable canvas elements (enabled = ${enabled})`)
   p.$canvas.selection = enabled
-  _.each(p.$canvas.getObjects(), (element: any) => element.selectable = enabled)
+  _.each(p.$canvas.getObjects(), (element: any) => {
+    element.evented = enabled
+    element.selectable = enabled
+  })
 }
 
 const $_ensureWithinCanvas = (object: any) => {
