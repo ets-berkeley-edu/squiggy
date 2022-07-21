@@ -51,23 +51,25 @@ export function addAssets(assets: any[], state: any) {
 
 export function afterChangeMode(state: any) {
   p.$canvas.discardActiveObject().requestRenderAll()
-  p.$canvas.isDrawingMode = state.mode === 'draw'
-  if (['text', 'shape'].includes(state.mode)) {
-    p.$canvas.forEachObject(object => {
-      object.selectable = false
-      object.evented = false
-    })
-  } else {
-    p.$canvas.forEachObject(object => {
-      object.selectable = true
-      object.evented = true
-    })
-  }
-  if (state.mode === 'move') {
-    $_enableCanvasElements(true)
-    store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
-  } else if (state.mode === 'text') {
-    p.$canvas.cursor = 'text'
+  if (!state.whiteboard.deletedAt) {
+    p.$canvas.isDrawingMode = state.mode === 'draw'
+    if (['text', 'shape'].includes(state.mode)) {
+      p.$canvas.forEachObject(object => {
+        object.selectable = false
+        object.evented = false
+      })
+    } else {
+      p.$canvas.forEachObject(object => {
+        object.selectable = true
+        object.evented = true
+      })
+    }
+    if (state.mode === 'move') {
+      $_enableCanvasElements(true)
+      store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
+    } else if (state.mode === 'text') {
+      p.$canvas.cursor = 'text'
+    }
   }
 }
 

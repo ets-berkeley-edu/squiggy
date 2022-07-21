@@ -26,17 +26,8 @@
             <AddLinkAsset />
             <UploadNewAsset />
           </v-btn-toggle>
-          <div v-if="$config.isVueAppDebugMode && !isLoading">
-            <v-chip
-              v-if="canvasObjectsCountChip"
-              class="ml-5"
-              close
-              color="green"
-              outlined
-              @click:close="canvasObjectsCountChip = false"
-            >
-              {{ pluralize('whiteboard element', whiteboard.whiteboardElements.length, {0: 'No', 1: 'One'}) }}
-            </v-chip>
+          <div v-if="whiteboard.deletedAt" class="pl-2">
+            This whiteboard was deleted on {{ whiteboard.deletedAt | moment('dddd, MMMM Do YYYY') }}.
           </div>
         </v-col>
         <v-col cols="4">
@@ -107,7 +98,6 @@ export default {
     }
   },
   data: () => ({
-    canvasObjectsCountChip: true,
     isDeleteDialogOpen: false,
     isDeleting: false
   }),
