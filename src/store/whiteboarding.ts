@@ -10,7 +10,6 @@ import {
   deleteActiveElements,
   initialize,
   moveLayer,
-  reload,
   setCanvasDimensions,
   updatePreviewImage
 } from '@/store/whiteboarding/fabric-utils'
@@ -118,6 +117,10 @@ const mutations = {
     })
     state.whiteboard.users = users
     // Whiteboard might have been deleted.
+    const hasDeleteStatusChanged = (!state.whiteboard.deletedAt && deletedAt) || (state.whiteboard.deletedAt && !deletedAt)
+    if (hasDeleteStatusChanged) {
+      state.whiteboard.deletedAt = deletedAt
+    }
     state.whiteboard.deletedAt = deletedAt
     // Close browser tab if current user is no longer authorized.
     if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
@@ -132,7 +135,10 @@ const mutations = {
         }
       }
     }
-    reload(state).then(resolve)
+    if (hasDeleteStatusChanged) {
+      p.$loading()
+      location.reload()
+    }
   },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight

@@ -76,7 +76,7 @@ export default {
   mixins: [Whiteboarding],
   components: {OxfordJoin, PageTitle},
   props: {
-    afterRestore: {
+    restore: {
       required: true,
       type: Function
     },
@@ -91,16 +91,6 @@ export default {
   }),
   created() {
     this.canRestore = this.whiteboard.deletedAt && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
-  },
-  methods: {
-    restore() {
-      this.isRestoring = true
-      this.undeleteWhiteboard().then(() => {
-        this.$announcer.polite('Whiteboard restored.')
-        this.isRestoring = false
-        this.afterRestore()
-      })
-    }
   }
 }
 </script>
