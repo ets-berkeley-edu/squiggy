@@ -30,6 +30,7 @@ from uuid import uuid4
 from flask import current_app as app
 from flask_login import logout_user
 from squiggy import db, std_commit
+from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_admin, is_teaching
 from squiggy.models.activity import Activity
 from squiggy.models.course import Course
@@ -67,6 +68,7 @@ class TestGetWhiteboard:
         std_commit(allow_test_environment=True)
 
         fake_auth.login(student.id)
+        assert Whiteboard.find_by_id(LoginSession(student.id), whiteboard_id)['deletedAt']
         _api_get_whiteboard(client, expected_status_code=404, whiteboard_id=whiteboard_id)
 
     def test_owner_view_whiteboard(self, client, fake_auth, mock_whiteboard):
@@ -263,29 +265,33 @@ class TestExportAsAsset:
                 assert add_asset_activities[0].user_id == user['id']
 
 
-class TestRestoreWhiteboard:
+class TestUndeleteWhiteboard:
 
     @staticmethod
-    def _api_restore_whiteboard(client, whiteboard_id, expected_status_code=200):
-        response = client.post(f'/api/whiteboard/{whiteboard_id}/restore')
+    def _api_undelete_whiteboard(client, whiteboard_id, expected_status_code=200):
+        response = client.post(
+            f'/api/whiteboard/{whiteboard_id}/undelete',
+            data=json.dumps({'socketId': _get_mock_socket_id()}),
+            content_type='application/json',
+        )
         assert response.status_code == expected_status_code
         return json.loads(response.data)
 
     def test_anonymous(self, client, mock_whiteboard):
         """Denies anonymous user."""
-        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
+        self._api_undelete_whiteboard(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
 
     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
+        self._api_undelete_whiteboard(client, whiteboard_id=mock_whiteboard['id'], expected_status_code=401)
 
     def test_authorized(self, authorized_user_id, client, fake_auth, mock_whiteboard):
-        """Authorized user can update whiteboard."""
+        """Authorized user can un-delete whiteboard."""
         fake_auth.login(authorized_user_id)
         Whiteboard.delete(mock_whiteboard['id'])
         std_commit(allow_test_environment=True)
-        api_json = self._api_restore_whiteboard(client, whiteboard_id=mock_whiteboard['id'])
+        api_json = self._api_undelete_whiteboard(client, whiteboard_id=mock_whiteboard['id'])
         assert api_json['deletedAt'] is None
         assert client.get(f"/api/whiteboard/{mock_whiteboard['id']}").json['deletedAt'] is None
 
@@ -475,6 +481,10 @@ def _create_student_whiteboard():
         users=[student],
     )
     return course, student, whiteboard
+
+
+def _get_mock_socket_id():
+    return str(randint(1, 9999999))
 
 
 def _get_sample_user(canvas_course_role, course):

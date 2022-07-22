@@ -10,7 +10,7 @@
         <v-col class="align-center d-flex" cols="8">
           <h1 id="whiteboard-title" class="sr-only">{{ whiteboard.title }}</h1>
           <v-btn-toggle
-            v-if="!whiteboard.isReadOnly"
+            v-if="!whiteboard.deletedAt"
             v-model="modeProxy"
             active-class="primary"
             background-color="white"
@@ -35,7 +35,7 @@
             <Users />
             <ExportTool />
             <SettingsTool
-              v-if="!whiteboard.isReadOnly || $currentUser.isAdmin || $currentUser.isTeaching"
+              v-if="!whiteboard.deletedAt || $currentUser.isAdmin || $currentUser.isTeaching"
               :open-delete-dialog="openDeleteDialog"
             />
           </div>

@@ -37,14 +37,14 @@ export default {
       'addAssets',
       'deleteActiveElements',
       'deleteWhiteboard',
-      'emitWhiteboardUpdate',
       'init',
       'moveLayer',
+      'onWhiteboardUpdate',
       'refreshWhiteboard',
       'resetSelected',
-      'restoreWhiteboard',
       'setDisableAll',
       'setMode',
+      'undeleteWhiteboard',
       'updateSelected',
       'toggleZoom'
     ])

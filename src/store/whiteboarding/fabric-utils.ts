@@ -85,33 +85,12 @@ export function deleteActiveElements(state: any) {
   }
 }
 
-export function emitWhiteboardUpdate(state: any, whiteboard: any) {
-  $_log('Emit whiteboard update')
-  document.title = `${whiteboard.title} | SuiteC`
-  state.whiteboard.title = whiteboard.title
-  state.whiteboard.users = whiteboard.users
-  state.whiteboard.deletedAt = whiteboard.deletedAt
-  const args = {
-    title: whiteboard.title,
-    userId: p.$currentUser.id,
-    users: whiteboard.users,
-    whiteboardId: state.whiteboard.id
-  }
-  p.$socket.emit('update_whiteboard', args, () => {
-    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-      const userIds = _.map(whiteboard.users, 'id')
-      if (!_.includes(userIds, p.$currentUser.id)) {
-        window.close()
-      }
-    }
-  })
-}
-
 export function initialize(state: any) {
   $_log('Initialize')
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
-    if (state.whiteboard.isReadOnly) {
+    if (state.whiteboard.deletedAt) {
+      $_initSocket(state)
       $_initCanvas(state)
       $_renderWhiteboard(state, true).then(() => {
         $_enableCanvasElements(false)
@@ -180,10 +159,11 @@ export function moveLayer(direction: string, state: any) {
 export function reload(state: any) {
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
-    $_log('Reload')
-    const isReadOnly = state.whiteboard.isReadOnly
-    store.dispatch('whiteboarding/setDisableAll', isReadOnly).then(_.noop)
-    if (isReadOnly) {
+    $_log(`Reload ${state.whiteboard.deletedAt ? 'deleted ' : ''}whiteboard`)
+    const isDeleted = state.whiteboard.deletedAt
+    store.dispatch('whiteboarding/setDisableAll', isDeleted).then(_.noop)
+    if (isDeleted) {
+      $_initSocket(state)
       $_initCanvas(state)
       $_renderWhiteboard(state, true).then(() => {
         $_enableCanvasElements(false)
@@ -355,7 +335,7 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('before:selection:cleared', () => {
     // When a group is programmatically added then it must be programmatically removed when the group is deselected.
     const selection = p.$canvas.getActiveObject()
-    if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+    if (selection && selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(selection)
     }
   })
@@ -552,7 +532,7 @@ const $_addSocketListeners = (state: any) => {
   })
 
   p.$socket.on('update_whiteboard', (data: any) => {
-    store.commit('whiteboarding/onUpdateWhiteboard', data)
+    store.commit('whiteboarding/onWhiteboardUpdate', data)
     $_log('socket.on update_whiteboard')
   })
 
@@ -737,7 +717,7 @@ const $_deserializeElement = (state: any, element: any) => {
   return new Promise<Object>(resolve => {
     element = _.cloneDeep(element)
     $_log(`Deserialize ${element.type} element (uuid: ${element.uuid})`)
-    if (state.whiteboard.isReadOnly) {
+    if (state.whiteboard.deletedAt) {
       element.selectable = false
     }
     const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
@@ -827,7 +807,7 @@ const $_initCanvas = (state: any) => {
     selectionBorderColor: lightBlue,
     selectionLineWidth: 2
   })
-  if (!state.whiteboard.isReadOnly) {
+  if (!state.whiteboard.deletedAt) {
     // Make the border dashed.
     p.$canvas.selectionDashArray = [10, 5]
     fabric.Object.prototype.borderColor = lightBlue
@@ -1017,7 +997,7 @@ const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
     const done = () => {
       return new Promise<void>(resolve => {
         // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
-        if (state.whiteboard.isReadOnly) {
+        if (state.whiteboard.deletedAt) {
           p.$canvas.discardActiveObject()
           p.$canvas.selection = false
         }
