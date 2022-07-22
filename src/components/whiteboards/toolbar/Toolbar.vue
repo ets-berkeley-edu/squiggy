@@ -108,6 +108,8 @@ export default {
     },
     deleteConfirmed() {
       this.isDeleting = true
+      this.setDisableAll(true)
+      this.$loading()
       this.deleteWhiteboard().then(() => {
         this.isDeleteDialogOpen = false
         this.isDeleting = false

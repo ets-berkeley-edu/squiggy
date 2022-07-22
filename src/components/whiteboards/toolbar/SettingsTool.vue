@@ -24,7 +24,7 @@
       <v-card-text class="scrollable-card">
         <RestoreWhiteboard
           v-if="whiteboard.deletedAt"
-          :after-restore="close"
+          :restore="restore"
           :on-cancel="close"
         />
         <EditWhiteboard
@@ -84,6 +84,14 @@ export default {
     onClickDelete() {
       this.close()
       this.openDeleteDialog()
+    },
+    restore() {
+      this.menu = false
+      this.setDisableAll(true)
+      this.$loading()
+      this.undeleteWhiteboard().then(() => {
+        this.$announcer.polite('Whiteboard restored')
+      })
     }
   }
 }

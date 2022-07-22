@@ -432,36 +432,36 @@ class TestRemixWhiteboard:
 #         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client)
 #         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
 #         assert asset_feed['previewStatus'] == 'pending'
-#
-#
-# class TestDeleteWhiteboard:
-#
-#     @staticmethod
-#     def _api_delete_whiteboard(whiteboard_id, client, expected_status_code=200):
-#         response = client.delete(f'/api/whiteboard/{whiteboard_id}/delete')
-#         assert response.status_code == expected_status_code
-#
-#     def test_anonymous(self, client):
-#         """Denies anonymous user."""
-#         self._api_delete_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
-#
-#     def test_unauthorized(self, client, fake_auth):
-#         """Denies unauthorized user."""
-#         fake_auth.login(unauthorized_user_id)
-#         self._api_delete_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
-#
-#     def test_delete_whiteboard_by_teacher(self, client, fake_auth, mock_whiteboard):
-#         """Authorized user can delete whiteboard."""
-#         course = Course.find_by_id(mock_whiteboard['courseId'])
-#         instructors = list(filter(lambda u: is_teaching(u), course.users))
-#         fake_auth.login(instructors[0].id)
-#         self._verify_delete_whiteboard(mock_whiteboard['id'], client)
-#
-#     def _verify_delete_whiteboard(self, whiteboard_id, client):
-#         self._api_delete_whiteboard(whiteboard_id=whiteboard_id, client=client)
-#         std_commit(allow_test_environment=True)
-#         response = client.get(f'/api/whiteboard/{whiteboard_id}')
-#         assert response.status_code == 404
+
+
+class TestDeleteWhiteboard:
+
+    @staticmethod
+    def _api_delete_whiteboard(whiteboard_id, client, expected_status_code=200):
+        response = client.delete(f'/api/whiteboard/{whiteboard_id}/delete?socketId=${_get_mock_socket_id()}')
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_delete_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_delete_whiteboard(whiteboard_id=1, client=client, expected_status_code=401)
+
+    def test_delete_whiteboard_by_teacher(self, client, fake_auth, mock_whiteboard):
+        """Authorized user can delete whiteboard."""
+        course = Course.find_by_id(mock_whiteboard['courseId'])
+        instructors = list(filter(lambda u: is_teaching(u), course.users))
+        fake_auth.login(instructors[0].id)
+        whiteboard_id = mock_whiteboard['id']
+        self._api_delete_whiteboard(whiteboard_id=whiteboard_id, client=client)
+        std_commit(allow_test_environment=True)
+        response = client.get(f'/api/whiteboard/{whiteboard_id}')
+        assert response.status_code == 200
+        assert response.json['deletedAt']
+
 
 def _create_student_whiteboard():
     course = Course.find_by_canvas_course_id(

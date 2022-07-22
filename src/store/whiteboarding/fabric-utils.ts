@@ -156,42 +156,6 @@ export function moveLayer(direction: string, state: any) {
   $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
 }
 
-export function reload(state: any) {
-  store.commit('whiteboarding/setIsInitialized', false)
-  return new Promise<void>(resolve => {
-    $_log(`Reload ${state.whiteboard.deletedAt ? 'deleted ' : ''}whiteboard`)
-    const isDeleted = state.whiteboard.deletedAt
-    store.dispatch('whiteboarding/setDisableAll', isDeleted).then(_.noop)
-    if (isDeleted) {
-      $_initSocket(state)
-      $_initCanvas(state)
-      $_renderWhiteboard(state, true).then(() => {
-        $_enableCanvasElements(false)
-        store.commit('whiteboarding/setIsInitialized', true)
-        resolve()
-      })
-    } else {
-      if (!p.$socket) {
-        $_initSocket(state)
-        $_addSocketListeners(state)
-      }
-      if (p.$canvas) {
-        resolve()
-      } else {
-        // Order matters: (1) set up Fabric prototypes, (2) initialize the canvas.
-        $_initFabricPrototypes(state)
-        $_initCanvas(state)
-        $_addViewportListeners(state)
-        $_renderWhiteboard(state, true).then(() => {
-          $_enableCanvasElements(true)
-          store.commit('whiteboarding/setIsInitialized', true)
-          resolve()
-        })
-      }
-    }
-  })
-}
-
 export function setCanvasDimensions(state: any) {
   $_log('Set canvas dimensions')
   // Set the width and height of the whiteboard canvas. The width of the visible canvas will be the same for all users,
