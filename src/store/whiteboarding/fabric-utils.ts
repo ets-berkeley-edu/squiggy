@@ -351,7 +351,7 @@ const $_addCanvasListeners = (state: any) => {
       const textPointer = p.$canvas.getPointer(event.e)
       const iText = new fabric.IText('', {
         fill: state.selected.fill,
-        fontFamily: '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif',
+        fontFamily: 'Helvetica',
         fontSize: state.selected.fontSize || constants.TEXT_SIZE_OPTIONS[0].value,
         height: 100,
         index: $_getNextAvailableObjectIndex(),
@@ -795,6 +795,7 @@ const $_initFabricPrototypes = (state: any) => {
       const index = _.isNil(this.index) ? $_getNextAvailableObjectIndex() : this.index
       const extras = {
         assetId: this.assetId,
+        fontFamily: this.fontFamily,
         height: this.height,
         index,
         isHelper: this.isHelper,
