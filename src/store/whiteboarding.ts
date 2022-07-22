@@ -3,12 +3,11 @@ import constants from '@/store/whiteboarding/constants'
 import store from '@/store'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
-import {deleteWhiteboard, getWhiteboard, restoreWhiteboard} from '@/api/whiteboards'
+import {deleteWhiteboard, getWhiteboard, undelete} from '@/api/whiteboards'
 import {
   addAssets,
   afterChangeMode,
   deleteActiveElements,
-  emitWhiteboardUpdate,
   initialize,
   moveLayer,
   reload,
@@ -73,14 +72,9 @@ const getters = {
 
 const mutations = {
   addAssets: (state: any, assets: any[]) => addAssets(assets, state),
-  afterWhiteboardDelete: (state: any) => {
-    state.whiteboard.deletedAt = new Date()
-    state.whiteboard.isReadOnly = true
-  },
   clearClipboard: (state: any) => state.clipboard = [],
   copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
-  emitWhiteboardUpdate: (state: any, whiteboard: any) => emitWhiteboardUpdate(state, whiteboard),
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onJoin: (state: any, userId: string) => {
@@ -99,16 +93,6 @@ const mutations = {
       }
     })
   },
-  onUpdateWhiteboard: (state: any, whiteboard: any) => {
-    state.whiteboard.title = whiteboard.title
-    const usersPrevious = {}
-    _.each(state.whiteboard.users, u => usersPrevious[u.id] = u)
-    _.each(whiteboard.users, user => {
-      const existingUser = usersPrevious[user.id]
-      user.isOnline = existingUser && existingUser.isOnline
-    })
-    state.whiteboard.users = whiteboard.users
-  },
   onWhiteboardElementDelete: (state: any, uuid: string) => {
     state.whiteboard.whiteboardElements = _.filter(state.whiteboard.whiteboardElements, w => w.uuid !== uuid)
   },
@@ -121,6 +105,34 @@ const mutations = {
     } else {
       state.whiteboard.whiteboardElements.push({assetId, element, uuid})
     }
+  },
+  onWhiteboardUpdate: (state: any, {deletedAt, resolve, title, users}) => {
+    document.title = `${title} | SuiteC`
+    state.whiteboard.title = title
+    // Set 'isOnline' (true or false) on incoming users.
+    const previousUsersById = {}
+    _.each(state.whiteboard.users, u => previousUsersById[u.id] = u)
+    _.each(users, user => {
+      const existingUser = previousUsersById[user.id]
+      user.isOnline = existingUser && existingUser.isOnline
+    })
+    state.whiteboard.users = users
+    // Whiteboard might have been deleted.
+    state.whiteboard.deletedAt = deletedAt
+    // Close browser tab if current user is no longer authorized.
+    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
+      if (state.whiteboard.deletedAt) {
+        window.close()
+        resolve()
+      } else {
+        const userIds = _.map(state.whiteboard.users, 'id')
+        if (!_.includes(userIds, p.$currentUser.id)) {
+          window.close()
+          resolve()
+        }
+      }
+    }
+    reload(state).then(resolve)
   },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
@@ -151,12 +163,7 @@ const mutations = {
       })
     }
   },
-  reload: (state, resolve) => reload(state).then(resolve),
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
-  restoreWhiteboard: (state: any) => {
-    state.whiteboard.isReadOnly = false
-    state.whiteboard.deletedAt = null
-  },
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCanvasDimensions: (state) => setCanvasDimensions(state),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
@@ -175,7 +182,7 @@ const mutations = {
   setViewport: (state: any, viewport: any) => state.viewport = viewport,
   setWhiteboard: (state: any, whiteboard: any) => {
     state.whiteboard = whiteboard
-    if (state.whiteboard.isReadOnly) {
+    if (state.whiteboard.deletedAt) {
       state.disableAll = true
     }
     _.each(whiteboard.users, user => {
@@ -198,18 +205,16 @@ const actions = {
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
-      deleteWhiteboard(state.whiteboard.id).then(() => {
-        commit('afterWhiteboardDelete')
-        if (p.$currentUser.isAdmin || p.$currentUser.isTeaching) {
-          commit('reload', resolve)
-        } else {
-          window.close()
-          resolve()
-        }
+      deleteWhiteboard(p.$socket.id, state.whiteboard.id).then(() => {
+        commit('onWhiteboardUpdate', {
+          deletedAt: Date(),
+          resolve,
+          title: state.whiteboard.title,
+          users: state.whiteboard.users
+        })
       })
     })
   },
-  emitWhiteboardUpdate: ({commit}, whiteboard: any) => commit('emitWhiteboardUpdate', whiteboard),
   init: ({commit}, whiteboard: any) => {
     return new Promise<void>(resolve => {
       getCategories(false).then(categories => {
@@ -222,6 +227,16 @@ const actions = {
   },
   moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
   onJoin: ({commit}, userId: number) => commit('onJoin', userId),
+  onWhiteboardUpdate: ({commit}, whiteboard: any) => {
+    return new Promise<void>(resolve => {
+      commit('onWhiteboardUpdate', {
+        deletedAt: whiteboard.deletedAt,
+        resolve,
+        title: whiteboard.title,
+        users: whiteboard.users
+      })
+    })
+  },
   refreshWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       getWhiteboard(state.whiteboard.id).then((data: any) => {
@@ -230,25 +245,28 @@ const actions = {
     })
   },
   resetSelected: ({commit}) => commit('resetSelected'),
-  restoreWhiteboard: ({commit, state}) => {
-    return new Promise<void>(resolve => {
-      if (state.whiteboard.deletedAt) {
-        restoreWhiteboard(state.whiteboard.id).then(function() {
-          // Update local state
-          commit('restoreWhiteboard')
-          commit('reload', resolve)
-        })
-      } else {
-        resolve()
-      }
-    })
-  },
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
   toggleZoom: ({commit, state}) => {
     commit('setMode', 'zoom')
     commit('setFitToScreen', !state.fitToScreen)
     commit('setCanvasDimensions')
+  },
+  undeleteWhiteboard: ({commit, state}) => {
+    return new Promise<void>(resolve => {
+      if (state.whiteboard.deletedAt) {
+        undelete(p.$socket.id, state.whiteboard.id).then(() => {
+          commit('onWhiteboardUpdate', {
+            deletedAt: null,
+            resolve,
+            title: state.whiteboard.title,
+            users: state.whiteboard.users
+          })
+        })
+      } else {
+        resolve()
+      }
+    })
   },
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties)
 }

@@ -27,25 +27,29 @@ import re
 
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards
+from flask_socketio import emit
+from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards, get_socket_io_room
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import local_now
+from squiggy.lib.util import is_student, isoformat, local_now
 from squiggy.lib.whiteboard_util import to_png_file
+from squiggy.logger import logger
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
 from squiggy.models.category import Category
 from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
+from squiggy.models.whiteboard_session import WhiteboardSession
+from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 
 @app.route('/api/whiteboard/<whiteboard_id>')
 @feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
-    if whiteboard and (not whiteboard['deletedAt'] or current_user.is_admin or current_user.is_teaching):
+    if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
         return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError('Whiteboard not found')
@@ -141,14 +145,41 @@ def export_as_png(whiteboard_id):
         raise BadRequestError('Failed to generate whiteboard PNG')
 
 
-@app.route('/api/whiteboard/<whiteboard_id>/restore', methods=['POST'])
+@app.route('/api/whiteboard/<whiteboard_id>/undelete', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def restore_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
-    if whiteboard:
-        restored = Whiteboard.restore(whiteboard_id)
-        return tolerant_jsonify(restored.to_api_json())
+def undelete_whiteboard(whiteboard_id):
+    if Whiteboard.can_update_whiteboard(include_deleted=True, user=current_user, whiteboard_id=whiteboard_id):
+        params = request.get_json()
+        socket_id = params.get('socketId')
+        if not socket_id:
+            # Socket ID is required because delete can only happen in context of a /whiteboard session.
+            raise BadRequestError('socket_id is required')
+        # Restore the whiteboard
+        whiteboard = Whiteboard.undelete(whiteboard_id)
+        # Broadcast via socket.io
+        if not app.config['TESTING']:
+            logger.info(f'socketio: Emit update_whiteboard where whiteboard_id = {whiteboard_id}')
+            emit(
+                'update_whiteboard',
+                {
+                    'deletedAt': isoformat(whiteboard.deleted_at),
+                    'title': whiteboard.title,
+                    'users': whiteboard.users,
+                    'whiteboardId': whiteboard.id,
+                },
+                include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
+                skip_sid=socket_id,
+                to=get_socket_io_room(whiteboard_id),
+            )
+        if is_student(current_user):
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
+        return tolerant_jsonify(whiteboard.to_api_json())
     else:
         raise ResourceNotFoundError('Not found')
 
@@ -198,12 +229,39 @@ def create_whiteboard():
 @feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
-    if not whiteboard:
+    if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        params = request.args
+        socket_id = params.get('socketId')
+        if not socket_id:
+            # Socket ID is required because delete can only happen in context of a /whiteboard session.
+            raise BadRequestError('socket_id is required')
+        # Delete
+        whiteboard = Whiteboard.delete(whiteboard_id=whiteboard_id)
+        # Broadcast via socket.io
+        if not app.config['TESTING']:
+            logger.info(f'socketio: Emit update_whiteboard where whiteboard_id = {whiteboard_id}')
+            emit(
+                'update_whiteboard',
+                {
+                    'deletedAt': isoformat(whiteboard.deleted_at),
+                    'title': whiteboard.title,
+                    'users': whiteboard.users,
+                    'whiteboardId': whiteboard.id,
+                },
+                include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
+                skip_sid=socket_id,
+                to=get_socket_io_room(whiteboard_id),
+            )
+        if is_student(current_user):
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
+        return tolerant_jsonify({'message': f'Whiteboard {whiteboard_id} deleted'}), 200
+    else:
         raise ResourceNotFoundError('Not found')
-    whiteboard_id = whiteboard['id']
-    Whiteboard.delete(whiteboard_id=whiteboard_id)
-    return tolerant_jsonify({'message': f'Whiteboard {whiteboard_id} deleted'}), 200
 
 
 @app.route('/api/whiteboards/eligible_collaborators')
@@ -219,17 +277,41 @@ def eligible_collaborators():
 def update_whiteboard():
     params = request.get_json()
     whiteboard_id = params.get('whiteboardId')
-    title = params.get('title')
-    user_ids = params.get('userIds')
-    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
-    if not whiteboard:
+    if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        socket_id = params.get('socketId')
+        title = params.get('title')
+        user_ids = params.get('userIds')
+        if not socket_id:
+            # Socket ID is required because update can only happen in context of a /whiteboard session.
+            raise BadRequestError('socket_id is required')
+        # Update
+        whiteboard = Whiteboard.update(
+            whiteboard_id=whiteboard_id,
+            title=title,
+            users=User.find_by_ids(user_ids),
+        )
+        # Broadcast via socket.io
+        if not app.config['TESTING']:
+            logger.info(f'socketio: Emit update_whiteboard where whiteboard_id = {whiteboard_id}')
+            emit(
+                'update_whiteboard',
+                {
+                    'deletedAt': isoformat(whiteboard.deleted_at),
+                    'title': whiteboard.title,
+                    'users': whiteboard.users,
+                    'whiteboardId': whiteboard.id,
+                },
+                include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
+                skip_sid=socket_id,
+                to=get_socket_io_room(whiteboard_id),
+            )
+        if is_student(current_user):
+            WhiteboardSession.update_updated_at(
+                socket_id=socket_id,
+                user_id=current_user.user_id,
+                whiteboard_id=whiteboard_id,
+            )
+        return tolerant_jsonify(whiteboard.to_api_json())
+    else:
         raise ResourceNotFoundError('Not found')
-    if whiteboard['deletedAt']:
-        raise ResourceNotFoundError('Whiteboard is read-only.')
-
-    whiteboard = Whiteboard.update(
-        whiteboard_id=whiteboard_id,
-        title=title,
-        users=User.find_by_ids(user_ids),
-    )
-    return tolerant_jsonify(whiteboard.to_api_json())

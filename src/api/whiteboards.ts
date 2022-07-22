@@ -5,8 +5,8 @@ export function createWhiteboard(title: string, userIds: number[]) {
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/create`, {title, userIds})
 }
 
-export function deleteWhiteboard(whiteboardId: number) {
-  return axios.delete(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/delete`)
+export function deleteWhiteboard(socketId: string, whiteboardId: number) {
+  return axios.delete(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/delete?socketId=${socketId}`)
 }
 
 export function exportAsset(
@@ -50,14 +50,14 @@ export function getWhiteboards(
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboards`, data)
 }
 
-export function restoreWhiteboard(whiteboardId: number) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/restore`)
-}
-
 export function remixWhiteboard(assetId: number) {
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${assetId}/remix`, {assetId})
 }
 
-export function updateWhiteboard(title: string, userIds: number[], whiteboardId: number) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/update`, {title, userIds, whiteboardId})
+export function undelete(socketId: string, whiteboardId: number) {
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/undelete`, {socketId})
+}
+
+export function updateWhiteboard(socketId: string, title: string, userIds: number[], whiteboardId: number) {
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/update`, {socketId, title, userIds, whiteboardId})
 }

@@ -75,8 +75,7 @@ export default {
   },
   methods: {
     afterSave(updated) {
-      this.emitWhiteboardUpdate(updated)
-      this.close()
+      this.onWhiteboardUpdate(updated).then(this.close)
     },
     close() {
       this.menu = false

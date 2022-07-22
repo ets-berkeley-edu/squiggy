@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <Toolbar />
-    <EditActiveFabricObject v-if="!isLoading && !whiteboard.isReadOnly" />
+    <EditActiveFabricObject v-if="!isLoading && !whiteboard.deletedAt" />
     <Spinner v-if="isLoading" class="spinner" />
     <v-main id="whiteboard-container" class="h-100 whiteboard-container">
       <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
@@ -36,7 +36,7 @@ export default {
       this.init(whiteboard).then(() => {
         this.setDisableAll(false)
         this.$ready(this.whiteboard.title)
-        if (!this.whiteboard.isReadOnly) {
+        if (!this.whiteboard.deletedAt) {
           this.scheduleRefresh()
         }
       })

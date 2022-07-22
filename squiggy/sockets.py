@@ -29,8 +29,6 @@ from flask_socketio import emit, join_room, leave_room
 from squiggy.api.api_util import get_socket_io_room
 from squiggy.lib.util import is_student, isoformat, utc_now
 from squiggy.logger import initialize_background_logger
-from squiggy.models.user import User
-from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_session import WhiteboardSession
 
 
@@ -85,36 +83,6 @@ def register_sockets(socketio):
                 namespace=SOCKET_IO_NAMESPACE,
                 skip_sid=socket_id,
                 to=room,
-            )
-        return {'status': 200}
-
-    @socketio.on('update_whiteboard')
-    @login_required
-    def socketio_update_whiteboard(data):
-        socket_id = request.sid
-        title = data.get('title')
-        users = User.find_by_ids(data.get('userIds'))
-        user_id = data.get('userId')
-        whiteboard_id = data.get('whiteboardId')
-        logger.debug(f'socketio_update_whiteboard: user_id = {user_id}, whiteboard_id = {whiteboard_id}')
-        Whiteboard.update(title=title, users=users, whiteboard_id=whiteboard_id)
-        emit(
-            'update_whiteboard',
-            {
-                'title': title,
-                'users': [user.to_api_json() for user in users],
-                'whiteboardId': whiteboard_id,
-            },
-            include_self=False,
-            namespace=SOCKET_IO_NAMESPACE,
-            skip_sid=socket_id,
-            to=get_socket_io_room(whiteboard_id),
-        )
-        if is_student(current_user):
-            WhiteboardSession.update_updated_at(
-                socket_id=socket_id,
-                user_id=current_user.user_id,
-                whiteboard_id=whiteboard_id,
             )
         return {'status': 200}
 

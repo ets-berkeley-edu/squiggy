@@ -95,7 +95,7 @@ export default {
   methods: {
     restore() {
       this.isRestoring = true
-      this.restoreWhiteboard().then(() => {
+      this.undeleteWhiteboard().then(() => {
         this.$announcer.polite('Whiteboard restored.')
         this.isRestoring = false
         this.afterRestore()

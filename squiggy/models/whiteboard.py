@@ -82,10 +82,17 @@ class Whiteboard(Base):
         """
 
     @classmethod
-    def can_update_whiteboard(cls, user, whiteboard_id):
+    def can_update_whiteboard(cls, user, whiteboard_id, include_deleted=False):
         if is_admin(user) or is_teaching(user):
             return True
-        sql = 'SELECT user_id FROM whiteboard_users WHERE whiteboard_id = :whiteboard_id AND user_id = :user_id'
+        sql = """
+            SELECT user_id
+            FROM whiteboard_users u
+            JOIN whiteboards w ON w.id = u.whiteboard_id
+            WHERE u.whiteboard_id = :whiteboard_id AND u.user_id = :user_id
+        """
+        if not include_deleted:
+            sql += ' AND w.deleted_at IS NULL'
         args = {
             'user_id': get_user_id(user),
             'whiteboard_id': whiteboard_id,
@@ -167,6 +174,7 @@ class Whiteboard(Base):
         if whiteboard:
             whiteboard.deleted_at = utc_now()
             std_commit()
+        return whiteboard
 
     @classmethod
     def get_whiteboards(
@@ -240,7 +248,6 @@ class Whiteboard(Base):
                 'createdAt': isoformat(row['created_at']),
                 'deletedAt': isoformat(deleted_at),
                 'imageUrl': row['image_url'],
-                'isReadOnly': deleted_at is not None,
                 'thumbnailUrl': row['thumbnail_url'],
                 'title': row['title'],
                 'updatedAt': isoformat(row['updated_at']),
@@ -316,27 +323,13 @@ class Whiteboard(Base):
         return whiteboard
 
     @classmethod
-    def restore(cls, whiteboard_id):
+    def undelete(cls, whiteboard_id):
         whiteboard = cls.query.filter_by(id=whiteboard_id).first()
         if whiteboard and whiteboard.deleted_at:
             whiteboard.deleted_at = None
             whiteboard.updated_at = utc_now()
             std_commit()
         return whiteboard
-
-    @classmethod
-    def undelete(cls, title, whiteboard_id):
-        sql = """
-            UPDATE whiteboards
-            SET deleted_at = NULL, title = :title, updated_at = now()
-            WHERE whiteboard_id = :whiteboard_id
-        """
-        params = {
-            'title': title,
-            'whiteboard_id': whiteboard_id,
-        }
-        db.session.execute(text(sql), params)
-        std_commit()
 
     @classmethod
     def update(cls, title, users, whiteboard_id):
@@ -371,7 +364,6 @@ class Whiteboard(Base):
             'id': self.id,
             'courseId': self.course_id,
             'imageUrl': self.image_url,
-            'isReadOnly': self.deleted_at is not None,
             'thumbnailUrl': self.thumbnail_url,
             'title': self.title,
             'users': [_user_api_json(user) for user in self.users if user.canvas_enrollment_state != 'inactive'],
