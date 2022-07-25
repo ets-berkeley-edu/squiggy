@@ -107,7 +107,7 @@ export default {
       }
       this.isComplete = this.whiteboards.length === this.totalWhiteboardCount
       if (!this.isComplete) {
-        this.startInfiniteLoading(this.fetch, {threshold: 800})
+        this.startInfiniteLoading(this.fetch, {threshold: 2500})
       }
       if (this.anchor) {
         this.scrollTo(`#${this.anchor}`)
