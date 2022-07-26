@@ -126,15 +126,14 @@ const mutations = {
     if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
       if (state.whiteboard.deletedAt) {
         window.close()
-        resolve()
       } else {
         const userIds = _.map(state.whiteboard.users, 'id')
         if (!_.includes(userIds, p.$currentUser.id)) {
           window.close()
-          resolve()
         }
       }
     }
+    resolve()
     if (hasDeleteStatusChanged) {
       p.$loading()
       location.reload()
