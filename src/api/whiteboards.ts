@@ -59,5 +59,5 @@ export function undelete(socketId: string, whiteboardId: number) {
 }
 
 export function updateWhiteboard(socketId: string, title: string, userIds: number[], whiteboardId: number) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/update`, {socketId, title, userIds, whiteboardId})
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/update`, {socketId, title, userIds})
 }

@@ -271,13 +271,12 @@ def eligible_collaborators():
     return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=course_id)])
 
 
-@app.route('/api/whiteboard/update', methods=['POST'])
+@app.route('/api/whiteboard/<whiteboard_id>/update', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def update_whiteboard():
-    params = request.get_json()
-    whiteboard_id = params.get('whiteboardId')
+def update_whiteboard(whiteboard_id):
     if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        params = request.get_json()
         socket_id = params.get('socketId')
         title = params.get('title')
         user_ids = params.get('userIds')

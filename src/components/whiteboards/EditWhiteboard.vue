@@ -307,6 +307,7 @@ export default {
         }
         if (this.whiteboard) {
           updateWhiteboard(
+            this.$socket.id,
             this.title,
             this.selectedUserIds,
             this.whiteboard.id
