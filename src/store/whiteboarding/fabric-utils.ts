@@ -59,13 +59,16 @@ export function afterChangeMode(state: any) {
       object.selectable = selectable
       object.evented = selectable
     })
-    if (state.mode === 'move') {
-      $_enableCanvasElements(true)
-      store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
-    } else if (state.mode === 'text') {
-      p.$canvas.cursor = 'text'
-    } else if (state.mode === 'draw') {
+    if (state.mode === 'draw') {
       p.$canvas.isDrawingMode = true
+    } else {
+      p.$canvas.isDrawingMode = false
+      if (state.mode === 'move') {
+        $_enableCanvasElements(true)
+        store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
+      } else if (state.mode === 'text') {
+        p.$canvas.cursor = 'text'
+      }
     }
   }
 }
