@@ -221,7 +221,7 @@ class Whiteboard(Base):
         }.get(order_by) or default_order_by
 
         # First, get whiteboard_ids
-        sql = f'SELECT w.id FROM whiteboards w {join_clause} {where_clause}'
+        sql = f'SELECT w.id FROM whiteboards w {join_clause} {where_clause} LIMIT :limit OFFSET :offset'
         all_whiteboard_ids = list({row['id'] for row in list(db.session.execute(sql, params))})
         params['whiteboard_ids'] = all_whiteboard_ids
 
@@ -233,7 +233,6 @@ class Whiteboard(Base):
             {join_clause}
             WHERE w.id = ANY(:whiteboard_ids)
             ORDER BY {order_by_clause}, u.canvas_full_name
-            LIMIT :limit OFFSET :offset
         """
         whiteboards_by_id = {}
         users_by_whiteboard_id = {}
