@@ -221,7 +221,7 @@ class Whiteboard(Base):
         }.get(order_by) or default_order_by
 
         # First, get whiteboard_ids
-        sql = f'SELECT w.id FROM whiteboards w {join_clause} {where_clause} LIMIT :limit OFFSET :offset'
+        sql = f'SELECT DISTINCT w.id FROM whiteboards w {join_clause} {where_clause} ORDER BY w.id LIMIT :limit OFFSET :offset'
         all_whiteboard_ids = list({row['id'] for row in list(db.session.execute(sql, params))})
         params['whiteboard_ids'] = all_whiteboard_ids
 
