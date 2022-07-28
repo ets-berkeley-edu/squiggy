@@ -99,9 +99,6 @@
             Cancel
           </v-btn>
         </div>
-        <InfiniteLoading spinner="spiral" @infinite="infiniteHandler">
-          <span slot="spinner" class="sr-only">Loading...</span>
-        </InfiniteLoading>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -112,13 +109,12 @@ import AssetCard from '@/components/assets/AssetCard'
 import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
-import InfiniteLoading from 'vue-infinite-loading'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'AddExistingAssets',
-  components: {AssetCard, AssetsHeader, InfiniteLoading},
+  components: {AssetCard, AssetsHeader},
   mixins: [AssetsSearch, Context, Utils, Whiteboarding],
   data: () => ({
     allAssetsLoaded: false,
@@ -131,6 +127,7 @@ export default {
   computed: {
     assetGrid() {
       if (this.isDialogReady) {
+        this.checkAssetsLoaded()
         if (this.allAssetsLoaded) {
           return this.assets
         } else {
@@ -174,19 +171,12 @@ export default {
       this.dialog = false
       this.isDialogReady = false
     },
-    getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
-    infiniteHandler($state) {
-      if (this.isSaving || !this.dialog) {
-        $state.complete()
-      } else {
-        this.allAssetsLoaded = this.$_.size(this.assets) >= this.totalAssetCount
-        if (this.allAssetsLoaded) {
-          $state.complete()
-        } else {
-          this.nextPage().then(() => $state.loaded())
-        }
+    checkAssetsLoaded() {
+      if (!this.allAssetsLoaded && this.$_.size(this.assets) >= this.totalAssetCount) {
+        this.allAssetsLoaded = true
       }
     },
+    getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
     reset() {
       this.allAssetsLoaded = false
       this.isDialogReady = false
