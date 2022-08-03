@@ -93,6 +93,8 @@ def upsert_whiteboard_elements():
 
     results = []
     for whiteboard_element in whiteboard_elements:
+        if not whiteboard_element:
+            continue
         results.append(
             _upsert_whiteboard_element(
                 socket_id=socket_id,

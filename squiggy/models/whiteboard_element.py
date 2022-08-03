@@ -77,6 +77,9 @@ class WhiteboardElement(Base):
 
     @classmethod
     def create(cls, element, uuid, whiteboard_id, asset_id=None):
+        # Ensure consistent uuid.
+        element['uuid'] = uuid
+
         whiteboard_element = cls(
             asset_id=asset_id,
             element=element,
@@ -95,11 +98,16 @@ class WhiteboardElement(Base):
     @classmethod
     def update(cls, element, uuid, whiteboard_id, asset_id=None):
         whiteboard_element = cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
-        whiteboard_element.asset_id = asset_id
-        whiteboard_element.element = element
-        db.session.add(whiteboard_element)
-        std_commit()
-        return whiteboard_element
+        if whiteboard_element:
+            whiteboard_element.asset_id = asset_id
+
+            # Ensure consistent uuid.
+            element['uuid'] = uuid
+            whiteboard_element.element = element
+
+            db.session.add(whiteboard_element)
+            std_commit()
+            return whiteboard_element
 
     @classmethod
     def update_order(cls, uuids, whiteboard_id):
@@ -111,6 +119,11 @@ class WhiteboardElement(Base):
             std_commit()
 
     def to_api_json(self):
+        # Correct any out-of-sync uuid surprises.
+        if self.element['uuid'] != self.uuid:
+            self.element['uuid'] = self.uuid
+            db.session.add(self)
+            std_commit()
         return {
             'id': self.id,
             'assetId': self.asset_id,
