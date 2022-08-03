@@ -818,7 +818,6 @@ const $_initFabricPrototypes = (state: any) => {
     if (element) {
       // If the text element is empty, it can be removed from the whiteboard canvas
       const text = element.text.trim()
-      // const uuid = element.get('uuid')
       if (text) {
         // The text element existed before. Notify the server that the element was updated
         const days_until_retirement = $_getDaysUntilRetirement()
