@@ -122,7 +122,7 @@ class WhiteboardElement(Base):
         # Correct any out-of-sync uuid surprises.
         if self.element['uuid'] != self.uuid:
             self.element['uuid'] = self.uuid
-            db.session.add(self)
+            flag_modified(self, 'element')
             std_commit()
         return {
             'id': self.id,
