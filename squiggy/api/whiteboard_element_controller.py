@@ -95,13 +95,13 @@ def upsert_whiteboard_elements():
     for whiteboard_element in whiteboard_elements:
         if not whiteboard_element:
             continue
-        results.append(
-            _upsert_whiteboard_element(
-                socket_id=socket_id,
-                whiteboard_id=whiteboard_id,
-                whiteboard_element=whiteboard_element,
-            ),
+        upserted = _upsert_whiteboard_element(
+            socket_id=socket_id,
+            whiteboard_id=whiteboard_id,
+            whiteboard_element=whiteboard_element,
         )
+        if upserted:
+            results.append(upserted)
     if not app.config['TESTING']:
         logger.info(f'socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_id} AND socket_id = {socket_id}')
         emit(
@@ -214,7 +214,8 @@ def _upsert_whiteboard_element(socket_id, whiteboard_element, whiteboard_id):
             whiteboard_element=whiteboard_element,
             whiteboard_id=whiteboard_id,
         )
-    WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
+    if whiteboard_element:
+        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
     return whiteboard_element
 
 
@@ -231,7 +232,8 @@ def _update_whiteboard_element(whiteboard_element, whiteboard_id):
         uuid=element['uuid'],
         whiteboard_id=whiteboard_id,
     )
-    return result.to_api_json()
+    if result:
+        return result.to_api_json()
 
 
 def _validate_whiteboard_element(whiteboard_element, is_update=False):
