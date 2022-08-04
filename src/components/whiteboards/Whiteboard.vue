@@ -33,7 +33,7 @@ export default {
     this.$loading(true)
     const whiteboardId = parseInt(this.$route.params.id, 10)
     getWhiteboard(whiteboardId).then(whiteboard => {
-      this.init(whiteboard).then(() => {
+      this.init({whiteboard, disable: false}).then(() => {
         this.setDisableAll(false)
         this.$ready(this.whiteboard.title)
         if (!this.whiteboard.deletedAt) {

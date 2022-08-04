@@ -24,9 +24,8 @@ export default {
     }
   },
   created() {
-    this.init(this.asset).then(asset => {
-      this.setDisableAll(false)
-      this.$ready(asset.title)
+    this.init({whiteboard: this.asset, disable: true}).then(() => {
+      this.$ready(this.asset.title)
     })
   }
 }
