@@ -173,33 +173,34 @@ def _create_whiteboard_element(whiteboard_element, whiteboard_id):
         whiteboard_id=whiteboard_id,
     )
     if asset_id:
-        AssetWhiteboardElement.upsert(
-            asset_id=asset_id,
-            element=element,
-            element_asset_id=element.get('assetId'),
-            uuid=element['uuid'],
-        )
         asset = Asset.find_by_id(asset_id)
-        user_id = current_user.user_id
-        if user_id not in [user.id for user in asset.users]:
-            course_id = current_user.course.id
-            Activity.create(
-                activity_type='whiteboard_add_asset',
-                course_id=course_id,
-                user_id=user_id,
-                object_type='whiteboard',
-                object_id=whiteboard_id,
-                asset_id=asset.id,
+        if asset:
+            AssetWhiteboardElement.upsert(
+                asset_id=asset_id,
+                element=element,
+                element_asset_id=element.get('assetId'),
+                uuid=element['uuid'],
             )
-            for asset_user in asset.users:
+            user_id = current_user.user_id
+            if user_id not in [user.id for user in asset.users]:
+                course_id = current_user.course.id
                 Activity.create(
-                    activity_type='get_whiteboard_add_asset',
+                    activity_type='whiteboard_add_asset',
                     course_id=course_id,
-                    user_id=asset_user.id,
+                    user_id=user_id,
                     object_type='whiteboard',
                     object_id=whiteboard_id,
                     asset_id=asset.id,
                 )
+                for asset_user in asset.users:
+                    Activity.create(
+                        activity_type='get_whiteboard_add_asset',
+                        course_id=course_id,
+                        user_id=asset_user.id,
+                        object_type='whiteboard',
+                        object_id=whiteboard_id,
+                        asset_id=asset.id,
+                    )
     return whiteboard_element.to_api_json()
 
 
