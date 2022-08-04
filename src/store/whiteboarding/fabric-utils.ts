@@ -51,7 +51,7 @@ export function addAssets(assets: any[], state: any) {
 
 export function afterChangeMode(state: any) {
   p.$canvas.discardActiveObject().requestRenderAll()
-  if (state.whiteboard.deletedAt) {
+  if (state.disableAll) {
     $_enableCanvasElements(false)
   } else {
     const selectable = !['text', 'shape'].includes(state.mode)
@@ -92,7 +92,7 @@ export function initialize(state: any) {
   $_log('Initialize')
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
-    if (state.whiteboard.deletedAt) {
+    if (state.disableAll) {
       $_initSocket(state)
       $_initCanvas(state)
       $_renderWhiteboard(state, true).then(() => {
@@ -684,7 +684,7 @@ const $_deserializeElement = (state: any, element: any) => {
   return new Promise<Object>(resolve => {
     element = _.cloneDeep(element)
     $_log(`Deserialize ${element.type} element (uuid: ${element.uuid})`)
-    if (state.whiteboard.deletedAt) {
+    if (state.disableAll) {
       element.selectable = false
     }
     const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
@@ -964,7 +964,7 @@ const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
     const done = () => {
       return new Promise<void>(resolve => {
         // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
-        if (state.whiteboard.deletedAt) {
+        if (state.disableAll) {
           p.$canvas.discardActiveObject()
           p.$canvas.selection = false
         }

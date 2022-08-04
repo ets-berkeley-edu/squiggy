@@ -37,7 +37,7 @@ const state = {
   activeCanvasObject: undefined,
   categories: undefined,
   clipboard: [],
-  disableAll: true,
+  disableAll: false,
   fitToScreen: true,
   // Variable that will keep track of whether a shape is currently being drawn
   isDrawingShape: false,
@@ -187,9 +187,6 @@ const mutations = {
   setViewport: (state: any, viewport: any) => state.viewport = viewport,
   setWhiteboard: (state: any, whiteboard: any) => {
     state.whiteboard = whiteboard
-    if (state.whiteboard.deletedAt) {
-      state.disableAll = true
-    }
     _.each(whiteboard.users, user => {
       if (user.id === p.$currentUser.id) {
         user.isOnline = true
@@ -220,10 +217,13 @@ const actions = {
       })
     })
   },
-  init: ({commit}, whiteboard: any) => {
+  init: ({commit}, {whiteboard, disable}) => {
     return new Promise<void>(resolve => {
       getCategories(false).then(categories => {
         commit('setCategories', categories)
+        if (disable || whiteboard.deletedAt) {
+          commit('setDisableAll', true)
+        }
         commit('setWhiteboard', whiteboard)
         commit('setViewport', document.getElementById(constants.VIEWPORT_ELEMENT_ID))
         commit('initialize', resolve)
