@@ -29,6 +29,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
+from squiggy.models.asset import Asset
 from squiggy.models.base import Base
 
 
@@ -66,7 +67,14 @@ class WhiteboardElement(Base):
 
     @classmethod
     def find_by_whiteboard_id(cls, whiteboard_id):
-        return cls.query.filter_by(whiteboard_id=whiteboard_id).all()
+        results = cls.query.filter_by(whiteboard_id=whiteboard_id).all()
+        asset_ids = [r.asset_id for r in results if r.asset_id]
+        # No deleted assets allowed on whiteboards.
+        if asset_ids:
+            deleted_asset_ids = {r[0] for r in db.session.query(Asset.id).filter(Asset.id.in_(asset_ids), Asset.deleted_at.isnot(None)).all()}
+            if deleted_asset_ids:
+                results = [r for r in results if not r.asset_id or r.asset_id not in deleted_asset_ids]
+        return results
 
     @classmethod
     def get_id_per_uuid(cls, uuid):
