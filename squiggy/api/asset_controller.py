@@ -160,8 +160,8 @@ def delete_asset(asset_id):
         raise ResourceNotFoundError('Asset not found.')
     if not can_update_asset(asset=asset, user=current_user):
         raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
-    if (not is_admin(current_user) and not is_teaching(current_user)) and (asset.comment_count or asset.likes):
-        raise BadRequestError('You cannot delete an asset with comments or likes.')
+    if (not is_admin(current_user) and not is_teaching(current_user)) and (asset.comment_count or asset.likes or asset.is_used_in_whiteboards()):
+        raise BadRequestError('You cannot delete an asset with comments, likes, or whiteboard usages.')
     Asset.delete(asset_id=asset_id)
     return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
 
