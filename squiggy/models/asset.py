@@ -296,6 +296,15 @@ class Asset(Base):
         """)
         return [_to_api_json(row) for row in db.session.execute(sql, {'element_asset_id': self.id})]
 
+    def is_used_in_whiteboards(self):
+        sql = text("""SELECT COUNT(DISTINCT w.id)
+            FROM whiteboards w
+            JOIN whiteboard_elements we ON w.id = we.whiteboard_id
+            WHERE we.asset_id = :asset_id AND w.deleted_at IS NULL
+        """)
+        count = db.session.execute(sql, {'asset_id': self.id}).first()[0]
+        return count > 0
+
     def add_like(self, user):
         like_activity = Activity.create_unless_exists(
             activity_type='asset_like',
@@ -423,6 +432,7 @@ class Asset(Base):
             'dislikes': self.dislikes,
             'downloadUrl': self.download_url,
             'imageUrl': image_url,
+            'isUsedInWhiteboards': self.is_used_in_whiteboards(),
             'liked': liked,
             'likes': self.likes,
             'mime': self.mime,

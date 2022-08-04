@@ -132,7 +132,7 @@ export default {
     const isTeacherOrAdmin = this.$currentUser.isAdmin || this.$currentUser.isTeaching
     const isAssetOwner = this.$_.find(this.asset.users, {'id': this.$currentUser.id})
     this.canEditAsset = isTeacherOrAdmin || isAssetOwner
-    this.canDeleteAsset = isTeacherOrAdmin || (isAssetOwner && !this.asset.likes && !this.asset.commentCount)
+    this.canDeleteAsset = isTeacherOrAdmin || (isAssetOwner && !this.asset.likes && !this.asset.commentCount && !this.asset.isUsedInWhiteboards)
     this.canRemixAsset = this.asset.assetType === 'whiteboard'
   },
   methods: {
