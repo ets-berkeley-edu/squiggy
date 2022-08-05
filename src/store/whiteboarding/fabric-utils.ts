@@ -170,12 +170,12 @@ export function setCanvasDimensions(state: any) {
   const viewportWidth = state.viewport.clientWidth
   const ratio = viewportWidth / constants.CANVAS_BASE_WIDTH
   p.$canvas.setZoom(ratio)
-  // p.$canvas.setZoom(ratio)
 
   // Calculate the position of the elements that are the most right and the most bottom. When all elements fit within
-  // the viewport, the canvas is made the same size as the viewport. When any elements overflow the viewport, the
-  // canvas is enlarged to incorporate all assets outside the viewport
-  const viewportHeight = state.viewport.clientHeight
+  // the viewport, the canvas is made the same size as the viewport minus the toolbar. When any elements overflow the
+  // viewport, the canvas is enlarged to incorporate all assets outside the viewport
+  const toolBarHeight = 72
+  const viewportHeight = state.viewport.clientHeight - toolBarHeight
   let maxRight = viewportWidth
   let maxBottom = viewportHeight
 
@@ -197,11 +197,15 @@ export function setCanvasDimensions(state: any) {
   } else {
     store.commit('whiteboarding/setIsScrollingCanvas', false)
   }
+
+  // Calculate the actual un-zoomed width of the whiteboard.
+  const realWidth = maxRight / p.$canvas.getZoom()
+  const realHeight = maxBottom / p.$canvas.getZoom()
+  const maximumSize = 4000
+
   // When the entire whiteboard content should fit within the screen, adjust the zoom level to make it fit.
   if (state.fitToScreen) {
-    // Calculate the actual un-zoomed width of the whiteboard.
-    const realWidth = maxRight / p.$canvas.getZoom()
-    const realHeight = maxBottom / p.$canvas.getZoom()
+
     // Zoom the canvas based on whether the height or width needs the largest zoom out.
     const widthRatio = viewportWidth / realWidth
     const heightRatio = viewportHeight / realHeight
@@ -209,8 +213,21 @@ export function setCanvasDimensions(state: any) {
     p.$canvas.setZoom(ratio)
     p.$canvas.setHeight(viewportHeight)
     p.$canvas.setWidth(viewportWidth)
+
+  // If the actual-size whiteboard is too big for sane display, set up a partial zoom.
+  } else if (realWidth > maximumSize || realHeight > maximumSize) {
+
+    const maxDimension = Math.max(realWidth, realHeight)
+    const ratio = maximumSize / maxDimension
+    const displayHeight = realHeight * ratio
+    const displayWidth = realWidth * ratio
+
+    p.$canvas.setZoom(ratio)
+    p.$canvas.setHeight(displayHeight - 1)
+    p.$canvas.setWidth(displayWidth - 1)
+
+  // Otherwise display actual size, adjusting for rounding issues to prevent scrollbars from incorrectly showing up.
   } else {
-    // Adjust the value for rounding issues to prevent scrollbars from incorrectly showing up.
     p.$canvas.setHeight(maxBottom - 1)
     p.$canvas.setWidth(maxRight - 1)
   }
