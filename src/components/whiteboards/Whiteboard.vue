@@ -72,7 +72,7 @@ export default {
   z-index: 1000;
 }
 .whiteboard-viewport {
-  overflow: hidden;
+  overflow: scroll;
   position: relative;
 }
 </style>
