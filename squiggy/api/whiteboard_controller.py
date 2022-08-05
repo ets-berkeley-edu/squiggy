@@ -289,16 +289,17 @@ def update_whiteboard(whiteboard_id):
             title=title,
             users=User.find_by_ids(user_ids),
         )
+        whiteboard = whiteboard.to_api_json()
         # Broadcast via socket.io
         if not app.config['TESTING']:
             logger.info(f'socketio: Emit update_whiteboard where whiteboard_id = {whiteboard_id}')
             emit(
                 'update_whiteboard',
                 {
-                    'deletedAt': isoformat(whiteboard.deleted_at),
-                    'title': whiteboard.title,
-                    'users': whiteboard.users,
-                    'whiteboardId': whiteboard.id,
+                    'deletedAt': whiteboard['deletedAt'],
+                    'title': whiteboard['title'],
+                    'users': whiteboard['users'],
+                    'whiteboardId': whiteboard['id'],
                 },
                 include_self=False,
                 namespace=SOCKET_IO_NAMESPACE,
@@ -311,6 +312,6 @@ def update_whiteboard(whiteboard_id):
                 user_id=current_user.user_id,
                 whiteboard_id=whiteboard_id,
             )
-        return tolerant_jsonify(whiteboard.to_api_json())
+        return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError('Not found')
