@@ -909,15 +909,11 @@ function $_invokeWithSocketConnectRetry(description: string, operation: () => vo
 
 const $_join = (state: any) => {
   return new Promise<void>(resolve => {
-    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-      $_log('Join')
-      store.dispatch('whiteboarding/onJoin', p.$currentUser.id).then(() => {
-        p.$socket.emit('join', {whiteboardId: state.whiteboard.id})
-        resolve()
-      })
-    } else {
+    $_log('Join')
+    store.dispatch('whiteboarding/onJoin', p.$currentUser.id).then(() => {
+      p.$socket.emit('join', {whiteboardId: state.whiteboard.id})
       resolve()
-    }
+    })
   })
 }
 
