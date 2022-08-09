@@ -27,7 +27,7 @@ from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
 from squiggy.api.api_util import get_socket_io_room
-from squiggy.lib.util import is_student, isoformat, utc_now
+from squiggy.lib.util import isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.whiteboard_session import WhiteboardSession
 
@@ -47,23 +47,22 @@ def register_sockets(socketio):
         socket_id = request.sid
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_join: {data}')
-        if is_student(current_user):
-            WhiteboardSession.update_updated_at(
-                socket_id=socket_id,
-                user_id=current_user.user_id,
-                whiteboard_id=whiteboard_id,
-            )
-            room = get_socket_io_room(whiteboard_id)
-            join_room(room, sid=socket_id)
-            emit(
-                'join',
-                current_user.user_id,
-                broadcast=True,
-                include_self=False,
-                namespace=SOCKET_IO_NAMESPACE,
-                skip_sid=socket_id,
-                to=room,
-            )
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
+        room = get_socket_io_room(whiteboard_id)
+        join_room(room, sid=socket_id)
+        emit(
+            'join',
+            current_user.user_id,
+            broadcast=True,
+            include_self=False,
+            namespace=SOCKET_IO_NAMESPACE,
+            skip_sid=socket_id,
+            to=room,
+        )
         return {'status': 200}
 
     @socketio.on('leave')
@@ -71,19 +70,18 @@ def register_sockets(socketio):
     def socketio_leave(data):
         whiteboard_id = data.get('whiteboardId')
         logger.debug(f'socketio_leave: user_id = {current_user}, whiteboard_id = {whiteboard_id}')
-        if is_student(current_user):
-            socket_id = request.sid
-            WhiteboardSession.delete_all([socket_id], older_than_minutes=1440)
-            room = get_socket_io_room(whiteboard_id)
-            leave_room(room, sid=socket_id)
-            emit(
-                'leave',
-                current_user.user_id,
-                include_self=False,
-                namespace=SOCKET_IO_NAMESPACE,
-                skip_sid=socket_id,
-                to=room,
-            )
+        socket_id = request.sid
+        WhiteboardSession.delete_all([socket_id], older_than_minutes=1440)
+        room = get_socket_io_room(whiteboard_id)
+        leave_room(room, sid=socket_id)
+        emit(
+            'leave',
+            current_user.user_id,
+            include_self=False,
+            namespace=SOCKET_IO_NAMESPACE,
+            skip_sid=socket_id,
+            to=room,
+        )
         return {'status': 200}
 
     @socketio.on('boo-boo-kitty')

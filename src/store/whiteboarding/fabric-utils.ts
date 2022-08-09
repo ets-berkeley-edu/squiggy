@@ -918,14 +918,12 @@ const $_join = (state: any) => {
 }
 
 const $_leave = (state: any) => {
-  if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-    $_log('Leave')
-    const args = {
-      userId: p.$currentUser.id,
-      whiteboardId: state.whiteboard.id
-    }
-    p.$socket.emit('leave', args, () => p.$socket = p.$socket.disconnect())
+  $_log('Leave')
+  const args = {
+    userId: p.$currentUser.id,
+    whiteboardId: state.whiteboard.id
   }
+  p.$socket.emit('leave', args, () => p.$socket = p.$socket.disconnect())
 }
 
 const $_log = (statement: string, force?: boolean) => {
