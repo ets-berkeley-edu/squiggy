@@ -29,7 +29,7 @@ from flask_socketio import emit
 from squiggy.api.api_util import feature_flag_whiteboards, get_socket_io_room
 from squiggy.lib.errors import BadRequestError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import is_student, safe_strip
+from squiggy.lib.util import safe_strip
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.logger import logger
 from squiggy.models.activity import Activity
@@ -69,12 +69,11 @@ def order_whiteboard_elements():
             skip_sid=socket_id,
             to=get_socket_io_room(whiteboard_id),
         )
-    if is_student(current_user):
-        WhiteboardSession.update_updated_at(
-            socket_id=socket_id,
-            user_id=current_user.user_id,
-            whiteboard_id=whiteboard_id,
-        )
+    WhiteboardSession.update_updated_at(
+        socket_id=socket_id,
+        user_id=current_user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
     return tolerant_jsonify(uuids)
 
 
@@ -112,12 +111,11 @@ def upsert_whiteboard_elements():
             skip_sid=socket_id,
             to=get_socket_io_room(whiteboard_id),
         )
-    if is_student(current_user):
-        WhiteboardSession.update_updated_at(
-            socket_id=socket_id,
-            user_id=current_user.user_id,
-            whiteboard_id=whiteboard_id,
-        )
+    WhiteboardSession.update_updated_at(
+        socket_id=socket_id,
+        user_id=current_user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
     return tolerant_jsonify(results)
 
 
@@ -150,12 +148,11 @@ def delete_whiteboard_element(whiteboard_id, uuid):
             )
         WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
         WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
-        if is_student(current_user):
-            WhiteboardSession.update_updated_at(
-                socket_id=socket_id,
-                user_id=current_user.user_id,
-                whiteboard_id=whiteboard_id,
-            )
+        WhiteboardSession.update_updated_at(
+            socket_id=socket_id,
+            user_id=current_user.user_id,
+            whiteboard_id=whiteboard_id,
+        )
     return tolerant_jsonify(uuid)
 
 
