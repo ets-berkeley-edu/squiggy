@@ -63,8 +63,8 @@ def is_admin(user):
 
 
 def is_student(user):
-    canvas_course_role = _get_canvas_course_role(user)
-    return 'student' in (canvas_course_role or '').lower()
+    canvas_course_role = (_get_canvas_course_role(user) or '').lower()
+    return 'student' in canvas_course_role or 'learner' in canvas_course_role
 
 
 def is_observer(user):
