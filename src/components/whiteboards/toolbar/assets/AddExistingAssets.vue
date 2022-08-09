@@ -187,17 +187,14 @@ export default {
       if (this.selectedAssetIds.length) {
         this.isSaving = true
         const assetIds = this.$_.uniq(this.selectedAssetIds)
-        const assets = []
-        this.$_.each(assetIds, assetId => {
-          assets.push(this.$_.find(this.assets, ['id', assetId]))
-          if (assetIds.length === this.selectedAssetIds.length) {
-            this.addAssets(assets).then(() => {
-              this.$announcer.polite('Assets added')
-              this.isSaving = false
-              this.dialog = false
-              this.reset()
-            })
-          }
+        const assets = this.$_.map(assetIds, assetId => {
+          return this.$_.find(this.assets, ['id', assetId])
+        })
+        this.addAssets(assets).then(() => {
+          this.$announcer.polite('Assets added')
+          this.isSaving = false
+          this.dialog = false
+          this.reset()
         })
       }
     }
