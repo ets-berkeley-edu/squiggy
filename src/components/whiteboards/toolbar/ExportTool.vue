@@ -12,7 +12,7 @@
           <v-btn
             id="toolbar-export"
             class="mx-2"
-            color="pink"
+            color="green"
             dark
             fab
             input-value="menu"
@@ -20,7 +20,7 @@
             v-bind="activator.attrs"
             v-on="{...activator.on, ...tooltip.on}"
           >
-            <font-awesome-icon color="white" icon="download" />
+            <font-awesome-icon color="white" icon="download" size="lg" />
           </v-btn>
         </template>
         <span>{{ tooltipText }}</span>
@@ -46,8 +46,8 @@
               :href="`${$config.apiBaseUrl}/api/whiteboard/${whiteboard.id}/download/png`"
               @click="() => menu = false"
             >
-              <font-awesome-icon icon="download" size="lg" />
-              <span class="pl-3">Download as image</span>
+              <font-awesome-icon icon="image" size="lg" />
+              <div class="pl-3">Download as image</div>
             </v-btn>
           </v-list-item-action>
         </v-list-item>
