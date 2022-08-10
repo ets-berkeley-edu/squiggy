@@ -4,21 +4,25 @@
     max-width="800"
     scrollable
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-settings"
-        class="mx-2"
-        color="indigo"
-        dark
-        fab
-        input-value="menu"
-        small
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">Edit</span>
-        <font-awesome-icon color="white" icon="cog" />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom>
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-settings"
+            class="mx-2"
+            color="indigo"
+            dark
+            fab
+            input-value="menu"
+            small
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon color="white" icon="cog" />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-text class="scrollable-card">
@@ -59,7 +63,8 @@ export default {
     }
   },
   data: () => ({
-    menu: false
+    menu: false,
+    tooltipText: 'Rename, share or delete this whiteboard'
   }),
   watch: {
     menu(value) {

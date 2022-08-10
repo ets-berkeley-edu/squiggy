@@ -5,23 +5,27 @@
     offset-y
     @input="onMenuChange"
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-draw-btn"
-        :color="mode === 'draw' ? 'white' : 'primary'"
-        icon
-        :title="title"
-        value="draw"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon
-          :color="{'white': mode === 'draw'}"
-          icon="paintbrush"
-          size="lg"
-        />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom :color="mode === 'draw' ? 'primary' : undefined">
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-draw-btn"
+            :alt="tooltipText"
+            :color="mode === 'draw' ? 'white' : 'primary'"
+            icon
+            value="draw"
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon
+              :color="{'white': mode === 'draw'}"
+              icon="paintbrush"
+              size="lg"
+            />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-title class="sr-only">
@@ -85,7 +89,7 @@ export default {
     color: undefined,
     drawOptions: undefined,
     menu: false,
-    title: 'Draw colorful and squiggly lines',
+    tooltipText: 'Draw colorful and squiggly lines',
     width: DEFAULT_WIDTH
   }),
   watch: {

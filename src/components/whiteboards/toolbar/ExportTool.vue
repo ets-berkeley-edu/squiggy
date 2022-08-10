@@ -6,21 +6,25 @@
     max-width="500"
     width="500"
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-export"
-        class="mx-2"
-        color="pink"
-        dark
-        fab
-        input-value="menu"
-        small
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">Export</span>
-        <font-awesome-icon color="white" icon="download" />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom>
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-export"
+            class="mx-2"
+            color="pink"
+            dark
+            fab
+            input-value="menu"
+            small
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon color="white" icon="download" />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card class="pt-1">
       <v-card-title class="sr-only">
@@ -99,7 +103,8 @@ export default {
   mixins: [Whiteboarding],
   components: {ExportAsAsset},
   data: () => ({
-    menu: false
+    menu: false,
+    tooltipText: 'Export this whiteboard'
   }),
   computed: {
     assetPreviewStatuses() {

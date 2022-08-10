@@ -5,23 +5,27 @@
     offset-y
     @input="onMenuChange"
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-text-btn"
-        :color="mode === 'text' ? 'white' : 'primary'"
-        icon
-        :title="title"
-        value="text"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon
-          :color="{'white': mode === 'text'}"
-          icon="font"
-          size="lg"
-        />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom :disabled="mode === 'text'">
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-text-btn"
+            :alt="tooltipText"
+            :color="mode === 'text' ? 'white' : 'primary'"
+            icon
+            value="text"
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon
+              :color="{'white': mode === 'text'}"
+              icon="font"
+              size="lg"
+            />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-title class="sr-only">
@@ -69,7 +73,7 @@ export default {
   data: () => ({
     menu: false,
     textSizeOptions: undefined,
-    title: 'Add text to your whiteboard'
+    tooltipText: 'Add text to your whiteboard'
   }),
   created() {
     this.textSizeOptions = this.$_.clone(constants.TEXT_SIZE_OPTIONS)
