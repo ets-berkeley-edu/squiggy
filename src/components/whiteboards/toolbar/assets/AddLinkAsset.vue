@@ -5,33 +5,34 @@
     max-width="500"
     scrollable
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-asset-add-link"
-        :color="mode === 'link' ? 'white' : 'primary'"
-        icon
-        :title="title"
-        value="link"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon
-          :color="{'white': mode === 'link'}"
-          icon="chain"
-          size="lg"
-        />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom :color="mode === 'link' ? 'primary' : undefined">
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-asset-add-link"
+            :alt="tooltipText"
+            :color="mode === 'link' ? 'white' : 'primary'"
+            icon
+            value="link"
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon
+              :color="{'white': mode === 'link'}"
+              icon="chain"
+              size="lg"
+            />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-text class="pl-8 pt-8 scrollable-card">
         <v-container fluid>
           <v-row>
             <v-col class="pb-2">
-              <h2 id="modal-header">Add a Link</h2>
-              <div class="pt-2 subtitle-1">
-                A new asset will be created and then added to this whiteboard.
-              </div>
+              <h2 id="modal-header">{{ tooltipText }}</h2>
             </v-col>
           </v-row>
           <v-row>
@@ -90,7 +91,7 @@
                   role="alert"
                 >
                   255 character limit
-                  <span v-if="title.length">({{ 255 - asset.title.length }} remaining)</span>
+                  <span v-if="asset.title.length">({{ 255 - asset.title.length }} remaining)</span>
                 </span>
               </div>
             </v-col>
@@ -197,7 +198,7 @@ export default {
     },
     dialog: false,
     isSaving: false,
-    title: 'Add Link Asset'
+    tooltipText: 'Add external link'
   }),
   computed: {
     disableSave() {
@@ -227,7 +228,7 @@ export default {
           this.asset.visible
         ).then(asset => {
           this.addAssets([asset]).then(() => {
-            this.$announcer.polite('Link asset created.')
+            this.$announcer.polite('External link added.')
             this.asset = {
               categoryId: undefined,
               description: undefined,

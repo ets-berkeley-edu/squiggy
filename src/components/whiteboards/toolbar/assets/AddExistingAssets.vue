@@ -4,23 +4,27 @@
     fullscreen
     scrollable
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-add-existing-assets"
-        :color="mode === 'assets' ? 'white' : 'primary'"
-        icon
-        :title="title"
-        value="assets"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon
-          :color="{'white': mode === 'assets'}"
-          icon="images"
-          size="lg"
-        />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom :disabled="mode === 'assets'">
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-add-existing-assets"
+            :alt="tooltipText"
+            :color="mode === 'assets' ? 'white' : 'primary'"
+            icon
+            value="assets"
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon
+              :color="{'white': mode === 'assets'}"
+              icon="images"
+              size="lg"
+            />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-title class="pb-1">
@@ -122,7 +126,7 @@ export default {
     isDialogReady: false,
     isSaving: false,
     selectedAssetIds: [],
-    title: 'Add existing assets'
+    tooltipText: 'Add existing assets'
   }),
   computed: {
     assetGrid() {

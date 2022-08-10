@@ -5,23 +5,27 @@
     offset-y
     @input="onMenuChange"
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-shapes"
-        :color="mode === 'shape' ? 'white' : 'primary'"
-        icon
-        :title="title"
-        value="shape"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">{{ title }}</span>
-        <font-awesome-icon
-          :color="{'white': mode === 'shape'}"
-          icon="shapes"
-          size="lg"
-        />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom :disabled="mode === 'shape'">
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-shapes"
+            :alt="tooltipText"
+            :color="mode === 'shape' ? 'white' : 'primary'"
+            icon
+            value="shape"
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon
+              :color="{'white': mode === 'shape'}"
+              icon="shapes"
+              size="lg"
+            />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-title class="sr-only">
@@ -84,7 +88,7 @@ export default {
     menu: false,
     shapeOptions: undefined,
     shapeStyle: undefined,
-    title: 'Add shapes to your whiteboard'
+    tooltipText: 'Add shapes to your whiteboard'
   }),
   created() {
     this.shapeOptions = this.$_.clone(constants.SHAPE_OPTIONS)

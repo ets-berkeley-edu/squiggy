@@ -5,32 +5,32 @@
     max-width="800"
     scrollable
   >
-    <template #activator="{on, attrs}">
-      <v-btn
-        id="toolbar-upload-new-asset"
-        :color="mode === 'upload' ? 'white' : 'primary'"
-        icon
-        title="Upload a new asset"
-        value="upload"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span class="sr-only">Upload a new asset</span>
-        <font-awesome-icon
-          :color="{'white': mode === 'upload'}"
-          icon="upload"
-          size="lg"
-        />
-      </v-btn>
+    <template #activator="activator">
+      <v-tooltip bottom :color="mode === 'upload' ? 'primary' : undefined">
+        <template #activator="tooltip">
+          <v-btn
+            id="toolbar-upload-new-asset"
+            :alt="tooltipText"
+            :color="mode === 'upload' ? 'white' : 'primary'"
+            icon
+            value="upload"
+            v-bind="activator.attrs"
+            v-on="{...activator.on, ...tooltip.on}"
+          >
+            <font-awesome-icon
+              :color="{'white': mode === 'upload'}"
+              icon="upload"
+              size="lg"
+            />
+          </v-btn>
+        </template>
+        <span>{{ tooltipText }}</span>
+      </v-tooltip>
     </template>
     <v-card>
       <v-card-text class="pt-8 scrollable-card">
         <div class="pb-4">
-          <h2>Upload a File</h2>
-          <div class="pt-2 subtitle-1">
-            The uploaded file will be used to create a new asset.
-            Next, the new asset will be added to this whiteboard.
-          </div>
+          <h2>{{ tooltipText }}</h2>
         </div>
         <div
           v-if="!uploading && !file"
@@ -211,6 +211,7 @@ export default {
       fileAssetValid: false,
       isSaving: false,
       title: '',
+      tooltipText: 'Upload a file',
       uploading: false,
       visible: false
     }
