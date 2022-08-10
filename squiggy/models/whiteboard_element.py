@@ -122,9 +122,10 @@ class WhiteboardElement(Base):
         whiteboard_elements = cls.query.filter(and_(cls.whiteboard_id == whiteboard_id, cls.uuid.in_(uuids))).all()
         for (index, uuid) in enumerate(uuids):
             whiteboard_element = next((w for w in whiteboard_elements if w.uuid == uuid), None)
-            whiteboard_element.element['index'] = index
-            flag_modified(whiteboard_element, 'element')
-            std_commit()
+            if whiteboard_element:
+                whiteboard_element.element['index'] = index
+                flag_modified(whiteboard_element, 'element')
+                std_commit()
 
     def to_api_json(self):
         # Correct any out-of-sync uuid surprises.
