@@ -18,7 +18,7 @@
             v-bind="activator.attrs"
             v-on="{...activator.on, ...tooltip.on}"
           >
-            <font-awesome-icon color="white" icon="cog" />
+            <font-awesome-icon color="white" icon="cog" size="lg" />
           </v-btn>
         </template>
         <span>{{ tooltipText }}</span>

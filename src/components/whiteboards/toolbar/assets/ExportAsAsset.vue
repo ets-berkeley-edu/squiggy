@@ -14,7 +14,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        <font-awesome-icon icon="images" size="lg" />
+        <font-awesome-icon icon="share" size="lg" />
         <span class="pl-3">Export to Asset Library</span>
       </v-btn>
     </template>

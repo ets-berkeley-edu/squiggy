@@ -18,7 +18,7 @@
           >
             <font-awesome-icon
               :color="{'white': mode === 'assets'}"
-              icon="images"
+              icon="folder-open"
               size="lg"
             />
           </v-btn>
