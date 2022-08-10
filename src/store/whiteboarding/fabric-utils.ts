@@ -436,8 +436,13 @@ const $_addCanvasListeners = (state: any) => {
         shape.top += shape.height / 2
         shape.originX = shape.originY = 'center'
         shape.isHelper = false
-        // Save the added shape and make it active.
+        // Shapes are special: When a shape is added we keep it selected and set mode to 'move'
+        // so it can be quickly manipulated without creating more shape objects.
+        // In the case of other canvas object types, after they are added to the canvas
+        // we do NOT reset the mode. We hope these varying rules are intuitive to the user.
         p.$canvas.bringToFront(shape)
+        setMode('move')
+        p.$canvas.setActiveObject(shape)
         const whiteboardElements = $_translateIntoWhiteboardElements([shape])
         $_broadcastUpsert(whiteboardElements, state).then(_.noop)
       }
