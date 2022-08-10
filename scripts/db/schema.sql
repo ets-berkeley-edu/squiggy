@@ -329,6 +329,7 @@ CREATE TABLE courses (
     name character varying(255),
     last_polled TIMESTAMP WITH TIME ZONE,
     whiteboards_url character varying(255),
+    impact_studio_url character varying(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
@@ -358,9 +359,11 @@ CREATE TABLE users (
     canvas_full_name character varying(255) NOT NULL,
     canvas_image character varying(255),
     canvas_email character varying(255),
+    personal_description character varying(255),
     points integer DEFAULT 0 NOT NULL,
     course_id integer NOT NULL,
     share_points boolean,
+    looking_for_collaborators boolean DEFAULT false NOT NULL,
     last_activity timestamp with time zone,
     canvas_course_sections character varying(255)[],
     created_at timestamp with time zone DEFAULT now() NOT NULL,

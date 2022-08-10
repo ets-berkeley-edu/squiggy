@@ -32,7 +32,7 @@ from squiggy.api.api_util import start_login_session
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
-from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS
+from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_IMPACT_STUDIO, TOOL_ID_WHITEBOARDS
 from squiggy.lib.util import safe_strip, to_int, utc_now
 from squiggy.logger import logger
 from squiggy.models.activity import Activity
@@ -82,6 +82,11 @@ def lti_launch_engagement_index():
     return _lti_launch(TOOL_ID_ENGAGEMENT_INDEX)
 
 
+@app.route('/api/auth/lti_launch/impact_studio', methods=['POST'])
+def lti_launch_impact_studio():
+    return _lti_launch(TOOL_ID_IMPACT_STUDIO)
+
+
 @app.route('/api/auth/lti_launch/whiteboards', methods=['POST'])
 def lti_launch_whiteboards():
     return _lti_launch(TOOL_ID_WHITEBOARDS)
@@ -118,8 +123,9 @@ def _lti_launch(tool_id):
 def _lti_launch_authentication(tool_id):
     is_asset_library = tool_id == TOOL_ID_ASSET_LIBRARY
     is_engagement_index = tool_id == TOOL_ID_ENGAGEMENT_INDEX
+    is_impact_studio = tool_id == TOOL_ID_IMPACT_STUDIO
     is_whiteboards = tool_id == TOOL_ID_WHITEBOARDS
-    if not is_asset_library and not is_engagement_index and not is_whiteboards:
+    if not is_asset_library and not is_engagement_index and not is_impact_studio and not is_whiteboards:
         raise BadRequestError(f'Missing or invalid tool_id: {tool_id}')
 
     def _alpha_num(s):
@@ -187,12 +193,14 @@ def _lti_launch_authentication(tool_id):
             active = _check_course_activity(course)
             asset_library_url = external_tool_url if is_asset_library else course.asset_library_url
             engagement_index_url = external_tool_url if is_engagement_index else course.engagement_index_url
+            impact_studio_url = external_tool_url if is_impact_studio else course.impact_studio_url
             whiteboards_url = external_tool_url if is_whiteboards else course.whiteboards_url
             course = Course.update(
                 active=active,
                 asset_library_url=asset_library_url,
                 course_id=course.id,
                 engagement_index_url=engagement_index_url,
+                impact_studio_url=impact_studio_url,
                 whiteboards_url=whiteboards_url,
             )
             logger.info(f'Updated course during LTI launch: {course.to_api_json()}')
@@ -202,6 +210,7 @@ def _lti_launch_authentication(tool_id):
                 canvas_api_domain=canvas_api_domain,
                 canvas_course_id=canvas_course_id,
                 engagement_index_url=external_tool_url if is_engagement_index else None,
+                impact_studio_url=impact_studio_url if is_impact_studio else None,
                 name=args.get('context_title'),
                 whiteboards_url=external_tool_url if is_whiteboards else None,
             )
@@ -224,7 +233,12 @@ def _lti_launch_authentication(tool_id):
             )
             logger.info(f'Created user during LTI launch: canvas_user_id={canvas_user_id}')
 
-        path = '/assets' if is_asset_library else ('/engage' if is_engagement_index else '/whiteboards')
+        path = {
+            TOOL_ID_ASSET_LIBRARY: '/assets',
+            TOOL_ID_ENGAGEMENT_INDEX: '/engage',
+            TOOL_ID_IMPACT_STUDIO: '/impact_studio',
+            TOOL_ID_WHITEBOARDS: '/whiteboards',
+        }[tool_id]
         params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
         logger.info(f'LTI launch redirect: {path}?{params}')
         return user, f'{path}?{params}'

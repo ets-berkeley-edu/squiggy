@@ -1,6 +1,6 @@
 # Squiggy
 
-Providing LTI tools (Asset Library, Engagement Index and Whiteboards) for bCourses sites.
+Providing LTI tools (Asset Library, Engagement Index, Whiteboards and Impact Studio) for bCourses sites.
 
 ![Squiggy says hello](src/assets/hello.jpg)
 

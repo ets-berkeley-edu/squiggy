@@ -28,6 +28,7 @@ from squiggy.models.canvas import Canvas
 
 TOOL_ID_ASSET_LIBRARY = 'suitec:asset_library'
 TOOL_ID_ENGAGEMENT_INDEX = 'suitec:engagement_index'
+TOOL_ID_IMPACT_STUDIO = 'suitec:impact_studio'
 TOOL_ID_WHITEBOARDS = 'suitec:whiteboards'
 
 
@@ -70,6 +71,7 @@ def get_tool_metadata(host, tool_id):
     api_path = {
         TOOL_ID_ASSET_LIBRARY: '/api/auth/lti_launch/asset_library',
         TOOL_ID_ENGAGEMENT_INDEX: '/api/auth/lti_launch/engagement_index',
+        TOOL_ID_IMPACT_STUDIO: '/api/auth/lti_launch/impact_studio',
         TOOL_ID_WHITEBOARDS: '/api/auth/lti_launch/whiteboards',
     }.get(tool_id, None)
     launch_url = f"https://{host.rstrip('/')}{api_path}"
@@ -89,6 +91,13 @@ def get_tool_metadata(host, tool_id):
             """,
             'launch_url': launch_url,
             'title': 'Engagement Index',
+        },
+        TOOL_ID_IMPACT_STUDIO: {
+            'description': """
+            The Impact Studio allows students to see the impact of their contributions across SuiteC tools.
+        """,
+            'launch_url': launch_url,
+            'title': 'Impact Studio',
         },
         TOOL_ID_WHITEBOARDS: {
             'description': """

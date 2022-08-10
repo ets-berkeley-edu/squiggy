@@ -27,7 +27,7 @@ from datetime import datetime
 import json
 
 from squiggy import db, std_commit
-from squiggy.lib.lti import TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS
+from squiggy.lib.lti import TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_IMPACT_STUDIO, TOOL_ID_WHITEBOARDS
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -156,6 +156,7 @@ class TestLtiLaunchUrl:
         url = {
             TOOL_ID_ASSET_LIBRARY: '/api/auth/lti_launch/asset_library',
             TOOL_ID_ENGAGEMENT_INDEX: '/api/auth/lti_launch/engagement_index',
+            TOOL_ID_IMPACT_STUDIO: '/api/auth/lti_launch/impact_studio',
             TOOL_ID_WHITEBOARDS: '/api/auth/lti_launch/whiteboards',
         }.get(tool_id)
         response = client.post(
@@ -202,12 +203,15 @@ class TestLtiLaunchUrl:
             assert course.canvas_course_id == canvas_course_id
             if tool_id == TOOL_ID_ASSET_LIBRARY:
                 assert course.asset_library_url == external_tool_url
-            else:
-                tool_url = course.engagement_index_url if tool_id == TOOL_ID_ENGAGEMENT_INDEX else course.whiteboards_url
-                assert tool_url == external_tool_url
+            elif tool_id == TOOL_ID_ENGAGEMENT_INDEX:
+                assert course.engagement_index_url == external_tool_url
+            elif tool_id == TOOL_ID_IMPACT_STUDIO:
+                assert course.impact_studio_url == external_tool_url
+            elif tool_id == TOOL_ID_WHITEBOARDS:
+                assert course.whiteboards_url == external_tool_url
             return _response
 
-        for tool_id in (TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS):
+        for tool_id in (TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_IMPACT_STUDIO, TOOL_ID_WHITEBOARDS):
             # Delete
             db.session.execute(f'DELETE FROM users WHERE canvas_user_id = {canvas_user_id}')
             std_commit(allow_test_environment=True)

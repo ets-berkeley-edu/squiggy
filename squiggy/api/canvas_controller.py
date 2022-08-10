@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app, request, Response
-from squiggy.lib.lti import get_tool_metadata, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_WHITEBOARDS
+from squiggy.lib.lti import get_tool_metadata, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_IMPACT_STUDIO, TOOL_ID_WHITEBOARDS
 
 
 @app.route('/lti/cartridge/asset_library.xml')
@@ -44,6 +44,17 @@ def engagement_index_xml():
         _get_lti_cartridge_xml(
             host=request.headers['Host'],
             tool_id=TOOL_ID_ENGAGEMENT_INDEX,
+        ),
+        mimetype='application/xml',
+    )
+
+
+@app.route('/lti/cartridge/impact_studio.xml')
+def impact_studio_xml():
+    return Response(
+        _get_lti_cartridge_xml(
+            host=request.headers['Host'],
+            tool_id=TOOL_ID_IMPACT_STUDIO,
         ),
         mimetype='application/xml',
     )
