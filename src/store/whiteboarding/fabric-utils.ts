@@ -51,6 +51,7 @@ export function addAssets(assets: any[], state: any) {
 
 export function afterChangeMode(state: any) {
   p.$canvas.discardActiveObject().requestRenderAll()
+  p.$canvas.isDrawingMode = state.mode === 'draw'
   if (state.disableAll) {
     $_enableCanvasElements(false)
   } else {
@@ -59,16 +60,11 @@ export function afterChangeMode(state: any) {
       object.selectable = selectable
       object.evented = selectable
     })
-    if (state.mode === 'draw') {
-      p.$canvas.isDrawingMode = true
-    } else {
-      p.$canvas.isDrawingMode = false
-      if (state.mode === 'move') {
-        $_enableCanvasElements(true)
-        store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
-      } else if (state.mode === 'text') {
-        p.$canvas.cursor = 'text'
-      }
+    if (state.mode === 'move') {
+      $_enableCanvasElements(true)
+      store.dispatch('whiteboarding/setDisableAll', false).then(_.noop)
+    } else if (state.mode === 'text') {
+      p.$canvas.cursor = 'text'
     }
   }
 }
@@ -335,10 +331,7 @@ const $_addCanvasListeners = (state: any) => {
       $_enableCanvasElements(true)
       element.uuid = uuidv4()
       const whiteboardElements = $_translateIntoWhiteboardElements([element])
-      $_broadcastUpsert(whiteboardElements, state).then(() => {
-        setCanvasDimensions(state)
-        setMode('move')
-      })
+      $_broadcastUpsert(whiteboardElements, state).then(() => setCanvasDimensions(state))
     }
   })
 
@@ -446,11 +439,7 @@ const $_addCanvasListeners = (state: any) => {
         // Save the added shape and make it active.
         p.$canvas.bringToFront(shape)
         const whiteboardElements = $_translateIntoWhiteboardElements([shape])
-        $_broadcastUpsert(whiteboardElements, state).then(() => {
-          setMode('move')
-        })
-      } else {
-        setMode('move')
+        $_broadcastUpsert(whiteboardElements, state).then(_.noop)
       }
     }
     $_enableCanvasElements(true)
@@ -845,16 +834,12 @@ const $_initFabricPrototypes = (state: any) => {
         }
         element.uuid = element.uuid || uuidv4()
         const whiteboardElements = $_translateIntoWhiteboardElements([element])
-        $_broadcastUpsert(whiteboardElements, state).then(() => setMode('move'))
+        $_broadcastUpsert(whiteboardElements, state).then(_.noop)
       } else {
         const uuid = element.get('uuid')
+        p.$canvas.remove(element)
         if (uuid) {
-          p.$canvas.remove(element)
           $_broadcastDelete(uuid, state)
-          setMode('move')
-        } else {
-          p.$canvas.remove(element)
-          setMode('move')
         }
       }
     }
