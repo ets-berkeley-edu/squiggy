@@ -920,12 +920,10 @@ const $_log = (statement: string, force?: boolean) => {
 const $_paste = (state: any): void => {
   $_log('Paste')
   const copies = state.clipboard
-  store.commit('whiteboarding/clearClipboard')
-
   if (copies.length) {
     // Clear the current selection
     const object = p.$canvas.getActiveObject()
-    if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+    if (object && object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       p.$canvas.remove(object)
     }
     const whiteboardElements: any[] = []
