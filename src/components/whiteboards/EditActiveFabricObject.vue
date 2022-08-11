@@ -3,14 +3,16 @@
     <div
       v-show="activeCanvasObject && !isModifyingElement"
       id="whiteboard-element-edit"
-      class="whiteboard-element-edit"
+      class="darken-2 elevation-1 mx-3 rounded-pill white whiteboard-element-edit"
+      :class="widthStyle"
     >
       <v-btn
-        v-if="$_.get(activeCanvasObject, 'assetId')"
+        v-if="assetId"
         id="open-asset-btn"
+        class="pl-2"
         icon
         target="_blank"
-        :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${activeCanvasObject.assetId}`"
+        :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${assetId}`"
       >
         <span class="sr-only">Open original asset</span>
         <font-awesome-icon icon="arrow-up-right-from-square" />
@@ -35,6 +37,7 @@
       </v-btn>
       <v-btn
         id="delete-btn"
+        class="pr-2"
         color="primary"
         icon
         @click="deleteActiveElements"
@@ -45,6 +48,7 @@
       <v-btn
         v-if="$config.isVueAppDebugMode"
         id="debug-btn"
+        class="pr-2"
         color="red"
         icon
         @click="debug"
@@ -62,6 +66,14 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'EditActiveFabricObject',
   mixins: [Whiteboarding],
+  computed: {
+    assetId() {
+      return this.$_.get(this.activeCanvasObject, 'assetId')
+    },
+    widthStyle() {
+      return `${this.assetId ? 'with' : 'without'}-asset-id${this.$config.isVueAppDebugMode ? '-debug' : ''}`
+    }
+  },
   methods: {
     debug() {
       if (this.activeCanvasObject && !this.isModifyingElement) {
@@ -73,11 +85,23 @@ export default {
 </script>
 
 <style scoped>
+.with-asset-id-debug {
+  width: 180px;
+}
+.with-asset-id {
+  width: 150px;
+}
+.without-asset-id {
+  width: 120px;
+}
+.without-asset-id-debug {
+  width: 150px;
+}
 .whiteboard-element-edit {
   display: inline-block;
+  margin-top: -5px;
   position: absolute;
-  text-align: left;
-  width: 180px;
+  text-align: center;
   z-index: 1100;
 }
 </style>
