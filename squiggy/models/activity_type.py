@@ -222,7 +222,7 @@ DEFAULT_ACTIVITY_TYPE_CONFIGURATION = [
     {
         'type': 'whiteboard_add_asset',
         'title': 'Add an asset to a whiteboard',
-        'points': 0,
+        'points': 8,
         'enabled': True,
     },
     {
