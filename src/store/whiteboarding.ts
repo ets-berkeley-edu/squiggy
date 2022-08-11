@@ -71,7 +71,6 @@ const getters = {
 
 const mutations = {
   addAssets: (state: any, assets: any[]) => addAssets(assets, state),
-  clearClipboard: (state: any) => state.clipboard = [],
   copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
