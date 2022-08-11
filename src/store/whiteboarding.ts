@@ -11,7 +11,8 @@ import {
   initialize,
   moveLayer,
   setCanvasDimensions,
-  updatePreviewImage
+  updatePreviewImage,
+  zoom
 } from '@/store/whiteboarding/fabric-utils'
 
 const DEFAULT_TOOL_SELECTION = {
@@ -272,7 +273,9 @@ const actions = {
       }
     })
   },
-  updateSelected: ({commit}, properties: any) => commit('updateSelected', properties)
+  updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
+  zoomIn: () => zoom(-constants.ZOOM_INCREMENT),
+  zoomOut: () => zoom(constants.ZOOM_INCREMENT)
 }
 
 export default {
