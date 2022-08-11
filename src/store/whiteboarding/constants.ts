@@ -79,5 +79,6 @@ export default {
     {text: 'Title', value: 48}
   ],
   VIEWPORT_ELEMENT_ID: 'whiteboard-viewport',
-  WHITEBOARD_ELEMENT_EDIT_ID: 'whiteboard-element-edit'
+  WHITEBOARD_ELEMENT_EDIT_ID: 'whiteboard-element-edit',
+  ZOOM_INCREMENT: 50
 }

@@ -46,7 +46,9 @@ export default {
       'setMode',
       'undeleteWhiteboard',
       'updateSelected',
-      'toggleZoom'
+      'toggleZoom',
+      'zoomIn',
+      'zoomOut'
     ])
   }
 }

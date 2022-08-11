@@ -18,7 +18,7 @@
             mandatory
           >
             <MoveTool />
-            <ZoomTool />
+            <!-- <ZoomTool /> -->
             <TextTool />
             <PencilBrushTool />
             <ShapeTool />
@@ -26,6 +26,7 @@
             <AddLinkAsset />
             <UploadNewAsset />
           </v-btn-toggle>
+          <Zoom />
           <div v-if="whiteboard.deletedAt" class="pl-2">
             This whiteboard was deleted on {{ whiteboard.deletedAt | moment('dddd, MMMM Do YYYY') }}.
           </div>
@@ -66,7 +67,7 @@ import UploadNewAsset from '@/components/whiteboards/toolbar/assets/UploadNewAss
 import Users from '@/components/whiteboards/toolbar/Users'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
-import ZoomTool from '@/components/whiteboards/toolbar/ZoomTool'
+import Zoom from '@/components/whiteboards/toolbar/Zoom'
 
 export default {
   name: 'Toolbar',
@@ -83,7 +84,7 @@ export default {
     TextTool,
     UploadNewAsset,
     Users,
-    ZoomTool
+    Zoom
   },
   computed: {
     modeProxy: {
