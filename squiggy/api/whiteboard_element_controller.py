@@ -92,7 +92,9 @@ def upsert_whiteboard_elements():
 
     results = []
     for whiteboard_element in whiteboard_elements:
-        if not whiteboard_element:
+        element = whiteboard_element.get('element') if whiteboard_element else None
+        ignore = not element or (element.get('type') == 'i-text' and not element.get('text', '').strip())
+        if ignore:
             continue
         upserted = _upsert_whiteboard_element(
             whiteboard_id=whiteboard_id,
