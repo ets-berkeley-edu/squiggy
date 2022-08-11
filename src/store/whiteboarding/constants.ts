@@ -66,6 +66,7 @@ export default {
   FABRIC_MULTIPLE_SELECT_TYPE: 'activeSelection',
   MODE_OPTIONS: ['move', 'draw', 'shape', 'text', 'asset'],
   MUTABLE_ELEMENT_ATTRIBUTES: ['angle', 'fill', 'flipX', 'flipY', 'height', 'index', 'left', 'originX', 'originY', 'radius', 'scaleX', 'scaleY', 'skewX', 'skewY', 'stroke', 'strokeDashArray', 'strokeDashOffset', 'strokeMiterLimit', 'strokeUniform', 'strokeWidth', 'text', 'top', 'width'],
+  PASTE_OFFSET: 25,
   SHAPE_OPTIONS: {
     'Rect:thin': require('@/assets/whiteboard/shape-rect-thin.png'),
     'Rect:thick': require('@/assets/whiteboard/shape-rect-thick.png'),

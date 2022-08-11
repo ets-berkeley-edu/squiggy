@@ -17,7 +17,7 @@ export default {
       'activeCanvasObject',
       'categories',
       'disableAll',
-      'fitToScreen',
+      'isFitToScreen',
       'isModifyingElement',
       'isScrollingCanvas',
       'mode',
@@ -37,6 +37,7 @@ export default {
       'addAssets',
       'deleteActiveElements',
       'deleteWhiteboard',
+      'fitToScreen',
       'init',
       'moveLayer',
       'onWhiteboardUpdate',
@@ -46,7 +47,6 @@ export default {
       'setMode',
       'undeleteWhiteboard',
       'updateSelected',
-      'toggleZoom',
       'zoomIn',
       'zoomOut'
     ])

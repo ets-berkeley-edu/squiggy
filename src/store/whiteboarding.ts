@@ -37,7 +37,7 @@ const $_log = (statement: string, force?: boolean) => {
 const state = {
   activeCanvasObject: undefined,
   categories: undefined,
-  clipboard: [],
+  clipboard: undefined,
   disableAll: false,
   fitToScreen: true,
   // Variable that will keep track of whether a shape is currently being drawn
@@ -61,7 +61,7 @@ const getters = {
   activeCanvasObject: (state: any): any => state.activeCanvasObject,
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll || store.getters['context/isLoading'],
-  fitToScreen: (state: any): boolean => state.fitToScreen,
+  isFitToScreen: (state: any): boolean => state.isFitToScreen,
   isModifyingElement: (state: any): boolean => state.isModifyingElement,
   isScrollingCanvas: (state: any): boolean => state.isScrollingCanvas,
   mode: (state: any): string => state.mode,
@@ -72,8 +72,11 @@ const getters = {
 
 const mutations = {
   addAssets: (state: any, assets: any[]) => addAssets(assets, state),
-  copy: (state: any, object: any) => state.clipboard.push(object),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
+  fitToScreen: (state: any) => {
+    state.isFitToScreen = true
+    setCanvasDimensions(state)
+  },
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
   moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onJoin: (state: any, userId: string) => {
@@ -170,10 +173,9 @@ const mutations = {
   },
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
-  setCanvasDimensions: (state) => setCanvasDimensions(state),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
+  setClipboard: (state: any, object: any) => state.clipboard = object,
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
-  setFitToScreen: (state: any, fitToScreen: boolean) => state.fitToScreen = fitToScreen,
   setIsInitialized: (state: any, isInitialized: boolean) => state.isInitialized = isInitialized,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
   setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
@@ -194,6 +196,7 @@ const mutations = {
       }
     })
   },
+  updateClipboard: (state: any, properties: any) => _.assignIn(state.clipboard, properties),
   updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties)
 }
 
@@ -217,6 +220,7 @@ const actions = {
       })
     })
   },
+  fitToScreen: ({commit}) => commit('fitToScreen'),
   init: ({commit}, {whiteboard, disable}) => {
     return new Promise<void>(resolve => {
       getCategories(false).then(categories => {
@@ -250,13 +254,9 @@ const actions = {
     })
   },
   resetSelected: ({commit}) => commit('resetSelected'),
+  setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
-  toggleZoom: ({commit, state}) => {
-    commit('setMode', 'zoom')
-    commit('setFitToScreen', !state.fitToScreen)
-    commit('setCanvasDimensions')
-  },
   undeleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       if (state.whiteboard.deletedAt) {
@@ -273,6 +273,7 @@ const actions = {
       }
     })
   },
+  updateClipboard: ({commit}, properties: any) => commit('updateClipboard', properties),
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
   zoomIn: () => zoom(-constants.ZOOM_INCREMENT),
   zoomOut: () => zoom(constants.ZOOM_INCREMENT)
