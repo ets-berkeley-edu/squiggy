@@ -32,22 +32,27 @@
         <h2 id="menu-header" class="sr-only">Select Text Size and Color</h2>
       </v-card-title>
       <v-card-text>
-        <v-container class="pb-0 pt-7 text-body-1">
+        <v-container class="pb-0 pt-5 text-body-1">
           <v-row class="pb-2" no-gutters>
-            <v-col class="pt-2" cols="3">
+            <v-col class="pt-1" cols="3">
               Size
             </v-col>
-            <v-col cols="9">
-              <AccessibleSelect
-                :key="menu"
-                :dense="true"
-                :hide-details="true"
-                id-prefix="tool-select-text-size"
-                :items="textSizeOptions"
-                :unclearable="true"
-                :value="selected.fontSize"
-                @input="fontSize => updateSelected({fontSize})"
-              />
+            <v-col class="pb-3" cols="9">
+              <v-radio-group
+                v-model="fontSize"
+                class="mt-0 pl-1 pt-1"
+                dense
+                hide-details
+                mandatory
+              >
+                <v-radio
+                  v-for="option in textSizeOptions"
+                  :id="`tool-select-text-size-${option.text.toLowerCase()}`"
+                  :key="option.value"
+                  :label="option.text"
+                  :value="option.value"
+                />
+              </v-radio-group>
             </v-col>
           </v-row>
           <ColorPicker
@@ -61,22 +66,28 @@
 </template>
 
 <script>
-import AccessibleSelect from '@/components/util/AccessibleSelect'
 import ColorPicker from '@/components/whiteboards/toolbar/ColorPicker'
 import constants from '@/store/whiteboarding/constants'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'TextTool',
-  components: {AccessibleSelect, ColorPicker},
+  components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
+    fontSize: undefined,
     menu: false,
     textSizeOptions: undefined,
     tooltipText: 'Add text to your whiteboard'
   }),
+  watch: {
+    fontSize() {
+      this.updateSelected({fontSize: this.fontSize})
+    }
+  },
   created() {
     this.textSizeOptions = this.$_.clone(constants.TEXT_SIZE_OPTIONS)
+    this.fontSize = this.selected.fontSize
   },
   beforeDestroy() {
     this.setDisableAll(false)
