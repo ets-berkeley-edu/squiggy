@@ -95,7 +95,6 @@ def upsert_whiteboard_elements():
         if not whiteboard_element:
             continue
         upserted = _upsert_whiteboard_element(
-            socket_id=socket_id,
             whiteboard_id=whiteboard_id,
             whiteboard_element=whiteboard_element,
         )
@@ -201,7 +200,7 @@ def _create_whiteboard_element(whiteboard_element, whiteboard_id):
     return whiteboard_element.to_api_json()
 
 
-def _upsert_whiteboard_element(socket_id, whiteboard_element, whiteboard_id):
+def _upsert_whiteboard_element(whiteboard_element, whiteboard_id):
     if WhiteboardElement.get_id_per_uuid(whiteboard_element['uuid']):
         whiteboard_element = _update_whiteboard_element(
             whiteboard_element=whiteboard_element,
