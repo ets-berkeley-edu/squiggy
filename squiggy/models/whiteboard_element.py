@@ -31,6 +31,7 @@ from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.asset import Asset
 from squiggy.models.base import Base
+from squiggy.models.whiteboard_session import WhiteboardSession
 
 
 class WhiteboardElement(Base):
@@ -82,6 +83,11 @@ class WhiteboardElement(Base):
         result = db.session.execute(query, {'uuid': uuid}).first()
         std_commit()
         return result and result['id']
+
+    @classmethod
+    def get_live_asset_usages(cls, asset_id):
+        query = cls.query.filter_by(asset_id=asset_id).join(WhiteboardSession, cls.whiteboard_id == WhiteboardSession.whiteboard_id)
+        return [r.to_api_json() for r in query.all()]
 
     @classmethod
     def create(cls, element, uuid, whiteboard_id, asset_id=None):
