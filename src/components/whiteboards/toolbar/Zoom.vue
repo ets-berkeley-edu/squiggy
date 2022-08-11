@@ -1,11 +1,11 @@
 <template>
   <v-btn-toggle class="ml-8 mr-3" rounded>
-    <v-tooltip bottom color="primary">
+    <v-tooltip bottom :color="color">
       <template #activator="{on, attrs}">
         <v-btn
           id="zoom-in-btn"
           alt="Zoom in"
-          color="teal lighten-3"
+          :color="color"
           dark
           fab
           small
@@ -21,12 +21,33 @@
       </template>
       <span>Zoom in</span>
     </v-tooltip>
-    <v-tooltip bottom color="primary">
+    <v-tooltip bottom :color="color">
+      <template #activator="{on, attrs}">
+        <v-btn
+          id="zoom-fit-to-screen-btn"
+          :alt="tooltipText"
+          :color="color"
+          dark
+          fab
+          small
+          v-bind="attrs"
+          v-on="on"
+          @click="fitToScreen"
+        >
+          <font-awesome-icon
+            icon="magnifying-glass"
+            size="lg"
+          />
+        </v-btn>
+      </template>
+      <span>{{ tooltipText }}</span>
+    </v-tooltip>
+    <v-tooltip bottom :color="color">
       <template #activator="{on, attrs}">
         <v-btn
           id="zoom-in-btn"
           alt="Zoom out"
-          color="teal lighten-3"
+          :color="color"
           dark
           fab
           small
@@ -34,10 +55,7 @@
           v-on="on"
           @click="zoomOut"
         >
-          <font-awesome-icon
-            icon="minus"
-            size="lg"
-          />
+          <font-awesome-icon icon="minus" size="lg" />
         </v-btn>
       </template>
       <span>Zoom out</span>
@@ -50,6 +68,14 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'Zoom',
-  mixins: [Whiteboarding]
+  mixins: [Whiteboarding],
+  data: () => ({
+    color: 'teal lighten-3'
+  }),
+  computed: {
+    tooltipText() {
+      return this.fitToScreen ? 'Actual size' : 'Fit to screen'
+    }
+  }
 }
 </script>

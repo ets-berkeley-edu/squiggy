@@ -625,14 +625,9 @@ const $_addViewportListeners = (state: any) => {
           event.preventDefault()
         } else if (event.keyCode === 67 && event.metaKey) {
           // Copy
-          const activeObjects = p.$canvas.getActiveObjects()
-          _.each(activeObjects, (object: any) => {
-            object.clone((clone: any) => {
-              clone.index = $_getNextAvailableObjectIndex()
-              clone.left += 25
-              clone.top += 25
-              store.commit('whiteboarding/copy', clone)
-            })
+          p.$canvas.getActiveObject().clone(clone => {
+            clone.index = $_getNextAvailableObjectIndex()
+            store.dispatch('whiteboarding/setClipboard', clone).then(_.noop)
           })
         } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
           $_paste(state)
@@ -958,34 +953,40 @@ const $_log = (statement: string, force?: boolean) => {
 
 const $_paste = (state: any): void => {
   $_log('Paste')
-  const copies = state.clipboard
-  if (copies.length) {
-    // Clear the current selection
-    const object = p.$canvas.getActiveObject()
-    if (object && object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-      p.$canvas.remove(object)
-    }
-    const whiteboardElements: any[] = []
-    _.each(copies, (element: any) => {
-      const copy = _.cloneDeep(element)
-      const uuid = uuidv4()
-      $_log(`Paste element ${copy.uuid}. Copy has uuid ${uuid}`)
-      copy.uuid = uuid
-      whiteboardElements.push({
-        assetId: copy.assetId,
-        element: copy,
-        uuid
+  if (state.clipboard) {
+    state.clipboard.clone((clone: any) => {
+      p.$canvas.discardActiveObject()
+      clone.set({
+        left: clone.left + constants.PASTE_OFFSET,
+        top: clone.top + constants.PASTE_OFFSET,
+        evented: true
       })
-      p.$canvas.add(copy)
-      $_ensureWithinCanvas(copy)
+      const whiteboardElements: any[] = []
+      const addObject = (object: any) => {
+        object.uuid = uuidv4()
+        p.$canvas.add(object)
+        whiteboardElements.push({
+          assetId: object.assetId,
+          element: object,
+          uuid: object.uuid
+        })
+      }
+      if (clone.type === 'activeSelection') {
+        clone.canvas = p.$canvas
+        clone.forEachObject(addObject)
+        clone.setCoords()
+      } else {
+        addObject(clone)
+      }
+      store.dispatch('whiteboarding/updateClipboard', {
+        left: state.clipboard.left + constants.PASTE_OFFSET,
+        top: state.clipboard.top + constants.PASTE_OFFSET
+      }).then(() => {
+        p.$canvas.setActiveObject(clone)
+        p.$canvas.requestRenderAll()
+        $_broadcastUpsert(whiteboardElements, state).then(() => setCanvasDimensions(state))
+      })
     })
-    if (whiteboardElements.length === 1) {
-      const uuid = whiteboardElements[0].uuid
-      p.$canvas.setActiveObject($_getCanvasElement(uuid))
-    } else {
-      $_log('TODO: If multiple elements were pasted then create a "group" for those elements and select it.')
-    }
-    $_broadcastUpsert(whiteboardElements, state).then(() => setCanvasDimensions(state))
   }
 }
 

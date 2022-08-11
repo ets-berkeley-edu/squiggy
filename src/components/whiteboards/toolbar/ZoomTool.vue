@@ -9,11 +9,11 @@
         value="zoom"
         v-bind="attrs"
         v-on="on"
-        @click="toggleZoom"
+        @click="fitToScreen"
       >
         <font-awesome-icon
           :color="{'white': mode === 'zoom'}"
-          :icon="fitToScreen ? 'search-plus' : 'search-minus'"
+          :icon="isFitToScreen ? 'search-plus' : 'search-minus'"
           size="lg"
         />
       </v-btn>
