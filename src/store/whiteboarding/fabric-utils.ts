@@ -144,13 +144,7 @@ export function moveLayer(direction: string, state: any) {
   })
   const apiCall = () => {
     const uuids: string[] = _.map(p.$canvas.getObjects(), 'uuid')
-    updateWhiteboardElementsOrder(p.$socket.id, uuids, state.whiteboard.id).then(() => {
-      p.$canvas.discardActiveObject().requestRenderAll()
-      if (elements.length === 1) {
-        // When only a single item was selected, re-select it
-        p.$canvas.setActiveObject($_getCanvasElement(elements[0].uuid))
-      }
-    })
+    updateWhiteboardElementsOrder(p.$socket.id, uuids, state.whiteboard.id).then(() => p.$canvas.requestRenderAll())
   }
   $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
 }
@@ -280,6 +274,7 @@ const $_addCanvasListeners = (state: any) => {
 
   p.$canvas.on('object:modified', (event: any) => {
     $_setModifyingElement(false)
+    moveLayer('front', state)
     // Ensure that none of the modified objects are positioned off-screen.
     $_ensureWithinCanvas(event.target)
     const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
