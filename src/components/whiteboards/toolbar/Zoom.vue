@@ -4,22 +4,19 @@
       <template #activator="{on, attrs}">
         <v-btn
           id="zoom-in-btn"
-          alt="Zoom in"
+          alt="Zoom out"
           :color="color"
           dark
           fab
           small
           v-bind="attrs"
           v-on="on"
-          @click="zoomIn"
+          @click="zoomOut"
         >
-          <font-awesome-icon
-            icon="plus"
-            size="lg"
-          />
+          <font-awesome-icon icon="minus" size="lg" />
         </v-btn>
       </template>
-      <span>Zoom in</span>
+      <span>Zoom out</span>
     </v-tooltip>
     <v-tooltip bottom :color="color">
       <template #activator="{on, attrs}">
@@ -46,19 +43,19 @@
       <template #activator="{on, attrs}">
         <v-btn
           id="zoom-in-btn"
-          alt="Zoom out"
+          alt="Zoom in"
           :color="color"
           dark
           fab
           small
           v-bind="attrs"
           v-on="on"
-          @click="zoomOut"
+          @click="zoomIn"
         >
-          <font-awesome-icon icon="minus" size="lg" />
+          <font-awesome-icon icon="plus" size="lg" />
         </v-btn>
       </template>
-      <span>Zoom out</span>
+      <span>Zoom in</span>
     </v-tooltip>
   </v-btn-toggle>
 </template>

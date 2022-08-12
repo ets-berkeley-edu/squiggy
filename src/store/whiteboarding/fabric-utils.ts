@@ -26,6 +26,7 @@ export function addAssets(assets: any[], state: any) {
       }
       fabric.Image.fromURL(imageUrl, (element: any) => {
         element.assetId = asset.id
+        element.index = $_getMaxElementIndex() + 1
         element.src = imageUrl
         element.uuid = uuidv4()
         const zoomLevel = p.$canvas.getZoom()
@@ -131,12 +132,10 @@ export function moveLayer(direction: string, state: any) {
       const element:any = $_getCanvasElement(e.uuid)
       if (element) {
         if (direction === 'back') {
-          if (element.index > 0) {
-            element.index = element.index - 1
-          }
+          element.index = $_getMinElementIndex() - 1
           p.$canvas.sendToBack(element)
         } else if (direction === 'front') {
-          element.index = element.index + 1
+          element.index = $_getMaxElementIndex() + 1
           p.$canvas.bringToFront(element)
         }
       }
@@ -347,7 +346,7 @@ const $_addCanvasListeners = (state: any) => {
       const shape = new fabric[state.selected.shape]({
         fill: state.selected.fill,
         height: 10,
-        index: $_getNextAvailableObjectIndex(),
+        index: $_getMaxElementIndex() + 1,
         isHelper: true,
         left: state.startShapePointer.x,
         originX: 'left',
@@ -367,7 +366,7 @@ const $_addCanvasListeners = (state: any) => {
         fontFamily: 'Helvetica',
         fontSize: state.selected.fontSize || constants.TEXT_SIZE_OPTIONS[0].value,
         height: 100,
-        index: $_getNextAvailableObjectIndex(),
+        index: $_getMaxElementIndex() + 1,
         left: textPointer.x,
         text: '',
         selectable: true,
@@ -626,7 +625,7 @@ const $_addViewportListeners = (state: any) => {
         } else if (event.keyCode === 67 && event.metaKey) {
           // Copy
           p.$canvas.getActiveObject().clone(clone => {
-            clone.index = $_getNextAvailableObjectIndex()
+            clone.index = $_getMaxElementIndex() + 1
             store.dispatch('whiteboarding/setClipboard', clone).then(_.noop)
           })
         } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
@@ -801,7 +800,9 @@ const $_getDaysUntilRetirement = () => {
 
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
-const $_getNextAvailableObjectIndex = () => _.max(_.map(p.$canvas.getObjects(), 'index')) + 1
+const $_getMaxElementIndex = () => _.max(_.map(p.$canvas.getObjects(), 'index'))
+
+const $_getMinElementIndex = () => _.min(_.map(p.$canvas.getObjects(), 'index'))
 
 const $_initCanvas = (state: any) => {
   $_log('Init canvas')
@@ -835,7 +836,7 @@ const $_initFabricPrototypes = (state: any) => {
     // uniquely identifies an object on the canvas, as well as a property containing the index
     // of the object relative to the other items on the canvas.
     return function() {
-      const index = _.isNil(this.index) ? $_getNextAvailableObjectIndex() : this.index
+      const index = _.isNil(this.index) ? $_getMaxElementIndex() + 1 : this.index
       const extras = {
         assetId: this.assetId,
         fontFamily: this.fontFamily,
@@ -994,10 +995,11 @@ const $_paste = (state: any): void => {
 const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
   return new Promise<void>(resolve => {
     $_log('Render whiteboard')
-    const whiteboardElements = _.sortBy(state.whiteboard.whiteboardElements, (w: any) => `${w.element.index}-${w.element.uuid}`)
-    let deserializeCount = 0
+    const whiteboardElements = state.whiteboard.whiteboardElements
+    const objects: any[] = []
     const done = () => {
       return new Promise<void>(resolve => {
+        _.each(_.sortBy(objects, (object: any) => object.index), o => p.$canvas.add(o))
         // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
         if (state.disableAll) {
           p.$canvas.discardActiveObject()
@@ -1011,15 +1013,16 @@ const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
       })
     }
     if (redrawElements && whiteboardElements.length) {
+      const promises: any[] = []
       _.each(whiteboardElements, (whiteboardElement: any) => {
-        $_deserializeElement(state, whiteboardElement.element).then((e: any) => {
-          deserializeCount++
-          p.$canvas.insertAt(e, whiteboardElement.element.index, false)
-          if (deserializeCount === whiteboardElements.length) {
-            done().then(resolve)
-          }
-        })
+        promises.push(new Promise<void>((resolve: any) => {
+          $_deserializeElement(state, whiteboardElement.element).then((object: any) => {
+            objects.push(object)
+            resolve()
+          })
+        }))
       })
+      Promise.all(promises).then(() => done().then(resolve))
     } else {
       done().then(resolve)
     }
