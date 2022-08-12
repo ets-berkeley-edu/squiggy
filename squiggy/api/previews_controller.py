@@ -117,7 +117,6 @@ def _update_asset_preview(metadata, params):
             emit(
                 'upsert_whiteboard_elements',
                 [whiteboard_element],
-                include_self=False,
                 namespace=SOCKET_IO_NAMESPACE,
                 to=get_socket_io_room(whiteboard_element['whiteboardId']),
             )
