@@ -25,16 +25,16 @@ const getArg = (flag: string) => {
   const index = args.indexOf(flag)
   return (index > -1 && index < args.length - 1) ? args[index + 1] : null
 }
+
 const baseDir = getArg('-b')
-const verbose = _.trim(getArg('-v'))
+const deserializedElements: any[] = []
+const elements = require(getArg('-w'))
 const pngFile = getArg('-p')
-let elements = require(getArg('-w'))
+const verbose = _.trim(getArg('-v'))
 
 if (!baseDir || !pngFile || !elements) {
   throw new Error('Required arg(s) are missing. baseDir=' + baseDir + '; pngFile=' + pngFile + '; elements=' + elements + ';')
 }
-
-elements = _.sortBy(elements, (e: any) => `${e.index}-${e.uuid}`)
 
 // Initialize fabric
 fabric.nodeCanvas.registerFont(`${baseDir}/dist/static/fonts/HelveticaNeueuLight.ttf`, {
@@ -51,11 +51,9 @@ let top = Number.MAX_VALUE
 let right = Number.MIN_VALUE
 let bottom = Number.MIN_VALUE
 
-let deserializedElements: any[] = []
-
 $_log('Begin')
 
-let countProcessed = 0
+const promises: any[] = []
 
 _.each(elements, (element: any) => {
   // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
@@ -65,23 +63,22 @@ _.each(elements, (element: any) => {
   }
   // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
   const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
-  $_createFabricObject(element, type).then((e: any) => {
-    $_log(`${_.capitalize(e.type)} element deserialized (uuid: ${e.uuid})`, false)
-    deserializedElements.push(e)
-    const bound = e.getBoundingRect()
-    // The values below determine canvas size during render.
-    left = Math.min(left, bound.left)
-    top = Math.min(top, bound.top)
-    right = Math.max(right, bound.left + bound.width)
-    bottom = Math.max(bottom, bound.top + bound.height)
-
-    countProcessed++
-    $_log(`Processed ${countProcessed} of ${elements.length}`)
-    if (countProcessed === elements.length) {
-      $_render()
-    }
-  })
+  promises.push(new Promise<void>((resolve: any) => {
+    $_createFabricObject(element, type).then((e: any) => {
+      $_log(`${_.capitalize(e.type)} element deserialized (uuid: ${e.uuid})`, false)
+      deserializedElements.push(e)
+      const bound = e.getBoundingRect()
+      // The values below determine canvas size during render.
+      left = Math.min(left, bound.left)
+      top = Math.min(top, bound.top)
+      right = Math.max(right, bound.left + bound.width)
+      bottom = Math.max(bottom, bound.top + bound.height)
+      resolve()
+    })
+  }))
 })
+
+Promise.all(promises).then(() => $_render())
 
 function $_createFabricObject(element, type) {
   return new Promise<any>(resolve => {
@@ -138,15 +135,9 @@ function $_render() {
   // Render canvas AFTER all elements have been added. This is significantly faster
   canvas.renderOnAddRemove = false
 
-  deserializedElements = _.sortBy(deserializedElements, (e: any) => `${e.index}-${e.uuid}`)
-
-  // Add each element to the canvas
-  _.each(deserializedElements, (deserializedElement: any, index: number) => {
-    canvas.add(deserializedElement)
-    if (index + 1 === deserializedElements.length) {
-      canvas.renderAll()
-      canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
-      $_log('Done.')
-    }
-  })
+  // Add elements to the canvas
+  _.each(_.sortBy(deserializedElements, (e: any) => e.index), o => canvas.add(o))
+  canvas.renderAll()
+  canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
+  $_log('Done.')
 }
