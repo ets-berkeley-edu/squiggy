@@ -26,6 +26,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import json
 
 from flask import current_app as app, request
+from flask_socketio import emit
+from squiggy.api.api_util import get_socket_io_room
 from squiggy.lib.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.previews import verify_preview_service_authorization
@@ -33,6 +35,8 @@ from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 from squiggy.models.asset import Asset
 from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_element import WhiteboardElement
+from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 
 @app.route('/api/previews/callback', methods=['POST'])
@@ -85,10 +89,37 @@ def _update_asset_preview(metadata, params):
     if not asset:
         raise BadRequestError(f'Asset {asset_id} not found.')
 
-    return asset.update_preview(
+    asset_image_url = params.get('image')
+
+    if not asset.update_preview(
         preview_status=params.get('status'),
         thumbnail_url=params.get('thumbnail'),
-        image_url=params.get('image'),
+        image_url=asset_image_url,
         pdf_url=params.get('pdf'),
         metadata=metadata,
-    )
+    ):
+        return False
+
+    # If the asset appears in any live whiteboards, update via socketio.
+    for whiteboard_element in WhiteboardElement.get_live_asset_usages(asset_id):
+        element = whiteboard_element['element']
+        if element.get('src') != asset_image_url:
+            element['src'] = asset_image_url
+            w = WhiteboardElement.update(
+                asset_id=asset_id,
+                element=element,
+                uuid=whiteboard_element['uuid'],
+                whiteboard_id=whiteboard_element['whiteboardId'],
+            )
+            whiteboard_element['element'] = w.element
+        if not app.config['TESTING']:
+            logger.info(f"socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_element['whiteboardId']}")
+            emit(
+                'upsert_whiteboard_elements',
+                [whiteboard_element],
+                include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
+                to=get_socket_io_room(whiteboard_element['whiteboardId']),
+            )
+
+    return True
