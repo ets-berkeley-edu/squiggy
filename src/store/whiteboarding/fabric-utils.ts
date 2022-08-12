@@ -121,7 +121,7 @@ export function moveLayer(direction: string, state: any) {
     return direction === 'back' ? elementB.index - elementA.index : elementA.index - elementB.index
   })
   const selection = p.$canvas.getActiveObject()
-  if (selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+  if (selection && selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
     p.$canvas.remove(selection)
   }
   _.each(elements, (e: any) => {
@@ -859,6 +859,7 @@ const $_initFabricPrototypes = (state: any) => {
       // If the text element is empty, it can be removed from the whiteboard canvas
       const text = element.text.trim()
       if (text) {
+        setMode('move')
         // The text element existed before. Notify the server that the element was updated
         const days_until_retirement = $_getDaysUntilRetirement()
         if (days_until_retirement === 0) {
