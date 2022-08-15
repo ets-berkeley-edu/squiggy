@@ -91,6 +91,7 @@ export default {
     tooltipText: 'Add shapes to your whiteboard'
   }),
   created() {
+    this.color = this.selected.color || constants.COLORS.black.hex
     this.shapeOptions = this.$_.clone(constants.SHAPE_OPTIONS)
   },
   beforeDestroy() {
