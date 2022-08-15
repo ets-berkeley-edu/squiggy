@@ -21,18 +21,18 @@
         id="move-layer-back-btn"
         color="primary"
         icon
-        @click="moveLayer('back')"
+        @click="changeZOrder('sendToBack')"
       >
-        <span class="sr-only">Move to back</span>
+        <span class="sr-only">Move object(s) to back</span>
         <font-awesome-icon icon="arrow-down" />
       </v-btn>
       <v-btn
         id="move-layer-front-btn"
         color="primary"
         icon
-        @click="moveLayer('front')"
+        @click="changeZOrder('bringToFront')"
       >
-        <span class="sr-only">Bring to front</span>
+        <span class="sr-only">Move object(s) to front</span>
         <font-awesome-icon icon="arrow-up" />
       </v-btn>
       <v-btn

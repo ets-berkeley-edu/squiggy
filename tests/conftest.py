@@ -237,11 +237,10 @@ def mock_whiteboard(app, db_session):
 
     student_1 = users[0]
     asset = _create_asset(app=app, course=course, users=[student_1])
-    for element in [
+    for (z_index, element) in enumerate([
         {
             'assetId': asset.id,
             'height': 600,
-            'index': 2,
             'type': 'asset',
             'uuid': str(uuid4()),
             'width': 800,
@@ -249,17 +248,24 @@ def mock_whiteboard(app, db_session):
         {
             'fill': 'rgb(0,0,0)',
             'fontSize': 14,
-            'index': 1,
-            'text': '',
+            'text': 'I am text.',
             'type': 'text',
             'uuid': str(uuid4()),
         },
-    ]:
+        {
+            'fill': 'rgb(0,0,0)',
+            'fontSize': 14,
+            'text': 'What are words for?',
+            'type': 'text',
+            'uuid': str(uuid4()),
+        },
+    ]):
         WhiteboardElement.create(
             asset_id=element.get('assetId'),
             element=element,
             uuid=element['uuid'],
             whiteboard_id=whiteboard['id'],
+            z_index=z_index,
         )
         std_commit(allow_test_environment=True)
 

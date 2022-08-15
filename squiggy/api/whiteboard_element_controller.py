@@ -46,24 +46,34 @@ from squiggy.sockets import SOCKET_IO_NAMESPACE
 @login_required
 def order_whiteboard_elements():
     params = request.form or request.get_json()
+    direction = params.get('direction')
     socket_id = params.get('socketId')
     uuids = params.get('uuids')
     whiteboard_id = params.get('whiteboardId')
     if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
         raise UnauthorizedRequestError('Unauthorized')
+    if not direction:
+        raise BadRequestError('direction is required')
     if not socket_id:
         raise BadRequestError('socket_id is required')
     if len(uuids or []) == 0:
         raise BadRequestError('uuids required')
 
     # Order the whiteboard_elements
-    WhiteboardElement.update_order(uuids=uuids, whiteboard_id=whiteboard_id)
+    WhiteboardElement.update_order(
+        direction=direction,
+        uuids=uuids,
+        whiteboard_id=whiteboard_id,
+    )
 
     if not app.config['TESTING']:
         logger.info(f'socketio: Emit order_whiteboard_elements where uuids = {uuids}')
         emit(
             'order_whiteboard_elements',
-            uuids,
+            {
+                'direction': direction,
+                'uuids': uuids,
+            },
             include_self=False,
             namespace=SOCKET_IO_NAMESPACE,
             skip_sid=socket_id,
@@ -74,7 +84,7 @@ def order_whiteboard_elements():
         user_id=current_user.user_id,
         whiteboard_id=whiteboard_id,
     )
-    return tolerant_jsonify(uuids)
+    return tolerant_jsonify({'message': 'Success'})
 
 
 @app.route('/api/whiteboard_elements/upsert', methods=['POST'])
@@ -90,18 +100,35 @@ def upsert_whiteboard_elements():
     if not socket_id:
         raise BadRequestError('socket_id is required')
 
+    queue_for_preview_image = False
+    all_existing_whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id)
     results = []
     for whiteboard_element in whiteboard_elements:
         element = whiteboard_element.get('element') if whiteboard_element else None
         ignore = not element or (element.get('type') == 'i-text' and not element.get('text', '').strip())
         if ignore:
             continue
-        upserted = _upsert_whiteboard_element(
-            whiteboard_id=whiteboard_id,
-            whiteboard_element=whiteboard_element,
-        )
-        if upserted:
-            results.append(upserted)
+        queue_for_preview_image = True
+        if WhiteboardElement.get_id_per_uuid(whiteboard_element.get('uuid')):
+            upserted = _update_whiteboard_element(
+                whiteboard_element=whiteboard_element,
+                whiteboard_id=whiteboard_id,
+            )
+        else:
+            if len(all_existing_whiteboard_elements):
+                next_available_z_index = max([w.z_index for w in all_existing_whiteboard_elements]) + 1
+            else:
+                next_available_z_index = 0
+            upserted = _create_whiteboard_element(
+                asset_id=whiteboard_element.get('assetId'),
+                element=element,
+                whiteboard_id=whiteboard_id,
+                z_index=next_available_z_index,
+            )
+            next_available_z_index += 1
+        results.append(upserted)
+    if queue_for_preview_image:
+        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
     if not app.config['TESTING']:
         logger.info(f'socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_id} AND socket_id = {socket_id}')
         emit(
@@ -157,18 +184,19 @@ def delete_whiteboard_element(whiteboard_id, uuid):
     return tolerant_jsonify(uuid)
 
 
-def _create_whiteboard_element(whiteboard_element, whiteboard_id):
-    if not whiteboard_element:
-        raise BadRequestError('Whiteboard element required')
-
-    _validate_whiteboard_element(whiteboard_element)
-    asset_id = whiteboard_element.get('assetId')
-    element = whiteboard_element['element']
+def _create_whiteboard_element(
+    asset_id,
+    element,
+    whiteboard_id,
+    z_index,
+):
+    _validate_fabricjs_element(element)
     whiteboard_element = WhiteboardElement.create(
         asset_id=asset_id,
         element=element,
         uuid=element['uuid'],
         whiteboard_id=whiteboard_id,
+        z_index=z_index,
     )
     if asset_id:
         asset = Asset.find_by_id(asset_id)
@@ -178,6 +206,7 @@ def _create_whiteboard_element(whiteboard_element, whiteboard_id):
                 element=element,
                 element_asset_id=element.get('assetId'),
                 uuid=element['uuid'],
+                z_index=z_index,
             )
             user_id = current_user.user_id
             if user_id not in [user.id for user in asset.users]:
@@ -202,29 +231,13 @@ def _create_whiteboard_element(whiteboard_element, whiteboard_id):
     return whiteboard_element.to_api_json()
 
 
-def _upsert_whiteboard_element(whiteboard_element, whiteboard_id):
-    if WhiteboardElement.get_id_per_uuid(whiteboard_element['uuid']):
-        whiteboard_element = _update_whiteboard_element(
-            whiteboard_element=whiteboard_element,
-            whiteboard_id=whiteboard_id,
-        )
-    else:
-        whiteboard_element = _create_whiteboard_element(
-            whiteboard_element=whiteboard_element,
-            whiteboard_id=whiteboard_id,
-        )
-    if whiteboard_element:
-        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
-    return whiteboard_element
-
-
 def _update_whiteboard_element(whiteboard_element, whiteboard_id):
     if not whiteboard_element:
         raise BadRequestError('Element required')
 
-    _validate_whiteboard_element(whiteboard_element, True)
-
     element = whiteboard_element['element']
+    _validate_fabricjs_element(element, True)
+
     result = WhiteboardElement.update(
         asset_id=whiteboard_element.get('assetId'),
         element=element,
@@ -235,8 +248,7 @@ def _update_whiteboard_element(whiteboard_element, whiteboard_id):
         return result.to_api_json()
 
 
-def _validate_whiteboard_element(whiteboard_element, is_update=False):
-    element = whiteboard_element['element']
+def _validate_fabricjs_element(element, is_update=False):
     error_message = None
     if element['type'] == 'i-text' and not safe_strip(element.get('text')):
         error_message = f'Invalid Fabric i-text element: {element}.'

@@ -164,17 +164,19 @@ class TestUpsertWhiteboardElement:
             assert updated_whiteboard_element['element']['fill'] == updated_fill
 
 
-class TestOrderUpsertWhiteboards:
+class TestOrderWhiteboardElements:
 
     @classmethod
     def _api_order_whiteboard_elements(
             cls,
             client,
+            direction,
             uuids,
             whiteboard_id,
             expected_status_code=200,
     ):
         params = {
+            'direction': direction,
             'socketId': _get_mock_socket_id(),
             'uuids': uuids,
             'whiteboardId': whiteboard_id,
@@ -187,56 +189,111 @@ class TestOrderUpsertWhiteboards:
         assert response.status_code == expected_status_code
         return response.json
 
-    def test_anonymous_create(self, client, mock_whiteboard):
+    def test_anonymous(self, client, mock_whiteboard):
         """Denies anonymous user."""
+        uuids = [mock_whiteboard['whiteboardElements'][0]['uuid']]
         self._api_order_whiteboard_elements(
             client=client,
+            direction='bringToFront',
             expected_status_code=401,
-            uuids=[e['uuid'] for e in mock_whiteboard['whiteboardElements']],
+            uuids=uuids,
             whiteboard_id=mock_whiteboard['id'],
         )
 
-    def test_unauthorized_create(self, client, fake_auth, mock_whiteboard):
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         user_id = _get_non_collaborator_user_id(mock_whiteboard)
         fake_auth.login(user_id)
+        uuids = [mock_whiteboard['whiteboardElements'][0]['uuid']]
         self._api_order_whiteboard_elements(
             client=client,
+            direction='bringToFront',
             expected_status_code=401,
-            uuids=[e['uuid'] for e in mock_whiteboard['whiteboardElements']],
+            uuids=uuids,
             whiteboard_id=mock_whiteboard['id'],
         )
 
-    @mock_s3
-    def test_authorized_create(self, app, client, fake_auth, mock_whiteboard):
-        """Authorized user orders whiteboard elements."""
-        with mock_s3_bucket(app):
-            user_id = _get_authorized_user_id(mock_whiteboard)
-            fake_auth.login(user_id)
-            whiteboard_id = mock_whiteboard['id']
-            api_json = _api_get_whiteboard(client, whiteboard_id)
+    def test_bring_element_to_front(self, client, fake_auth, mock_whiteboard):
+        """Authorized user can 'bringToFront' a single whiteboard element."""
+        self._verify_whiteboard_element_order(
+            client=client,
+            direction='bringToFront',
+            fake_auth=fake_auth,
+            selected_uuids=[mock_whiteboard['whiteboardElements'][1]['uuid']],
+            whiteboard=mock_whiteboard,
+        )
 
-            previous_index = -1
-            uuids = []
-            # Assert that /api/whiteboard/<id> returns elements ordered by index.
-            for whiteboard_element in api_json['whiteboardElements']:
-                next_index = whiteboard_element['element']['index']
-                assert next_index > previous_index
-                previous_index = next_index
-                uuids.append(whiteboard_element['uuid'])
+    def test_bring_elements_to_front(self, client, fake_auth, mock_whiteboard):
+        """Authorized user can 'bringToFront' multiple whiteboard elements."""
+        whiteboard_elements = mock_whiteboard['whiteboardElements']
+        whiteboard_elements = sorted(whiteboard_elements, key=lambda w: w['zIndex'])
+        selected_uuids = [w['uuid'] for w in filter(lambda w: w['zIndex'] in [0, 2], whiteboard_elements)]
+        assert len(selected_uuids) == 2
+        self._verify_whiteboard_element_order(
+            client=client,
+            direction='bringToFront',
+            fake_auth=fake_auth,
+            selected_uuids=selected_uuids,
+            whiteboard=mock_whiteboard,
+        )
 
-            assert len(uuids) > 1
-            # Move first element to the end of the list
-            uuids.append(uuids.pop(0))
+    def test_send_element_to_back(self, client, fake_auth, mock_whiteboard):
+        """Authorized user can 'bringToFront' a single whiteboard element."""
+        self._verify_whiteboard_element_order(
+            client=client,
+            direction='sendToBack',
+            fake_auth=fake_auth,
+            selected_uuids=[mock_whiteboard['whiteboardElements'][1]['uuid']],
+            whiteboard=mock_whiteboard,
+        )
 
-            self._api_order_whiteboard_elements(
-                client=client,
-                uuids=uuids,
-                whiteboard_id=whiteboard_id,
-            )
-            api_json = _api_get_whiteboard(client, whiteboard_id)
-            ordered_uuids = [e['uuid'] for e in api_json['whiteboardElements']]
-            assert ordered_uuids == uuids
+    def test_send_elements_to_back(self, app, client, fake_auth, mock_whiteboard):
+        """Authorized user can 'sendToBack' multiple whiteboard elements."""
+        whiteboard_elements = mock_whiteboard['whiteboardElements']
+        whiteboard_elements = sorted(whiteboard_elements, key=lambda w: w['zIndex'])
+        selected_uuids = [w['uuid'] for w in filter(lambda w: w['zIndex'] in [1, 2], whiteboard_elements)]
+        assert len(selected_uuids) == 2
+        self._verify_whiteboard_element_order(
+            client=client,
+            direction='sendToBack',
+            fake_auth=fake_auth,
+            selected_uuids=selected_uuids,
+            whiteboard=mock_whiteboard,
+        )
+
+    def _verify_whiteboard_element_order(
+            self,
+            client,
+            direction,
+            fake_auth,
+            selected_uuids,
+            whiteboard,
+    ):
+        user_id = _get_authorized_user_id(whiteboard)
+        fake_auth.login(user_id)
+        whiteboard_id = whiteboard['id']
+        # Cherry-pick UUIDs for the re-order operation.
+        whiteboard_elements = whiteboard['whiteboardElements']
+        whiteboard_elements = sorted(whiteboard_elements, key=lambda w: w['zIndex'])
+        other_uuids = [w['uuid'] for w in filter(lambda w: w['uuid'] not in selected_uuids, whiteboard_elements)]
+
+        self._api_order_whiteboard_elements(
+            client=client,
+            direction=direction,
+            uuids=selected_uuids,
+            whiteboard_id=whiteboard_id,
+        )
+        api_json = _api_get_whiteboard(client, whiteboard_id)
+        # Verify that the /whiteboard/:id API is returning ordered elements.
+        whiteboard_elements = api_json['whiteboardElements']
+        uuids = [w['uuid'] for w in whiteboard_elements]
+        uuids_sorted = [w['uuid'] for w in sorted(whiteboard_elements, key=lambda w: w['zIndex'])]
+        assert uuids == uuids_sorted
+        # Verify
+        if direction == 'bringToFront':
+            assert uuids == (other_uuids + selected_uuids)
+        elif direction == 'sendToBack':
+            assert uuids == (selected_uuids + other_uuids)
 
 
 def _get_authorized_user_id(whiteboard):

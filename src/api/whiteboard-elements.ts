@@ -5,10 +5,15 @@ export function deleteWhiteboardElement(socketId: string, uuid: string, whiteboa
   return axios.delete(`${utils.apiBaseUrl()}/api/whiteboard/${whiteboardId}/element/${uuid}/delete?socketId=${socketId}`)
 }
 
-export function updateWhiteboardElementsOrder(socketId: string, uuids: string[], whiteboardId: number) {
+export function updateWhiteboardElementsOrder(
+    direction: string,
+    socketId: string,
+    uuids: string[],
+    whiteboardId: number
+) {
   return axios.post(
     `${utils.apiBaseUrl()}/api/whiteboard_elements/order`,
-    {socketId, uuids, whiteboardId}
+    {direction, socketId, uuids, whiteboardId}
   )
 }
 

@@ -9,7 +9,7 @@ import {
   afterChangeMode,
   deleteActiveElements,
   initialize,
-  moveLayer,
+  changeZOrder,
   setCanvasDimensions,
   updatePreviewImage,
   zoom
@@ -72,13 +72,13 @@ const getters = {
 
 const mutations = {
   addAssets: (state: any, assets: any[]) => addAssets(assets, state),
+  changeZOrder: (state: any, direction: string) => changeZOrder(direction, state),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   fitToScreen: (state: any) => {
     state.isFitToScreen = true
     setCanvasDimensions(state)
   },
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
-  moveLayer: (state: any, direction: string) => moveLayer(direction, state),
   onJoin: (state: any, userId: string) => {
     _.each(state.whiteboard.users, user => {
       if (user.id === userId) {
@@ -207,6 +207,7 @@ const actions = {
       resolve()
     })
   },
+  changeZOrder: ({commit}, direction: string) => commit('changeZOrder', direction),
   deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
   deleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
@@ -234,7 +235,6 @@ const actions = {
       })
     })
   },
-  moveLayer: ({commit}, direction: string) => commit('moveLayer', direction),
   onJoin: ({commit}, userId: number) => commit('onJoin', userId),
   onWhiteboardUpdate: ({commit}, whiteboard: any) => {
     return new Promise<void>(resolve => {

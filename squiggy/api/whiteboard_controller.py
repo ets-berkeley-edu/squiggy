@@ -108,6 +108,7 @@ def export_as_asset(whiteboard_id):
                     element=element,
                     element_asset_id=element.get('assetId'),
                     uuid=element['uuid'],
+                    z_index=whiteboard_element.z_index,
                 )
             return tolerant_jsonify(Asset.find_by_id(asset_id=asset.id).to_api_json())
         else:
