@@ -248,7 +248,9 @@ class TestExportAsAsset:
                 'uuid': uuid,
             },
             uuid=uuid,
-            whiteboard_id=whiteboard['id'])
+            whiteboard_id=whiteboard['id'],
+            z_index=len(whiteboard['whiteboardElements']),
+        )
         std_commit(allow_test_environment=True)
         with mock_s3_bucket(app):
             api_json = self._api_export(

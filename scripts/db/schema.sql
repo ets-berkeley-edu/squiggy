@@ -182,7 +182,8 @@ CREATE TABLE asset_whiteboard_elements (
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
     asset_id integer NOT NULL,
-    element_asset_id integer
+    element_asset_id integer,
+    z_index integer NOT NULL
 );
 
 ALTER TABLE ONLY asset_whiteboard_elements
@@ -386,6 +387,7 @@ CREATE TABLE whiteboard_elements (
     element json NOT NULL,
     whiteboard_id integer NOT NULL,
     asset_id integer,
+    z_index integer NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );

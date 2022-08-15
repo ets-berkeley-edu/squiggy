@@ -23,10 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy import and_, ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql import text
+from sqlalchemy.sql import asc, text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.asset import Asset
@@ -42,6 +42,7 @@ class WhiteboardElement(Base):
     element = db.Column('element', JSONB, nullable=False)
     uuid = db.Column('uuid', db.String(255), nullable=False)
     whiteboard_id = db.Column('whiteboard_id', Integer, ForeignKey('whiteboards.id'), nullable=False)
+    z_index = db.Column('z_index', Integer, nullable=False)
 
     __table_args__ = (db.UniqueConstraint(
         'created_at',
@@ -56,11 +57,13 @@ class WhiteboardElement(Base):
             element,
             uuid,
             whiteboard_id,
+            z_index,
     ):
         self.asset_id = asset_id
         self.element = element
         self.uuid = uuid
         self.whiteboard_id = whiteboard_id
+        self.z_index = z_index
 
     @classmethod
     def find_by_uuid(cls, uuid, whiteboard_id):
@@ -90,7 +93,7 @@ class WhiteboardElement(Base):
         return [r.to_api_json() for r in query.all()]
 
     @classmethod
-    def create(cls, element, uuid, whiteboard_id, asset_id=None):
+    def create(cls, element, uuid, whiteboard_id, z_index, asset_id=None):
         # Ensure consistent uuid.
         element['uuid'] = uuid
 
@@ -99,6 +102,7 @@ class WhiteboardElement(Base):
             element=element,
             uuid=uuid,
             whiteboard_id=whiteboard_id,
+            z_index=z_index,
         )
         db.session.add(whiteboard_element)
         std_commit()
@@ -124,14 +128,31 @@ class WhiteboardElement(Base):
             return whiteboard_element
 
     @classmethod
-    def update_order(cls, uuids, whiteboard_id):
-        whiteboard_elements = cls.query.filter(and_(cls.whiteboard_id == whiteboard_id, cls.uuid.in_(uuids))).all()
-        for (index, uuid) in enumerate(uuids):
-            whiteboard_element = next(filter(lambda w: w.uuid == uuid, whiteboard_elements), None)
-            if whiteboard_element:
-                whiteboard_element.element['index'] = index
-                flag_modified(whiteboard_element, 'element')
-                std_commit()
+    def update_order(cls, direction, uuids, whiteboard_id):
+        whiteboard_elements = cls.query.filter(cls.whiteboard_id == whiteboard_id).order_by(asc(cls.z_index)).all()
+        selected = list(filter(lambda w: w.uuid in uuids, whiteboard_elements))
+        others = list(filter(lambda w: w.uuid not in uuids, whiteboard_elements))
+        z_index = 0
+        if direction == 'bringForward':
+            # TODO: Implement this if customer convinces us to expand the layering feature.
+            pass
+        elif direction == 'bringToFront':
+            for whiteboard_element in others:
+                whiteboard_element.z_index = z_index
+                z_index += 1
+            for whiteboard_element in selected:
+                whiteboard_element.z_index = z_index
+                z_index += 1
+        elif direction == 'sendToBack':
+            for whiteboard_element in selected:
+                whiteboard_element.z_index = z_index
+                z_index += 1
+            for whiteboard_element in others:
+                whiteboard_element.z_index = z_index
+                z_index += 1
+        elif direction == 'sendBackwards':
+            # TODO: Implement this if customer convinces us to expand the layering feature.
+            pass
 
     def to_api_json(self):
         # Correct any out-of-sync uuid surprises.
@@ -147,4 +168,5 @@ class WhiteboardElement(Base):
             'updatedAt': isoformat(self.updated_at),
             'uuid': self.uuid,
             'whiteboardId': self.whiteboard_id,
+            'zIndex': self.z_index,
         }

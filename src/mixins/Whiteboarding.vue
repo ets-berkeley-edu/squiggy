@@ -35,11 +35,11 @@ export default {
   methods: {
     ...mapActions('whiteboarding', [
       'addAssets',
+      'changeZOrder',
       'deleteActiveElements',
       'deleteWhiteboard',
       'fitToScreen',
       'init',
-      'moveLayer',
       'onWhiteboardUpdate',
       'refreshWhiteboard',
       'resetSelected',

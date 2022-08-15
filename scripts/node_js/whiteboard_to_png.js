@@ -137,7 +137,7 @@ const generatePng = (whiteboardElements, callback) => {
   let bottom = Number.MIN_VALUE
 
   // A variable that will keep track of all the deserialized elements in the whiteboard
-  const deserializedElements = []
+  const deserialized = []
 
   const render = _.after(whiteboardElements.length, function() {
     // At this point we've figured out what the left-most and right-most element is. By subtracting
@@ -159,7 +159,8 @@ const generatePng = (whiteboardElements, callback) => {
       width = width * scaleFactor
       height = height * scaleFactor
       // Next, scale and reposition each element against top left corner of the canvas.
-      _.each(deserializedElements, function(element) {
+      _.each(deserialized, function(object) {
+        const element = object.element
         element.scaleX = element.scaleX * scaleFactor
         element.scaleY = element.scaleY * scaleFactor
         element.left = left + ((element.left - left) * scaleFactor)
@@ -182,14 +183,7 @@ const generatePng = (whiteboardElements, callback) => {
 
     // Once all elements have been added to the canvas, restore
     // the layer order and convert to PNG
-    const finishRender = _.after(deserializedElements.length, function() {
-      // Ensure each element is placed at the right index. This can only happen
-      // once all elements have been added to the canvas
-      canvas.getObjects().sort(function(elementA, elementB) {
-        return elementA.index - elementB.index
-      })
-
-      // Render the canvas
+    const finishRender = _.after(deserialized.length, function() {
       canvas.renderAll()
 
       const dimensions = {
@@ -204,8 +198,9 @@ const generatePng = (whiteboardElements, callback) => {
     })
 
     // Add each element to the canvas
-    _.each(deserializedElements, function(deserializedElement) {
-      canvas.add(deserializedElement)
+    const sorted = _.sortBy(deserialized, object => object.zIndex)
+    _.each(sorted, function(object) {
+      canvas.add(object.element)
       finishRender()
     })
   })
@@ -228,8 +223,8 @@ const generatePng = (whiteboardElements, callback) => {
       bottom = Math.max(bottom, bound.top + bound.height)
 
       // Retain a reference to the deserialized elements. This allows for moving each element
-      // to the right index once all alements have been added to the canvas
-      deserializedElements.push(deserializedElement)
+      // to the right z-index once all elements have been added to the canvas
+      deserialized.push({element: deserializedElement, zIndex: whiteboardElement.zIndex})
 
       render()
     })

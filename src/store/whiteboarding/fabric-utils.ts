@@ -26,7 +26,6 @@ export function addAssets(assets: any[], state: any) {
       }
       fabric.Image.fromURL(imageUrl, (element: any) => {
         element.assetId = asset.id
-        element.index = $_getMaxElementIndex() + 1
         element.src = imageUrl
         element.uuid = uuidv4()
         const zoomLevel = p.$canvas.getZoom()
@@ -113,37 +112,30 @@ export function initialize(state: any) {
   })
 }
 
-export function moveLayer(direction: string, state: any) {
-  $_log('Move layer')
-  // Send selected element(s) to either the front or the back.
-  const elements: any[] = $_getActiveObjects()
-  // Sort selected elements by position such that they are in the same order when moved to back or front.
-  elements.sort((elementA: any, elementB: any) => {
-    return direction === 'back' ? elementB.index - elementA.index : elementA.index - elementB.index
-  })
-  const selection = p.$canvas.getActiveObject()
-  if (selection && selection.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-    p.$canvas.remove(selection)
-  }
-  _.each(elements, (e: any) => {
-    if (e.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-      p.$canvas.remove(e)
-    } else {
-      const element:any = $_getCanvasElement(e.uuid)
+export function changeZOrder(direction: string, state: any) {
+  $_log('Change z-order')
+  const uuids: string[] = []
+  _.each($_getActiveObjects(), (e: any) => {
+    if (e.type !== constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+      const uuid: string = e.uuid
+      const element:any = $_getCanvasElement(uuid)
       if (element) {
-        if (direction === 'back') {
-          element.index = $_getMinElementIndex() - 1
-          p.$canvas.sendToBack(element)
-        } else if (direction === 'front') {
-          element.index = $_getMaxElementIndex() + 1
+        uuids.push(uuid)
+        if (direction === 'bringToFront') {
           p.$canvas.bringToFront(element)
+        } else if (direction === 'sendToBack') {
+          p.$canvas.sendToBack(element)
         }
       }
     }
   })
   const apiCall = () => {
-    const uuids: string[] = _.map(p.$canvas.getObjects(), 'uuid')
-    updateWhiteboardElementsOrder(p.$socket.id, uuids, state.whiteboard.id).then(() => p.$canvas.requestRenderAll())
+    updateWhiteboardElementsOrder(
+        direction,
+        p.$socket.id,
+        uuids,
+        state.whiteboard.id
+    ).then(_.noop)
   }
   $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
 }
@@ -278,7 +270,7 @@ const $_addCanvasListeners = (state: any) => {
 
   p.$canvas.on('object:modified', (event: any) => {
     $_setModifyingElement(false)
-    moveLayer('front', state)
+    changeZOrder('bringToFront', state)
     // Ensure that none of the modified objects are positioned off-screen.
     $_ensureWithinCanvas(event.target)
     const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
@@ -346,7 +338,6 @@ const $_addCanvasListeners = (state: any) => {
       const shape = new fabric[state.selected.shape]({
         fill: state.selected.fill,
         height: 10,
-        index: $_getMaxElementIndex() + 1,
         isHelper: true,
         left: state.startShapePointer.x,
         originX: 'left',
@@ -366,7 +357,6 @@ const $_addCanvasListeners = (state: any) => {
         fontFamily: 'Helvetica',
         fontSize: state.selected.fontSize || constants.TEXT_SIZE_OPTIONS[0].value,
         height: 100,
-        index: $_getMaxElementIndex() + 1,
         left: textPointer.x,
         text: '',
         selectable: true,
@@ -625,7 +615,6 @@ const $_addViewportListeners = (state: any) => {
         } else if (event.keyCode === 67 && event.metaKey) {
           // Copy
           p.$canvas.getActiveObject().clone(clone => {
-            clone.index = $_getMaxElementIndex() + 1
             store.dispatch('whiteboarding/setClipboard', clone).then(_.noop)
           })
         } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
@@ -800,10 +789,6 @@ const $_getDaysUntilRetirement = () => {
 
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
-const $_getMaxElementIndex = () => _.max(_.map(p.$canvas.getObjects(), 'index'))
-
-const $_getMinElementIndex = () => _.min(_.map(p.$canvas.getObjects(), 'index'))
-
 const $_initCanvas = (state: any) => {
   $_log('Init canvas')
   // Ensure that the horizontal and vertical origins of objects are set to center.
@@ -836,12 +821,10 @@ const $_initFabricPrototypes = (state: any) => {
     // uniquely identifies an object on the canvas, as well as a property containing the index
     // of the object relative to the other items on the canvas.
     return function() {
-      const index = _.isNil(this.index) ? $_getMaxElementIndex() + 1 : this.index
       const extras = {
         assetId: this.assetId,
         fontFamily: this.fontFamily,
         height: this.height,
-        index,
         isHelper: this.isHelper,
         radius: this.radius,
         text: this.text,
@@ -999,7 +982,7 @@ const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
     const objects: any[] = []
     const done = () => {
       return new Promise<void>(resolve => {
-        _.each(_.sortBy(objects, (object: any) => object.index), o => p.$canvas.add(o))
+        _.each(_.sortBy(objects, (object: any) => object.zIndex), o => p.$canvas.add(o.element))
         // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
         if (state.disableAll) {
           p.$canvas.discardActiveObject()
@@ -1016,8 +999,8 @@ const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
       const promises: any[] = []
       _.each(whiteboardElements, (whiteboardElement: any) => {
         promises.push(new Promise<void>((resolve: any) => {
-          $_deserializeElement(state, whiteboardElement.element).then((object: any) => {
-            objects.push(object)
+          $_deserializeElement(state, whiteboardElement.element).then((deserialized: any) => {
+            objects.push({element: deserialized, zIndex: whiteboardElement.zIndex})
             resolve()
           })
         }))

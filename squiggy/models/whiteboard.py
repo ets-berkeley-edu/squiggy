@@ -297,6 +297,7 @@ class Whiteboard(Base):
                 element=a.element,
                 uuid=str(uuid4()),
                 whiteboard_id=whiteboard_id,
+                z_index=a.z_index,
             )
         # If user is remixing their own whiteboard then no 'activity' is created.
         user_id = user.id
@@ -401,11 +402,6 @@ def _get_whiteboards_where_clause(
 
 
 def _get_sorted_whiteboard_elements(whiteboard_id):
-    def _get_element_sort_key(whiteboard_element):
-        index = whiteboard_element['element'].get('index') or 0
-        uuid = whiteboard_element['element']['uuid']
-        return f'{index}-{uuid}'
-
     whiteboard_elements = [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
-    whiteboard_elements.sort(key=_get_element_sort_key)
+    whiteboard_elements.sort(key=lambda w: w['zIndex'])
     return whiteboard_elements

@@ -37,11 +37,13 @@ class AssetWhiteboardElement(Base):
     element = db.Column(JSONB, nullable=False)
     element_asset_id = db.Column(Integer, ForeignKey('assets.id'))
     uuid = db.Column(db.String(255), nullable=False, primary_key=True)
+    z_index = db.Column('z_index', Integer, nullable=False)
 
     def __init__(
             self,
             element,
             uuid,
+            z_index,
             asset_id=None,
             element_asset_id=None,
     ):
@@ -49,6 +51,7 @@ class AssetWhiteboardElement(Base):
         self.element = element
         self.element_asset_id = element_asset_id
         self.uuid = uuid
+        self.z_index = z_index
 
     @classmethod
     def upsert(
@@ -57,6 +60,7 @@ class AssetWhiteboardElement(Base):
             element,
             element_asset_id,
             uuid,
+            z_index,
     ):
         existing = cls.query.filter_by(asset_id=asset_id, uuid=uuid).first()
         if existing:
@@ -69,6 +73,7 @@ class AssetWhiteboardElement(Base):
                     element=element,
                     element_asset_id=element_asset_id,
                     uuid=uuid,
+                    z_index=z_index,
                 ),
             )
         std_commit()
@@ -88,4 +93,5 @@ class AssetWhiteboardElement(Base):
             'element': self.element,
             'elementAssetId': self.element_asset_id,
             'uuid': self.uuid,
+            'zIndex': self.z_index,
         }
