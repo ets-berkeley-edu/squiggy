@@ -524,11 +524,23 @@ const $_addSocketListeners = (state: any) => {
     $_log(`socket.on leave: user_id = ${userId}`)
   })
 
-  p.$socket.on('order_whiteboard_elements', (uuids: string[]) => {
-    _.each(uuids, (uuid: string, index: number) => {
+  p.$socket.on('order_whiteboard_elements', (summary: any) => {
+    const objects = []
+    _.each(summary.uuids, (uuid: string) => {
       const object = $_getCanvasElement(uuid)
-      p.$canvas.moveTo(object, index)
+      if (object) {
+        objects.push(object)
+      }
     })
+    if (objects.length) {
+      const group = new fabric.Group(objects)
+      if (summary.direction === 'bringToFront') {
+        p.$canvas.bringToFront(group)
+      } else if (summary.direction === 'sendToBack') {
+        p.$canvas.sendToBack(group)
+      }
+      p.$canvas.requestRenderAll()
+    }
     $_log('socket.on order_whiteboard_elements')
   })
 
