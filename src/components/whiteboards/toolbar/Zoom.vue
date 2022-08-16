@@ -29,7 +29,7 @@
           small
           v-bind="attrs"
           v-on="on"
-          @click="fitToScreen"
+          @click="toggleFitToScreen"
         >
           <font-awesome-icon
             icon="magnifying-glass"
@@ -71,7 +71,7 @@ export default {
   }),
   computed: {
     tooltipText() {
-      return this.fitToScreen ? 'Actual size' : 'Fit to screen'
+      return this.isFitToScreen ? 'Actual size' : 'Fit to screen'
     }
   }
 }

@@ -39,9 +39,9 @@ const state = {
   categories: undefined,
   clipboard: undefined,
   disableAll: false,
-  fitToScreen: true,
   // Variable that will keep track of whether a shape is currently being drawn
   isDrawingShape: false,
+  isFitToScreen: true,
   isInitialized: false,
   // Keep track of whether the currently selected elements are in the process of being moved, scaled or rotated.
   isModifyingElement: false,
@@ -74,10 +74,6 @@ const mutations = {
   addAssets: (state: any, assets: any[]) => addAssets(assets, state),
   changeZOrder: (state: any, direction: string) => changeZOrder(direction, state),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
-  fitToScreen: (state: any) => {
-    state.isFitToScreen = true
-    setCanvasDimensions(state)
-  },
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
   onJoin: (state: any, userId: string) => {
     _.each(state.whiteboard.users, user => {
@@ -197,7 +193,11 @@ const mutations = {
     })
   },
   updateClipboard: (state: any, properties: any) => _.assignIn(state.clipboard, properties),
-  updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties)
+  updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties),
+  setIsFitToScreen: (state: any, isFitToScreen) => {
+    state.isFitToScreen = isFitToScreen
+    $_log(`isFitToScreen: ${state.isFitToScreen}`)
+  }
 }
 
 const actions = {
@@ -221,7 +221,6 @@ const actions = {
       })
     })
   },
-  fitToScreen: ({commit}) => commit('fitToScreen'),
   init: ({commit}, {whiteboard, disable}) => {
     return new Promise<void>(resolve => {
       getCategories(false).then(categories => {
@@ -256,7 +255,12 @@ const actions = {
   resetSelected: ({commit}) => commit('resetSelected'),
   setClipboard: ({commit}, object: any) => commit('setClipboard', object),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
+  setIsFitToScreen: ({commit}, isFitToScreen: boolean) => commit('setIsFitToScreen', isFitToScreen),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
+  toggleFitToScreen: ({commit, state}) => {
+    commit('setIsFitToScreen', !state.isFitToScreen)
+    setCanvasDimensions(state)
+  },
   undeleteWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       if (state.whiteboard.deletedAt) {

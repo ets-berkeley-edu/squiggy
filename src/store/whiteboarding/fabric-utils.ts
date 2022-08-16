@@ -155,8 +155,7 @@ export function setCanvasDimensions(state: any) {
   // Calculate the position of the elements that are the most right and the most bottom. When all elements fit within
   // the viewport, the canvas is made the same size as the viewport minus the toolbar. When any elements overflow the
   // viewport, the canvas is enlarged to incorporate all assets outside the viewport
-  const toolBarHeight = 72
-  const viewportHeight = state.viewport.clientHeight - toolBarHeight
+  const viewportHeight = state.viewport.clientHeight
   let maxRight = viewportWidth
   let maxBottom = viewportHeight
 
@@ -185,8 +184,8 @@ export function setCanvasDimensions(state: any) {
   const maximumSize = 4000
 
   // When the entire whiteboard content should fit within the screen, adjust the zoom level to make it fit.
-  if (state.fitToScreen) {
 
+  if (state.isFitToScreen) {
     // Zoom the canvas based on whether the height or width needs the largest zoom out.
     const widthRatio = viewportWidth / realWidth
     const heightRatio = viewportHeight / realHeight
@@ -439,12 +438,6 @@ const $_addCanvasListeners = (state: any) => {
     $_enableCanvasElements(true)
   })
 
-  p.$canvas.on('mouse:wheel', (opt: any) => {
-    $_zoom(opt.e.deltaY, {x: opt.e.offsetX, y: opt.e.offsetY})
-    opt.e.preventDefault()
-    opt.e.stopPropagation()
-  })
-
   p.$canvas.on('mouse:down', function(opt) {
     const evt = opt.e
     if (evt.altKey === true) {
@@ -452,6 +445,7 @@ const $_addCanvasListeners = (state: any) => {
       this.selection = false
       this.lastPosX = evt.clientX
       this.lastPosY = evt.clientY
+      store.dispatch('whiteboarding/setIsFitToScreen', false).then(_.noop)
     }
   })
 
@@ -464,6 +458,7 @@ const $_addCanvasListeners = (state: any) => {
       this.requestRenderAll()
       this.lastPosX = e.clientX
       this.lastPosY = e.clientY
+      store.dispatch('whiteboarding/setIsFitToScreen', false).then(_.noop)
     }
   })
 
@@ -1076,4 +1071,5 @@ const $_zoom = (delta: number, point: any) => {
   }
   p.$canvas.zoomToPoint(point, zoom)
   p.$canvas.requestRenderAll()
+  store.dispatch('whiteboarding/setIsFitToScreen', false).then(_.noop)
 }
