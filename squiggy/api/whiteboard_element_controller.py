@@ -60,7 +60,7 @@ def order_whiteboard_elements():
         raise BadRequestError('uuids required')
 
     # Order the whiteboard_elements
-    WhiteboardElement.update_order(
+    WhiteboardElement.update_z_indexes(
         direction=direction,
         uuids=uuids,
         whiteboard_id=whiteboard_id,
@@ -201,13 +201,6 @@ def _create_whiteboard_element(
     if asset_id:
         asset = Asset.find_by_id(asset_id)
         if asset:
-            AssetWhiteboardElement.upsert(
-                asset_id=asset_id,
-                element=element,
-                element_asset_id=element.get('assetId'),
-                uuid=element['uuid'],
-                z_index=z_index,
-            )
             user_id = current_user.user_id
             if user_id not in [user.id for user in asset.users]:
                 course_id = current_user.course.id

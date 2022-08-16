@@ -54,7 +54,7 @@ class AssetWhiteboardElement(Base):
         self.z_index = z_index
 
     @classmethod
-    def upsert(
+    def create(
             cls,
             asset_id,
             element,
@@ -62,20 +62,15 @@ class AssetWhiteboardElement(Base):
             uuid,
             z_index,
     ):
-        existing = cls.query.filter_by(asset_id=asset_id, uuid=uuid).first()
-        if existing:
-            existing.element = element
-            existing.element_asset_id = element_asset_id
-        else:
-            db.session.add(
-                cls(
-                    asset_id=asset_id,
-                    element=element,
-                    element_asset_id=element_asset_id,
-                    uuid=uuid,
-                    z_index=z_index,
-                ),
-            )
+        db.session.add(
+            cls(
+                asset_id=asset_id,
+                element=element,
+                element_asset_id=element_asset_id,
+                uuid=uuid,
+                z_index=z_index,
+            ),
+        )
         std_commit()
 
     @classmethod

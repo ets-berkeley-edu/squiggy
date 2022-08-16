@@ -467,6 +467,7 @@ class Asset(Base):
                     'element': element,
                     'updatedAt': isoformat(self.updated_at),
                     'uuid': w.uuid,
+                    'zIndex': w.z_index,
                 })
             api_json['whiteboardElements'] = whiteboard_elements
         return api_json
