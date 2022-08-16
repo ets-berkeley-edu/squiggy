@@ -71,10 +71,11 @@ export function afterChangeMode(state: any) {
 
 export function deleteActiveElements(state: any) {
   $_log('Delete active elements')
+  const uuids: any[] = []
   _.each($_getActiveObjects(), (element: any) => {
     const uuid = element.uuid
     p.$canvas.remove($_getCanvasElement(uuid))
-    $_broadcastDelete(uuid, state)
+    uuids.push(uuid)
   })
   // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
   const activeObject = p.$canvas.getActiveObject()
@@ -82,6 +83,7 @@ export function deleteActiveElements(state: any) {
     p.$canvas.remove(activeObject)
     p.$canvas.discardActiveObject().requestRenderAll()
   }
+  return $_broadcastDelete(uuids, state)
 }
 
 export function initialize(state: any) {
@@ -129,15 +131,12 @@ export function changeZOrder(direction: string, state: any) {
       }
     }
   })
-  const apiCall = () => {
-    updateWhiteboardElementsOrder(
-        direction,
-        p.$socket.id,
-        uuids,
-        state.whiteboard.id
-    ).then(_.noop)
-  }
-  $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
+  return updateWhiteboardElementsOrder(
+      direction,
+      p.$socket.id,
+      uuids,
+      state.whiteboard.id
+  )
 }
 
 export function setCanvasDimensions(state: any) {
@@ -269,11 +268,12 @@ const $_addCanvasListeners = (state: any) => {
 
   p.$canvas.on('object:modified', (event: any) => {
     $_setModifyingElement(false)
-    changeZOrder('bringToFront', state)
-    // Ensure that none of the modified objects are positioned off-screen.
-    $_ensureWithinCanvas(event.target)
-    const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
-    $_broadcastUpsert(whiteboardElements, state).then(_.noop)
+    changeZOrder('bringToFront', state).then(() => {
+      // Ensure that none of the modified objects are positioned off-screen.
+      $_ensureWithinCanvas(event.target)
+      const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
+      $_broadcastUpsert(whiteboardElements, state).then(_.noop)
+    })
   })
 
   p.$canvas.on('after:render', () => {
@@ -594,17 +594,19 @@ const $_addSocketListeners = (state: any) => {
     })
   })
 
-  p.$socket.on('delete_whiteboard_element', (uuid: any) => {
-    const element = $_getCanvasElement(uuid)
-    if (element) {
-      // Deactivate the current group if any of the deleted elements are in the current group
-      $_deactivateGroupIfOverlap(uuid)
-      p.$canvas.remove(element)
-      store.commit('whiteboarding/onWhiteboardElementDelete')
-      p.$canvas.requestRenderAll()
-      // Recalculate the size of the whiteboard canvas
-      setCanvasDimensions(state)
-    }
+  p.$socket.on('delete_whiteboard_elements', (uuids: string[]) => {
+    _.each(uuids, uuid => {
+      const element = $_getCanvasElement(uuid)
+      if (element) {
+        // Deactivate the current group if any of the deleted elements are in the current group
+        $_deactivateGroupIfOverlap(uuid)
+        p.$canvas.remove(element)
+      }
+    })
+    store.commit('whiteboarding/onDeleteWhiteboardElements', uuids)
+    p.$canvas.requestRenderAll()
+    // Recalculate the size of the whiteboard canvas
+    setCanvasDimensions(state)
   })
 }
 
@@ -644,29 +646,22 @@ const $_assignIn = (object: any, source: any) => {
   return modified
 }
 
-const $_broadcastDelete = (uuid: string, state: any) => {
-  $_log(`Delete whiteboard element ${uuid}`)
-  store.commit('whiteboarding/onWhiteboardElementDelete', uuid)
-  const apiCall = () => deleteWhiteboardElement(p.$socket.id, uuid, state.whiteboard.id)
-  $_invokeWithSocketConnectRetry('whiteboard element delete', apiCall, state)
+const $_broadcastDelete = (uuids: string[], state: any) => {
+  $_log(`Delete whiteboard elements: ${uuids}`)
+  store.commit('whiteboarding/onDeleteWhiteboardElements', uuids)
+  return deleteWhiteboardElement(p.$socket.id, uuids, state.whiteboard.id)
 }
 
 const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
   $_log('Upsert whiteboard elements')
-  return new Promise<void>(resolve => {
-    const apiCall = () => {
-      upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
-        _.each(data, whiteboardElement => {
-          store.commit('whiteboarding/onWhiteboardElementUpsert', {
-            assetId: whiteboardElement.assetId,
-            element: whiteboardElement.element,
-            uuid: whiteboardElement.uuid
-          })
-        })
-        resolve()
+  return upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
+    _.each(data, whiteboardElement => {
+      store.commit('whiteboarding/onWhiteboardElementUpsert', {
+        assetId: whiteboardElement.assetId,
+        element: whiteboardElement.element,
+        uuid: whiteboardElement.uuid
       })
-    }
-    $_invokeWithSocketConnectRetry('whiteboard elements upsert', apiCall, state)
+    })
   })
 }
 
@@ -865,7 +860,7 @@ const $_initFabricPrototypes = (state: any) => {
         const uuid = element.get('uuid')
         p.$canvas.remove(element)
         if (uuid) {
-          $_broadcastDelete(uuid, state)
+          $_broadcastDelete([uuid], state).then(_.noop)
         }
       }
     }
@@ -901,21 +896,6 @@ const $_initSocket = (state: any) => {
     }
     $_join(state)
   })
-}
-
-function $_invokeWithSocketConnectRetry(description: string, operation: () => void, state: any) {
-  const isConnected = () => p.$socket.connected && p.$socket.id
-  if (isConnected()) {
-    return operation()
-  } else {
-    $_tryReconnect(state).then(() => {
-      if (isConnected()) {
-        return operation()
-      } else {
-        throw `Socket.io reconnect failed prior to ${description}.`
-      }
-    })
-  }
 }
 
 const $_join = (state: any) => {

@@ -164,6 +164,72 @@ class TestUpsertWhiteboardElement:
             assert updated_whiteboard_element['element']['fill'] == updated_fill
 
 
+class TestDeleteWhiteboardElements:
+
+    @classmethod
+    def _api_delete_whiteboard_elements(
+            cls,
+            client,
+            uuids,
+            whiteboard_id,
+            expected_status_code=200,
+    ):
+        params = {
+            'socketId': _get_mock_socket_id(),
+            'uuids': uuids,
+            'whiteboardId': whiteboard_id,
+        }
+        response = client.delete(
+            '/api/whiteboard_elements/delete',
+            data=json.dumps(params),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client, mock_whiteboard):
+        """Denies anonymous user."""
+        uuids = [mock_whiteboard['whiteboardElements'][0]['uuid']]
+        self._api_delete_whiteboard_elements(
+            client=client,
+            expected_status_code=401,
+            uuids=uuids,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+
+    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+        """Denies unauthorized user."""
+        user_id = _get_non_collaborator_user_id(mock_whiteboard)
+        fake_auth.login(user_id)
+        uuids = [mock_whiteboard['whiteboardElements'][0]['uuid']]
+        self._api_delete_whiteboard_elements(
+            client=client,
+            expected_status_code=401,
+            uuids=uuids,
+            whiteboard_id=mock_whiteboard['id'],
+        )
+
+    def test_authorized(self, client, fake_auth, mock_whiteboard):
+        """Authorized user can delete whiteboard elements."""
+        user_id = _get_authorized_user_id(mock_whiteboard)
+        fake_auth.login(user_id)
+
+        whiteboard_id = mock_whiteboard['id']
+        whiteboard_elements = mock_whiteboard['whiteboardElements']
+        count = len(whiteboard_elements)
+        uuids = [whiteboard_elements[-1]['uuid'], whiteboard_elements[0]['uuid']]
+        self._api_delete_whiteboard_elements(
+            client=client,
+            uuids=uuids,
+            whiteboard_id=whiteboard_id,
+        )
+        api_json = _api_get_whiteboard(client, whiteboard_id)
+        whiteboard_elements = api_json['whiteboardElements']
+        assert len(whiteboard_elements) == count - 2
+        for uuid in [w['uuid'] for w in whiteboard_elements]:
+            assert uuid not in uuids
+
+
 class TestOrderWhiteboardElements:
 
     @classmethod

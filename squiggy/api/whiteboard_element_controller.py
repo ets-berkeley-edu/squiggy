@@ -147,41 +147,45 @@ def upsert_whiteboard_elements():
     return tolerant_jsonify(results)
 
 
-@app.route('/api/whiteboard/<whiteboard_id>/element/<uuid>/delete', methods=['DELETE'])
+@app.route('/api/whiteboard_elements/delete', methods=['DELETE'])
 @feature_flag_whiteboards
 @login_required
-def delete_whiteboard_element(whiteboard_id, uuid):
-    params = request.args
+def delete_whiteboard_elements():
+    params = request.form or request.get_json()
     socket_id = params.get('socketId')
+    uuids = params.get('uuids')
+    whiteboard_id = params.get('whiteboardId')
     if not socket_id:
         raise BadRequestError('socket_id is required')
     if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
         raise UnauthorizedRequestError('Unauthorized')
 
-    whiteboard_element = WhiteboardElement.find_by_uuid(uuid=uuid, whiteboard_id=whiteboard_id)
-    if whiteboard_element and not app.config['TESTING']:
-        logger.info(f'socketio: Emit delete_whiteboard_element where whiteboard_id = {whiteboard_id} AND socket_id = {socket_id}')
-        emit(
-            'delete_whiteboard_element',
-            uuid,
-            include_self=False,
-            namespace=SOCKET_IO_NAMESPACE,
-            skip_sid=socket_id,
-            to=get_socket_io_room(whiteboard_id),
-        )
-        if whiteboard_element.asset_id:
-            AssetWhiteboardElement.delete(
-                asset_id=whiteboard_element.asset_id,
-                uuid=whiteboard_element.uuid,
+    whiteboard_elements = WhiteboardElement.find_all(uuids=uuids, whiteboard_id=whiteboard_id)
+    if len(whiteboard_elements):
+        logger.info(f'socketio: Emit delete_whiteboard_elements where whiteboard_id = {whiteboard_id}')
+        for whiteboard_element in whiteboard_elements:
+            if whiteboard_element.asset_id:
+                AssetWhiteboardElement.delete(
+                    asset_id=whiteboard_element.asset_id,
+                    uuid=whiteboard_element.uuid,
+                )
+        if not app.config['TESTING']:
+            emit(
+                'delete_whiteboard_elements',
+                uuids,
+                include_self=False,
+                namespace=SOCKET_IO_NAMESPACE,
+                skip_sid=socket_id,
+                to=get_socket_io_room(whiteboard_id),
             )
-        WhiteboardElement.delete(uuid=uuid, whiteboard_id=whiteboard_id)
+        WhiteboardElement.delete_all(uuids=uuids, whiteboard_id=whiteboard_id)
         WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
         WhiteboardSession.update_updated_at(
             socket_id=socket_id,
             user_id=current_user.user_id,
             whiteboard_id=whiteboard_id,
         )
-    return tolerant_jsonify(uuid)
+    return tolerant_jsonify(uuids)
 
 
 def _create_whiteboard_element(
