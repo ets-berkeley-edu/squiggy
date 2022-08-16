@@ -91,8 +91,8 @@ const mutations = {
       }
     })
   },
-  onWhiteboardElementDelete: (state: any, uuid: string) => {
-    state.whiteboard.whiteboardElements = _.filter(state.whiteboard.whiteboardElements, w => w.uuid !== uuid)
+  onDeleteWhiteboardElements: (state: any, uuids: string[]) => {
+    state.whiteboard.whiteboardElements = _.filter(state.whiteboard.whiteboardElements, w => !uuids.includes(w.uuid))
   },
   onWhiteboardElementUpsert: (state: any, {assetId, element, uuid}) => {
     const existing = _.find(state.whiteboard.whiteboardElements, ['uuid', uuid])

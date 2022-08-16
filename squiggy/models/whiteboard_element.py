@@ -23,7 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import and_, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql import asc, text
@@ -66,8 +66,8 @@ class WhiteboardElement(Base):
         self.z_index = z_index
 
     @classmethod
-    def find_by_uuid(cls, uuid, whiteboard_id):
-        return cls.query.filter_by(uuid=uuid, whiteboard_id=whiteboard_id).first()
+    def find_all(cls, uuids, whiteboard_id):
+        return cls.query.filter(and_(cls.uuid.in_(uuids), cls.whiteboard_id == whiteboard_id)).all()
 
     @classmethod
     def find_by_whiteboard_id(cls, whiteboard_id):
@@ -109,8 +109,9 @@ class WhiteboardElement(Base):
         return whiteboard_element
 
     @classmethod
-    def delete(cls, uuid, whiteboard_id):
-        db.session.query(cls).filter_by(uuid=uuid, whiteboard_id=whiteboard_id).delete()
+    def delete_all(cls, uuids, whiteboard_id):
+        sql = 'DELETE FROM whiteboard_elements WHERE uuid = ANY(:uuids) AND whiteboard_id = :whiteboard_id'
+        db.session.execute(text(sql), {'uuids': uuids, 'whiteboard_id': whiteboard_id})
         std_commit()
 
     @classmethod
