@@ -159,6 +159,13 @@ const router = new Router({
           }
         },
         {
+          path: '/impact_studio/profile/:id',
+          component: ImpactStudio,
+          meta: {
+            title: 'Impact Studio'
+          }
+        },
+        {
           path: '/whiteboard/create',
           component: CreateWhiteboard,
           meta: {
