@@ -131,12 +131,13 @@ export function changeZOrder(direction: string, state: any) {
       }
     }
   })
-  return updateWhiteboardElementsOrder(
+  const apiCall = () => updateWhiteboardElementsOrder(
       direction,
       p.$socket.id,
       uuids,
       state.whiteboard.id
   )
+  $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
 }
 
 export function setCanvasDimensions(state: any) {
@@ -266,11 +267,11 @@ const $_addCanvasListeners = (state: any) => {
     $_ensureWithinCanvas(event.target)
   })
 
-  p.$canvas.on('object:modified', (event: any) => {
+  p.$canvas.on('object:modified', () => {
     $_setModifyingElement(false)
-    changeZOrder('bringToFront', state).then(() => {
-      // Ensure that none of the modified objects are positioned off-screen.
-      $_ensureWithinCanvas(event.target)
+    changeZOrder('bringToFront', state)
+    store.dispatch('whiteboarding/setIsFitToScreen', true).then(() => {
+      _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
       const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
       $_broadcastUpsert(whiteboardElements, state).then(_.noop)
     })
@@ -619,7 +620,7 @@ const $_addViewportListeners = (state: any) => {
       if (!state.disableAll) {
         if (event.keyCode === 8 || event.keyCode === 46) {
           // Delete or backspace
-          deleteActiveElements(state).then(_.noop)
+          deleteActiveElements(state)
           event.preventDefault()
         } else if (event.keyCode === 67 && event.metaKey) {
           // Copy
@@ -667,19 +668,25 @@ const $_assignIn = (object: any, source: any) => {
 const $_broadcastDelete = (uuids: string[], state: any) => {
   $_log(`Delete whiteboard elements: ${uuids}`)
   store.commit('whiteboarding/onDeleteWhiteboardElements', uuids)
-  return deleteWhiteboardElement(p.$socket.id, uuids, state.whiteboard.id)
+  const apiCall = () => deleteWhiteboardElement(p.$socket.id, uuids, state.whiteboard.id)
+  $_invokeWithSocketConnectRetry('whiteboard element delete', apiCall, state)
 }
 
 const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
   $_log('Upsert whiteboard elements')
-  return upsertWhiteboardElements(p.$socket.id, whiteboardElements, state.whiteboard.id).then((data: any) => {
-    _.each(data, whiteboardElement => {
-      store.commit('whiteboarding/onWhiteboardElementUpsert', {
-        assetId: whiteboardElement.assetId,
-        element: whiteboardElement.element,
-        uuid: whiteboardElement.uuid
+  return new Promise<void>(resolve => {
+    const whiteboardId = state.whiteboard.id
+    const apiCall = () => upsertWhiteboardElements(p.$socket.id, whiteboardElements, whiteboardId).then((data: any) => {
+      _.each(data, whiteboardElement => {
+        store.commit('whiteboarding/onWhiteboardElementUpsert', {
+          assetId: whiteboardElement.assetId,
+          element: whiteboardElement.element,
+          uuid: whiteboardElement.uuid
+        })
       })
+      resolve()
     })
+    $_invokeWithSocketConnectRetry('whiteboard elements upsert', apiCall, state)
   })
 }
 
@@ -878,7 +885,7 @@ const $_initFabricPrototypes = (state: any) => {
         const uuid = element.get('uuid')
         p.$canvas.remove(element)
         if (uuid) {
-          $_broadcastDelete([uuid], state).then(_.noop)
+          $_broadcastDelete([uuid], state)
         }
       }
     }
@@ -914,6 +921,21 @@ const $_initSocket = (state: any) => {
     }
     $_join(state)
   })
+}
+
+function $_invokeWithSocketConnectRetry(description: string, operation: () => void, state: any) {
+  const isConnected = () => p.$socket.connected && p.$socket.id
+  if (isConnected()) {
+    return operation()
+  } else {
+    $_tryReconnect(state).then(() => {
+      if (isConnected()) {
+        return operation()
+      } else {
+        throw `Socket.io reconnect failed prior to ${description}.`
+      }
+    })
+  }
 }
 
 const $_join = (state: any) => {
@@ -956,6 +978,7 @@ const $_paste = (state: any): void => {
         clone.top = clone.top + constants.PASTE_OFFSET
         clone.uuid = uuid
         p.$canvas.add(clone)
+        $_ensureWithinCanvas(_.find(p.$canvas.getObjects(), ['uuid', uuid]))
         p.$canvas.requestRenderAll()
         whiteboardElements.push({
           assetId: clone.assetId,
@@ -979,6 +1002,7 @@ const $_renderWhiteboard = (state: any, redrawElements?: boolean) => {
     const done = () => {
       return new Promise<void>(resolve => {
         _.each(_.sortBy(objects, (object: any) => object.zIndex), o => p.$canvas.add(o.element))
+        _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
         // Deactivate all elements and element selection when the whiteboard is being rendered in read-only mode.
         if (state.disableAll) {
           p.$canvas.discardActiveObject()
