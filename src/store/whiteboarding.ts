@@ -37,7 +37,7 @@ const $_log = (statement: string, force?: boolean) => {
 const state = {
   activeCanvasObject: undefined,
   categories: undefined,
-  clipboard: undefined,
+  clipboard: [],
   disableAll: false,
   // Variable that will keep track of whether a shape is currently being drawn
   isDrawingShape: false,
@@ -170,7 +170,12 @@ const mutations = {
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
   setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
-  setClipboard: (state: any, object: any) => state.clipboard = object,
+  setClipboard: (state: any, objects: any[]) => {
+    _.each(objects, object => {
+      delete object.uuid
+    })
+    state.clipboard = objects
+  },
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setIsInitialized: (state: any, isInitialized: boolean) => state.isInitialized = isInitialized,
   setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
@@ -192,7 +197,6 @@ const mutations = {
       }
     })
   },
-  updateClipboard: (state: any, properties: any) => _.assignIn(state.clipboard, properties),
   updateSelected: (state: any, properties: any) => _.assignIn(state.selected, properties),
   setIsFitToScreen: (state: any, isFitToScreen) => {
     state.isFitToScreen = isFitToScreen
@@ -253,7 +257,7 @@ const actions = {
     })
   },
   resetSelected: ({commit}) => commit('resetSelected'),
-  setClipboard: ({commit}, object: any) => commit('setClipboard', object),
+  setClipboard: ({commit}, objects: any[]) => commit('setClipboard', objects),
   setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsFitToScreen: ({commit}, isFitToScreen: boolean) => commit('setIsFitToScreen', isFitToScreen),
   setMode: ({commit}, mode: string) => commit('setMode', mode),
@@ -277,7 +281,6 @@ const actions = {
       }
     })
   },
-  updateClipboard: ({commit}, properties: any) => commit('updateClipboard', properties),
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
   zoomIn: () => zoom(-constants.ZOOM_INCREMENT),
   zoomOut: () => zoom(constants.ZOOM_INCREMENT)
