@@ -84,14 +84,13 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
-    color: undefined,
+    color: constants.COLORS.black.hex,
     menu: false,
     shapeOptions: undefined,
-    shapeStyle: undefined,
+    shapeStyle: 'Rect:thin',
     tooltipText: 'Add shapes to your whiteboard'
   }),
   created() {
-    this.color = this.selected.color || constants.COLORS.black.hex
     this.shapeOptions = this.$_.clone(constants.SHAPE_OPTIONS)
   },
   beforeDestroy() {
