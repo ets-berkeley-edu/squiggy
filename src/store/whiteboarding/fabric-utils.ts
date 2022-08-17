@@ -632,7 +632,7 @@ const $_addViewportListeners = (state: any) => {
               delete clone.uuid
               clone.left = left
               clone.top = top
-              clipboard.push(clone)
+              clipboard.push(clone.toObject())
             }
             if (activeObject.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
               _.each(activeObject.getObjects(), (object: any) => {
@@ -967,30 +967,38 @@ const $_paste = (state: any): void => {
   $_log('Paste')
   if (state.clipboard.length) {
     p.$canvas.discardActiveObject()
+    const promises: any[] = []
     const whiteboardElements: any[] = []
     let zIndex = Math.max(_.map(state.whiteboard.whiteboardElements, 'zIndex')) + 1
     _.each(state.clipboard, element => {
       if (element.type !== constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-        const clone = _.cloneDeep(element)
-        const uuid = uuidv4()
-        clone.evented = true
-        clone.left = clone.left + constants.PASTE_OFFSET
-        clone.top = clone.top + constants.PASTE_OFFSET
-        clone.uuid = uuid
-        p.$canvas.add(clone)
-        $_ensureWithinCanvas(_.find(p.$canvas.getObjects(), ['uuid', uuid]))
-        p.$canvas.requestRenderAll()
-        whiteboardElements.push({
-          assetId: clone.assetId,
-          element: clone,
-          uuid,
-          zIndex
-        })
-        zIndex++
+        promises.push(new Promise<void>((resolve: any) => {
+          const clone = _.cloneDeep(element)
+          const uuid = uuidv4()
+          clone.evented = true
+          clone.left = clone.left + constants.PASTE_OFFSET
+          clone.top = clone.top + constants.PASTE_OFFSET
+          clone.uuid = uuid
+          $_deserializeElement(state, clone).then((object: any) => {
+            p.$canvas.add(object)
+            // $_ensureWithinCanvas(_.find(p.$canvas.getObjects(), ['uuid', uuid]))
+            // p.$canvas.requestRenderAll()
+            whiteboardElements.push({
+              assetId: clone.assetId,
+              element: clone,
+              uuid,
+              zIndex
+            })
+            zIndex++
+            resolve()
+          })
+        }))
       }
     })
-    setCanvasDimensions(state)
-    $_broadcastUpsert(whiteboardElements, state).then(_.noop)
+    Promise.all(promises).then(() => {
+      setCanvasDimensions(state)
+      $_broadcastUpsert(whiteboardElements, state).then(_.noop)
+    })
   }
 }
 
