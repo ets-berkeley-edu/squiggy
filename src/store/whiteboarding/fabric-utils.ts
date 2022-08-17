@@ -72,7 +72,7 @@ export function afterChangeMode(state: any) {
 export function deleteActiveElements(state: any) {
   $_log('Delete active elements')
   const uuids: any[] = []
-  _.each($_getActiveObjects(), (element: any) => {
+  _.each(getActiveObjects(), (element: any) => {
     const uuid = element.uuid
     p.$canvas.remove($_getCanvasElement(uuid))
     uuids.push(uuid)
@@ -84,6 +84,25 @@ export function deleteActiveElements(state: any) {
     p.$canvas.discardActiveObject().requestRenderAll()
   }
   return $_broadcastDelete(uuids, state)
+}
+
+export function getActiveObjects() {
+  $_log('Get active objects')
+  const activeElements: any[] = []
+  const selection = p.$canvas.getActiveObject()
+  if (selection) {
+    if (selection.getObjects) {
+      _.each(selection.getObjects(), (element: any) => {
+        // When a Fabric.js canvas is part of a group selection, its properties will be relative to the group.
+        // Therefore, we calculate the actual position of each element in the group relative to the whiteboard canvas.
+        const position = $_calculateGlobalElementPosition(selection, element)
+        activeElements.push(_.assignIn({}, element.toObject(), position))
+      })
+    } else {
+      activeElements.push(selection.toObject())
+    }
+  }
+  return activeElements
 }
 
 export function initialize(state: any) {
@@ -114,10 +133,10 @@ export function initialize(state: any) {
   })
 }
 
-export function changeZOrder(direction: string, state: any) {
+export function changeZOrder(direction: string, objects: any[], state: any) {
   $_log('Change z-order')
   const uuids: string[] = []
-  _.each($_getActiveObjects(), (e: any) => {
+  _.each(objects, (e: any) => {
     if (e.type !== constants.FABRIC_MULTIPLE_SELECT_TYPE) {
       const uuid: string = e.uuid
       const element:any = $_getCanvasElement(uuid)
@@ -267,12 +286,13 @@ const $_addCanvasListeners = (state: any) => {
     $_ensureWithinCanvas(event.target)
   })
 
-  p.$canvas.on('object:modified', () => {
+  p.$canvas.on('object:modified', (event) => {
     $_setModifyingElement(false)
-    changeZOrder('bringToFront', state)
+    const objects = event.target.type === constants.FABRIC_MULTIPLE_SELECT_TYPE ? event.target.objects : [event.target]
+    changeZOrder('bringToFront', objects, state)
     store.dispatch('whiteboarding/setIsFitToScreen', true).then(() => {
       _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
-      const whiteboardElements = $_translateIntoWhiteboardElements($_getActiveObjects())
+      const whiteboardElements = $_translateIntoWhiteboardElements(objects)
       $_broadcastUpsert(whiteboardElements, state).then(_.noop)
     })
   })
@@ -521,22 +541,17 @@ const $_addSocketListeners = (state: any) => {
   })
 
   p.$socket.on('order_whiteboard_elements', (summary: any) => {
-    const objects = []
     _.each(summary.uuids, (uuid: string) => {
       const object = $_getCanvasElement(uuid)
       if (object) {
-        objects.push(object)
+        if (summary.direction === 'bringToFront') {
+          p.$canvas.bringToFront(object)
+        } else if (summary.direction === 'sendToBack') {
+          p.$canvas.sendToBack(object)
+        }
       }
     })
-    if (objects.length) {
-      const group = new fabric.Group(objects)
-      if (summary.direction === 'bringToFront') {
-        p.$canvas.bringToFront(group)
-      } else if (summary.direction === 'sendToBack') {
-        p.$canvas.sendToBack(group)
-      }
-      p.$canvas.requestRenderAll()
-    }
+    p.$canvas.requestRenderAll()
     $_log('socket.on order_whiteboard_elements')
   })
 
@@ -546,52 +561,45 @@ const $_addSocketListeners = (state: any) => {
   })
 
   p.$socket.on('upsert_whiteboard_elements', (data: any) => {
-    const totalCount = data.length
-    let updateCount = 0
-    const after = (whiteboardElement: any) => {
-      store.commit('whiteboarding/onWhiteboardElementUpsert', {
-        assetId: whiteboardElement.assetId,
-        element: whiteboardElement.element,
-        uuid: whiteboardElement.uuid
-      })
-      if (updateCount === totalCount) {
+    const promises: any[] = []
+    const whiteboardElements: any[] = []
+    _.each(data, (whiteboardElement: any) => {
+      promises.push(new Promise<void>((resolve: any) => {
+        const element = whiteboardElement.element
+        const uuid = whiteboardElement.uuid
+        const existing: any = $_getCanvasElement(uuid)
+        if (existing) {
+          // Deactivate the current group if any of the updated elements are in the current group
+          $_deactivateGroupIfOverlap(uuid)
+          updatePreviewImage(element.src, state, uuid).then((modified) => {
+            modified ||= $_assignIn(existing, element)
+            if (modified) {
+              $_assignIn(existing, element)
+              $_ensureWithinCanvas(existing)
+              whiteboardElements.push({
+                assetId: whiteboardElement.assetId,
+                element,
+                uuid
+              })
+            }
+            resolve()
+          })
+        } else {
+          $_deserializeElement(state, element).then((e: any) => {
+            // Add the element to the whiteboard canvas and move it to its appropriate index
+            store.commit('whiteboarding/pushRemoteUUID', e.uuid)
+            p.$canvas.add(e)
+            resolve()
+          })
+        }
+      }))
+    })
+    Promise.all(promises).then(() => {
+      $_log(`socket.on upsert_whiteboard_elements: uuids = ${_.map(whiteboardElements, 'uuid')}`)
+      store.dispatch('whiteboarding/onWhiteboardElementsUpsert', whiteboardElements).then(() => {
         p.$canvas.requestRenderAll()
         setCanvasDimensions(state)
-      }
-    }
-    _.each(data, (whiteboardElement: any) => {
-      const element = whiteboardElement.element
-      const uuid = whiteboardElement.uuid
-      $_log(`socket.on upsert_whiteboard_elements: type = ${element.type}, uuid = ${uuid}`)
-      const existing = $_getCanvasElement(uuid)
-      if (existing) {
-        // Deactivate the current group if any of the updated elements are in the current group
-        $_deactivateGroupIfOverlap(uuid)
-        updatePreviewImage(element.src, state, uuid).then((modified) => {
-          modified ||= $_assignIn(existing, element)
-          if (modified) {
-            $_ensureWithinCanvas(existing)
-            updateCount++
-            after({
-              assetId: whiteboardElement.assetId,
-              element: existing,
-              uuid
-            })
-          }
-        })
-      } else {
-        $_deserializeElement(state, element).then((e: any) => {
-          // Add the element to the whiteboard canvas and move it to its appropriate index
-          store.commit('whiteboarding/pushRemoteUUID', e.uuid)
-          p.$canvas.add(_.cloneDeep(e))
-          updateCount++
-          after({
-            assetId: whiteboardElement.assetId,
-            element: e,
-            uuid
-          })
-        })
-      }
+      })
     })
   })
 
@@ -677,14 +685,7 @@ const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
   return new Promise<void>(resolve => {
     const whiteboardId = state.whiteboard.id
     const apiCall = () => upsertWhiteboardElements(p.$socket.id, whiteboardElements, whiteboardId).then((data: any) => {
-      _.each(data, whiteboardElement => {
-        store.commit('whiteboarding/onWhiteboardElementUpsert', {
-          assetId: whiteboardElement.assetId,
-          element: whiteboardElement.element,
-          uuid: whiteboardElement.uuid
-        })
-      })
-      resolve()
+      store.dispatch('whiteboarding/onWhiteboardElementsUpsert', data).then(resolve)
     })
     $_invokeWithSocketConnectRetry('whiteboard elements upsert', apiCall, state)
   })
@@ -774,25 +775,6 @@ const $_ensureWithinCanvas = (object: any) => {
   if (bound.top < 0) {
     object.top -= bound.top / p.$canvas.getZoom()
   }
-}
-
-const $_getActiveObjects = () => {
-  $_log('Get active objects')
-  const activeElements: any[] = []
-  const selection = p.$canvas.getActiveObject()
-  if (selection) {
-    if (selection.getObjects) {
-      _.each(selection.getObjects(), (element: any) => {
-        // When a Fabric.js canvas is part of a group selection, its properties will be relative to the group.
-        // Therefore, we calculate the actual position of each element in the group relative to the whiteboard canvas.
-        const position = $_calculateGlobalElementPosition(selection, element)
-        activeElements.push(_.assignIn({}, element.toObject(), position))
-      })
-    } else {
-      activeElements.push(selection.toObject())
-    }
-  }
-  return activeElements
 }
 
 const $_getCanvasElement = (uuid: string) => {

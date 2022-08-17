@@ -7,9 +7,10 @@ import {deleteWhiteboard, getWhiteboard, undelete} from '@/api/whiteboards'
 import {
   addAssets,
   afterChangeMode,
-  deleteActiveElements,
-  initialize,
   changeZOrder,
+  deleteActiveElements,
+  getActiveObjects,
+  initialize,
   setCanvasDimensions,
   updatePreviewImage,
   zoom
@@ -72,7 +73,7 @@ const getters = {
 
 const mutations = {
   addAssets: (state: any, assets: any[]) => addAssets(assets, state),
-  changeZOrder: (state: any, direction: string) => changeZOrder(direction, state),
+  changeZOrder: (state: any, direction: string) => changeZOrder(direction, getActiveObjects(), state),
   deleteActiveElements: (state: any) => deleteActiveElements(state),
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
   onJoin: (state: any, userId: string) => {
@@ -94,15 +95,16 @@ const mutations = {
   onDeleteWhiteboardElements: (state: any, uuids: string[]) => {
     state.whiteboard.whiteboardElements = _.filter(state.whiteboard.whiteboardElements, w => !uuids.includes(w.uuid))
   },
-  onWhiteboardElementUpsert: (state: any, {assetId, element, uuid}) => {
-    const existing = _.find(state.whiteboard.whiteboardElements, ['uuid', uuid])
-    element = _.cloneDeep(element)
-    if (existing) {
-      existing.assetId = assetId
-      existing.element = element
-    } else {
-      state.whiteboard.whiteboardElements.push({assetId, element, uuid})
-    }
+  onWhiteboardElementsUpsert: (state: any, whiteboardElements: any[]) => {
+    _.each(whiteboardElements, (whiteboardElement: any) => {
+      const existing = _.find(state.whiteboard.whiteboardElements, ['uuid', whiteboardElement.uuid])
+      if (existing) {
+        existing.assetId = whiteboardElement.assetId
+        existing.element = _.cloneDeep(whiteboardElement.element)
+      } else {
+        state.whiteboard.whiteboardElements.push(whiteboardElement)
+      }
+    })
   },
   onWhiteboardUpdate: (state: any, {deletedAt, resolve, title, users}) => {
     document.title = `${title} | SuiteC`
@@ -239,6 +241,7 @@ const actions = {
     })
   },
   onJoin: ({commit}, userId: number) => commit('onJoin', userId),
+  onWhiteboardElementsUpsert: ({commit}, whiteboardElements: any[]) => commit('onWhiteboardElementsUpsert', whiteboardElements),
   onWhiteboardUpdate: ({commit}, whiteboard: any) => {
     return new Promise<void>(resolve => {
       commit('onWhiteboardUpdate', {
