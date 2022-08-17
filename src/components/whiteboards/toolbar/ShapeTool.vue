@@ -84,10 +84,10 @@ export default {
   components: {ColorPicker},
   mixins: [Whiteboarding],
   data: () => ({
-    color: constants.COLORS.black.hex,
+    color: undefined,
     menu: false,
     shapeOptions: undefined,
-    shapeStyle: 'Rect:thin',
+    shapeStyle: undefined,
     tooltipText: 'Add shapes to your whiteboard'
   }),
   created() {
@@ -104,6 +104,7 @@ export default {
       if (value) {
         this.resetSelected()
         this.setMode('shape')
+        this.color = constants.COLORS.black.hex
         this.shapeStyle = 'Rect:thin'
         this.updateSelected({fill: this.calculateFill()})
         this.$putFocusNextTick('menu-header')
