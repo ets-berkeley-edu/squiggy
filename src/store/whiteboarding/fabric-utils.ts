@@ -266,8 +266,7 @@ export function updatePreviewImage(element: any, state: any, uuid: string) {
 }
 
 export function zoom(delta: number) {
-  const center = p.$canvas.getCenter()
-  $_zoom(delta, new fabric.Point(center.left, center.top))
+  $_zoom(delta)
 }
 
 /**
@@ -1071,15 +1070,17 @@ const $_tryReconnect = (state: any) => {
   })
 }
 
-const $_zoom = (delta: number, point: any) => {
-  let zoom = p.$canvas.getZoom()
-  zoom *= 0.999 ** delta
-  if (zoom > 20) {
-    zoom = 20
-  } else if (zoom < 0.01) {
-    zoom = 0.01
+const $_zoom = (delta: number) => {
+  const originalZoom = p.$canvas.getZoom()
+  let newZoom = originalZoom * (0.999 ** delta)
+  if (newZoom > 20) {
+    newZoom = 20
+  } else if (newZoom < 0.01) {
+    newZoom = 0.01
   }
-  p.$canvas.zoomToPoint(point, zoom)
+  p.$canvas.setZoom(newZoom)
+  p.$canvas.setHeight(p.$canvas.height * newZoom / originalZoom)
+  p.$canvas.setWidth(p.$canvas.width * newZoom / originalZoom)
   p.$canvas.requestRenderAll()
   store.dispatch('whiteboarding/setIsFitToScreen', false).then(_.noop)
 }
