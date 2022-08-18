@@ -1042,7 +1042,12 @@ const $_scaleImageObject = (element: any, state: any) => {
 const $_setModifyingElement = (value: boolean) => store.commit('whiteboarding/setIsModifyingElement', value)
 
 const $_translateIntoWhiteboardElement = (fabricObject: any) => {
-  return {assetId: fabricObject.assetId, element: fabricObject, uuid: fabricObject.uuid}
+  const element = fabricObject.toObject()
+  // Force serialization to include properties that fabric.js assumes by default aren't worth its while.
+  if (fabricObject.fontSize) {
+    element.fontSize = fabricObject.fontSize
+  }
+  return {assetId: fabricObject.assetId, element: element, uuid: fabricObject.uuid}
 }
 
 const $_translateIntoWhiteboardElements = (fabricObjects: any) => {
