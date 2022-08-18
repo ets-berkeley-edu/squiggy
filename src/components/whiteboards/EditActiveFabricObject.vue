@@ -47,7 +47,7 @@
         <font-awesome-icon icon="trash" />
       </v-btn>
       <v-btn
-        v-if="$config.isVueAppDebugMode"
+        v-if="$config.socketIoDebugMode"
         id="debug-btn"
         class="pr-2"
         color="red"
@@ -72,7 +72,7 @@ export default {
       return this.$_.get(this.activeCanvasObject, 'assetId')
     },
     widthStyle() {
-      return `${this.assetId ? 'with' : 'without'}-asset-id${this.$config.isVueAppDebugMode ? '-debug' : ''}`
+      return `${this.assetId ? 'with' : 'without'}-asset-id${this.$config.socketIoDebugMode ? '-debug' : ''}`
     }
   },
   methods: {
