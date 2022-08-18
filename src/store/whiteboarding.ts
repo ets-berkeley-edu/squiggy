@@ -30,7 +30,7 @@ const DEFAULT_TOOL_SELECTION = {
 const p = Vue.prototype
 
 const $_log = (statement: string, force?: boolean) => {
-  if (p.$config.isVueAppDebugMode || force) {
+  if (p.$config.socketIoDebugMode || force) {
     console.log(`🪲 ${statement}`)
   }
 }
