@@ -152,21 +152,17 @@ const mutations = {
     state.whiteboard.users = whiteboard.users
     const count = whiteboard.whiteboardElements.length
     if (count) {
-      let modified = false
-      _.each(whiteboard.whiteboardElements, (whiteboardElement: any, index: number) => {
-        const uuid = whiteboardElement.uuid
-        const after = (index) => {
-          if (index === count - 1) {
-            if (modified) {
-              setCanvasDimensions(state)
-            }
-            resolve()
-          }
+      const promises: any[] = []
+      _.each(whiteboard.whiteboardElements, (whiteboardElement: any) => {
+        promises.push(new Promise<boolean>((resolve: any) => {
+          updatePreviewImage(whiteboardElement.element, state, whiteboardElement.uuid).then(resolve)
+        }))
+      })
+      Promise.all(promises).then((values: boolean[]) => {
+        if (values.includes(true)) {
+          setCanvasDimensions(state)
         }
-        updatePreviewImage(whiteboardElement.element, state, uuid).then((wasUpdated: boolean) => {
-          modified = wasUpdated
-          after(index)
-        })
+        resolve()
       })
     } else {
       resolve()
