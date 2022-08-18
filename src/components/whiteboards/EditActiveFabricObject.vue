@@ -10,6 +10,7 @@
         v-if="assetId"
         id="open-asset-btn"
         class="pl-2"
+        color="primary"
         icon
         target="_blank"
         :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${assetId}`"
@@ -24,7 +25,7 @@
         @click="changeZOrder('sendToBack')"
       >
         <span class="sr-only">Move object(s) to back</span>
-        <font-awesome-icon icon="arrow-down" />
+        <img alt="Icon of send-to-back" class="svg-icon" src="@/assets/whiteboard/send-backward.svg" />
       </v-btn>
       <v-btn
         id="move-layer-front-btn"
@@ -33,7 +34,7 @@
         @click="changeZOrder('bringToFront')"
       >
         <span class="sr-only">Move object(s) to front</span>
-        <font-awesome-icon icon="arrow-up" />
+        <img alt="Icon of bring-to-front" class="svg-icon" src="@/assets/whiteboard/bring-forward.svg" />
       </v-btn>
       <v-btn
         id="delete-btn"
@@ -85,6 +86,10 @@ export default {
 </script>
 
 <style scoped>
+.svg-icon {
+  filter: invert(51%) sepia(40%) saturate(789%) hue-rotate(160deg) brightness(90%) contrast(88%);
+  width: 15px;
+}
 .with-asset-id-debug {
   width: 180px;
 }
