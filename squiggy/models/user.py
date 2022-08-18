@@ -191,6 +191,16 @@ class User(Base):
     def find_by_ids(cls, user_ids):
         return cls.query.filter(cls.id.in_(user_ids)).all()
 
+    def update_personal_description(self, personal_description):
+        self.personal_description = personal_description
+        db.session.add(self)
+        std_commit()
+
+    def update_looking_for_collaborators(self, looking_for_collaborators):
+        self.looking_for_collaborators = True if looking_for_collaborators else False
+        db.session.add(self)
+        std_commit()
+
     def update_share_points(self, share):
         self.share_points = True if share else False
         db.session.add(self)
