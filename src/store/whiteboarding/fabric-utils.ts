@@ -237,16 +237,16 @@ export function setMode(mode: string) {
   store.dispatch('whiteboarding/setMode', mode).then(_.noop)
 }
 
-export function updatePreviewImage(src: any, state: any, uuid: string) {
+export function updatePreviewImage(element: any, state: any, uuid: string) {
   return new Promise<boolean>(resolve => {
-    $_log('Update preview image')
     const existing: any = $_getCanvasElement(uuid)
+    const src = element.src
     if (existing && (existing.type === 'image') && (existing.getSrc() !== src)) {
+      $_log(`Update preview image:  \nexisting:  \n${JSON.stringify(existing)}  \n----\nelement:  \n${JSON.stringify(element)}`)
       // Preview image of this asset has changed. Update existing element and re-render.
       const done = (src: any) => {
         existing.setSrc(src, () => {
           $_scaleImageObject(existing, state)
-          $_log(`Update existing image element: src = ${src}, uuid = ${uuid}`)
           $_renderWhiteboard(state).then(() => {
             $_ensureWithinCanvas(existing)
             resolve(true)
@@ -573,7 +573,7 @@ const $_addSocketListeners = (state: any) => {
         if (existing) {
           // Deactivate the current group if any of the updated elements are in the current group
           $_deactivateGroupIfOverlap(uuid)
-          updatePreviewImage(element.src, state, uuid).then((modified) => {
+          updatePreviewImage(element, state, uuid).then((modified: boolean) => {
             modified ||= $_assignIn(existing, element)
             if (modified) {
               $_assignIn(existing, element)
