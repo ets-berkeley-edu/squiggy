@@ -146,6 +146,7 @@ const mutations = {
   },
   pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
   refreshWhiteboard: (state: any, {resolve, whiteboard}) => {
+    $_log(`Refresh (happens every ${p.$config.whiteboardsRefreshInterval / 1000} seconds)`)
     state.whiteboard.deletedAt = whiteboard.deletedAt
     state.whiteboard.title = whiteboard.title
     state.whiteboard.users = whiteboard.users
@@ -162,11 +163,13 @@ const mutations = {
             resolve()
           }
         }
-        updatePreviewImage(whiteboardElement.element.src, state, uuid).then((wasUpdated: boolean) => {
+        updatePreviewImage(whiteboardElement.element, state, uuid).then((wasUpdated: boolean) => {
           modified = wasUpdated
           after(index)
         })
       })
+    } else {
+      resolve()
     }
   },
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
