@@ -288,13 +288,15 @@ const $_addCanvasListeners = (state: any) => {
 
   p.$canvas.on('object:modified', (event) => {
     $_setModifyingElement(false)
-    const objects = event.target.type === constants.FABRIC_MULTIPLE_SELECT_TYPE ? event.target.objects : [event.target]
-    changeZOrder('bringToFront', objects, state)
-    store.dispatch('whiteboarding/setIsFitToScreen', true).then(() => {
-      _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
-      const whiteboardElements = $_translateIntoWhiteboardElements(objects)
-      $_broadcastUpsert(whiteboardElements, state).then(_.noop)
-    })
+    const objects = event.target.type === constants.FABRIC_MULTIPLE_SELECT_TYPE ? event.target.getObjects() : [event.target]
+    if (_.size(objects)) {
+      changeZOrder('bringToFront', objects, state)
+      store.dispatch('whiteboarding/setIsFitToScreen', true).then(() => {
+        _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
+        const whiteboardElements = $_translateIntoWhiteboardElements(objects)
+        $_broadcastUpsert(whiteboardElements, state).then(_.noop)
+      })
+    }
   })
 
   p.$canvas.on('after:render', () => {
