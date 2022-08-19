@@ -103,7 +103,7 @@ def _update_asset_preview(metadata, params):
     # If the asset appears in any live whiteboards, update via socketio.
     all_asset_usages = WhiteboardElement.get_asset_usages(asset_id)
     live_asset_usages = WhiteboardElement.get_asset_usages(asset_id, live_usages_only=True)
-    live_usage_whiteboard_element_ids = [whiteboard_element.id for whiteboard_element in live_asset_usages]
+    live_usage_whiteboard_element_ids = [whiteboard_element['id'] for whiteboard_element in live_asset_usages]
     for whiteboard_element in all_asset_usages:
         element = whiteboard_element['element']
         whiteboard_id = whiteboard_element['whiteboardId']
