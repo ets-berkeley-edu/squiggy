@@ -27,7 +27,7 @@
         <span>{{ tooltipText }}</span>
       </v-tooltip>
     </template>
-    <v-card width="360">
+    <v-card width="420">
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Select Text Size and Color</h2>
       </v-card-title>

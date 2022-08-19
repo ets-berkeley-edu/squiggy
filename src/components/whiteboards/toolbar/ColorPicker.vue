@@ -12,7 +12,7 @@
         show-swatches
         :swatches="swatches"
         :value="value"
-        width="260"
+        width="325"
         @input="updateValue"
       />
     </v-col>
@@ -45,7 +45,8 @@ export default {
       [colors.black.hex, colors.grey.hex],
       [colors.darkBlue.hex, colors.purple.hex],
       [colors.lightBlue.hex, colors.red.hex],
-      [colors.green.hex, colors.yellow.hex]
+      [colors.green.hex, colors.yellow.hex],
+      [colors.berkeleyBlue.hex, colors.californiaGold.hex]
     ]
   }
 }
