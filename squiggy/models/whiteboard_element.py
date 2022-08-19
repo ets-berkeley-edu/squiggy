@@ -88,8 +88,11 @@ class WhiteboardElement(Base):
         return result and result['id']
 
     @classmethod
-    def get_live_asset_usages(cls, asset_id):
-        query = cls.query.filter_by(asset_id=asset_id).join(WhiteboardSession, cls.whiteboard_id == WhiteboardSession.whiteboard_id)
+    def get_asset_usages(cls, asset_id, live_usages_only=False):
+        if live_usages_only:
+            query = cls.query.filter_by(asset_id=asset_id).join(WhiteboardSession, cls.whiteboard_id == WhiteboardSession.whiteboard_id)
+        else:
+            query = cls.query.filter_by(asset_id=asset_id)
         return [r.to_api_json() for r in query.all()]
 
     @classmethod
