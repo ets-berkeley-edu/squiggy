@@ -101,7 +101,10 @@ def _update_asset_preview(metadata, params):
         return False
 
     # If the asset appears in any live whiteboards, update via socketio.
-    for whiteboard_element in WhiteboardElement.get_live_asset_usages(asset_id):
+    all_asset_usages = WhiteboardElement.get_asset_usages(asset_id)
+    live_asset_usages = WhiteboardElement.get_asset_usages(asset_id, live_usages_only=True)
+    live_usage_whiteboard_element_ids = [whiteboard_element['id'] for whiteboard_element in live_asset_usages]
+    for whiteboard_element in all_asset_usages:
         element = whiteboard_element['element']
         whiteboard_id = whiteboard_element['whiteboardId']
         if element.get('src') != asset_image_url:
@@ -112,8 +115,8 @@ def _update_asset_preview(metadata, params):
                 {metadata}
 
             """)
-            element['width'] = metadata['imageWidth'] if 'imageWidth' in metadata else element['width']
-            element['height'] = metadata['imageHeight'] if 'imageHeight' in metadata else element['height']
+            element['width'] = metadata['image_width'] if 'image_width' in metadata else element['width']
+            element['height'] = metadata['image_height'] if 'image_height' in metadata else element['height']
             w = WhiteboardElement.update(
                 asset_id=asset_id,
                 element=element,
@@ -127,7 +130,7 @@ def _update_asset_preview(metadata, params):
 
             """)
             whiteboard_element['element'] = w.element
-        if not app.config['TESTING']:
+        if not app.config['TESTING'] and whiteboard_element['id'] in live_usage_whiteboard_element_ids:
             logger.info(f'socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_id}')
             emit(
                 'upsert_whiteboard_elements',
