@@ -249,6 +249,7 @@ export function updatePreviewImage(element: any, state: any, uuid: string) {
           $_scaleImageObject(existing, state)
           $_renderWhiteboard(state).then(() => {
             $_ensureWithinCanvas(existing)
+            p.$canvas.requestRenderAll()
             resolve(true)
           })
         })
