@@ -105,6 +105,8 @@ def _update_asset_preview(metadata, params):
         element = whiteboard_element['element']
         if element.get('src') != asset_image_url:
             element['src'] = asset_image_url
+            element['width'] = metadata['imageWidth'] if 'imageWidth' in metadata else element['width']
+            element['height'] = metadata['imageHeight'] if 'imageHeight' in metadata else element['height']
             w = WhiteboardElement.update(
                 asset_id=asset_id,
                 element=element,
