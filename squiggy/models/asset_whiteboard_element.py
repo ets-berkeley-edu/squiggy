@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from squiggy import db, std_commit
+from squiggy.lib.util import utc_now
 from squiggy.models.base import Base
 
 
@@ -38,6 +39,8 @@ class AssetWhiteboardElement(Base):
     element_asset_id = db.Column(Integer, ForeignKey('assets.id'))
     uuid = db.Column(db.String(255), nullable=False, primary_key=True)
     z_index = db.Column('z_index', Integer, nullable=False)
+    # Override created_at in base class with primary key notation.
+    created_at = db.Column(db.DateTime, nullable=False, default=utc_now, primary_key=True)
 
     def __init__(
             self,
