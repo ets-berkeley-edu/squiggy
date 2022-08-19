@@ -19,9 +19,17 @@ export default {
   // The padding that will be enforced on the canvas when it can be scrolled
   CANVAS_PADDING: 100,
   COLORS: {
+    berkeleyBlue: {
+      hex: '#003262',
+      rgb: 'rgb(0, 50, 98)'
+    },
     black: {
       hex: '#000000',
       rgb: 'rgb(0, 0, 0)'
+    },
+    californiaGold: {
+      hex: '#FDB515',
+      rgb: 'rgb(253, 181, 21)'
     },
     darkBlue: {
       hex: '#5a6c7a',
