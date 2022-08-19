@@ -187,7 +187,7 @@ CREATE TABLE asset_whiteboard_elements (
 );
 
 ALTER TABLE ONLY asset_whiteboard_elements
-    ADD CONSTRAINT asset_whiteboard_elements_pkey PRIMARY KEY (uuid, asset_id);
+    ADD CONSTRAINT asset_whiteboard_elements_pkey PRIMARY KEY (uuid, asset_id, created_at);
 
 --
 
