@@ -27,7 +27,7 @@
         <span>{{ tooltipText }}</span>
       </v-tooltip>
     </template>
-    <v-card>
+    <v-card width="420">
       <v-card-title class="sr-only">
         <h2 id="menu-header" class="sr-only">Select brush and color</h2>
       </v-card-title>
@@ -64,6 +64,7 @@
             </v-col>
           </v-row>
           <ColorPicker
+            class="pt-2"
             :update-value="setColor"
             :value="color"
           />
