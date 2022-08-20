@@ -50,8 +50,8 @@ export function getWhiteboards(
   return axios.post(`${utils.apiBaseUrl()}/api/whiteboards`, data)
 }
 
-export function remixWhiteboard(assetId: number) {
-  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/${assetId}/remix`, {assetId})
+export function remixWhiteboard(assetId: number, title: string) {
+  return axios.post(`${utils.apiBaseUrl()}/api/whiteboard/remix`, {assetId, title})
 }
 
 export function undelete(socketId: string, whiteboardId: number) {

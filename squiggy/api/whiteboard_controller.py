@@ -55,25 +55,28 @@ def get_whiteboard(whiteboard_id):
         raise ResourceNotFoundError('Whiteboard not found')
 
 
-@app.route('/api/whiteboard/<asset_id>/remix', methods=['POST'])
+@app.route('/api/whiteboard/remix', methods=['POST'])
 @feature_flag_whiteboards
 @login_required
-def remix_whiteboard(asset_id):
+def remix_whiteboard():
+    params = request.get_json()
+    asset_id = params.get('assetId')
+    title = params.get('title')
     asset = Asset.find_by_id(asset_id=asset_id)
     if not asset or not can_view_asset(asset=asset, user=current_user):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
     if asset.asset_type != 'whiteboard':
         raise BadRequestError('Asset type is not \'whiteboard\'.')
+    if not (title or '').strip():
+        raise BadRequestError('title is required')
     whiteboard = Whiteboard.remix(
-        asset=asset,
+        asset_id=asset.id,
         course_id=asset.course_id,
-        user=User.find_by_id(current_user.user_id),
+        created_by=User.find_by_id(current_user.user_id),
+        title=title,
+        whiteboard_users=asset.users,
     )
-    whiteboard_id = whiteboard['id']
-    return tolerant_jsonify(Whiteboard.find_by_id(
-        current_user=current_user,
-        whiteboard_id=whiteboard_id),
-    )
+    return tolerant_jsonify(Whiteboard.find_by_id(current_user, whiteboard_id=whiteboard['id']))
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
