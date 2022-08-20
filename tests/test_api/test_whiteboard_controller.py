@@ -329,19 +329,28 @@ class TestGetEligibleCollaborators:
 class TestRemixWhiteboard:
 
     @staticmethod
-    def _api_remix_whiteboard(client, asset_id, expected_status_code=200):
-        response = client.post(f'/api/whiteboard/{asset_id}/remix')
+    def _api_remix_whiteboard(
+        client,
+        asset_id,
+        title,
+        expected_status_code=200,
+    ):
+        response = client.post(
+            '/api/whiteboard/remix',
+            content_type='application/json',
+            data=json.dumps({'assetId': asset_id, 'title': title}),
+        )
         assert response.status_code == expected_status_code
         return json.loads(response.data)
 
     def test_anonymous(self, client):
         """Denies anonymous user."""
-        self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401)
+        self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401, title='Anonymous remix')
 
     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
-        self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401)
+        self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401, title='Unauthorized remix')
 
     def test_authorized(self, client, fake_auth, mock_whiteboard):
         """Authorized user can update whiteboard."""
@@ -365,8 +374,14 @@ class TestRemixWhiteboard:
         for user in [student, some_other_student]:
             logout_user()
             fake_auth.login(user.id)
-            remixed_whiteboard = self._api_remix_whiteboard(client, asset_id=asset_original['id'])
-            assert remixed_whiteboard['title'] == title
+            custom_title = f'{user.canvas_full_name} remix'
+            remixed_whiteboard = self._api_remix_whiteboard(
+                client,
+                asset_id=asset_original['id'],
+                title=custom_title,
+            )
+            std_commit(allow_test_environment=True)
+            assert remixed_whiteboard['title'] == custom_title
             # Compare elements
             original_whiteboard_elements = mock_whiteboard['whiteboardElements']
             remixed_elements = remixed_whiteboard['whiteboardElements']
@@ -395,45 +410,6 @@ class TestRemixWhiteboard:
         assert len(activities_get_whiteboard_remix) == len(collaborator_user_ids)
         for activity in activities_get_whiteboard_remix:
             assert activity.user_id in collaborator_user_ids
-
-
-# class TestRefreshAssetPreview:
-#
-#     @staticmethod
-#     def _api_refresh_whiteboard_preview(whiteboard_id, client, expected_status_code=200):
-#         response = client.post(f'/api/whiteboard/{whiteboard_id}/refresh_preview')
-#         assert response.status_code == expected_status_code
-#
-#     def test_anonymous(self, client, mock_whiteboard):
-#         """Denies anonymous user."""
-#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client, expected_status_code=401)
-#
-#     def test_unauthorized(self, client, fake_auth, mock_whiteboard):
-#         """Denies unauthorized user."""
-#         fake_auth.login(unauthorized_user_id)
-#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client, expected_status_code=401)
-#
-#     def test_refresh_whiteboard_by_owner(self, client, db_session, fake_auth, mock_whiteboard):
-#         """Authorized user can refresh asset preview."""
-#         mock_whiteboard.preview_status = 'done'
-#         fake_auth.login(mock_whiteboard.users[0].id)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
-#         assert asset_feed['previewStatus'] == 'done'
-#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
-#         assert asset_feed['previewStatus'] == 'pending'
-#
-#     def test_refresh_whiteboard_by_instructor(self, client, db_session, fake_auth, mock_whiteboard):
-#         """Instructor can refresh asset preview."""
-#         mock_whiteboard.preview_status = 'done'
-#         course = Course.find_by_id(mock_whiteboard['courseId'])
-#         instructors = list(filter(lambda u: is_teaching(u), course.users))
-#         fake_auth.login(instructors[0].id)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
-#         assert asset_feed['previewStatus'] == 'done'
-#         self._api_refresh_whiteboard_preview(mock_whiteboard['id'], client)
-#         asset_feed = _api_get_whiteboard(mock_whiteboard['id'], client)
-#         assert asset_feed['previewStatus'] == 'pending'
 
 
 class TestDeleteWhiteboard:

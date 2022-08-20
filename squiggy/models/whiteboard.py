@@ -284,14 +284,14 @@ class Whiteboard(Base):
         }
 
     @classmethod
-    def remix(cls, asset, course_id, user):
+    def remix(cls, asset_id, course_id, created_by, title, whiteboard_users):
         whiteboard = cls.create(
             course_id=course_id,
-            title=asset.title,
-            users=[user],
+            title=title,
+            users=[created_by],
         )
         whiteboard_id = whiteboard['id']
-        for a in AssetWhiteboardElement.find_by_asset_id(asset.id):
+        for a in AssetWhiteboardElement.find_by_asset_id(asset_id):
             WhiteboardElement.create(
                 asset_id=a.element_asset_id,
                 element=a.element,
@@ -300,25 +300,25 @@ class Whiteboard(Base):
                 z_index=a.z_index,
             )
         # If user is remixing their own whiteboard then no 'activity' is created.
-        user_id = user.id
-        course_id = user.course.id
-        if user_id not in [user.id for user in asset.users]:
+        user_id = created_by.id
+        course_id = created_by.course.id
+        if user_id not in [user.id for user in whiteboard_users]:
             Activity.create(
                 activity_type='whiteboard_remix',
                 course_id=course_id,
                 user_id=user_id,
                 object_type='asset',
-                object_id=asset.id,
-                asset_id=asset.id,
+                object_id=asset_id,
+                asset_id=asset_id,
             )
-            for asset_user in asset.users:
+            for asset_user in whiteboard_users:
                 Activity.create(
                     activity_type='get_whiteboard_remix',
                     course_id=course_id,
                     user_id=asset_user.id,
                     object_type='asset',
-                    object_id=asset.id,
-                    asset_id=asset.id,
+                    object_id=asset_id,
+                    asset_id=asset_id,
                 )
         return whiteboard
 
