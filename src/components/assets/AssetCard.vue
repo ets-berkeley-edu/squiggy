@@ -14,8 +14,11 @@
       <v-card
         v-if="!asset.isLoading"
         :id="`asset-${asset.id}`"
-        hover
+        :aria-pressed="ariaPressed"
         class="card-class"
+        hover
+        role="button"
+        tabindex="0"
         @keypress.enter="onClick"
         @click="onClick"
       >
@@ -73,6 +76,10 @@ export default {
   name: 'AssetCard',
   mixins: [Utils],
   props: {
+    ariaPressed: {
+      required: false,
+      type: Boolean
+    },
     asset: {
       required: true,
       type: Object
