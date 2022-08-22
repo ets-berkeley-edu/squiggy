@@ -47,11 +47,12 @@
             class="ma-3"
           >
             <AssetCard
+              :aria-pressed="selectedAssetIds.includes(asset.id)"
               :asset="asset"
               class="asset-card"
               context="whiteboard"
               :hide-engagement-counts="true"
-              :on-asset-click="$_.noop"
+              :on-asset-click="onClickAssetImage"
             >
               <v-checkbox
                 :id="`asset-${asset.id}`"
@@ -59,6 +60,7 @@
                 class="mb-0 pt-0"
                 dark
                 multiple
+                readonly
                 :value="asset.id"
               >
                 <template #label>
@@ -169,6 +171,13 @@ export default {
     }
   },
   methods: {
+    onClickAssetImage(asset) {
+      if (this.selectedAssetIds.includes(asset.id)) {
+        this.selectedAssetIds = this.$_.filter(this.selectedAssetIds, id => id !== asset.id)
+      } else {
+        this.selectedAssetIds.push(asset.id)
+      }
+    },
     cancel() {
       this.$announcer.polite('Canceled.')
       this.reset()
