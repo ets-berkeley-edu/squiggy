@@ -72,6 +72,8 @@ const mutations = {
   addWhiteboards: (state: any, whiteboards: any[]) => state.whiteboards.push(...whiteboards),
   refresh: (state: any, data: any) => {
     const results = _.get(data, 'results')
+    const ids = _.map(results, 'id')
+    state.whiteboards = _.filter(state.whiteboards, (whiteboard: any) => ids.includes(whiteboard.id))
     _.each(results, row => {
       const existing = _.find(state.whiteboards, ['id', row['id']])
       if (existing) {
