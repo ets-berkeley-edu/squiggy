@@ -110,7 +110,10 @@ export function initialize(state: any) {
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
     if (state.disableAll) {
-      $_initSocket(state)
+      // The /asset page uses this code to render assets of type 'whiteboard' and does not need a socket.io connection.
+      if (!$_isAsset(state.whiteboard)) {
+        $_initSocket(state)
+      }
       $_initCanvas(state)
       $_renderWhiteboard(state, true).then(() => {
         $_enableCanvasElements(false)
@@ -517,7 +520,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on('error', (error: any) => {
     $_log(`socket-io error: ${error}`, true)
     if (p.$socket.disconnected) {
-      $_tryReconnect(state)
+      $_tryReconnect(state).then(_.noop)
     }
   })
   p.$socket.on('ping', () => $_log('socket-io ping'))
@@ -528,7 +531,7 @@ const $_addSocketListeners = (state: any) => {
   p.$socket.on('reconnect_failed', (error: any) => {
     $_log(`socket-io reconnect_failed: ${error}`, true)
     if (p.$socket.disconnected) {
-      $_tryReconnect(state)
+      $_tryReconnect(state).then(_.noop)
     }
   })
 
@@ -890,10 +893,10 @@ const $_initSocket = (state: any) => {
     transports: ['websocket', 'polling'],
     withCredentials: true
   })
-  p.$socket.on('close', $_tryReconnect)
+  p.$socket.on('close', () => $_tryReconnect(state))
   p.$socket.on('connect_error', (error: any) => {
     $_log(`socket.on connect_error: ${error}`, true)
-    $_tryReconnect(state)
+    $_tryReconnect(state).then(_.noop)
   })
   p.$socket.on('connect_timeout', data => $_log(`[WARN] connect_timeout: ${data}`, true))
   p.$socket.on('connect', () => {
@@ -903,7 +906,7 @@ const $_initSocket = (state: any) => {
       engine.once('upgrade', () => $_log(`socket.engine.once -> upgrade: ${engine.transport.name}`))
       engine.on('close', (reason: string) => $_log(`socket.engine.on -> close: ${reason}`))
     }
-    $_join(state)
+    $_join(state).then(_.noop)
   })
 }
 
@@ -921,6 +924,8 @@ function $_invokeWithSocketConnectRetry(description: string, operation: () => vo
     })
   }
 }
+
+const $_isAsset = (object: any) => !!object.assetType
 
 const $_join = (state: any) => {
   return new Promise<void>(resolve => {
