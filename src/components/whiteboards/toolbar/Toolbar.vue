@@ -18,7 +18,6 @@
             mandatory
           >
             <MoveTool />
-            <!-- <ZoomTool /> -->
             <TextTool />
             <PencilBrushTool />
             <ShapeTool />
