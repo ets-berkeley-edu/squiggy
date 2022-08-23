@@ -109,12 +109,6 @@ def _update_asset_preview(metadata, params):
         whiteboard_id = whiteboard_element['whiteboardId']
         if element.get('src') != asset_image_url:
             element['src'] = asset_image_url
-            app.logger.warn(f"""
-                preview-service metadata for whiteboard_id = {whiteboard_id} where asset_id = {asset_id}:
-
-                {metadata}
-
-            """)
             element['width'] = metadata['image_width'] if 'image_width' in metadata else element['width']
             element['height'] = metadata['image_height'] if 'image_height' in metadata else element['height']
             w = WhiteboardElement.update(
@@ -123,12 +117,6 @@ def _update_asset_preview(metadata, params):
                 uuid=whiteboard_element['uuid'],
                 whiteboard_id=whiteboard_id,
             )
-            app.logger.warn(f"""
-                whiteboard_element['element'] after update:
-
-                {w.element}
-
-            """)
             whiteboard_element['element'] = w.element
         if not app.config['TESTING'] and whiteboard_element['id'] in live_usage_whiteboard_element_ids:
             logger.info(f'socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_id}')

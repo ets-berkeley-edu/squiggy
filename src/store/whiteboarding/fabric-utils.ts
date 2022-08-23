@@ -241,11 +241,11 @@ export function setMode(mode: string) {
 }
 
 export function updatePreviewImage(element: any, state: any, uuid: string) {
-  return new Promise<boolean>(resolve => {
+  return new Promise<void>(resolve => {
     const existing: any = $_getCanvasElement(uuid)
     const src = element.src
     if (existing && (existing.type === 'image') && (existing.getSrc() !== src)) {
-      $_log(`Update preview image:  \nexisting:  \n${JSON.stringify(existing)}  \n----\nelement:  \n${JSON.stringify(element)}`)
+      $_log(`Update preview image (uuid: ${uuid})`)
       // Preview image of this asset has changed. Update existing element and re-render.
       const done = (src: any) => {
         existing.setSrc(src, () => {
@@ -253,7 +253,7 @@ export function updatePreviewImage(element: any, state: any, uuid: string) {
           $_renderWhiteboard(state).then(() => {
             $_ensureWithinCanvas(existing)
             p.$canvas.requestRenderAll()
-            resolve(true)
+            resolve()
           })
         })
       }
@@ -264,7 +264,7 @@ export function updatePreviewImage(element: any, state: any, uuid: string) {
         done(existing.getSrc() || constants.ASSET_PLACEHOLDERS['file'])
       }
     } else {
-      resolve(false)
+      resolve()
     }
   })
 }
@@ -565,47 +565,35 @@ const $_addSocketListeners = (state: any) => {
     $_log('socket.on update_whiteboard')
   })
 
-  p.$socket.on('upsert_whiteboard_elements', (data: any) => {
+  p.$socket.on('upsert_whiteboard_elements', (whiteboardElements: any[]) => {
+    $_log(`socket.on upsert_whiteboard_elements: uuids = ${_.map(whiteboardElements, 'uuid')}`)
     const promises: any[] = []
-    const whiteboardElements: any[] = []
-    _.each(data, (whiteboardElement: any) => {
-      promises.push(new Promise<void>((resolve: any) => {
-        const element = whiteboardElement.element
-        const uuid = whiteboardElement.uuid
-        const existing: any = $_getCanvasElement(uuid)
-        if (existing) {
-          // Deactivate the current group if any of the updated elements are in the current group
-          $_deactivateGroupIfOverlap(uuid)
-          updatePreviewImage(element, state, uuid).then((modified: boolean) => {
-            modified ||= $_assignIn(existing, element)
-            if (modified) {
-              $_assignIn(existing, element)
+    store.dispatch('whiteboarding/onWhiteboardElementsUpsert', whiteboardElements).then(() => {
+      _.each(whiteboardElements, (whiteboardElement: any) => {
+        promises.push(new Promise<void>((resolve: any) => {
+          const element = whiteboardElement.element
+          const uuid = whiteboardElement.uuid
+          const existing: any = $_getCanvasElement(uuid)
+          if (existing) {
+            // Deactivate the current group if any of the updated elements are in the current group
+            $_deactivateGroupIfOverlap(uuid)
+            updatePreviewImage(element, state, uuid).then(() => {
+              _.each(constants.MUTABLE_ELEMENT_ATTRIBUTES, (key: string) => existing.set(key, element[key]))
               $_ensureWithinCanvas(existing)
-              whiteboardElements.push({
-                assetId: whiteboardElement.assetId,
-                element,
-                uuid
-              })
-            }
-            resolve()
-          })
-        } else {
-          $_deserializeElement(state, element).then((e: any) => {
-            // Add the element to the whiteboard canvas and move it to its appropriate index
-            store.commit('whiteboarding/pushRemoteUUID', e.uuid)
-            p.$canvas.add(e)
-            resolve()
-          })
-        }
-      }))
-    })
-    Promise.all(promises).then(() => {
-      $_log(`socket.on upsert_whiteboard_elements: uuids = ${_.map(whiteboardElements, 'uuid')}`)
-      store.dispatch('whiteboarding/onWhiteboardElementsUpsert', whiteboardElements).then(() => {
-        p.$canvas.requestRenderAll()
-        setCanvasDimensions(state)
+              resolve()
+            })
+          } else {
+            $_deserializeElement(state, element).then((e: any) => {
+              // Add the element to the whiteboard canvas and move it to its appropriate index
+              store.commit('whiteboarding/pushRemoteUUID', e.uuid)
+              p.$canvas.add(e)
+              resolve()
+            })
+          }
+        }))
       })
     })
+    Promise.all(promises).then(() => setCanvasDimensions(state))
   })
 
   p.$socket.on('delete_whiteboard_elements', (uuids: string[]) => {
@@ -665,17 +653,6 @@ const $_addViewportListeners = (state: any) => {
     }
     element.addEventListener('keydown', onKeydown, false)
   }
-}
-
-const $_assignIn = (object: any, source: any) => {
-  $_log('Assign in')
-  let modified = false
-  _.each(constants.MUTABLE_ELEMENT_ATTRIBUTES, (key: string) => {
-    const value = source[key]
-    modified ||= value !== object.get(key)
-    object.set(key, value)
-  })
-  return modified
 }
 
 const $_broadcastDelete = (uuids: string[], state: any) => {
