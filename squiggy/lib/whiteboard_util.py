@@ -38,9 +38,7 @@ def to_png_file(whiteboard):
     base_dir = app.config['BASE_DIR']
     temp_file = tempfile.NamedTemporaryFile(suffix='.json')
     with open(temp_file.name, mode='wt', encoding='utf-8') as f:
-        elements = [w['element'] for w in whiteboard['whiteboardElements']]
-        json.dump(elements, f)
-
+        json.dump(whiteboard['whiteboardElements'], f)
     with open(f.name, mode='rb') as f:
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as png_file:

@@ -9,7 +9,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 BASE_DIR="${SCRIPT_DIR}/.."
 
 mkdir -p "${BASE_DIR}/tmp"
-TARGET_JSON="${BASE_DIR}/tmp/elements.json"
+TARGET_JSON="${BASE_DIR}/tmp/whiteboardElements.json"
 
 cd "$BASE_DIR"
 
@@ -22,22 +22,33 @@ echo -e '\nFirst, we compile the 'whiteboard_to_png' Typescript file...\n'
 
 echo -e '\nNext, pull sample whiteboard_elements JSON from Squiggy db.\n'
 
-SQL="SELECT element FROM whiteboard_elements WHERE whiteboard_id = ${PNG_FOR_WHITEBOARD_ID}"
+# Construct an array of serialized whiteboard_elements, including z_index and uuid.
+whiteboardElements='['
 
-psql -c "${SQL}" \
+SQL="SELECT (json_build_object('element', element, 'uuid', uuid, 'zIndex', z_index) || ',') AS whiteboard_element FROM whiteboard_elements WHERE whiteboard_id = ${PNG_FOR_WHITEBOARD_ID}"
+
+while read row
+do
+  whiteboardElements+="${row}"
+done <<< $(psql \
+  --field-separator ' ' \
+  --no-align \
+  --quiet \
+  --set AUTOCOMMIT=off \
+  --set ON_ERROR_STOP=on \
+  --single-transaction \
+  -c "${SQL}" \
   -h localhost \
-  --output="${TARGET_JSON}" \
   -p 65432 \
   -t \
   -U app_squiggy \
-  squiggy_dev
+  -X \
+  squiggy_dev)
 
-# Convert db result-set to valid JSON.
-TMP_JSON="${BASE_DIR}/tmp/tmp.json"
-echo -e "[$(cat "${TARGET_JSON}")]" > "${TMP_JSON}"
-sed '$!s/$/,/' "${TMP_JSON}" > "${TARGET_JSON}"
-rm "${TMP_JSON}"
-# The TARGET_JSON file is now valid JSON.
+# Remove trailing comma and append right-bracket to close the array.
+whiteboardElements=$(echo "${whiteboardElements}" | awk 'gsub(/,$/,x)')
+whiteboardElements+="]"
+echo -e "${whiteboardElements}" > "${TARGET_JSON}"
 
 echo -e "\nGenerated JSON file: ${TARGET_JSON}\n"
 
@@ -49,7 +60,7 @@ node \
   "${BASE_DIR}/scripts/node_js/save_whiteboard_as_png.js" \
   -b "${BASE_DIR}" \
   -p "${PNG_FILE}" \
-  -w "${BASE_DIR}/tmp/elements.json" \
+  -w "${TARGET_JSON}" \
   -v true
 
 echo -e "\nPNG file: ${PNG_FILE}\n\nBye!\n"
