@@ -6,7 +6,7 @@ import {fabric} from 'fabric'
  * NOTE: The steps below are automated for you in 'scripts/developer_debug_whiteboard_as_png.sh'.
  *
  * USAGE:
- *  1. Create mock data in elements.json (array of serialized fabric objects, as seen in Squiggy database).
+ *  1. Create mock data in whiteboardElements.json (array of serialized fabric objects, as seen in Squiggy database).
  *  2. cd to Squiggy base directory
  *  3. Run command
  *      node \
@@ -14,7 +14,7 @@ import {fabric} from 'fabric'
  *        -b /path/to/squiggy \
  *        -p "/path/to/output/whiteboard.png" \
  *        -v true \
- *        -w "/path/to/elements.json"
+ *        -w "/path/to/whiteboardElements.json"
  */
 
 const WHITEBOARD_PADDING = 10
@@ -27,13 +27,12 @@ const getArg = (flag: string) => {
 }
 
 const baseDir = getArg('-b')
-const deserializedElements: any[] = []
-const elements = require(getArg('-w'))
+const whiteboardElements = require(getArg('-w'))
 const pngFile = getArg('-p')
 const verbose = _.trim(getArg('-v'))
 
-if (!baseDir || !pngFile || !elements) {
-  throw new Error('Required arg(s) are missing. baseDir=' + baseDir + '; pngFile=' + pngFile + '; elements=' + elements + ';')
+if (!baseDir || !pngFile || !whiteboardElements) {
+  throw new Error(`'Required arg(s) are missing. baseDir=${baseDir}; pngFile=${pngFile}; whiteboardElements=${whiteboardElements}`)
 }
 
 // Initialize fabric
@@ -53,21 +52,24 @@ let bottom = Number.MIN_VALUE
 
 $_log('Begin')
 
+const deserializedElements: any[] = []
 const promises: any[] = []
 
-_.each(elements, (element: any) => {
+_.each(whiteboardElements, (whiteboardElement: any) => {
   // Canvas doesn't seem to deal terribly well with text elements that specify a prioritized list
   // of font family names. It seems that the only way to render custom fonts is to only specify one
-  if (element.fontFamily) {
-    element.fontFamily = 'HelveticaNeue-Light'
+  if (whiteboardElement.element.fontFamily) {
+    whiteboardElement.element.fontFamily = 'HelveticaNeue-Light'
   }
   // Deserialize the element, get its boundary and check how large the canvas should be to display the element entirely.
-  const type = fabric.util.string.camelize(fabric.util.string.capitalize(element.type))
   promises.push(new Promise<void>((resolve: any) => {
-    $_createFabricObject(element, type).then((e: any) => {
-      $_log(`${_.capitalize(e.type)} element deserialized (uuid: ${e.uuid})`, false)
-      deserializedElements.push(e)
-      const bound = e.getBoundingRect()
+    const type = fabric.util.string.camelize(fabric.util.string.capitalize(whiteboardElement.element.type))
+    const uuid = whiteboardElement.uuid
+    const zIndex = whiteboardElement.zIndex
+    $_createFabricObject(whiteboardElement.element, type).then((object: any) => {
+      $_log(`${_.capitalize(object.type)} element deserialized (uuid: ${uuid})`, false)
+      deserializedElements.push({element: object, uuid, zIndex})
+      const bound = object.getBoundingRect()
       // The values below determine canvas size during render.
       left = Math.min(left, bound.left)
       top = Math.min(top, bound.top)
@@ -136,8 +138,45 @@ function $_render() {
   canvas.renderOnAddRemove = false
 
   // Add elements to the canvas
-  _.each(_.sortBy(deserializedElements, (e: any) => e.index), o => canvas.add(o))
+  const sorted = _.sortBy(deserializedElements, ['zIndex', 'uuid'])
+  _.each(sorted, (whiteboardElement: any) => canvas.add(whiteboardElement.element))
+  $_setCanvasDimensions(canvas)
   canvas.renderAll()
   canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
   $_log('Done.')
+}
+
+function $_setCanvasDimensions(canvas: any) {
+  const canvasBaseWidth = 1000
+  const canvasPadding = 100
+  const viewportHeight = 600
+  const viewportWidth = 800
+  let maxRight = viewportWidth
+  let maxBottom = viewportHeight
+
+  const ratio = viewportWidth / canvasBaseWidth
+  canvas.setZoom(ratio)
+
+  _.each(canvas.getObjects(), (element: any) => {
+    const bound = element.group ? element.group.getBoundingRect() : element.getBoundingRect()
+    maxRight = Math.max(maxRight, bound.left + bound.width)
+    maxBottom = Math.max(maxBottom, bound.top + bound.height)
+  })
+  if (maxRight > viewportWidth || maxBottom > viewportHeight) {
+    if (maxRight > viewportWidth) {
+      maxRight += canvasPadding
+    }
+    if (maxBottom > viewportHeight) {
+      maxBottom += canvasPadding
+    }
+  }
+  // Calculate the actual un-zoomed width of the whiteboard.
+  const realWidth = maxRight / canvas.getZoom()
+  const realHeight = maxBottom / canvas.getZoom()
+  const widthRatio = viewportWidth / realWidth
+  const heightRatio = viewportHeight / realHeight
+
+  canvas.setZoom(Math.min(widthRatio, heightRatio))
+  canvas.setHeight(viewportHeight)
+  canvas.setWidth(viewportWidth)
 }
