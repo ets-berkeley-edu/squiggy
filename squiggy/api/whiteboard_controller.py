@@ -249,7 +249,7 @@ def delete_whiteboard(whiteboard_id):
                 {
                     'deletedAt': isoformat(whiteboard.deleted_at),
                     'title': whiteboard.title,
-                    'users': whiteboard.users,
+                    'users': [user.to_api_json() for user in whiteboard.users],
                     'whiteboardId': whiteboard.id,
                 },
                 include_self=False,
