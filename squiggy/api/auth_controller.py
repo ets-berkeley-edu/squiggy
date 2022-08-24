@@ -210,7 +210,7 @@ def _lti_launch_authentication(tool_id):
                 canvas_api_domain=canvas_api_domain,
                 canvas_course_id=canvas_course_id,
                 engagement_index_url=external_tool_url if is_engagement_index else None,
-                impact_studio_url=impact_studio_url if is_impact_studio else None,
+                impact_studio_url=external_tool_url if is_impact_studio else None,
                 name=args.get('context_title'),
                 whiteboards_url=external_tool_url if is_whiteboards else None,
             )
