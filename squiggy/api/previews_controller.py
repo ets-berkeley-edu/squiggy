@@ -38,6 +38,11 @@ from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.sockets import SOCKET_IO_NAMESPACE
 
+# TODO: Fix suitec-preview-service
+# The preview-service has hard-coded width and height when generating 'link' asset preview. However, the
+# preview-service returns only 'image_width' in its payload. Thus, we hard-code the default value.
+DEFAULT_LINK_ASSET_IMAGE_HEIGHT = 1280
+
 
 @app.route('/api/previews/callback', methods=['POST'])
 def previews_callback():
@@ -116,7 +121,9 @@ def _update_asset_preview(metadata, params):
 
             """)
             element['width'] = metadata['image_width'] if 'image_width' in metadata else element['width']
-            element['height'] = metadata['image_height'] if 'image_height' in metadata else element['height']
+            image_height = metadata['image_height'] if 'image_height' in metadata else None
+            is_link_asset = asset.asset_type == 'link'
+            element['height'] = image_height or (DEFAULT_LINK_ASSET_IMAGE_HEIGHT if is_link_asset else element['height'])
             w = WhiteboardElement.update(
                 asset_id=asset_id,
                 element=element,
