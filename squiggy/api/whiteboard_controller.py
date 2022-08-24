@@ -32,6 +32,7 @@ from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards, get_s
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_student, isoformat, local_now
+from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.logger import logger
 from squiggy.models.asset import Asset
@@ -76,6 +77,7 @@ def remix_whiteboard():
         title=title,
         whiteboard_users=asset.users,
     )
+    WhiteboardHousekeeping.queue_for_preview_image(whiteboard['id'])
     return tolerant_jsonify(Whiteboard.find_by_id(current_user, whiteboard_id=whiteboard['id']))
 
 
