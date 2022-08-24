@@ -20,6 +20,7 @@ import CreateWhiteboard from '@/components/whiteboards/CreateWhiteboard.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
 import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
+import ImpactStudio from '@/components/impactstudio/ImpactStudio.vue'
 import LaunchFailure from '@/components/LaunchFailure.vue'
 import ManageAssets from '@/components/assets/ManageAssets.vue'
 import NotFound from '@/components/NotFound.vue'
@@ -148,6 +149,20 @@ const router = new Router({
           component: PointsConfiguration,
           meta: {
             title: 'Points Configuration'
+          }
+        },
+        {
+          path: '/impact_studio',
+          component: ImpactStudio,
+          meta: {
+            title: 'Impact Studio'
+          }
+        },
+        {
+          path: '/impact_studio/profile/:id',
+          component: ImpactStudio,
+          meta: {
+            title: 'Impact Studio'
           }
         },
         {

@@ -41,6 +41,7 @@ class Course(Base):
     enable_upload = db.Column(db.Boolean, default=True, nullable=False)
     enable_weekly_notifications = db.Column(db.Boolean, default=True, nullable=False)
     engagement_index_url = db.Column(db.String(255))
+    impact_studio_url = db.Column(db.String(255))
     last_polled = db.Column(db.DateTime)
     name = db.Column(db.String(255))
     whiteboards_url = db.Column(db.String(255))
@@ -57,6 +58,7 @@ class Course(Base):
             enable_upload=True,
             enable_weekly_notifications=True,
             engagement_index_url=None,
+            impact_studio_url=None,
             name=None,
             whiteboards_url=None,
     ):
@@ -68,6 +70,7 @@ class Course(Base):
         self.enable_upload = enable_upload
         self.enable_weekly_notifications = enable_weekly_notifications
         self.engagement_index_url = engagement_index_url
+        self.impact_studio_url = impact_studio_url
         self.name = name
         self.whiteboards_url = whiteboards_url
 
@@ -82,6 +85,7 @@ class Course(Base):
                     enable_weekly_notifications={self.enable_weekly_notifications},
                     engagement_index_url={self.engagement_index_url},
                     id={self.id},
+                    impact_studio_url={self.impact_studio_url},
                     name={self.name},
                     whiteboards_url={self.whiteboards_url},
                     created_at={self.created_at},
@@ -103,6 +107,7 @@ class Course(Base):
             canvas_course_id,
             asset_library_url=None,
             engagement_index_url=None,
+            impact_studio_url=None,
             name=None,
             whiteboards_url=None,
     ):
@@ -112,6 +117,7 @@ class Course(Base):
             canvas_api_domain=canvas_api_domain,
             canvas_course_id=canvas_course_id,
             engagement_index_url=engagement_index_url,
+            impact_studio_url=impact_studio_url,
             name=name,
             whiteboards_url=whiteboards_url,
         )
@@ -126,12 +132,14 @@ class Course(Base):
             asset_library_url,
             course_id,
             engagement_index_url,
+            impact_studio_url,
             whiteboards_url=None,
     ):
         course = cls.find_by_id(course_id=course_id)
         course.active = active
         course.asset_library_url = asset_library_url
         course.engagement_index_url = engagement_index_url
+        course.impact_studio_url = impact_studio_url
         course.whiteboards_url = whiteboards_url
         db.session.add(course)
         std_commit()
@@ -150,6 +158,7 @@ class Course(Base):
             'enableWeeklyNotifications': self.enable_weekly_notifications,
             'engagementIndexUrl': self.engagement_index_url,
             'id': self.id,
+            'impactStudioUrl': self.impact_studio_url,
             'lastPolled': _isoformat(self.last_polled),
             'name': self.name,
             'whiteboardsUrl': self.whiteboards_url,

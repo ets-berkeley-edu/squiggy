@@ -60,9 +60,11 @@ class User(Base):
     canvas_full_name = db.Column(db.String(255), nullable=False)
     canvas_image = db.Column(db.String(255))
     canvas_user_id = db.Column(db.Integer, nullable=False)
+    personal_description = db.Column(db.String(255))
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     points = db.Column(db.Integer, default=0, nullable=False)
     share_points = db.Column(db.Boolean, default=None)
+    looking_for_collaborators = db.Column(db.Boolean, default=False, nullable=False)
     last_activity = db.Column(db.DateTime, nullable=False, default=utc_now)
 
     assets = db.relationship(
@@ -88,8 +90,10 @@ class User(Base):
         canvas_course_sections=None,
         canvas_email=None,
         canvas_image=None,
+        personal_description=None,
         points=0,
         share_points=None,
+        looking_for_collaborators=False,
     ):
         self.bookmarklet_token = '%032x' % random.getrandbits(128)
         self.canvas_course_role = canvas_course_role
@@ -100,8 +104,10 @@ class User(Base):
         self.canvas_image = canvas_image
         self.canvas_user_id = canvas_user_id
         self.course_id = course_id
+        self.personal_description = personal_description
         self.points = points
         self.share_points = share_points
+        self.looking_for_collaborators = looking_for_collaborators
 
     def __repr__(self):
         return f"""<User
@@ -113,9 +119,11 @@ class User(Base):
                     canvas_full_name={self.canvas_full_name},
                     canvas_user_id={self.canvas_user_id},
                     course_id={self.course_id},
+                    personal_description={self.personal_description},
                     last_activity={self.last_activity},
                     points={self.points},
                     share_points={self.share_points},
+                    looking_for_collaborators={self.looking_for_collaborators},
                     created_at={self.created_at},
                     updated_at={self.updated_at}>
                 """
@@ -131,6 +139,7 @@ class User(Base):
             canvas_course_sections=None,
             canvas_email=None,
             canvas_image=None,
+            personal_description=None,
     ):
         user = cls(
             canvas_course_role=canvas_course_role,
@@ -141,6 +150,7 @@ class User(Base):
             canvas_image=canvas_image,
             canvas_user_id=canvas_user_id,
             course_id=course_id,
+            personal_description=personal_description,
         )
         db.session.add(user)
         std_commit()
@@ -201,6 +211,8 @@ class User(Base):
             'canvasFullName': self.canvas_full_name,
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
+            'personalDescription': self.personal_description,
+            'lookingForCollaborators': self.looking_for_collaborators,
             'whiteboards': [{'id': w.id, 'title': w.title} for w in self.whiteboards],
             'isAdmin': is_admin(self),
             'isObserver': is_observer(self),
