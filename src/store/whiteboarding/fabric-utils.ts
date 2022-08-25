@@ -289,15 +289,26 @@ const $_addCanvasListeners = (state: any) => {
     $_ensureWithinCanvas(event.target)
   })
 
-  p.$canvas.on('object:modified', (event) => {
+  p.$canvas.on('object:modified', () => {
     $_setModifyingElement(false)
-    const objects = event.target.type === constants.FABRIC_MULTIPLE_SELECT_TYPE ? event.target.getObjects() : [event.target]
+    const objects: any[] = []
+    const object = p.$canvas.getActiveObject()
+    if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+      _.each(object.getObjects(), (element: any) => {
+        const position = $_calculateGlobalElementPosition(object, element)
+        objects.push(_.assignIn({}, element.toObject(), position))
+      })
+    } else {
+      objects.push(object.toObject())
+    }
     if (_.size(objects)) {
+      const whiteboardElements = _.map(objects, o => {
+        return {assetId: o.assetId, element: o, uuid: o.uuid}
+      })
       changeZOrder('bringToFront', objects, state)
-      store.dispatch('whiteboarding/setIsFitToScreen', true).then(() => {
+      $_broadcastUpsert(whiteboardElements, state).then(() => {
         _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
-        const whiteboardElements = $_translateIntoWhiteboardElements(objects)
-        $_broadcastUpsert(whiteboardElements, state).then(_.noop)
+        store.dispatch('whiteboarding/setIsFitToScreen', true).then(_.noop)
       })
     }
   })
@@ -837,6 +848,7 @@ const $_initFabricPrototypes = (state: any) => {
     return function() {
       const extras = {
         assetId: this.assetId,
+        fontSize: this.fontSize,
         fontFamily: this.fontFamily,
         height: this.height,
         isHelper: this.isHelper,
