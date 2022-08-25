@@ -115,6 +115,20 @@ class CanvasPoller(BackgroundJob):
                 course_updates['engagement_index_url'] = None
             else:
                 has_active_tools = True
+        if db_course.whiteboards_url:
+            whiteboards_tab = next((t for t in tabs if db_course.whiteboards_url.endswith(t.html_url)), None)
+            if not whiteboards_tab or getattr(whiteboards_tab, 'hidden', None):
+                logger.debug(f'No active tab found for Whiteboards, will remove URL from db: {_format_course(db_course)}')
+                course_updates['whiteboards_url'] = None
+            else:
+                has_active_tools = True
+        if db_course.impact_studio_url:
+            impact_studio_tab = next((t for t in tabs if db_course.impact_studio_url.endswith(t.html_url)), None)
+            if not impact_studio_tab or getattr(impact_studio_tab, 'hidden', None):
+                logger.debug(f'No active tab found for Impact Studio, will remove URL from db: {_format_course(db_course)}')
+                course_updates['impact_studio_url'] = None
+            else:
+                has_active_tools = True
 
         if not has_active_tools:
             logger.debug(f'No active tools found for course, will mark inactive: {_format_course(db_course)}')
