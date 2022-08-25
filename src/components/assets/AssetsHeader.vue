@@ -2,7 +2,7 @@
   <div>
     <h2 class="sr-only">Asset Library</h2>
     <v-expand-transition>
-      <div v-if="!expanded" class="align-start d-flex justify-space-between">
+      <div v-if="!isAdvancedSearchOpen" class="align-start d-flex justify-space-between">
         <div class="w-50">
           <v-text-field
             id="basic-search-input"
@@ -22,10 +22,10 @@
                 class="ml-2"
                 :disabled="isLoading || isBusy"
                 icon
-                @click="reset(!expanded)"
+                @click="reset(!isAdvancedSearchOpen)"
               >
                 <font-awesome-icon icon="caret-down" />
-                <span class="sr-only">{{ expanded ? 'Hide' : 'Show' }} advanced search</span>
+                <span class="sr-only">{{ isAdvancedSearchOpen ? 'Hide' : 'Show' }} Show advanced search</span>
               </v-btn>
             </template>
             <template #append-outer>
@@ -66,10 +66,10 @@
       </div>
     </v-expand-transition>
     <v-expand-transition>
-      <v-card v-if="expanded" class="mb-6 pl-8 pr-16 pt-4">
+      <v-card v-if="isAdvancedSearchOpen" class="mb-6 pl-8 pr-16 pt-4">
         <v-container fluid>
           <v-row no-gutters>
-            <v-col class="pr-4 pt-4 text-right" cols="1">
+            <v-col class="pr-4 pt-2 text-right" cols="1">
               Search
             </v-col>
             <v-col>
@@ -161,7 +161,7 @@
                     id="adv-search-btn"
                     class="text-capitalize"
                     color="primary"
-                    :disabled="isBusy || (!$_.trim(keywords) && !expanded)"
+                    :disabled="isBusy || (!$_.trim(keywords) && !isAdvancedSearchOpen)"
                     elevation="1"
                     medium
                     @click="fetch"
@@ -226,6 +226,10 @@ export default {
       required: false,
       type: Boolean
     },
+    openAdvancedSearch: {
+      required: true,
+      type: Boolean
+    },
     putFocusOnLoad: {
       default: undefined,
       required: false,
@@ -235,27 +239,31 @@ export default {
   data: () => ({
     alert: undefined,
     alertType: undefined,
+    openAdvancedSearchOverride: false,
     isBusy: true,
     keyForSelectReset: new Date().getTime()
   }),
+  computed: {
+    isAdvancedSearchOpen() {
+      return this.openAdvancedSearch || this.openAdvancedSearchOverride
+    }
+  },
   watch: {
-    expanded() {
-      if (!this.isBusy) {
-        this.$putFocusNextTick(this.expanded ? 'adv-search-keywords-input' : 'basic-search-input')
-      }
-    },
     isDirty() {
       this.clearAlert()
+    },
+    openAdvancedSearch() {
+      if (this.openAdvancedSearch) {
+        this.openAdvancedSearchOverride = true
+      }
+      this.putFocus()
     }
   },
   created() {
-    this.init().then(() => {
-      this.setExpanded(!!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId))
-      if (this.putFocusOnLoad) {
-        this.$putFocusNextTick(this.putFocusOnLoad)
-      }
-      this.isBusy = false
-    })
+    this.isBusy = false
+    if (this.putFocusOnLoad) {
+      this.$putFocusNextTick(this.putFocusOnLoad)
+    }
   },
   methods: {
     clearAlert() {
@@ -279,7 +287,7 @@ export default {
         })
       }
     },
-    reset(expand, fetchAgain) {
+    reset(openAdvancedSearch, fetchAgain) {
       this.setAssetType(null)
       this.setCategoryId(null)
       this.setOrderBy(this.orderByDefault)
@@ -287,9 +295,9 @@ export default {
       this.rewriteBookmarkHash({orderBy: this.orderByDefault})
       this.alert = null
       this.alertType = null
-      if (this.expanded !== expand) {
-        this.setExpanded(expand)
-        this.$announcer.polite(`Advanced search form is ${this.expanded ? 'open' : 'closed'}.`)
+      this.openAdvancedSearchOverride = openAdvancedSearch
+      if (this.isAdvancedSearchOpen !== openAdvancedSearch) {
+        this.$announcer.polite(`Advanced search form is ${this.isAdvancedSearchOpen ? 'open' : 'closed'}.`)
       } else {
         this.setKeywords(undefined)
         this.keyForSelectReset = new Date().getTime()
@@ -297,8 +305,11 @@ export default {
       if (fetchAgain) {
         this.fetch()
       }
-      this.$putFocusNextTick(this.expanded ? 'keywords-input' : 'basic-search-input')
+      this.putFocus()
     },
+    putFocus() {
+      this.$putFocusNextTick(this.isAdvancedSearchOpen ? 'adv-search-keywords-input' : 'basic-search-input')
+    }
   }
 }
 </script>

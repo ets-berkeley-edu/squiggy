@@ -1,7 +1,11 @@
 <template>
   <div id="asset-library">
     <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
-    <AssetsHeader ref="header" :put-focus-on-load="anchor ? null : 'basic-search-input'" />
+    <AssetsHeader
+      ref="header"
+      :open-advanced-search="openAdvancedSearch"
+      :put-focus-on-load="anchor ? null : 'basic-search-input'"
+    />
     <v-card class="d-flex flex-wrap" flat tile>
       <CreateAssetCard class="asset-card ma-3" />
       <AssetCard
@@ -46,60 +50,65 @@ export default {
         }
         return this.assets.concat(this.getSkeletons(skeletonCount))
       }
+    },
+    openAdvancedSearch() {
+      return !!(this.assetType || this.categoryId || (this.orderBy !== this.orderByDefault) || this.userId)
     }
   },
   created() {
     this.$loading(true)
   },
   mounted() {
-    this.anchor = this.$route.query.anchor
-    this.isReturning = this.anchor && this.$_.size(this.assets)
-    if (this.isReturning) {
-      this.consoleLog('Back to Asset Library')
-      this.handleResults()
-    } else {
-      this.resetSearch()
-      this.isComplete = false
-      this.stopInfiniteLoading()
-      this.getBookmarkHash().then(bookmarkHash => {
-        if (bookmarkHash && Object.keys(bookmarkHash).length) {
-          this.consoleLog(`Bookmark-hash for /assets: ${JSON.stringify(bookmarkHash)}`)
-          this.setAssetType(bookmarkHash.assetType)
-          this.setCategoryId(bookmarkHash.categoryId)
-          this.setOrderBy(bookmarkHash.orderBy)
-          this.setUserId(parseInt(bookmarkHash.userId, 10))
-          this.$announcer.polite('Searching for matching assets')
-          this.search().then(data => {
-            this.handleResults(data, true)
-          })
-        } else if (this.$route.query.userId) {
-          this.consoleLog(`/assets route.query.userId: ${this.$route.query.userId}`)
-          this.setAssetType(undefined)
-          this.setCategoryId(undefined)
-          this.setUserId(parseInt(this.$route.query.userId, 10))
-          this.$router.replace({query: {userId: undefined}})
-          this.$announcer.polite('Searching for assets by user')
-          this.search().then(data => {
-            this.updateSearchBookmark()
-            this.handleResults(data, true)
-          })
-        } else if (this.$route.query.categoryId) {
-          this.consoleLog(`/assets route.query.categoryId: ${this.$route.query.categoryId}`)
-          this.setAssetType(undefined)
-          this.setCategoryId(parseInt(this.$route.query.categoryId, 10))
-          this.setUserId(undefined)
-          this.$router.replace({query: {categoryId: undefined}})
-          this.$announcer.polite('Searching for assets by category')
-          this.search().then(data => {
-            this.updateSearchBookmark()
-            this.handleResults(data, true)
-          })
-        } else {
-          this.consoleLog('/assets: Default search')
-          this.search().then(this.handleResults)
-        }
-      })
-    }
+    this.initAssetSearchOptions().then(() => {
+      this.anchor = this.$route.query.anchor
+      this.isReturning = this.anchor && this.$_.size(this.assets)
+      if (this.isReturning) {
+        this.consoleLog('Back to Asset Library')
+        this.handleResults()
+      } else {
+        this.resetSearch()
+        this.isComplete = false
+        this.stopInfiniteLoading()
+        this.getBookmarkHash().then(bookmarkHash => {
+          if (bookmarkHash && Object.keys(bookmarkHash).length) {
+            this.consoleLog(`Bookmark-hash for /assets: ${JSON.stringify(bookmarkHash)}`)
+            this.setAssetType(bookmarkHash.assetType)
+            this.setCategoryId(bookmarkHash.categoryId)
+            this.setOrderBy(bookmarkHash.orderBy)
+            this.setUserId(parseInt(bookmarkHash.userId, 10))
+            this.$announcer.polite('Searching for matching assets')
+            this.search().then(data => {
+              this.handleResults(data, true)
+            })
+          } else if (this.$route.query.userId) {
+            this.consoleLog(`/assets route.query.userId: ${this.$route.query.userId}`)
+            this.setAssetType(undefined)
+            this.setCategoryId(undefined)
+            this.setUserId(parseInt(this.$route.query.userId, 10))
+            this.$router.replace({query: {userId: undefined}})
+            this.$announcer.polite('Searching for assets by user')
+            this.search().then(data => {
+              this.updateSearchBookmark()
+              this.handleResults(data, true)
+            })
+          } else if (this.$route.query.categoryId) {
+            this.consoleLog(`/assets route.query.categoryId: ${this.$route.query.categoryId}`)
+            this.setAssetType(undefined)
+            this.setCategoryId(parseInt(this.$route.query.categoryId, 10))
+            this.setUserId(undefined)
+            this.$router.replace({query: {categoryId: undefined}})
+            this.$announcer.polite('Searching for assets by category')
+            this.search().then(data => {
+              this.updateSearchBookmark()
+              this.handleResults(data, true)
+            })
+          } else {
+            this.consoleLog('/assets: Default search')
+            this.search().then(this.handleResults)
+          }
+        })
+      }
+    })
   },
   methods: {
     fetch() {
