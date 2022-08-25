@@ -2,6 +2,18 @@
   <div id="impact-studio">
     <div v-if="!isLoading && user">
       <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
+      <div class="d-flex justify-space-between w-100 mb-4">
+        <div id="previous-user">
+          <a v-if="previousUser" :href="`/impact_studio/profile/${previousUser.id}`">
+            &lt; {{ previousUser.canvasFullName }}
+          </a>
+        </div>
+        <div id="next-user">
+          <a v-if="nextUser" :href="`/impact_studio/profile/${nextUser.id}`">
+            {{ nextUser.canvasFullName }} &gt;
+          </a>
+        </div>
+      </div>
       <div class="d-flex w-100 mb-4">
         <div id="profile-image" class="pr-4">
           <img v-if="user.canvasImage" class="profile-avatar" :src="user.canvasImage" />
@@ -11,6 +23,7 @@
           <div id="profile-looking-for-collaborators" class="my-4">
             {{ user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators' }}
             <v-btn
+              v-if="isMyProfile"
               id="toggle-looking-for-collaborators-btn"
               class="mx-2"
               @click="toggleLookingForCollaborators"
@@ -92,7 +105,9 @@ export default {
   data: () => ({
     isMyProfile: false,
     isEditingPersonalDescription: false,
+    nextUser: null,
     personalDescription: null,
+    previousUser: null,
     user: undefined,
     users: []
   }),
@@ -102,7 +117,10 @@ export default {
       this.users = data
       const userId = parseInt(this.$route.params.id || this.$currentUser.id)
       if (this.users) {
-        this.user = this.$_.find(this.users, {'id': userId}) || this.users[0]
+        const userIndex = this.$_.findIndex(this.users, {'id': userId}) || 0
+        this.user = this.users[userIndex]
+        this.nextUser = this.users[(userIndex + 1) % this.users.length]
+        this.previousUser = this.users[(userIndex || this.users.length) - 1]
         this.isMyProfile = !!(this.user && this.user.id === this.$currentUser.id)
         if (this.isMyProfile) {
           this.personalDescription = this.user.personalDescription
