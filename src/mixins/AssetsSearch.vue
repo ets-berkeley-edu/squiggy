@@ -2,7 +2,6 @@
 import Context from '@/mixins/Context'
 import {mapActions, mapGetters} from 'vuex'
 
-
 export default {
   name: 'AssetsSearch',
   mixins: [Context],
@@ -12,7 +11,6 @@ export default {
       'assetType',
       'categories',
       'categoryId',
-      'expanded',
       'isDirty',
       'keywords',
       'limit',
@@ -34,13 +32,12 @@ export default {
       })
     },
     ...mapActions('assets', [
-      'init',
+      'initAssetSearchOptions',
       'nextPage',
       'resetSearch',
       'search',
       'setAssetType',
       'setCategoryId',
-      'setExpanded',
       'setKeywords',
       'setOrderBy',
       'setUserId',
