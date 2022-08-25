@@ -55,6 +55,7 @@ export default {
     this.anchor = this.$route.query.anchor
     this.isReturning = this.anchor && this.$_.size(this.assets)
     if (this.isReturning) {
+      this.consoleLog('Back to Asset Library')
       this.handleResults()
     } else {
       this.resetSearch()
@@ -62,6 +63,7 @@ export default {
       this.stopInfiniteLoading()
       this.getBookmarkHash().then(bookmarkHash => {
         if (bookmarkHash && Object.keys(bookmarkHash).length) {
+          this.consoleLog(`Bookmark-hash for /assets: ${JSON.stringify(bookmarkHash)}`)
           this.setAssetType(bookmarkHash.assetType)
           this.setCategoryId(bookmarkHash.categoryId)
           this.setOrderBy(bookmarkHash.orderBy)
@@ -71,6 +73,7 @@ export default {
             this.handleResults(data, true)
           })
         } else if (this.$route.query.userId) {
+          this.consoleLog(`/assets route.query.userId: ${this.$route.query.userId}`)
           this.setAssetType(undefined)
           this.setCategoryId(undefined)
           this.setUserId(parseInt(this.$route.query.userId, 10))
@@ -81,6 +84,7 @@ export default {
             this.handleResults(data, true)
           })
         } else if (this.$route.query.categoryId) {
+          this.consoleLog(`/assets route.query.categoryId: ${this.$route.query.categoryId}`)
           this.setAssetType(undefined)
           this.setCategoryId(parseInt(this.$route.query.categoryId, 10))
           this.setUserId(undefined)
@@ -91,6 +95,7 @@ export default {
             this.handleResults(data, true)
           })
         } else {
+          this.consoleLog('/assets: Default search')
           this.search().then(this.handleResults)
         }
       })

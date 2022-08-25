@@ -100,6 +100,8 @@ axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
       Vue.prototype.$config = data
       Vue.prototype.$config.apiBaseUrl = apiBaseUrl
       Vue.prototype.$config.isVueAppDebugMode = isDebugMode
+      const ebEnvironment = Vue.prototype.$config.ebEnvironment
+      Vue.prototype.$config.isProduction = ebEnvironment && ebEnvironment.toLowerCase().includes('prod')
 
       new Vue({
         router,
