@@ -11,7 +11,7 @@
           <div id="profile-looking-for-collaborators">
             {{ user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators' }}
           </div>
-          <div id="canvas-course-sections">
+          <div v-if="user.canvasCourseSections" id="canvas-course-sections">
             {{ user.canvasCourseSections.join(', ') }}
           </div>
           <div id="profile-last-activity" class="mb-4">
