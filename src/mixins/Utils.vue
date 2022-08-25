@@ -21,6 +21,12 @@ export default {
     ...mapActions('context', [
       'postIFrameMessage'
     ]),
+    consoleLog(statement, force=false) {
+      const isProduction = Vue.prototype.$config.isProduction
+      if (!isProduction || force) {
+        console.log(`🪲 ${statement}`)
+      }
+    },
     getApiErrorMessage: (data) => _.get(data, 'response.data.message') || data.message || _.get(data, 'response.statusText'),
     getPossessive(comment) {
       return comment.userId === this.$currentUser.id ? 'your' : `${comment.user.canvasFullName}'s`
