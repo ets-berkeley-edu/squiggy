@@ -54,6 +54,26 @@ def get_leaderboard():
         raise ForbiddenRequestError('Leaderboard disallowed for users not sharing points.')
 
 
+@app.route('/api/users/me/looking_for_collaborators', methods=['POST'])
+@login_required
+def update_looking_for_collaborators():
+    params = request.get_json()
+    if 'lookingForCollaborators' not in params:
+        raise BadRequestError('No looking for collaborators status provided.')
+    current_user.user.update_looking_for_collaborators(params['lookingForCollaborators'])
+    return tolerant_jsonify(current_user.to_api_json())
+
+
+@app.route('/api/users/me/personal_description', methods=['POST'])
+@login_required
+def update_personal_description():
+    params = request.get_json()
+    if 'personalDescription' not in params:
+        raise BadRequestError('No personal description provided.')
+    current_user.user.update_personal_description(params['personalDescription'])
+    return tolerant_jsonify(current_user.to_api_json())
+
+
 @app.route('/api/users/me/share', methods=['POST'])
 @login_required
 def update_share_points():
