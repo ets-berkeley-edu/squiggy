@@ -31,7 +31,6 @@ const state = {
   assetType: undefined,
   categories: undefined,
   categoryId: undefined,
-  expanded: undefined,
   isDirty: false,
   keywords: undefined,
   limit: 20,
@@ -48,11 +47,10 @@ const getters = {
   assetType: (state: any): string => state.assetType,
   categories: (state: any): any[] => state.categories,
   categoryId: (state: any): number => state.categoryId,
-  expanded: (state: any): boolean => state.expanded,
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
-  orderBy: (state: any): string => state.orderBy,
+  orderBy: (state: any): string => state.orderBy || orderByDefault,
   orderByDefault: (): string => orderByDefault,
   totalAssetCount: (state: any): number => state.totalAssetCount,
   userId: (state: any): number => state.userId,
@@ -72,7 +70,6 @@ const mutations = {
     state.isDirty = true
   },
   setDirty: (state: any, dirty: boolean) => state.isDirty = dirty,
-  setExpanded: (state: any, expanded: boolean) => state.expanded = expanded,
   setKeywords: (state: any, keywords: string) => {
     state.keywords = keywords
     state.isDirty = true
@@ -100,7 +97,7 @@ const mutations = {
 }
 
 const actions = {
-  init({commit}) {
+  initAssetSearchOptions({commit}) {
     return new Promise<void>(resolve => {
       getUsers().then(data => {
         commit('setUsers', data)
@@ -119,7 +116,6 @@ const actions = {
   search: ({commit, state}) => $_search(commit, state),
   setAssetType: ({commit}, assetType) => commit('setAssetType', assetType),
   setCategoryId: ({commit}, categoryId) => commit('setCategoryId', categoryId),
-  setExpanded: ({commit}, expanded) => commit('setExpanded', expanded),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
   setUserId: ({commit}, userId) => commit('setUserId', userId),

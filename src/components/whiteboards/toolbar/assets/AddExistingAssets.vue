@@ -38,6 +38,7 @@
         <AssetsHeader
           v-if="totalAssetCount > 1"
           :hide-manage-assets-button="true"
+          :open-advanced-search="!!(assetType || categoryId || (orderBy !== orderByDefault) || userId)"
           put-focus-on-load="basic-search-input"
         />
         <v-card class="d-flex flex-wrap" flat tile>
@@ -158,12 +159,14 @@ export default {
       this.allAssetsLoaded = false
       this.selectedAssetIds = []
       if (value) {
-        this.search().then(() => {
-          if (!this.totalAssetCount) {
-            this.allAssetsLoaded = true
-          }
-          this.isDialogReady = true
-          this.$putFocusNextTick('modal-header')
+        this.initAssetSearchOptions().then(() => {
+          this.search().then(() => {
+            if (!this.totalAssetCount) {
+              this.allAssetsLoaded = true
+            }
+            this.isDialogReady = true
+            this.$putFocusNextTick('modal-header')
+          })
         })
       } else {
         this.reset()
