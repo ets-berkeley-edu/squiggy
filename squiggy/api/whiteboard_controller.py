@@ -28,7 +28,7 @@ import re
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
 from flask_socketio import emit
-from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards, get_socket_io_room
+from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards, get_socket_io_room, SOCKET_IO_NAMESPACE
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_student, isoformat, local_now
@@ -42,7 +42,6 @@ from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
-from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 
 @app.route('/api/whiteboard/<whiteboard_id>')

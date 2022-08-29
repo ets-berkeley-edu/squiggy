@@ -26,13 +26,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import request
 from flask_login import current_user, login_required
 from flask_socketio import emit, join_room, leave_room
-from squiggy.api.api_util import get_socket_io_room
+from squiggy.api.api_util import get_socket_io_room, SOCKET_IO_NAMESPACE, upsert_whiteboard_elements
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.logger import initialize_background_logger
 from squiggy.models.whiteboard_session import WhiteboardSession
-
-
-SOCKET_IO_NAMESPACE = '/'
 
 
 def register_sockets(socketio):
@@ -106,6 +103,18 @@ def register_sockets(socketio):
     @socketio.on('disconnect')
     def socketio_disconnect():
         logger.debug('socketio_disconnect')
+
+    @socketio.on('upsert_whiteboard_element')
+    @login_required
+    def socketio_upsert_whiteboard_element(data):
+        socket_id = request.sid
+        whiteboard_elements = data.get('whiteboardElements')
+        whiteboard_id = data.get('whiteboardId')
+        upsert_whiteboard_elements(
+            socket_id=socket_id,
+            whiteboard_elements=whiteboard_elements,
+            whiteboard_id=whiteboard_id,
+        )
 
     @socketio.on_error()
     def socketio_error(e):
