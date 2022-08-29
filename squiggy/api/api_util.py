@@ -27,13 +27,21 @@ from functools import wraps
 
 from flask import current_app as app, redirect, request
 from flask_login import current_user, login_user
-from squiggy.lib.errors import UnauthorizedRequestError
+from flask_socketio import emit
+from squiggy.lib.errors import BadRequestError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import get_user_id, is_admin, is_teaching
+from squiggy.lib.util import get_user_id, is_admin, is_teaching, safe_strip
+from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.logger import logger
+from squiggy.models.activity import Activity
 from squiggy.models.activity_type import activities_type
-from squiggy.models.asset import assets_type
+from squiggy.models.asset import Asset, assets_type
 from squiggy.models.canvas import Canvas
+from squiggy.models.whiteboard import Whiteboard
+from squiggy.models.whiteboard_element import WhiteboardElement
+from squiggy.models.whiteboard_session import WhiteboardSession
+
+SOCKET_IO_NAMESPACE = '/'
 
 
 def admin_required(func):
@@ -138,6 +146,128 @@ def start_login_session(login_session, redirect_path=None, tool_id=None):
         return tolerant_jsonify({'message': f'User {login_session.user_id} failed to authenticate.'}, 403)
 
 
+def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
+    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+        raise UnauthorizedRequestError('Unauthorized')
+    if not socket_id:
+        raise BadRequestError('socket_id is required')
+
+    queue_for_preview_image = False
+    all_existing_whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id)
+    results = []
+    for whiteboard_element in whiteboard_elements:
+        element = whiteboard_element.get('element') if whiteboard_element else None
+        ignore = not element or (element.get('type') == 'i-text' and not element.get('text', '').strip())
+        if ignore:
+            continue
+        queue_for_preview_image = True
+        if WhiteboardElement.get_id_per_uuid(whiteboard_element.get('uuid')):
+            upserted = _update_whiteboard_element(
+                whiteboard_element=whiteboard_element,
+                whiteboard_id=whiteboard_id,
+            )
+        else:
+            if len(all_existing_whiteboard_elements):
+                next_available_z_index = max([w.z_index for w in all_existing_whiteboard_elements]) + 1
+            else:
+                next_available_z_index = 0
+            upserted = _create_whiteboard_element(
+                asset_id=whiteboard_element.get('assetId'),
+                element=element,
+                whiteboard_id=whiteboard_id,
+                z_index=next_available_z_index,
+            )
+            next_available_z_index += 1
+        results.append(upserted)
+    if queue_for_preview_image:
+        WhiteboardHousekeeping.queue_for_preview_image(whiteboard_id)
+    if not app.config['TESTING']:
+        logger.info(f'socketio: Emit upsert_whiteboard_elements where whiteboard_id = {whiteboard_id} AND socket_id = {socket_id}')
+        emit(
+            'upsert_whiteboard_elements',
+            whiteboard_elements,
+            include_self=False,
+            namespace=SOCKET_IO_NAMESPACE,
+            skip_sid=socket_id,
+            to=get_socket_io_room(whiteboard_id),
+        )
+    WhiteboardSession.update_updated_at(
+        socket_id=socket_id,
+        user_id=current_user.user_id,
+        whiteboard_id=whiteboard_id,
+    )
+    return results
+
+
 def _filter_per_feature_flag(enums):
     feature_flag = app.config['FEATURE_FLAG_WHITEBOARDS']
     return enums if feature_flag else list(filter(lambda enum: 'whiteboard' not in enum, enums))
+
+
+def _create_whiteboard_element(
+    asset_id,
+    element,
+    whiteboard_id,
+    z_index,
+):
+    _validate_fabricjs_element(element)
+    whiteboard_element = WhiteboardElement.create(
+        asset_id=asset_id,
+        element=element,
+        uuid=element['uuid'],
+        whiteboard_id=whiteboard_id,
+        z_index=z_index,
+    )
+    if asset_id:
+        asset = Asset.find_by_id(asset_id)
+        if asset:
+            user_id = current_user.user_id
+            if user_id not in [user.id for user in asset.users]:
+                course_id = current_user.course.id
+                Activity.create(
+                    activity_type='whiteboard_add_asset',
+                    course_id=course_id,
+                    user_id=user_id,
+                    object_type='whiteboard',
+                    object_id=whiteboard_id,
+                    asset_id=asset.id,
+                )
+                for asset_user in asset.users:
+                    Activity.create(
+                        activity_type='get_whiteboard_add_asset',
+                        course_id=course_id,
+                        user_id=asset_user.id,
+                        object_type='whiteboard',
+                        object_id=whiteboard_id,
+                        asset_id=asset.id,
+                    )
+    return whiteboard_element.to_api_json()
+
+
+def _update_whiteboard_element(whiteboard_element, whiteboard_id):
+    if not whiteboard_element:
+        raise BadRequestError('Element required')
+
+    element = whiteboard_element['element']
+    _validate_fabricjs_element(element, True)
+
+    result = WhiteboardElement.update(
+        asset_id=whiteboard_element.get('assetId'),
+        element=element,
+        uuid=element['uuid'],
+        whiteboard_id=whiteboard_id,
+    )
+    if result:
+        return result.to_api_json()
+
+
+def _validate_fabricjs_element(element, is_update=False):
+    error_message = None
+    if element['type'] == 'i-text' and not safe_strip(element.get('text')):
+        error_message = f'Invalid Fabric i-text element: {element}.'
+    if is_update:
+        if 'uuid' not in element:
+            error_message = 'uuid is required when updating existing whiteboard_element.'
+    if error_message:
+        app.logger.error(error_message)
+        raise BadRequestError(error_message)

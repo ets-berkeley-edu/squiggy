@@ -27,7 +27,7 @@ import json
 
 from flask import current_app as app, request
 from flask_socketio import emit
-from squiggy.api.api_util import get_socket_io_room
+from squiggy.api.api_util import get_socket_io_room, SOCKET_IO_NAMESPACE
 from squiggy.lib.errors import BadRequestError, InternalServerError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.previews import verify_preview_service_authorization
@@ -36,7 +36,6 @@ from squiggy.logger import logger
 from squiggy.models.asset import Asset
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
-from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 # TODO: Fix suitec-preview-service
 # The preview-service has hard-coded width and height when generating 'link' asset preview. However, the
