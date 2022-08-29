@@ -30,7 +30,6 @@ import store from '@/store'
 import Vue from 'vue'
 import Whiteboard from '@/components/whiteboards/Whiteboard.vue'
 import Whiteboards from '@/components/whiteboards/Whiteboards.vue'
-import Whosonline from '@/components/util/Whosonline.vue'
 
 Vue.use(Router)
 
@@ -93,14 +92,6 @@ const router = new Router({
           beforeEnter: auth.requiresInstructor,
           meta: {
             title: 'Manage Assets'
-          }
-        },
-        {
-          path: '/users/active',
-          component: Whosonline,
-          beforeEnter: auth.requiresInstructor,
-          meta: {
-            title: 'Last Activity'
           }
         },
         {
@@ -297,7 +288,7 @@ const router = new Router({
 router.afterEach((to: any) => {
   const pageTitle = _.get(to, 'meta.title')
   document.title = `${pageTitle || _.capitalize(to.name) || 'Welcome'} | SuiteC`
-  Vue.prototype.$announcer.polite(`${pageTitle || 'Page'} is loading`)
+  Vue.prototype.$announcer.assertive(`${pageTitle || 'Page'} is loading`)
 })
 
 export default router
