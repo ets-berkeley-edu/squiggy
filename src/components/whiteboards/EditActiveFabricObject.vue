@@ -6,57 +6,90 @@
       class="darken-2 elevation-1 mx-3 rounded-pill white whiteboard-element-edit"
       :class="widthStyle"
     >
-      <v-btn
-        v-if="assetId"
-        id="open-asset-btn"
-        class="pl-2"
-        color="primary"
-        icon
-        target="_blank"
-        :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${assetId}`"
-      >
-        <span class="sr-only">Open original asset</span>
-        <font-awesome-icon icon="arrow-up-right-from-square" />
-      </v-btn>
-      <v-btn
-        id="move-layer-back-btn"
-        color="primary"
-        icon
-        @click="changeZOrder('sendToBack')"
-      >
-        <span class="sr-only">Move object(s) to back</span>
-        <img alt="Icon of send-to-back" class="svg-icon" src="@/assets/whiteboard/send-backward.svg" />
-      </v-btn>
-      <v-btn
-        id="move-layer-front-btn"
-        color="primary"
-        icon
-        @click="changeZOrder('bringToFront')"
-      >
-        <span class="sr-only">Move object(s) to front</span>
-        <img alt="Icon of bring-to-front" class="svg-icon" src="@/assets/whiteboard/bring-forward.svg" />
-      </v-btn>
-      <v-btn
-        id="delete-btn"
-        class="pr-2"
-        color="primary"
-        icon
-        @click="deleteActiveElements"
-      >
-        <span class="sr-only">Delete</span>
-        <font-awesome-icon icon="trash" />
-      </v-btn>
-      <v-btn
-        v-if="$config.socketIoDebugMode"
-        id="debug-btn"
-        class="pr-2"
-        color="red"
-        icon
-        @click="debug"
-      >
-        <span class="sr-only">Debug</span>
-        <font-awesome-icon icon="bug" />
-      </v-btn>
+      <v-tooltip v-if="assetId" bottom>
+        <template #activator="{on, attrs}">
+          <label for="open-asset-btn" class="sr-only">{{ toolTips.openOriginalAsset }}</label>
+          <v-btn
+            id="open-asset-btn"
+            class="pl-2"
+            color="primary"
+            icon
+            v-bind="attrs"
+            target="_blank"
+            :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${assetId}`"
+            v-on="on"
+          >
+            <font-awesome-icon icon="arrow-up-right-from-square" />
+          </v-btn>
+        </template>
+        <span>{{ toolTips.openOriginalAsset }}</span>
+      </v-tooltip>
+      <v-tooltip bottom>
+        <template #activator="{on, attrs}">
+          <label for="move-layer-back-btn" class="sr-only">{{ toolTips.sendBack }}</label>
+          <v-btn
+            id="move-layer-back-btn"
+            color="primary"
+            icon
+            v-bind="attrs"
+            @click="changeZOrder('sendToBack')"
+            v-on="on"
+          >
+            <img alt="Icon of send-to-back" class="svg-icon" src="@/assets/whiteboard/send-backward.svg" />
+          </v-btn>
+        </template>
+        <span>{{ toolTips.sendBack }}</span>
+      </v-tooltip>
+      <v-tooltip bottom>
+        <template #activator="{on, attrs}">
+          <label for="move-layer-front-btn" class="sr-only">{{ toolTips.sendForward }}</label>
+          <v-btn
+            id="move-layer-front-btn"
+            color="primary"
+            icon
+            v-bind="attrs"
+            @click="changeZOrder('bringToFront')"
+            v-on="on"
+          >
+            <img alt="Icon of bring-to-front" class="svg-icon" src="@/assets/whiteboard/bring-forward.svg" />
+          </v-btn>
+        </template>
+        <span>{{ toolTips.sendForward }}</span>
+      </v-tooltip>
+      <v-tooltip bottom>
+        <template #activator="{on, attrs}">
+          <label for="delete-btn" class="sr-only">{{ toolTips.deleteItem }}</label>
+          <v-btn
+            id="delete-btn"
+            class="pr-2"
+            color="primary"
+            icon
+            v-bind="attrs"
+            @click="deleteActiveElements"
+            v-on="on"
+          >
+            <font-awesome-icon icon="trash" />
+          </v-btn>
+        </template>
+        <span>{{ toolTips.deleteItem }}</span>
+      </v-tooltip>
+      <v-tooltip v-if="$config.socketIoDebugMode" bottom>
+        <template #activator="{on, attrs}">
+          <label for="debug-btn" class="sr-only">{{ toolTips.debugItem }}</label>
+          <v-btn
+            id="debug-btn"
+            class="pr-2"
+            color="red"
+            icon
+            v-bind="attrs"
+            @click="debug"
+            v-on="on"
+          >
+            <font-awesome-icon icon="bug" />
+          </v-btn>
+        </template>
+        <span>{{ toolTips.debugItem }}</span>
+      </v-tooltip>
     </div>
   </div>
 </template>
@@ -67,6 +100,15 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'EditActiveFabricObject',
   mixins: [Whiteboarding],
+  data: () => ({
+    toolTips: {
+      sendBack: 'Move object(s) to back',
+      sendForward: 'Move object(s) to front',
+      deleteItem: 'Delete selected item(s)',
+      openOriginalAsset: 'Open original asset',
+      debugItem: 'Debug item(s)'
+    }
+  }),
   computed: {
     assetId() {
       return this.$_.get(this.activeCanvasObject, 'assetId')
