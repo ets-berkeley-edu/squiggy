@@ -66,3 +66,10 @@ def get_activity_csv():
     fieldnames, rows = Activity.get_activities_as_csv(course_id=course_id)
     filename_prefix = f'engagement_index_activities_{current_user.course.canvas_course_id}'
     return response_with_csv_download(rows, filename_prefix, fieldnames)
+
+
+@app.route('/api/activities/interactions', methods=['GET'])
+@login_required
+def get_interactions():
+    interactions = Activity.get_interactions_for_course(course_id=current_user.course.id)
+    return tolerant_jsonify(interactions)

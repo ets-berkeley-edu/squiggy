@@ -303,7 +303,9 @@ class Whiteboard(Base):
         user_id = created_by.id
         course_id = created_by.course.id
         if user_id not in [user.id for user in whiteboard_users]:
-            Activity.create(
+            print('OKAY USER ID')
+            print(user_id)
+            remix_activity = Activity.create(
                 activity_type='whiteboard_remix',
                 course_id=course_id,
                 user_id=user_id,
@@ -319,6 +321,8 @@ class Whiteboard(Base):
                     object_type='asset',
                     object_id=asset_id,
                     asset_id=asset_id,
+                    actor_id=user_id,
+                    reciprocal_id=remix_activity.id,
                 )
         return whiteboard
 

@@ -136,8 +136,9 @@ class Comment(Base):
 def _create_activities_per_new_comment(asset, comment):
     if asset.visible:
         course_id = asset.course_id
+        comment_activity = None
         if comment.user_id not in [user.id for user in asset.users]:
-            Activity.create(
+            comment_activity = Activity.create(
                 activity_type='asset_comment',
                 course_id=course_id,
                 user_id=comment.user_id,
@@ -153,10 +154,13 @@ def _create_activities_per_new_comment(asset, comment):
                     object_type='comment',
                     object_id=comment.id,
                     asset_id=asset.id,
+                    actor_id=comment.user_id,
+                    reciprocal_id=comment_activity.id,
                 )
         if comment.parent_id:
             parent = Comment.find_by_id(comment.parent_id)
             if parent.user_id != comment.user_id:
+                reciprocal_id = comment_activity.id if comment_activity else None
                 Activity.create(
                     activity_type='get_asset_comment_reply',
                     course_id=course_id,
@@ -164,4 +168,6 @@ def _create_activities_per_new_comment(asset, comment):
                     object_type='comment',
                     object_id=parent.id,
                     asset_id=asset.id,
+                    actor_id=comment.user_id,
+                    reciprocal_id=reciprocal_id,
                 )
