@@ -224,7 +224,7 @@ def _create_whiteboard_element(
             user_id = current_user.user_id
             if user_id not in [user.id for user in asset.users]:
                 course_id = current_user.course.id
-                Activity.create(
+                whiteboard_activity = Activity.create(
                     activity_type='whiteboard_add_asset',
                     course_id=course_id,
                     user_id=user_id,
@@ -240,6 +240,8 @@ def _create_whiteboard_element(
                         object_type='whiteboard',
                         object_id=whiteboard_id,
                         asset_id=asset.id,
+                        actor_id=user_id,
+                        reciprocal_id=whiteboard_activity.id,
                     )
     return whiteboard_element.to_api_json()
 

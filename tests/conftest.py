@@ -179,30 +179,40 @@ def mock_asset(app, db_session):
         visible=True,
     )
     course = Course.query.order_by(Course.name).all()[0]
-    canvas_user_id = str(randint(1000000, 9999999))
-    user = User.create(
+    canvas_user_id_1 = str(randint(1000000, 9999999))
+    canvas_user_id_2 = str(randint(1000000, 9999999))
+    user_1 = User.create(
         canvas_course_role='Student',
         canvas_course_sections=[],
-        canvas_email=f'{canvas_user_id}@berkeley.edu',
+        canvas_email=f'{canvas_user_id_1}@berkeley.edu',
         canvas_enrollment_state='active',
-        canvas_full_name=f'Student {canvas_user_id}',
-        canvas_user_id=canvas_user_id,
+        canvas_full_name=f'Student {canvas_user_id_1}',
+        canvas_user_id=canvas_user_id_1,
+        course_id=course.id,
+    )
+    user_2 = User.create(
+        canvas_course_role='Student',
+        canvas_course_sections=[],
+        canvas_email=f'{canvas_user_id_2}@berkeley.edu',
+        canvas_enrollment_state='active',
+        canvas_full_name=f'Student {canvas_user_id_2}',
+        canvas_user_id=canvas_user_id_2,
         course_id=course.id,
     )
     asset = _create_asset(
         app=app,
         categories=[category_hidden, category_visible],
         course=course,
-        users=[user],
+        users=[user_1],
     )
     for test_comment in _get_mock_comments():
-        comment = Comment.create(asset=asset, body=test_comment['body'], user_id=user.id)
+        comment = Comment.create(asset=asset, body=test_comment['body'], user_id=user_2.id)
         for reply in test_comment.get('replies', []):
             Comment.create(
                 asset=asset,
                 body=reply['body'],
                 parent_id=comment.id,
-                user_id=user.id,
+                user_id=user_1.id,
             )
     std_commit(allow_test_environment=True)
     yield asset

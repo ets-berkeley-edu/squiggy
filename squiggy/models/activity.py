@@ -28,6 +28,7 @@ import pytz
 from sqlalchemy import and_, func
 from sqlalchemy.dialects.postgresql import ENUM, JSON
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.activity_type import activities_type, ActivityType
@@ -172,6 +173,42 @@ class Activity(Base):
         # Rather than querying activities directly, perform a more lightweight query against the last_activity attribute
         # for course users.
         return db.session.query(func.max(User.last_activity)).filter_by(course_id=course_id).scalar()
+
+    @classmethod
+    def get_interactions_for_course(cls, course_id):
+        interactions_query = text("""
+        SELECT a.type AS type, a.actor_id as source, a.user_id as target, COUNT(a.type)::int AS count
+        FROM activities a
+            LEFT JOIN assets ON a.asset_id = assets.id
+            JOIN users AS u ON
+                (a.user_id = u.id AND u.canvas_course_role IN ('Learner', 'Student') AND u.canvas_enrollment_state != 'inactive')
+            JOIN users AS act ON
+                (a.actor_id = act.id AND act.canvas_course_role IN ('Learner', 'Student') AND act.canvas_enrollment_state != 'inactive')
+        WHERE a.course_id = :course_id
+            AND a.reciprocal_id IS NOT NULL
+            AND assets.deleted_at IS NULL
+        GROUP BY a.type, a.user_id, a.actor_id""")
+
+        # Co-creation of whiteboards is a special "activity" type, not captured in the activities table but extractable
+        # from the assets table.
+        whiteboard_co_creation_query = text("""
+        SELECT 'co_create_whiteboard' AS type, au1.user_id AS source, au2.user_id AS target, count(*)::int AS count
+        FROM assets a
+            JOIN (
+                asset_users au1 JOIN users u1 ON au1.user_id = u1.id
+                AND u1.canvas_course_role IN ('Learner', 'Student') AND u1.canvas_enrollment_state != 'inactive'
+            ) ON a.id = au1.asset_id
+            JOIN (
+                asset_users au2 JOIN users u2 ON au2.user_id = u2.id
+                AND u2.canvas_course_role IN ('Learner', 'Student') AND u2.canvas_enrollment_state != 'inactive'
+            ) ON a.id = au2.asset_id AND au1.user_id < au2.user_id
+        WHERE a.course_id = :course_id
+        AND a.type = 'whiteboard'
+        GROUP BY au1.user_id, au2.user_id""")
+
+        params = {'course_id': course_id}
+
+        return list(db.session.execute(interactions_query, params)) + list(db.session.execute(whiteboard_co_creation_query, params))
 
     @classmethod
     def recalculate_points(cls, course_id=None, user_ids=None):

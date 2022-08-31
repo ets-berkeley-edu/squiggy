@@ -190,3 +190,30 @@ class TestActivityCsvDownload:
         assert parsed_rows[1][5] == '5'
         for i in range(2, 5):
             assert int(parsed_rows[i][5]) == int(parsed_rows[i][4]) + int(parsed_rows[i - 1][5])
+
+
+class TestActivityInteractions:
+
+    def _api_download_interactions(self, client, expected_status_code=200):
+        response = client.get('/api/activities/interactions')
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_download_interactions(client, expected_status_code=401)
+
+    def test_no_interactions(self, client, fake_auth):
+        student = User.find_by_canvas_user_id(8765432)
+        fake_auth.login(student.id)
+        response = self._api_download_interactions(client)
+        assert response == []
+
+    def test_interactions(self, client, fake_auth, mock_asset):
+        fake_auth.login(mock_asset.users[0].id)
+        response = self._api_download_interactions(client)
+        assert len(response) == 1
+        assert response[0]['type'] == 'get_asset_comment'
+        assert response[0]['count'] == 2
+        assert response[0]['source']
+        assert response[0]['target']

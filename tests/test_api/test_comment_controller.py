@@ -211,7 +211,8 @@ class TestDeleteComment:
 
     def test_delete_comment_by_owner(self, client, fake_auth, mock_asset):
         """Authorized user can delete comment."""
-        fake_auth.login(mock_asset.users[0].id)
+        comment_owner_id = mock_asset.comments[0].user_id
+        fake_auth.login(comment_owner_id)
         self._verify_delete_comment(mock_asset, client)
 
     def test_delete_comment_by_teacher(self, client, fake_auth, mock_asset):
