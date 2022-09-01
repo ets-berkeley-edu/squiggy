@@ -26,10 +26,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app, request
 from flask_login import current_user, login_required
 from squiggy.api.api_util import activities_type_enums, teacher_required
-from squiggy.lib.errors import BadRequestError
+from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import response_with_csv_download, tolerant_jsonify
 from squiggy.models.activity import Activity
 from squiggy.models.activity_type import ActivityType
+from squiggy.models.user import User
 
 
 @app.route('/api/activities/configuration', methods=['GET'])
@@ -73,3 +74,13 @@ def get_activity_csv():
 def get_interactions():
     interactions = Activity.get_interactions_for_course(course_id=current_user.course.id)
     return tolerant_jsonify(interactions)
+
+
+@app.route('/api/activities/user/<user_id>', methods=['GET'])
+@login_required
+def get_user_activities(user_id):
+    user = User.find_by_id(user_id)
+    if not user or user.course.id != current_user.course.id:
+        raise ResourceNotFoundError('User not found.')
+    activities_feed = Activity.get_activities_for_user_id(user_id)
+    return tolerant_jsonify(activities_feed)

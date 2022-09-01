@@ -221,6 +221,25 @@ def mock_asset(app, db_session):
 
 
 @pytest.fixture(scope='function')
+def mock_other_course_user(app, db_session):
+    course = Course.query.order_by(Course.name).all()[1]
+    canvas_user_id = str(randint(1000000, 9999999))
+    user = User.create(
+        canvas_course_role='Student',
+        canvas_course_sections=[],
+        canvas_email=f'{canvas_user_id}@berkeley.edu',
+        canvas_enrollment_state='active',
+        canvas_full_name=f'Student {canvas_user_id}',
+        canvas_user_id=canvas_user_id,
+        course_id=course.id,
+    )
+    std_commit(allow_test_environment=True)
+    yield user
+    db_session.delete(user)
+    std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
 def mock_whiteboard(app, db_session):
     Course.create(
         canvas_api_domain='bcourses.berkeley.edu',

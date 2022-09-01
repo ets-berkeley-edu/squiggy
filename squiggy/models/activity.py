@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
+from flask_login import current_user
 import pytz
 from sqlalchemy import and_, func
 from sqlalchemy.dialects.postgresql import ENUM, JSON
@@ -55,13 +56,19 @@ class Activity(Base):
     object_id = db.Column(db.Integer)
     object_type = db.Column('object_type', activities_object_type, nullable=False)
     activity_metadata = db.Column('metadata', JSON)
-    asset_id = db.Column(db.Integer)
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'))
     course_id = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    actor_id = db.Column(db.Integer)
+    actor_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     reciprocal_id = db.Column(db.Integer)
 
-    user = db.relationship('User')
+    user = db.relationship('User', primaryjoin='Activity.user_id==User.id')
+    actor = db.relationship('User', primaryjoin='Activity.actor_id==User.id')
+    asset = db.relationship('Asset')
+    comment = db.relationship(
+        'Comment',
+        primaryjoin='and_(foreign(Activity.object_id)==remote(Comment.id), Activity.object_type==\'comment\')',
+    )
 
     def __init__(
         self,
@@ -167,6 +174,71 @@ class Activity(Base):
                     'running_total': total_scores[activity.user_id],
                 })
         return headers, rows
+
+    @classmethod
+    def get_activities_for_user_id(cls, user_id):
+        activities = cls.query.filter_by(user_id=user_id).order_by(cls.created_at).options(
+            joinedload(cls.actor),
+            joinedload(cls.asset),
+            joinedload(cls.comment),
+            joinedload(cls.user),
+        ).all()
+
+        activities_by_type = {
+            'actions': {
+                'engagements': [],
+                'interactions': [],
+                'creations': [],
+            },
+            'impacts': {
+                'engagements': [],
+                'interactions': [],
+                'creations': [],
+            },
+        }
+
+        for activity in activities:
+            activity_json = {
+                'id': activity.id,
+                'type': activity.activity_type,
+                'date': isoformat(activity.created_at),
+                'user': {},
+            }
+
+            if activity.asset:
+                activity_json['asset'] = {
+                    'id': activity.asset.id,
+                    'title': activity.asset.title,
+                    'thumbnailUrl': activity.asset.thumbnail_url,
+                }
+            if activity.comment:
+                activity_json['comment'] = {
+                    'id': activity.comment.id,
+                    'body': activity.comment.body,
+                }
+            if activity.actor_id:
+                activity_json['actorId'] = activity.actor_id
+
+            user = activity.user or activity.actor or (current_user and current_user.user)
+            if user:
+                activity_json['user']['id'] = user.id
+                activity_json['user']['name'] = user.canvas_full_name
+                activity_json['user']['image'] = user.canvas_image
+
+            if activity.activity_type in {'asset_like', 'asset_view'}:
+                activities_by_type['actions']['engagements'].append(activity_json)
+            elif activity.activity_type in {'asset_comment', 'discussion_entry', 'discussion_topic'}:
+                activities_by_type['actions']['interactions'].append(activity_json)
+            elif activity.activity_type in {'asset_add', 'whiteboard_add_asset', 'whiteboard_export', 'whiteboard_remix'}:
+                activities_by_type['actions']['creations'].append(activity_json)
+            elif activity.activity_type in {'get_view_asset', 'get_like'}:
+                activities_by_type['impacts']['engagements'].append(activity_json)
+            elif activity.activity_type in {'get_asset_comment', 'get_asset_comment_reply', 'get_discussion_entry_reply'}:
+                activities_by_type['impacts']['interactions'].append(activity_json)
+            elif activity.activity_type in {'get_whiteboard_add_asset', 'get_whiteboard_remix'}:
+                activities_by_type['impacts']['creations'].append(activity_json)
+
+        return activities_by_type
 
     @classmethod
     def get_last_activity_for_course(cls, course_id):
