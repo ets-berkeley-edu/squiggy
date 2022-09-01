@@ -192,6 +192,61 @@ class TestActivityCsvDownload:
             assert int(parsed_rows[i][5]) == int(parsed_rows[i][4]) + int(parsed_rows[i - 1][5])
 
 
+class TestActivitiesForUser:
+
+    def _api_download_user_activities(self, client, user_id, expected_status_code=200):
+        path = f'/api/activities/user/{user_id}'
+        response = client.get(path)
+        assert response.status_code == expected_status_code
+        return response.json
+
+    def test_anonymous_activities(self, client, mock_asset):
+        """Denies anonymous user."""
+        self._api_download_user_activities(client, user_id=mock_asset.users[0].id, expected_status_code=401)
+
+    def test_different_course_user(self, client, fake_auth, mock_asset, mock_other_course_user):
+        """Denies user in another course."""
+        fake_auth.login(mock_other_course_user.id)
+        user_id = mock_asset.users[0].id
+        self._api_download_user_activities(client, user_id=user_id, expected_status_code=404)
+
+    def test_get_ones_own_activities(self, client, fake_auth, mock_asset):
+        user_id = mock_asset.users[0].id
+        fake_auth.login(user_id)
+        response = self._api_download_user_activities(client, user_id=user_id)
+        creations = response['actions']['creations']
+        assert len(creations) == 1
+        assert creations[0]['type'] == 'asset_add'
+        assert creations[0]['date']
+        assert creations[0]['user']['id'] == mock_asset.users[0].id
+        assert creations[0]['user']['name'] == mock_asset.users[0].canvas_full_name
+        assert creations[0]['user']['image'] == mock_asset.users[0].canvas_image
+        assert creations[0]['asset']['id'] == mock_asset.id
+        assert creations[0]['asset']['title'] == mock_asset.title
+        assert creations[0]['asset']['thumbnailUrl'] == mock_asset.thumbnail_url
+
+        interactions = response['impacts']['interactions']
+        assert len(interactions) == 2
+        for interaction in interactions:
+            assert interaction['type'] == 'get_asset_comment'
+            assert interaction['asset']['id'] == mock_asset.id
+            assert interaction['user']['id'] == mock_asset.users[0].id
+            assert interaction['actorId'] == mock_asset.comments[0].user_id
+            assert interaction['comment']['id']
+
+        assert interactions[0]['comment']['body'] == 'But mostly you just make me mad, baby, you just make me mad'
+        assert interactions[1]['comment']['body'] == 'And where will she go, and what shall she do, when midnight comes around?'
+
+    def test_get_someone_elses_activities(self, client, fake_auth, mock_asset):
+        user1_id = mock_asset.users[0].id
+        user2_id = mock_asset.comments[0].user_id
+        assert user1_id != user2_id
+        fake_auth.login(user2_id)
+        response = self._api_download_user_activities(client, user_id=user2_id)
+        assert len(response['actions']['interactions'])
+        assert len(response['impacts']['interactions'])
+
+
 class TestActivityInteractions:
 
     def _api_download_interactions(self, client, expected_status_code=200):
