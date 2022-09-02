@@ -1,8 +1,8 @@
 <template>
   <a
     :id="`user-${user.id}-href`"
-    :href="`${$currentUser.course.assetLibraryUrl}#suitec_userId=${user.id}`"
-    :aria-label="`View assets, filtered by ${user.isAdmin || user.isTeaching ? 'instructor' : 'user'} ${user.canvasFullName}`"
+    :href="destination"
+    :aria-label="ariaLabel"
     target="_parent"
     class="hover-link"
   >
@@ -23,6 +23,19 @@ export default {
     user: {
       required: true,
       type: Object
+    }
+  },
+  data: () => ({
+    ariaLabel: null,
+    destination: null
+  }),
+  created() {
+    if (this.$currentUser.course.impactStudioUrl) {
+      this.destination = `${this.$currentUser.course.impactStudioUrl}#suitec_userId=${this.user.id}`
+      this.ariaLabel = `View Impact Studio profile for ${this.user.canvasFullName}`
+    } else {
+      this.destination = `${this.$currentUser.course.assetLibraryUrl}#suitec_userId=${this.user.id}`
+      this.ariaLabel = `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
     }
   }
 }

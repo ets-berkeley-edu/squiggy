@@ -64,7 +64,7 @@
               <Avatar :user="asset.users[0]" />
             </div>
             <div class="pl-1">
-              <UserLink :user="asset.users[0]" />
+              <UserLink :user="asset.users[0]" source="assetlibrary" />
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@
                 <Avatar :user="user" />
               </div>
               <div class="pl-2">
-                <UserLink :user="user" />
+                <UserLink :user="user" source="assetlibrary" />
               </div>
             </div>
           </div>

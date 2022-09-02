@@ -152,6 +152,26 @@ const router = new Router({
           }
         },
         {
+          beforeEnter: (to: any, from: any, next: any) => {
+            // Skip hash redirect if we're returning from an Impact Studio page.
+            if (from.fullPath.match(/\/impact_studio\/\d+/)) {
+              next()
+            } else {
+              store.dispatch('context/loadingStart')
+              store.dispatch('context/getBookmarkHash').then(params => {
+                if (params.userId) {
+                  next(`/impact_studio/profile/${params.userId}`)
+                } else {
+                  next({
+                    query: {
+                      ...params,
+                      ...(to.query || {})
+                    }
+                  })
+                }
+              })
+            }
+          },
           path: '/impact_studio',
           component: ImpactStudio,
           meta: {

@@ -53,7 +53,7 @@
         <div class="leaderboard-name-outer">
           <img class="leaderboard-avatar" :src="item.canvasImage">
           <div class="leaderboard-name">
-            <UserLink :user="item" :cross-tool-link="true" />
+            <CrossToolUserLink :user="item" />
           </div>
         </div>
       </template>
@@ -75,12 +75,12 @@
 </template>
 
 <script>
-import UserLink from '@/components/util/UserLink'
+import CrossToolUserLink from '@/components/util/CrossToolUserLink'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Leaderboard',
-  components: {UserLink},
+  components: {CrossToolUserLink},
   mixins: [Utils],
   data() {
     return {
