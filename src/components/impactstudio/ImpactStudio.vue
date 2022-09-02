@@ -85,6 +85,62 @@
           </div>
         </div>
       </div>
+      <div v-if="courseInteractions" id="activity-network" class="my-4 w-100">
+        <div class="mb-3">
+          <h2 class="impact-studio-section-header">Activity Network</h2>
+          <div>
+            See how you and others are connected.
+          </div>
+        </div>
+        <div v-for="(interaction, index) in courseInteractions" :key="index">
+          {{ courseInteractions }}
+        </div>
+        <div v-if="!courseInteractions.length">
+          No activity detected in this course.
+        </div>
+      </div>
+      <div v-if="userActivities" id="activity-timeline" class="my-4 w-100">
+        <div class="mb-3">
+          <h2 class="impact-studio-section-header">Activity Timeline</h2>
+          <div>
+            Your individual actions and others' responses to your actions over time.
+          </div>
+        </div>
+        <div id="activity-timeline-contributions" class="mb-3">
+          <h3>Contributions (activities you do)</h3>
+          <div>
+            <h4>Views/Likes</h4>
+            <div>
+              {{ userActivities.actions.engagements }}
+            </div>
+            <h4>Interactions</h4>
+            <div>
+              {{ userActivities.actions.interactions }}
+            </div>
+            <h4>Creations</h4>
+            <div>
+              {{ userActivities.actions.creations }}
+            </div>
+          </div>
+        </div>
+        <div id="activity-timeline-impacts" class="mb-3">
+          <h3>Impacts (others responding to your activities)</h3>
+          <div>
+            <h4>Views/Likes</h4>
+            <div>
+              {{ userActivities.impacts.engagements }}
+            </div>
+            <h4>Interactions</h4>
+            <div>
+              {{ userActivities.impacts.interactions }}
+            </div>
+            <h4>Reuses</h4>
+            <div>
+              {{ userActivities.impacts.creations }}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div v-if="!isLoading && !user">
       No user.
@@ -93,6 +149,7 @@
 </template>
 
 <script>
+import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
 import Context from '@/mixins/Context'
 import SyncDisabled from '@/components/util/SyncDisabled'
@@ -103,12 +160,14 @@ export default {
   mixins: [Context, Utils],
   components: {SyncDisabled},
   data: () => ({
+    courseInteractions: null,
     isMyProfile: false,
     isEditingPersonalDescription: false,
     nextUser: null,
     personalDescription: null,
     previousUser: null,
     user: undefined,
+    userActivities: null,
     users: []
   }),
   created() {
@@ -125,6 +184,12 @@ export default {
         if (this.isMyProfile) {
           this.personalDescription = this.user.personalDescription
         }
+        getUserActivities(this.user.id).then(data => {
+          this.userActivities = data
+        })
+        getCourseInteractions().then(data => {
+          this.courseInteractions = data
+        })
       }
       this.$ready()
     })
@@ -154,6 +219,10 @@ export default {
 </script>
 
 <style scoped>
+.impact-studio-section-header {
+  font-size: 22px;
+}
+
 .profile-avatar {
   border-radius: 50%;
   text-align: center;
