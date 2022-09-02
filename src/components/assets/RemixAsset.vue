@@ -160,7 +160,7 @@
                 <OxfordJoin v-slot="{item}" :items="whiteboard.users">
                   <div class="align-center d-flex pr-1">
                     <Avatar :user="item" />
-                    <UserLink :user="item" />
+                    <UserLink :user="item" source="assetlibrary" />
                   </div>
                 </OxfordJoin>
                 <div class="pt-1">

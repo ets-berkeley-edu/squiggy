@@ -3,8 +3,8 @@
     <router-link
       v-if="!$isInIframe || !crossToolLink"
       :id="`user-${user.id}-href`"
-      :to="`/assets?userId=${user.id}`"
-      :aria-label="`View assets, filtered by ${user.isAdmin || user.isTeaching ? 'instructor' : 'user'} ${user.canvasFullName}`"
+      :to="destination"
+      :aria-label="ariaLabel"
       class="hover-link"
     >
       <font-awesome-icon
@@ -25,13 +25,35 @@ export default {
   name: 'UserLink',
   components: {CrossToolUserLink},
   props: {
-    crossToolLink: {
-      required: false,
-      type: Boolean
+    source: {
+      required: true,
+      type: String
     },
     user: {
       required: true,
       type: Object
+    }
+  },
+  data: () => ({
+    ariaLabel: null,
+    crossToolLink: false,
+    destination: null
+  }),
+  created() {
+    if (this.$currentUser.course.impactStudioUrl) {
+      if (this.source === 'impactstudio') {
+        this.destination = `/profile/user/${this.user.id}`
+        this.ariaLabel = `View Impact Studio profile for ${this.user.canvasFullName}`
+      } else {
+        this.crossToolLink = true
+      }
+    } else {
+      if (this.source === 'assetlibrary') {
+        this.destination = `/assets?userId=${this.user.id}`
+        this.ariaLabel = `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
+      } else {
+        this.crossToolLink = true
+      }
     }
   }
 }

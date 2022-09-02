@@ -1,7 +1,7 @@
 <template>
   <div class="align-center d-flex justify-space-between w-100">
     <div :id="`comment-${comment.id}-user-name`">
-      <UserLink :user="comment.user" />
+      <UserLink :user="comment.user" source="assetlibrary" />
       on {{ comment.createdAt | moment('LL') }}
     </div>
     <div class="d-flex">
