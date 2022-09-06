@@ -293,23 +293,25 @@ const $_addCanvasListeners = (state: any) => {
     $_setModifyingElement(false)
     const objects: any[] = []
     const object = p.$canvas.getActiveObject()
-    if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-      _.each(object.getObjects(), (element: any) => {
-        const position = $_calculateGlobalElementPosition(object, element)
-        objects.push(_.assignIn({}, element.toObject(), position))
-      })
-    } else {
-      objects.push(object.toObject())
-    }
-    if (_.size(objects)) {
-      const whiteboardElements = _.map(objects, o => {
-        return {assetId: o.assetId, element: o, uuid: o.uuid}
-      })
-      changeZOrder('bringToFront', objects, state)
-      $_broadcastUpsert(whiteboardElements, state).then(() => {
-        _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
-        store.dispatch('whiteboarding/setIsFitToScreen', true).then(_.noop)
-      })
+    if (object) {
+      if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
+        _.each(object.getObjects(), (element: any) => {
+          const position = $_calculateGlobalElementPosition(object, element)
+          objects.push(_.assignIn({}, element.toObject(), position))
+        })
+      } else {
+        objects.push(object.toObject())
+      }
+      if (_.size(objects)) {
+        const whiteboardElements = _.map(objects, o => {
+          return {assetId: o.assetId, element: o, uuid: o.uuid}
+        })
+        changeZOrder('bringToFront', objects, state)
+        $_broadcastUpsert(whiteboardElements, state).then(() => {
+          _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
+          store.dispatch('whiteboarding/setIsFitToScreen', true).then(_.noop)
+        })
+      }
     }
   })
 
