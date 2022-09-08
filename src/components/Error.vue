@@ -23,8 +23,8 @@
           <span id="error-message" aria-live="polite" role="alert">{{ message || 'Uh oh, there was a problem.' }}</span>
         </div>
         <div>
-          Problem? Question?
-          Email us at <a id="help-mailto" :href="`mailto:${emailAddressSupport}`" target="_blank">{{ emailAddressSupport }}</a>.
+          Problem? Question? Please review our <a id="help-article-kb" :href="`${kbArticleUrl}`" target="_blank">support documentation</a>
+          or Email us at <a id="help-mailto" :href="`mailto:${emailAddressSupport}`" target="_blank">{{ emailAddressSupport }}</a>.
         </div>
         <div v-if="isInIframe" class="pt-4">
           <v-btn id="go-back-btn" icon @click="$router.go(-2)">
@@ -46,11 +46,13 @@ export default {
   mixins: [Context],
   data: () => ({
     emailAddressSupport: undefined,
+    kbArticleUrl: undefined,
     message: undefined
   }),
   created() {
     this.message = this.$route.query.m
     this.emailAddressSupport = this.$config.emailAddressSupport
+    this.kbArticleUrl = this.$config.kbArticleUrl
     this.$ready('Error')
   }
 }

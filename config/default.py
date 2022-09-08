@@ -55,6 +55,7 @@ DEVELOPER_AUTH_PASSWORD = 'shotz_brewery'
 DIST_STATIC_DIR = 'dist/static'
 
 EMAIL_ADDRESS_SUPPORT = 'bcourseshelp@berkeley.edu'
+KB_ARTICLE_URL = 'https://berkeley.service-now.com/kb?id=kb_article_view&sysparm_article=KB0014417'
 
 FEATURE_FLAG_WHITEBOARDS = False
 
