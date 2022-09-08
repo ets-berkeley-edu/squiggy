@@ -41,6 +41,7 @@ def app_config():
         'baseUrl': app.config['VUE_LOCALHOST_BASE_URL'] or request.url_root,
         'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
+        'kbArticleUrl': app.config['KB_ARTICLE_URL'],
         'developerAuthEnabled': app.config['DEVELOPER_AUTH_ENABLED'],
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],
         'orderByOptions': assets_sort_by_options,
