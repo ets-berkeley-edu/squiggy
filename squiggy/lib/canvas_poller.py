@@ -453,8 +453,9 @@ class CanvasPoller(BackgroundJob):
                     continue
                 # Don't create a discussion_topic for an assigned discussion as these are set up by instructors.
                 if not getattr(topic, 'assignment', None):
-                    if not discussion_activity_index.get(topic.author.get('id', None), {}).get('discussion_topic', {}).get(topic.id):
-                        user = users_by_canvas_id.get(topic.author.get('id', None), None)
+                    author_id = topic.author.get('id', None) if topic.author else None
+                    if not discussion_activity_index.get(author_id, {}).get('discussion_topic', {}).get(topic.id):
+                        user = users_by_canvas_id.get(author_id, None)
                         if user:
                             Activity.create(
                                 activity_type='discussion_topic',
