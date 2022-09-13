@@ -45,6 +45,7 @@ class Course(Base):
     last_polled = db.Column(db.DateTime)
     name = db.Column(db.String(255))
     whiteboards_url = db.Column(db.String(255))
+    protects_assets_per_section = db.Column(db.Boolean, default=False, nullable=False)
 
     users = db.relationship('User', back_populates='course')
 
@@ -61,6 +62,7 @@ class Course(Base):
             impact_studio_url=None,
             name=None,
             whiteboards_url=None,
+            protects_assets_per_section=False,
     ):
         self.active = active
         self.asset_library_url = asset_library_url
@@ -73,6 +75,7 @@ class Course(Base):
         self.impact_studio_url = impact_studio_url
         self.name = name
         self.whiteboards_url = whiteboards_url
+        self.protects_assets_per_section = protects_assets_per_section
 
     def __repr__(self):
         return f"""<Course
@@ -88,6 +91,7 @@ class Course(Base):
                     impact_studio_url={self.impact_studio_url},
                     name={self.name},
                     whiteboards_url={self.whiteboards_url},
+                    protects_assets_per_section={self.protects_assets_per_section},
                     created_at={self.created_at},
                     updated_at={self.updated_at}>
                 """
@@ -110,6 +114,7 @@ class Course(Base):
             impact_studio_url=None,
             name=None,
             whiteboards_url=None,
+            protects_assets_per_section=False,
     ):
         course = cls(
             active=True,
@@ -120,6 +125,7 @@ class Course(Base):
             impact_studio_url=impact_studio_url,
             name=name,
             whiteboards_url=whiteboards_url,
+            protects_assets_per_section=protects_assets_per_section,
         )
         db.session.add(course)
         std_commit()

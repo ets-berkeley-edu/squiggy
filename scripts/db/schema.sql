@@ -330,6 +330,7 @@ CREATE TABLE courses (
     last_polled TIMESTAMP WITH TIME ZONE,
     whiteboards_url character varying(255),
     impact_studio_url character varying(255),
+    protects_assets_per_section boolean DEFAULT false NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
