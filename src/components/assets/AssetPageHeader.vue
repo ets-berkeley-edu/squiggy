@@ -1,5 +1,5 @@
 <template>
-  <div class="align-content-center d-flex justify-space-between pt-2 w-100">
+  <div class="align-content-center flex-wrap d-flex justify-space-between pt-2 w-100">
     <h2 id="asset-title" class="text-break mr-2">{{ asset.title }}</h2>
     <div class="d-flex align-content-end">
       <div v-if="canEditAsset" class="mr-2">
