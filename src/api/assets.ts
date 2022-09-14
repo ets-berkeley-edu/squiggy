@@ -64,28 +64,10 @@ export function getAsset(assetId) {
   return axios.get(`${utils.apiBaseUrl()}/api/asset/${assetId}`)
 }
 
-export function getAssets(
-  assetType,
-  categoryId,
-  keywords,
-  limit,
-  offset,
-  orderBy,
-  sectionId,
-  userId
-) {
+export function getAssets(params) {
   return axios.post(
     `${utils.apiBaseUrl()}/api/assets`,
-    {
-      assetType,
-      categoryId,
-      keywords,
-      limit,
-      offset,
-      orderBy,
-      sectionId,
-      userId
-    }
+    params
   )
 }
 
