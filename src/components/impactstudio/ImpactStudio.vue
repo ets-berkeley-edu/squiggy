@@ -140,6 +140,46 @@
             </div>
           </div>
         </div>
+        <div id="user-assets">
+          <h2 class="impact-studio-section-header">
+            {{ isMyProfile ? 'My Assets' : `${user.canvasFullName}'s Assets` }}
+          </h2>
+          <v-card
+            v-if="userAssetsLane.length"
+            class="d-flex flex-wrap"
+            flat
+            tile
+          >
+            <AssetCard
+              v-for="(asset, index) in userAssetsLane"
+              :key="index"
+              :asset="asset"
+              class="asset-card ma-3"
+            />
+          </v-card>
+          <div v-if="!userAssetsLane.length">
+            No assets.
+          </div>
+        </div>
+        <div v-if="isMyProfile" id="everyones-assets">
+          <h2 class="impact-studio-section-header">Everyone's Assets</h2>
+          <v-card
+            v-if="everyonesAssetsLane.length"
+            class="d-flex flex-wrap"
+            flat
+            tile
+          >
+            <AssetCard
+              v-for="(asset, index) in everyonesAssetsLane"
+              :key="index"
+              :asset="asset"
+              class="asset-card ma-3"
+            />
+          </v-card>
+          <div v-if="!everyonesAssetsLane.length">
+            No assets.
+          </div>
+        </div>
       </div>
     </div>
     <div v-if="!isLoading && !user">
@@ -149,8 +189,10 @@
 </template>
 
 <script>
+import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
+import AssetCard from '@/components/assets/AssetCard'
 import Context from '@/mixins/Context'
 import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
@@ -158,9 +200,11 @@ import Utils from '@/mixins/Utils'
 export default {
   name: 'ImpactStudio',
   mixins: [Context, Utils],
-  components: {SyncDisabled},
+  components: {AssetCard, SyncDisabled},
   data: () => ({
     courseInteractions: null,
+    everyonesAssetsLane: [],
+    everyonesAssetsOrderBy: 'recent',
     isMyProfile: false,
     isEditingPersonalDescription: false,
     nextUser: null,
@@ -168,6 +212,8 @@ export default {
     previousUser: null,
     user: undefined,
     userActivities: null,
+    userAssetsLane: [],
+    userAssetsOrderBy: 'recent',
     users: []
   }),
   created() {
@@ -183,6 +229,7 @@ export default {
         this.isMyProfile = !!(this.user && this.user.id === this.$currentUser.id)
         if (this.isMyProfile) {
           this.personalDescription = this.user.personalDescription
+          this.fetchEveryonesAssets()
         }
         getUserActivities(this.user.id).then(data => {
           this.userActivities = data
@@ -190,11 +237,25 @@ export default {
         getCourseInteractions().then(data => {
           this.courseInteractions = data
         })
+        this.fetchUserAssets(this.user.id)
       }
       this.$ready()
     })
   },
   methods: {
+    getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
+    fetchEveryonesAssets() {
+      this.everyonesAssetsLane = this.getSkeletons(4)
+      getAssets({offset: 0, limit: 4, orderBy: this.everyonesAssetsOrderBy}).then((data) => {
+        this.everyonesAssetsLane = data.results || []
+      })
+    },
+    fetchUserAssets(userId) {
+      this.userAssetsLane = this.getSkeletons(4)
+      getAssets({offset: 0, limit: 4, orderBy: this.userAssetsOrderBy, userId: userId}).then((data) => {
+        this.userAssetsLane = data.results || []
+      })
+    },
     personalDescriptionCancel() {
       this.$announcer.polite('Canceled')
       this.personalDescription = this.user.personalDescription

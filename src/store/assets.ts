@@ -7,16 +7,16 @@ const orderByDefault = 'recent'
 
 function $_search(commit, state, addToExisting?: boolean) {
   return new Promise(resolve => {
-    getAssets(
-      state.assetType,
-      state.categoryId,
-      state.keywords,
-      state.limit,
-      state.offset,
-      state.orderBy,
-      state.sectionId,
-      state.userId
-    ).then(data => {
+    getAssets({
+      assetType: state.assetType,
+      categoryId: state.categoryId,
+      keywords: state.keywords,
+      limit: state.limit,
+      offset: state.offset,
+      orderBy: state.orderBy,
+      sectionId: state.sectionId,
+      userId: state.userId
+    }).then(data => {
       const assets = _.get(data, 'results')
       commit(addToExisting ? 'addAssets' : 'setAssets', assets)
       commit('setTotalAssetCount', _.get(data, 'total'))
