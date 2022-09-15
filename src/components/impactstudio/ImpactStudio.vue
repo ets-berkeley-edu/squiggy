@@ -140,46 +140,24 @@
             </div>
           </div>
         </div>
-        <div id="user-assets">
-          <h2 class="impact-studio-section-header">
-            {{ isMyProfile ? 'My Assets' : `${user.canvasFullName}'s Assets` }}
-          </h2>
-          <v-card
-            v-if="userAssetsLane.length"
-            class="d-flex flex-wrap"
-            flat
-            tile
-          >
-            <AssetCard
-              v-for="(asset, index) in userAssetsLane"
-              :key="index"
-              :asset="asset"
-              class="asset-card ma-3"
-            />
-          </v-card>
-          <div v-if="!userAssetsLane.length">
-            No assets.
-          </div>
-        </div>
-        <div v-if="isMyProfile" id="everyones-assets">
-          <h2 class="impact-studio-section-header">Everyone's Assets</h2>
-          <v-card
-            v-if="everyonesAssetsLane.length"
-            class="d-flex flex-wrap"
-            flat
-            tile
-          >
-            <AssetCard
-              v-for="(asset, index) in everyonesAssetsLane"
-              :key="index"
-              :asset="asset"
-              class="asset-card ma-3"
-            />
-          </v-card>
-          <div v-if="!everyonesAssetsLane.length">
-            No assets.
-          </div>
-        </div>
+        <AssetSwimlane
+          id-prefix="user-assets"
+          :assets="userAssets"
+          :fetch-assets="fetchUserAssets"
+          :show-more="userAssetsMore"
+          :title="isMyProfile ? 'My Assets' : `${user.canvasFullName}'s Assets`"
+          :user="user"
+          class="my-4"
+        />
+        <AssetSwimlane
+          v-if="isMyProfile"
+          id-prefix="everyones-assets"
+          :assets="everyonesAssets"
+          :fetch-assets="fetchEveryonesAssets"
+          :show-more="everyonesAssetsMore"
+          title="Everyone's Assets"
+          class="my-4"
+        />
       </div>
     </div>
     <div v-if="!isLoading && !user">
@@ -192,7 +170,7 @@
 import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
-import AssetCard from '@/components/assets/AssetCard'
+import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
 import Context from '@/mixins/Context'
 import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
@@ -200,11 +178,11 @@ import Utils from '@/mixins/Utils'
 export default {
   name: 'ImpactStudio',
   mixins: [Context, Utils],
-  components: {AssetCard, SyncDisabled},
+  components: {AssetSwimlane, SyncDisabled},
   data: () => ({
     courseInteractions: null,
-    everyonesAssetsLane: [],
-    everyonesAssetsOrderBy: 'recent',
+    everyonesAssets: [],
+    everyonesAssetsMore: false,
     isMyProfile: false,
     isEditingPersonalDescription: false,
     nextUser: null,
@@ -212,8 +190,8 @@ export default {
     previousUser: null,
     user: undefined,
     userActivities: null,
-    userAssetsLane: [],
-    userAssetsOrderBy: 'recent',
+    userAssets: [],
+    userAssetsMore: false,
     users: []
   }),
   created() {
@@ -229,7 +207,6 @@ export default {
         this.isMyProfile = !!(this.user && this.user.id === this.$currentUser.id)
         if (this.isMyProfile) {
           this.personalDescription = this.user.personalDescription
-          this.fetchEveryonesAssets()
         }
         getUserActivities(this.user.id).then(data => {
           this.userActivities = data
@@ -237,23 +214,24 @@ export default {
         getCourseInteractions().then(data => {
           this.courseInteractions = data
         })
-        this.fetchUserAssets(this.user.id)
       }
       this.$ready()
     })
   },
   methods: {
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
-    fetchEveryonesAssets() {
-      this.everyonesAssetsLane = this.getSkeletons(4)
-      getAssets({offset: 0, limit: 4, orderBy: this.everyonesAssetsOrderBy}).then((data) => {
-        this.everyonesAssetsLane = data.results || []
+    fetchEveryonesAssets(orderBy) {
+      this.everyonesAssets = this.getSkeletons(4)
+      return getAssets({offset: 0, limit: 4, orderBy: orderBy}).then((data) => {
+        this.everyonesAssets = data.results || []
+        this.everyonesAssetsMore = data.total && data.total > 4
       })
     },
-    fetchUserAssets(userId) {
-      this.userAssetsLane = this.getSkeletons(4)
-      getAssets({offset: 0, limit: 4, orderBy: this.userAssetsOrderBy, userId: userId}).then((data) => {
-        this.userAssetsLane = data.results || []
+    fetchUserAssets(orderBy) {
+      this.userAssets = this.getSkeletons(4)
+      return getAssets({offset: 0, limit: 4, orderBy: orderBy, userId: this.user.id}).then((data) => {
+        this.userAssets = data.results || []
+        this.userAssetsMore = data.total && data.total > 4
       })
     },
     personalDescriptionCancel() {
@@ -279,11 +257,13 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .impact-studio-section-header {
   font-size: 22px;
 }
+</style>
 
+<style scoped>
 .profile-avatar {
   border-radius: 50%;
   text-align: center;
