@@ -79,7 +79,10 @@ class TestGetWhiteboard:
 
     def test_teacher_view_whiteboard(self, client, fake_auth, mock_whiteboard):
         """Authorized user can view whiteboard."""
-        course = Course.find_by_id(mock_whiteboard['courseId'])
+        course = Course.find_by_canvas_course_id(
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=1502870,
+        )
         instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         asset = _api_get_whiteboard(whiteboard_id=mock_whiteboard['id'], client=client)
@@ -368,7 +371,12 @@ class TestRemixWhiteboard:
         assert asset_original['title'] == title
 
         student = User.find_by_id(student_id)
-        some_other_student = User.find_by_canvas_user_id(4328765)
+        whiteboard_user_ids = [u['id'] for u in mock_whiteboard['users']]
+        course = Course.find_by_canvas_course_id(
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=1502871,
+        )
+        some_other_student = next(u for u in course.users if u.canvas_course_role == 'Student' and u.id not in [whiteboard_user_ids])
         assert some_other_student.id != student.id
 
         for user in [student, some_other_student]:
@@ -430,7 +438,10 @@ class TestDeleteWhiteboard:
 
     def test_delete_whiteboard_by_teacher(self, client, fake_auth, mock_whiteboard):
         """Authorized user can delete whiteboard."""
-        course = Course.find_by_id(mock_whiteboard['courseId'])
+        course = Course.find_by_canvas_course_id(
+            canvas_api_domain='bcourses.berkeley.edu',
+            canvas_course_id=1502870,
+        )
         instructors = list(filter(lambda u: is_teaching(u), course.users))
         fake_auth.login(instructors[0].id)
         whiteboard_id = mock_whiteboard['id']

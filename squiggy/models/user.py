@@ -110,7 +110,7 @@ class User(Base):
         self.looking_for_collaborators = looking_for_collaborators
 
     def __repr__(self):
-        return f"""<User
+        return f"""<User id={self.id},
                     bookmarklet_token={self.bookmarklet_token}
                     canvas_course_role={self.canvas_course_role},
                     canvas_course_sections={self.canvas_course_sections},
