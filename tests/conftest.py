@@ -178,12 +178,15 @@ def mock_asset(app, db_session):
         canvas_assignment_id=98765,
         visible=True,
     )
-    course = Course.query.order_by(Course.name).all()[0]
+    course = Course.find_by_canvas_course_id(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=1502870,
+    )
     canvas_user_id_1 = str(randint(1000000, 9999999))
     canvas_user_id_2 = str(randint(1000000, 9999999))
     user_1 = User.create(
         canvas_course_role='Student',
-        canvas_course_sections=[],
+        canvas_course_sections=['section A'],
         canvas_email=f'{canvas_user_id_1}@berkeley.edu',
         canvas_enrollment_state='active',
         canvas_full_name=f'Student {canvas_user_id_1}',
@@ -192,7 +195,7 @@ def mock_asset(app, db_session):
     )
     user_2 = User.create(
         canvas_course_role='Student',
-        canvas_course_sections=[],
+        canvas_course_sections=['section B'],
         canvas_email=f'{canvas_user_id_2}@berkeley.edu',
         canvas_enrollment_state='active',
         canvas_full_name=f'Student {canvas_user_id_2}',
@@ -217,6 +220,14 @@ def mock_asset(app, db_session):
     std_commit(allow_test_environment=True)
     yield asset
     db_session.delete(asset)
+    std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
+def mock_asset_course(mock_asset):
+    course = Course.find_by_id(mock_asset.course_id)
+    yield course
+    course.protects_assets_per_section = False
     std_commit(allow_test_environment=True)
 
 

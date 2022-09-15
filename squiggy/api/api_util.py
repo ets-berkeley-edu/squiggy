@@ -97,6 +97,11 @@ def can_view_asset(asset, user):
         return True
     if not user or user.course.id != asset.course_id:
         return False
+    if user.course.protects_assets_per_section:
+        asset_sections = [section for sections in [u.canvas_course_sections for u in asset.users] for section in sections]
+        user_sections = current_user.user.canvas_course_sections
+        if len(list(set(user_sections) & set(asset_sections))) == 0:
+            return False
     return asset.visible or (asset.id in [a.id for a in current_user.user.assets])
 
 

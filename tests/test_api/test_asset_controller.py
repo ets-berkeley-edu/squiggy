@@ -90,6 +90,19 @@ class TestGetAsset:
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['views'] == 3
 
+    def test_view_protected_asset(self, client, fake_auth, mock_asset, mock_asset_course):
+        course = mock_asset_course
+        course.protects_assets_per_section = True
+
+        section_a_student = User.query.filter_by(course_id=course.id, canvas_course_role='Student', canvas_course_sections=['section A']).first()
+        fake_auth.login(section_a_student.id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client)
+        assert asset['id'] == mock_asset.id
+
+        section_b_student = User.query.filter_by(course_id=course.id, canvas_course_role='Student', canvas_course_sections=['section B']).first()
+        fake_auth.login(section_b_student.id)
+        asset = _api_get_asset(asset_id=mock_asset.id, client=client, expected_status_code=404)
+
 
 class TestDownloadAsset:
 
