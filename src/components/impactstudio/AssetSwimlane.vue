@@ -3,7 +3,7 @@
     <h2 class="impact-studio-section-header my-3">
       {{ title }}
     </h2>
-    <v-row no-gutters>
+    <v-row v-if="assets.length" no-gutters>
       <v-col class="pr-4 pt-2 text-right" cols="1">
         Sort by
       </v-col>

@@ -57,6 +57,21 @@
           </div>
         </div>
       </template>
+      <template #item.lastActivity="{ item }">
+        {{ item.lastActivity ? new Date(item.lastActivity).toLocaleString() : '' }}
+      </template>
+      <template #item.lookingForCollaborators="{ item }">
+        <div align="center">
+          <v-btn
+            v-if="item.lookingForCollaborators && item.id !== $currentUser.id"
+            color="success"
+            @click="startCanvasConversation(item)"
+            @keypress.enter.prevent="startCanvasConversation(item)"
+          >
+            <v-icon>mdi-account-plus</v-icon><span class="sr-only">Start a conversation</span>
+          </v-btn>
+        </div>
+      </template>
       <template #item.points="{ item }">
         <div align="center">
           {{ item.points }}
@@ -67,21 +82,19 @@
           {{ item.sharePoints ? 'Yes' : 'No' }}
         </div>
       </template>
-      <template #item.lastActivity="{ item }">
-        {{ item.lastActivity ? new Date(item.lastActivity).toLocaleString() : '' }}
-      </template>
     </v-data-table>
   </div>
 </template>
 
 <script>
+import CanvasConversation from '@/mixins/CanvasConversation'
 import CrossToolUserLink from '@/components/util/CrossToolUserLink'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Leaderboard',
   components: {CrossToolUserLink},
-  mixins: [Utils],
+  mixins: [CanvasConversation, Utils],
   data() {
     return {
       headers: this.getHeaders(),
@@ -108,6 +121,9 @@ export default {
       ]
       if (!this.$currentUser.isAdmin && !this.$currentUser.isTeaching) {
         headers.splice(2, 1)
+      }
+      if (this.$currentUser.course.impactStudioUrl) {
+        headers.splice(2, 0, {text: 'Collaborate', value: 'lookingForCollaborators'})
       }
       return headers
     }
