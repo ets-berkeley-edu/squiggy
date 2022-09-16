@@ -1,7 +1,7 @@
 <template>
   <span>
     <router-link
-      v-if="!$isInIframe || !crossToolLink"
+      v-if="!crossToolLink"
       :id="`user-${user.id}-href`"
       :to="destination"
       :aria-label="ariaLabel"
@@ -14,16 +14,27 @@
       />
       {{ user.canvasFullName }}
     </router-link>
-    <CrossToolUserLink v-if="$isInIframe && crossToolLink" :user="user" />
+    <CrossToolUserLink v-if="crossToolLink" :user="user" />
+    <v-btn
+      v-if="user.lookingForCollaborators && user.id !== $currentUser.id"
+      color="success"
+      x-small
+      @click="startCanvasConversation(user)"
+      @keypress.enter.prevent="startCanvasConversation(user)"
+    >
+      <v-icon small>mdi-account-plus</v-icon><span class="sr-only">Start a conversation</span>
+    </v-btn>
   </span>
 </template>
 
 <script>
+import CanvasConversation from '@/mixins/CanvasConversation'
 import CrossToolUserLink from '@/components/util/CrossToolUserLink'
 
 export default {
   name: 'UserLink',
   components: {CrossToolUserLink},
+  mixins: [CanvasConversation],
   props: {
     source: {
       required: true,

@@ -20,16 +20,26 @@
         </div>
         <div id="about-user" class="w-100">
           <h1 id="profile-header-name" class="profile-header-name mb-4">{{ user.canvasFullName }}</h1>
-          <div id="profile-looking-for-collaborators" class="my-4">
+          <div v-if="isMyProfile" id="profile-looking-for-collaborators" class="my-4">
             {{ user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators' }}
             <v-btn
-              v-if="isMyProfile"
               id="toggle-looking-for-collaborators-btn"
               class="mx-2"
               @click="toggleLookingForCollaborators"
               @keypress.enter="toggleLookingForCollaborators"
             >
               Change
+            </v-btn>
+          </div>
+          <div v-if="!isMyProfile & user.lookingForCollaborators" id="profile-looking-for-collaborators" class="my-4">
+            <v-btn
+              id="toggle-looking-for-collaborators-btn"
+              color="success"
+              @click="startCanvasConversation(user)"
+              @keypress.enter.prevent="startCanvasConversation(user)"
+            >
+              <v-icon class="pr-2">mdi-account-plus</v-icon>
+              Looking for Collaborators
             </v-btn>
           </div>
           <div v-if="user.canvasCourseSections" id="canvas-course-sections">
@@ -171,13 +181,14 @@ import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
+import CanvasConversation from '@/mixins/CanvasConversation'
 import Context from '@/mixins/Context'
 import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'ImpactStudio',
-  mixins: [Context, Utils],
+  mixins: [CanvasConversation, Context, Utils],
   components: {AssetSwimlane, SyncDisabled},
   data: () => ({
     courseInteractions: null,
@@ -224,14 +235,14 @@ export default {
       this.everyonesAssets = this.getSkeletons(4)
       return getAssets({offset: 0, limit: 4, orderBy: orderBy}).then((data) => {
         this.everyonesAssets = data.results || []
-        this.everyonesAssetsMore = data.total && data.total > 4
+        this.everyonesAssetsMore = !!data.total && data.total > 4
       })
     },
     fetchUserAssets(orderBy) {
       this.userAssets = this.getSkeletons(4)
       return getAssets({offset: 0, limit: 4, orderBy: orderBy, userId: this.user.id}).then((data) => {
         this.userAssets = data.results || []
-        this.userAssetsMore = data.total && data.total > 4
+        this.userAssetsMore = !!data.total && data.total > 4
       })
     },
     personalDescriptionCancel() {
