@@ -151,6 +151,17 @@ class Course(Base):
         std_commit()
         return course
 
+    @classmethod
+    def update_protect_assets_per_section(
+            cls,
+            course_id,
+            protect_assets_per_section,
+    ):
+        course = cls.find_by_id(course_id=course_id)
+        course.protects_assets_per_section = protect_assets_per_section
+        std_commit()
+        return course
+
     def to_api_json(self, include_users=False):
         canvas = Canvas.find_by_domain(canvas_api_domain=self.canvas_api_domain)
         api_json = {
@@ -167,6 +178,7 @@ class Course(Base):
             'impactStudioUrl': self.impact_studio_url,
             'lastPolled': _isoformat(self.last_polled),
             'name': self.name,
+            'protectsAssetsPerSection': self.protects_assets_per_section,
             'whiteboardsUrl': self.whiteboards_url,
             'createdAt': _isoformat(self.created_at),
             'updatedAt': _isoformat(self.updated_at),

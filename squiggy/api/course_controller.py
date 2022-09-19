@@ -23,7 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
+from flask import current_app as app, request
 from flask_login import current_user, login_required
 from squiggy.api.api_util import teacher_required
 from squiggy.lib.http import tolerant_jsonify
@@ -41,3 +41,12 @@ def activate():
 @login_required
 def get_course(course_id):
     return tolerant_jsonify(Course.find_by_id(course_id).to_api_json(include_users=True))
+
+
+@app.route('/api/course/update_protect_assets_per_section', methods=['POST'])
+@teacher_required
+def update_protect_assets_per_section_checkbox():
+    params = request.get_json()
+    protect_assets_per_section = params.get('protectSectionCheckbox')
+    Course.update_protect_assets_per_section(current_user.course.id, protect_assets_per_section)
+    return tolerant_jsonify({'status': 'success'})
