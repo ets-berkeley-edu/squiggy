@@ -2,6 +2,27 @@
   <div id="impact-studio">
     <div v-if="!isLoading && user">
       <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
+      <div class="d-flex align-baseline">
+        <div>Find user:</div>
+        <div class="w-25 mx-3">
+          <AccessibleSelect
+            :dense="true"
+            :disabled="!users.length"
+            id-prefix="find-user"
+            :items="$_.map(users, (u) => ({text: u.canvasFullName, value: u.id}))"
+            :value="findUserId"
+            @input="v => findUserId = v"
+          />
+        </div>
+        <v-btn
+          id="find-user-apply"
+          color="primary"
+          @click="goToProfile(findUserId)"
+          @keypress.enter.prevent="goToProfile(findUserId)"
+        >
+          Go
+        </v-btn>
+      </div>
       <div class="d-flex justify-space-between w-100 mb-4">
         <div id="previous-user">
           <a v-if="previousUser" :href="`/impact_studio/profile/${previousUser.id}`">
@@ -180,6 +201,7 @@
 import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
+import AccessibleSelect from '@/components/util/AccessibleSelect'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
 import CanvasConversation from '@/mixins/CanvasConversation'
 import Context from '@/mixins/Context'
@@ -189,7 +211,7 @@ import Utils from '@/mixins/Utils'
 export default {
   name: 'ImpactStudio',
   mixins: [CanvasConversation, Context, Utils],
-  components: {AssetSwimlane, SyncDisabled},
+  components: {AccessibleSelect, AssetSwimlane, SyncDisabled},
   data: () => ({
     courseInteractions: null,
     everyonesAssets: [],
@@ -244,6 +266,9 @@ export default {
         this.userAssets = data.results || []
         this.userAssetsMore = !!data.total && data.total > 4
       })
+    },
+    goToProfile(userId) {
+      this.$router.push({path: `/impact_studio/profile/${userId}`})
     },
     personalDescriptionCancel() {
       this.$announcer.polite('Canceled')
