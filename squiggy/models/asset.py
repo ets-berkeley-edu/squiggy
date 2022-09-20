@@ -507,6 +507,11 @@ def _build_where_clause(filters, include_hidden, params, session):
         where_clause += ' AND a.visible = TRUE'
     if not session.is_admin and not session.is_teaching:
         where_clause += ' AND (a.visible = TRUE OR a.id = ANY(:my_asset_ids))'
+    if session.course.protects_assets_per_section and session.is_student:
+        where_clause += """ AND (
+            to_jsonb(u.canvas_course_sections) ?| (SELECT canvas_course_sections FROM users WHERE id = :user_id)
+            OR NOT lower(u.canvas_course_role) SIMILAR TO '%(student|learner)%'
+        )"""
     if filters.get('keywords'):
         where_clause += ' AND (a.title ILIKE :keywords OR a.description ILIKE :keywords)'
         params['keywords'] = '%' + re.sub(r'\s+', '%', filters['keywords'].strip()) + '%'

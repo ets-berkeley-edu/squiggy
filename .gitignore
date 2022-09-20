@@ -38,5 +38,6 @@ log/
 tmp/
 .DS_Store
 *.log
+*.log.*
 .cache
 .pytest_cache/

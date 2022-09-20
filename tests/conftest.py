@@ -160,9 +160,9 @@ def fake_sts(app):
 
 @pytest.fixture(scope='function')
 def mock_asset(app, db_session):
-    course = Course.create(
+    course = Course.find_by_canvas_course_id(
         canvas_api_domain='bcourses.berkeley.edu',
-        canvas_course_id=randrange(1000000),
+        canvas_course_id=1502870,
     )
     category_hidden = Category.create(
         canvas_assignment_name='Just look into her false colored eyes',
@@ -177,10 +177,6 @@ def mock_asset(app, db_session):
         title='What a clown (visible=True)',
         canvas_assignment_id=98765,
         visible=True,
-    )
-    course = Course.find_by_canvas_course_id(
-        canvas_api_domain='bcourses.berkeley.edu',
-        canvas_course_id=1502870,
     )
     canvas_user_id_1 = str(randint(1000000, 9999999))
     canvas_user_id_2 = str(randint(1000000, 9999999))
@@ -207,6 +203,12 @@ def mock_asset(app, db_session):
         categories=[category_hidden, category_visible],
         course=course,
         users=[user_1],
+    )
+    _create_asset(
+        app=app,
+        categories=[category_hidden, category_visible],
+        course=course,
+        users=[user_2],
     )
     for test_comment in _get_mock_comments():
         comment = Comment.create(asset=asset, body=test_comment['body'], user_id=user_2.id)
@@ -256,7 +258,10 @@ def mock_whiteboard(app, db_session):
         canvas_api_domain='bcourses.berkeley.edu',
         canvas_course_id=randrange(1000000),
     )
-    course = Course.query.order_by(Course.name).all()[0]
+    course = Course.find_by_canvas_course_id(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=1502870,
+    )
     users = []
     for canvas_user_id in [randint(1000000, 9999999), randint(1000000, 9999999)]:
         users.append(User.create(
@@ -313,6 +318,14 @@ def mock_whiteboard(app, db_session):
     yield whiteboard
 
     Whiteboard.delete(whiteboard_id=whiteboard['id'])
+    std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
+def mock_whiteboard_course(mock_whiteboard):
+    course = Course.find_by_id(mock_whiteboard['courseId'])
+    yield course
+    course.protects_assets_per_section = False
     std_commit(allow_test_environment=True)
 
 
