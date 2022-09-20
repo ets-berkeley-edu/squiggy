@@ -8,3 +8,8 @@ export function activate() {
 export function getCourse(courseId) {
   return axios.get(`${utils.apiBaseUrl()}/api/course/${courseId}`)
 }
+
+export function updateProtectAssetsPerSectionCheckbox(protectSectionCheckbox) {
+  return axios.post(`${utils.apiBaseUrl()}/api/course/update_protect_assets_per_section`,
+      {protectSectionCheckbox})
+}

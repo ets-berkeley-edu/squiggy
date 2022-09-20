@@ -23,6 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import json
+
 from squiggy.models.course import Course
 from squiggy.models.user import User
 
@@ -86,3 +88,60 @@ class TestGetCourse:
         fake_auth.login(user.id)
         api_json = _api_get_course(client, user.course_id)
         assert user.id in [user['id'] for user in api_json['users']]
+
+
+class TestProtectsAssetsPerSection:
+
+    def _api_protect_assets_per_section(
+            self,
+            client,
+            protect_assets_per_section,
+            expected_status_code=200,
+    ):
+        response = client.post(
+            '/api/course/update_protect_assets_per_section',
+            data=json.dumps({
+                'protectSectionCheckbox': protect_assets_per_section,
+            }),
+            content_type='application/json',
+        )
+        assert response.status_code == expected_status_code
+
+    def test_anonymous(self, client):
+        """Denies anonymous user."""
+        self._api_protect_assets_per_section(
+            client=client,
+            protect_assets_per_section=True,
+            expected_status_code=401,
+        )
+
+    def test_unauthorized(self, client, fake_auth):
+        """Denies unauthorized user."""
+        fake_auth.login(unauthorized_user_id)
+        self._api_protect_assets_per_section(
+            client=client,
+            protect_assets_per_section=True,
+            expected_status_code=401,
+        )
+
+    def test_student(self, client, fake_auth, student_id):
+        """Denies student."""
+        fake_auth.login(student_id)
+        self._api_protect_assets_per_section(
+            client=client,
+            protect_assets_per_section=True,
+            expected_status_code=401,
+        )
+
+    def test_teacher(self, client, fake_auth, authorized_user_id, db_session):
+        """Allows teacher."""
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(authorized_user_id)
+        api_json = _api_get_course(client, user.course_id)
+        expected_protect_assets = not api_json['protectsAssetsPerSection']
+        self._api_protect_assets_per_section(
+            client=client,
+            protect_assets_per_section=expected_protect_assets,
+        )
+        api_json = _api_get_course(client, user.course_id)
+        assert api_json['protectsAssetsPerSection'] == expected_protect_assets
