@@ -41,6 +41,8 @@ from squiggy.models.asset import Asset
 from squiggy.models.canvas_poller_api_key import CanvasPollerApiKey
 from squiggy.models.category import Category
 from squiggy.models.course import Course
+from squiggy.models.course_group import CourseGroup
+from squiggy.models.course_group_membership import CourseGroupMembership
 from squiggy.models.user import User
 
 
@@ -94,6 +96,7 @@ class CanvasPoller(BackgroundJob):
         users_by_canvas_id = self.poll_users(db_course, api_course)
         self.poll_assignments(db_course, api_course, users_by_canvas_id)
         self.poll_discussions(db_course, api_course, users_by_canvas_id)
+        self.poll_groups(db_course, api_course)
         self.poll_last_activity(db_course)
 
     def poll_tab_configuration(self, db_course, api_course):
@@ -141,6 +144,38 @@ class CanvasPoller(BackgroundJob):
             std_commit()
 
         return course_updates.get('active', True)
+
+    def poll_groups(self, db_course, api_course):
+        api_groups = list(api_course.get_groups())
+        db_groups = db_course.groups
+        if not api_groups and not db_groups:
+            return
+
+        logger.debug(f'Retrieved {len(api_groups)} groups from Canvas: {_format_course(db_course)}')
+
+        api_group_ids = set()
+        for api_group in api_groups:
+            api_group_ids.add(api_group.id)
+            db_group = next((dbg for dbg in db_groups if dbg.canvas_group_id == api_group.id), None)
+            if db_group:
+                if db_group.name != api_group.name:
+                    db_group.name = api_group.name
+                    db.session.add(db_group)
+                    std_commit()
+            else:
+                db_group = CourseGroup.create(course_id=db_course.id, canvas_group_id=api_group.id, name=api_group.name)
+
+            api_memberships = list(api_group.get_memberships())
+            db.session.query(CourseGroupMembership).filter_by(course_group_id=db_group.id).delete(synchronize_session=False)
+            for m in api_memberships:
+                CourseGroupMembership.create(course_id=db_course.id, course_group_id=db_group.id, canvas_user_id=m.user_id)
+                logger.debug(f'Group has {len(api_memberships)} memberships: {_format_course(db_course)}, group {api_group.id}')
+
+        ids_to_delete = [g.id for g in db_groups if g.canvas_group_id not in api_group_ids]
+        if ids_to_delete:
+            db.session.query(CourseGroup).filter(CourseGroup.id.in_(ids_to_delete)).delete(synchronize_session=False)
+            std_commit()
+            logger.debug(f'Deleted {len(ids_to_delete)} groups: {_format_course(db_course)}')
 
     def poll_users(self, db_course, api_course):  # noqa C901
         db_users_by_canvas_id = {u.canvas_user_id: u for u in db_course.users}

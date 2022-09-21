@@ -59,6 +59,11 @@ ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_as
 ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_parent_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_user_id_fkey;
 
+ALTER TABLE IF EXISTS ONLY public.course_group_memberships DROP CONSTRAINT IF EXISTS course_group_memberships_course_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.course_group_memberships DROP CONSTRAINT IF EXISTS course_group_memberships_course_group_id_fkey;
+
+ALTER TABLE IF EXISTS ONLY public.course_groups DROP CONSTRAINT IF EXISTS course_groups_course_id_fkey;
+
 ALTER TABLE IF EXISTS ONLY public.courses DROP CONSTRAINT IF EXISTS courses_canvas_api_domain_fkey;
 
 ALTER TABLE IF EXISTS ONLY public.canvas_poller_api_keys
@@ -107,6 +112,9 @@ ALTER TABLE IF EXISTS public.categories ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_pkey;
 ALTER TABLE IF EXISTS public.comments ALTER COLUMN id DROP DEFAULT;
 
+ALTER TABLE IF EXISTS ONLY public.course_groups DROP CONSTRAINT IF EXISTS courses_pkey;
+ALTER TABLE IF EXISTS public.course_groups ALTER COLUMN id DROP DEFAULT;
+
 ALTER TABLE IF EXISTS ONLY public.courses DROP CONSTRAINT IF EXISTS courses_pkey;
 ALTER TABLE IF EXISTS public.courses ALTER COLUMN id DROP DEFAULT;
 
@@ -134,6 +142,8 @@ DROP INDEX IF EXISTS asset_categories_category_id_idx;
 DROP INDEX IF EXISTS asset_users_asset_id_idx;
 DROP INDEX IF EXISTS asset_users_user_id_idx;
 
+DROP INDEX IF EXISTS course_group_memberships_canvas_user_id_idx;
+
 DROP INDEX IF EXISTS whiteboard_elements_created_at_uuid_whiteboard_id_idx;
 
 --
@@ -153,6 +163,9 @@ DROP SEQUENCE IF EXISTS public.categories_id_seq;
 DROP TABLE IF EXISTS public.categories;
 DROP SEQUENCE IF EXISTS public.comments_id_seq;
 DROP TABLE IF EXISTS public.comments;
+DROP TABLE IF EXISTS public.course_group_memberships;
+DROP SEQUENCE IF EXISTS public.course_groups_id_seq;
+DROP TABLE IF EXISTS public.course_groups;
 DROP SEQUENCE IF EXISTS public.courses_id_seq;
 DROP TABLE IF EXISTS public.courses;
 DROP SEQUENCE IF EXISTS public.users_id_seq;
