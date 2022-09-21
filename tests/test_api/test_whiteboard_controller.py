@@ -350,12 +350,12 @@ class TestRemixWhiteboard:
         """Denies anonymous user."""
         self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401, title='Anonymous remix')
 
-    def test_unauthorized(self, client, fake_auth, mock_whiteboard):
+    def test_unauthorized(self, client, fake_auth):
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
         self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401, title='Unauthorized remix')
 
-    def test_authorized(self, client, fake_auth, mock_whiteboard):
+    def test_authorized(self, client, fake_auth, mock_whiteboard, mock_whiteboard_course):
         """Authorized user can update whiteboard."""
         student_id = mock_whiteboard['users'][0]['id']
         fake_auth.login(student_id)
@@ -371,12 +371,7 @@ class TestRemixWhiteboard:
         assert asset_original['title'] == title
 
         student = User.find_by_id(student_id)
-        whiteboard_user_ids = [u['id'] for u in mock_whiteboard['users']]
-        course = Course.find_by_canvas_course_id(
-            canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=1502871,
-        )
-        some_other_student = next(u for u in course.users if u.canvas_course_role == 'Student' and u.id not in [whiteboard_user_ids])
+        some_other_student = User.find_by_canvas_user_id(4328765)
         assert some_other_student.id != student.id
 
         for user in [student, some_other_student]:

@@ -225,13 +225,25 @@ class TestGetAssets:
                 assert key in asset, f'{key} not present in asset JSON'
 
             assert len(asset['users']) == 1
-            assert asset['users'][0]['id'] == user.id
-            assert asset['users'][0]['canvasFullName'] == 'Oliver Heyer'
-            assert asset['users'][0]['canvasUserId'] == 9876543
-            assert asset['users'][0]['canvasCourseRole'] == 'Teacher'
-            assert asset['users'][0]['canvasEnrollmentState'] == 'active'
-            assert 'canvasCourseSections' in asset['users'][0]
-            assert 'canvasImage' in asset['users'][0]
+            for key in ('id', 'canvasFullName', 'canvasUserId', 'canvasCourseRole', 'canvasEnrollmentState', 'canvasCourseSections', 'canvasImage'):
+                assert key in asset['users'][0]
+
+    def test_course_assets_protected_per_section(self, authorized_user_id, client, fake_auth, app, mock_asset_course):
+        mock_asset_course.protects_assets_per_section = True
+        # Instructor can see all assets for the course
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(user.id)
+        api_json = self._api_get_assets(client)
+
+        # Students can see the instructor's assets plus any other assets for their section
+        for section in ('section A', 'section B'):
+            student = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Student', canvas_course_sections=[section]).first()
+            fake_auth.login(student.id)
+            api_json = self._api_get_assets(client)
+            assert api_json['total'] > 1
+            for asset in api_json['results']:
+                assert len(asset['users']) == 1
+                assert asset['users'][0]['canvasCourseRole'] != 'Student' or asset['users'][0]['canvasCourseSections'] == [section]
 
 
 class TestCreateAsset:
