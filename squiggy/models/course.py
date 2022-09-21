@@ -47,6 +47,7 @@ class Course(Base):
     whiteboards_url = db.Column(db.String(255))
     protects_assets_per_section = db.Column(db.Boolean, default=False, nullable=False)
 
+    groups = db.relationship('CourseGroup', back_populates='course')
     users = db.relationship('User', back_populates='course')
 
     def __init__(
