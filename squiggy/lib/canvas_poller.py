@@ -147,6 +147,7 @@ class CanvasPoller(BackgroundJob):
 
     def poll_groups(self, db_course, api_course):
         api_groups = list(api_course.get_groups())
+        api_categories_by_id = {c.id: c for c in api_course.get_group_categories()}
         db_groups = db_course.groups
         if not api_groups and not db_groups:
             return
@@ -156,14 +157,21 @@ class CanvasPoller(BackgroundJob):
         api_group_ids = set()
         for api_group in api_groups:
             api_group_ids.add(api_group.id)
+            category = api_categories_by_id.get(api_group.group_category_id)
+            category_name = category.name if category else None
             db_group = next((dbg for dbg in db_groups if dbg.canvas_group_id == api_group.id), None)
             if db_group:
+                group_modified = False
                 if db_group.name != api_group.name:
                     db_group.name = api_group.name
+                if category_name and db_group.category_name != category_name:
+                    db_group.category_name = category_name
+                    group_modified = True
+                if group_modified:
                     db.session.add(db_group)
                     std_commit()
             else:
-                db_group = CourseGroup.create(course_id=db_course.id, canvas_group_id=api_group.id, name=api_group.name)
+                db_group = CourseGroup.create(course_id=db_course.id, canvas_group_id=api_group.id, name=api_group.name, category_name=category_name)
 
             api_memberships = list(api_group.get_memberships())
             db.session.query(CourseGroupMembership).filter_by(course_group_id=db_group.id).delete(synchronize_session=False)

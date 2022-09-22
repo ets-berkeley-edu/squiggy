@@ -34,6 +34,7 @@ class CourseGroup(Base):
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     canvas_group_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(255))
+    category_name = db.Column(db.String(255))
 
     course = db.relationship('Course', back_populates='groups')
     memberships = db.relationship('CourseGroupMembership', back_populates='course_group')
@@ -43,25 +44,29 @@ class CourseGroup(Base):
         course_id,
         canvas_group_id,
         name,
+        category_name,
     ):
         self.course_id = course_id
         self.canvas_group_id = canvas_group_id
         self.name = name
+        self.category_name = category_name
 
     def __repr__(self):
         return f"""<CourseGroup
                     id={self.id},
                     course_id={self.course_id},
                     canvas_group_id={self.canvas_group_id},
-                    name={self.name}>
+                    name={self.name}
+                    category_name={self.category_name}>
                 """
 
     @classmethod
-    def create(cls, course_id, canvas_group_id, name):
+    def create(cls, course_id, canvas_group_id, name, category_name):
         course_group = cls(
             course_id=course_id,
             canvas_group_id=canvas_group_id,
             name=name,
+            category_name=category_name,
         )
         db.session.add(course_group)
         std_commit()
