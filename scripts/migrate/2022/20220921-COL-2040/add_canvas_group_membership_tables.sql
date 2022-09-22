@@ -5,6 +5,7 @@ CREATE TABLE course_groups (
     course_id integer NOT NULL,
     canvas_group_id integer NOT NULL,
     name character varying(255),
+    category_name character varying(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
