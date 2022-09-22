@@ -27,7 +27,7 @@ import random
 
 from cryptography.fernet import Fernet
 from flask import current_app as app
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from sqlalchemy.sql import desc
 from squiggy import db, std_commit
@@ -162,10 +162,18 @@ class User(Base):
         return cls.query.filter(where_clause).one_or_none()
 
     @classmethod
-    def get_users_by_course_id(cls, course_id):
-        return cls.query.filter(
+    def get_users_by_course_id(cls, course_id, sections=None):
+        query = cls.query.filter(
             and_(cls.course_id == course_id, cls.canvas_enrollment_state.in_(['active', 'invited'])),
-        ).order_by(cls.canvas_full_name).all()
+        )
+        if sections:
+            query = query.filter(
+                or_(
+                    cls.canvas_course_sections.overlap(sections),
+                    and_(cls.canvas_course_role.not_ilike('%student%'), cls.canvas_course_role.not_ilike('%learner%')),
+                ),
+            )
+        return query.order_by(cls.canvas_full_name).all()
 
     @classmethod
     def get_leaderboard(cls, course_id, sharing_only=True):
