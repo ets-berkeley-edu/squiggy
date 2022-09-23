@@ -176,10 +176,17 @@ class User(Base):
         return query.order_by(cls.canvas_full_name).all()
 
     @classmethod
-    def get_leaderboard(cls, course_id, sharing_only=True):
+    def get_leaderboard(cls, course_id, sections=None, sharing_only=True):
         query = cls.query.filter(
             and_(cls.course_id == course_id, cls.canvas_enrollment_state.in_(['active', 'invited'])),
         )
+        if sections:
+            query = query.filter(
+                or_(
+                    cls.canvas_course_sections.overlap(sections),
+                    and_(cls.canvas_course_role.not_ilike('%student%'), cls.canvas_course_role.not_ilike('%learner%')),
+                ),
+            )
         if sharing_only:
             query = query.filter_by(share_points=True)
         return query.order_by(desc(cls.points), cls.id).all()
