@@ -38,7 +38,8 @@ def my_profile():
 @app.route('/api/users')
 @login_required
 def get_users():
-    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id)])
+    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
+    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id, sections=sections)])
 
 
 @app.route('/api/users/leaderboard')
