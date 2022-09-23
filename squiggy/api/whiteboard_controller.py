@@ -273,7 +273,8 @@ def delete_whiteboard(whiteboard_id):
 @login_required
 def eligible_collaborators():
     course_id = current_user.course.id
-    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=course_id)])
+    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
+    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=course_id, sections=sections)])
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/update', methods=['POST'])

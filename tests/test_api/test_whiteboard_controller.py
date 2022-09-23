@@ -23,6 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+from itertools import groupby
 import json
 from random import randint
 from uuid import uuid4
@@ -327,6 +328,81 @@ class TestGetEligibleCollaborators:
         assert user_count > 1
         users_of_all_types = User.get_users_by_course_id(course_id=current_user.course.id)
         assert user_count == len(users_of_all_types)
+
+    def test_course_all_users(self, client, fake_auth, mock_asset_course):
+        """Teachers and students can see other users in the course."""
+        # Instructor can see all users in the course
+        instructor = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Teacher').first()
+        fake_auth.login(instructor.id)
+        api_json = self._api_eligible_collaborators(client)
+        users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
+        roles = list(users_by_role.keys())
+        assert 'Student' in roles
+        assert 'Teacher' in roles
+        print(api_json)
+
+        users_by_section = {section: users for section, users in groupby(
+            api_json,
+            key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
+        )}
+        sections = list(users_by_section.keys())
+        assert 'section A' in sections
+        assert 'section B' in sections
+
+        # Students can see all users in the course
+        for section in ('section A', 'section B'):
+            student = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Student', canvas_course_sections=[section]).first()
+            fake_auth.login(student.id)
+            api_json = self._api_eligible_collaborators(client)
+            users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
+            roles = list(users_by_role.keys())
+            assert 'Student' in roles
+            assert 'Teacher' in roles
+
+            users_by_section = {section: users for section, users in groupby(
+                api_json,
+                key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
+            )}
+            sections = list(users_by_section.keys())
+            assert 'section A' in sections
+            assert 'section B' in sections
+
+    def test_course_users_per_section(self, client, fake_auth, mock_asset_course):
+        """Students in an asset-siloed course can see only other students in their section."""
+        mock_asset_course.protects_assets_per_section = True
+        # Instructor can see all users in the course
+        instructor = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Teacher').first()
+        fake_auth.login(instructor.id)
+        api_json = self._api_eligible_collaborators(client)
+        users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
+        roles = list(users_by_role.keys())
+        assert 'Student' in roles
+        assert 'Teacher' in roles
+
+        users_by_section = {section: users for section, users in groupby(
+            api_json,
+            key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
+        )}
+        sections = list(users_by_section.keys())
+        assert 'section A' in sections
+        assert 'section B' in sections
+
+        # Students can see only instructors plus other users in their section
+        for section in ('section A', 'section B'):
+            student = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Student', canvas_course_sections=[section]).first()
+            fake_auth.login(student.id)
+            api_json = self._api_eligible_collaborators(client)
+            users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
+            roles = list(users_by_role.keys())
+            assert 'Student' in roles
+            assert 'Teacher' in roles
+
+            users_by_section = {section: users for section, users in groupby(
+                api_json,
+                key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
+            )}
+            sections = list(users_by_section.keys())
+            assert sections == [None, section]
 
 
 class TestRemixWhiteboard:
