@@ -49,7 +49,8 @@ def get_leaderboard():
         users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=False)
         return tolerant_jsonify([u.to_api_json(include_points=True, include_sharing=True) for u in users])
     elif current_user.user.share_points:
-        users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=True)
+        sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
+        users = User.get_leaderboard(course_id=current_user.course.id, sections=sections, sharing_only=True)
         return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
     else:
         raise ForbiddenRequestError('Leaderboard disallowed for users not sharing points.')

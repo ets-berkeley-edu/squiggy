@@ -339,7 +339,6 @@ class TestGetEligibleCollaborators:
         roles = list(users_by_role.keys())
         assert 'Student' in roles
         assert 'Teacher' in roles
-        print(api_json)
 
         users_by_section = {section: users for section, users in groupby(
             api_json,
