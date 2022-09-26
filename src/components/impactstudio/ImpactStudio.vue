@@ -241,9 +241,11 @@ export default {
         if (this.isMyProfile) {
           this.personalDescription = this.user.personalDescription
         }
-        getUserActivities(this.user.id).then(data => {
-          this.userActivities = data
-        })
+        if (this.user) {
+          getUserActivities(this.user.id).then(data => {
+            this.userActivities = data
+          })
+        }
         getCourseInteractions().then(data => {
           this.courseInteractions = data
         })
