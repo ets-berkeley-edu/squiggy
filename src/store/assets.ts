@@ -37,6 +37,7 @@ const state = {
   offset: 0,
   orderBy: orderByDefault,
   sectionId: undefined,
+  sections: undefined,
   totalAssetCount: undefined,
   userId: undefined,
   users: undefined
@@ -52,6 +53,7 @@ const getters = {
   limit: (state: any): number => state.limit,
   orderBy: (state: any): string => state.orderBy || orderByDefault,
   orderByDefault: (): string => orderByDefault,
+  sections: (state: any): string[] => state.sections,
   totalAssetCount: (state: any): number => state.totalAssetCount,
   userId: (state: any): number => state.userId,
   users: (state: any): any[] => state.users
@@ -84,7 +86,18 @@ const mutations = {
     state.isDirty = true
   },
   setTotalAssetCount: (state: any, count: number) => state.totalAssetCount = count,
-  setUsers: (state: any, users: any[]) => state.users = users,
+  setUsers: (state: any, users: any[]) => {
+    state.users = users
+    state.sections = []
+    _.each(state.users, (user: any) => {
+      _.each(user.canvasCourseSections, (canvasCourseSection: string) => {
+        const section = {text: canvasCourseSection, value: canvasCourseSection}
+        if (!_.find(state.sections, s => s.value = section.value)) {
+          state.sections.push(section)
+        }
+      })
+    })
+  },
   updateAssetStore: (state: any, updatedAsset: any) => {
     if (state.assets) {
       _.each(state.assets, asset => {

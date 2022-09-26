@@ -120,7 +120,6 @@
                 <v-col class="w-50">
                   <AccessibleSelect
                     :key="keyForSelectReset"
-                    class="w-50"
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-user"
@@ -130,6 +129,19 @@
                     label="User"
                     :value="userId"
                     @input="setUserId"
+                  />
+                </v-col>
+                <v-col v-if="$currentUser.isAdmin || $currentUser.isTeaching" class="pl-2 w-50">
+                  <AccessibleSelect
+                    :key="keyForSelectReset"
+                    :dense="true"
+                    :disabled="isBusy"
+                    id-prefix="adv-search-section"
+                    :items="sections"
+                    item-text="text"
+                    item-value="value"
+                    label="Section"
+                    @input="setSection"
                   />
                 </v-col>
               </v-row>
@@ -309,6 +321,9 @@ export default {
     },
     putFocus() {
       this.$putFocusNextTick(this.isAdvancedSearchOpen ? 'adv-search-keywords-input' : 'basic-search-input')
+    },
+    setSection(section) {
+      console.log(section)
     }
   }
 }
