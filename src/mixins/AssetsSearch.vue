@@ -16,6 +16,7 @@ export default {
       'limit',
       'orderBy',
       'orderByDefault',
+      'sections',
       'totalAssetCount',
       'userId',
       'users'
