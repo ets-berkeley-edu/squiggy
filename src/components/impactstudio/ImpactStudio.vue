@@ -5,14 +5,11 @@
       <div class="d-flex align-baseline">
         <div>Find user:</div>
         <div class="w-25 mx-3">
-          <AccessibleSelect
-            :dense="true"
-            :disabled="!users.length"
-            id-prefix="find-user"
-            :items="$_.map(users, (u) => ({text: u.canvasFullName, value: u.id}))"
-            :value="findUserId"
-            @input="v => findUserId = v"
-          />
+          <select id="find-user-select" v-model="findUserId" class="native-select">
+            <option v-for="u in users" :key="u.id" :value="u.id">
+              {{ u.canvasFullName }}
+            </option>
+          </select>
         </div>
         <v-btn
           id="find-user-apply"
@@ -201,7 +198,6 @@
 import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
-import AccessibleSelect from '@/components/util/AccessibleSelect'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
 import CanvasConversation from '@/mixins/CanvasConversation'
 import Context from '@/mixins/Context'
@@ -211,11 +207,12 @@ import Utils from '@/mixins/Utils'
 export default {
   name: 'ImpactStudio',
   mixins: [CanvasConversation, Context, Utils],
-  components: {AccessibleSelect, AssetSwimlane, SyncDisabled},
+  components: {AssetSwimlane, SyncDisabled},
   data: () => ({
     courseInteractions: null,
     everyonesAssets: [],
     everyonesAssetsMore: false,
+    findUserId: null,
     isMyProfile: false,
     isEditingPersonalDescription: false,
     nextUser: null,

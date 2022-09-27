@@ -8,16 +8,11 @@
         Sort by
       </v-col>
       <v-col>
-        <AccessibleSelect
-          class="w-50"
-          :dense="true"
-          :disabled="!assets.length"
-          :id-prefix="`${idPrefix}-sort`"
-          :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
-          :unclearable="true"
-          :value="orderBy"
-          @input="v => orderBy = v"
-        />
+        <select :id="`${idPrefix}-sort-select`" v-model="orderBy" class="native-select">
+          <option v-for="(optionText, optionValue) in $config.orderByOptions" :key="optionValue" :value="optionValue">
+            {{ optionText }}
+          </option>
+        </select>
       </v-col>
       <v-col>
         <v-btn
@@ -56,12 +51,11 @@
 </template>
 
 <script>
-import AccessibleSelect from '@/components/util/AccessibleSelect'
 import AssetCard from '@/components/assets/AssetCard'
 
 export default {
   name: 'AssetSwimlane',
-  components: {AccessibleSelect, AssetCard},
+  components: {AssetCard},
   props: {
     assets: {
       required: true,

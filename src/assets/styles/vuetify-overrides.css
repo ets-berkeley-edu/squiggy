@@ -7,3 +7,11 @@
 #color-picker .fa-circle-check {
   color: white;
 }
+
+.native-select {
+  appearance: auto !important;
+  border-style: solid !important;
+  padding: 5px;
+  -moz-appearance: auto !important;
+  -webkit-appearance: auto !important;
+}
