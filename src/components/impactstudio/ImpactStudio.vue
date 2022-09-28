@@ -121,8 +121,13 @@
           </div>
         </div>
         <div v-for="(interaction, index) in courseInteractions" :key="index">
-          {{ courseInteractions }}
+          {{ interaction }}
         </div>
+        <ActivityNetwork
+          :course-interactions="courseInteractions"
+          :user="user"
+          :users="users"
+        />
         <div v-if="!courseInteractions.length">
           No activity detected in this course.
         </div>
@@ -198,6 +203,7 @@
 import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
+import ActivityNetwork from '@/components/impactstudio/ActivityNetwork'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
 import CanvasConversation from '@/mixins/CanvasConversation'
 import Context from '@/mixins/Context'
@@ -207,7 +213,7 @@ import Utils from '@/mixins/Utils'
 export default {
   name: 'ImpactStudio',
   mixins: [CanvasConversation, Context, Utils],
-  components: {AssetSwimlane, SyncDisabled},
+  components: {ActivityNetwork, AssetSwimlane, SyncDisabled},
   data: () => ({
     courseInteractions: null,
     everyonesAssets: [],
