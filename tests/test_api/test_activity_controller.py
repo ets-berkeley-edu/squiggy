@@ -191,6 +191,26 @@ class TestActivityCsvDownload:
         for i in range(2, 5):
             assert int(parsed_rows[i][5]) == int(parsed_rows[i][4]) + int(parsed_rows[i - 1][5])
 
+    def test_csv_with_course_sections(self, client, fake_auth, mock_asset_course):
+        """Course sections column is included for asset-siloed course."""
+        mock_asset_course.protects_assets_per_section = True
+        instructor = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Teacher').first()
+        fake_auth.login(instructor.id)
+        response = self._api_download_csv(client)
+        rows = response.decode('utf-8').split('\n')
+        assert rows[0].strip() == 'course_sections,user_id,user_name,action,date,score,running_total'
+        parsed_rows = [r.strip().split(',') for r in rows]
+        assert len(parsed_rows) > 0
+        assert parsed_rows[5][0] == 'section A'
+        assert parsed_rows[5][1] == '8'
+        assert parsed_rows[5][2] is not None
+        assert parsed_rows[5][3] == 'asset_add'
+        assert parsed_rows[5][4] is not None
+        assert parsed_rows[5][5] == '5'
+        assert parsed_rows[5][6] == '5'
+        for i in range(2, 5):
+            assert int(parsed_rows[i][6]) == int(parsed_rows[i][5]) + int(parsed_rows[i - 1][6])
+
 
 class TestActivitiesForUser:
 

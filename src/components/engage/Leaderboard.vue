@@ -1,5 +1,9 @@
 <template>
-  <div id="leaderboard" class="leaderboard">
+  <div
+    id="leaderboard"
+    class="leaderboard"
+    :class="$vuetify.theme.dark ? 'dark' : 'light'"
+  >
     <v-data-table
       :headers="headers"
       :items="rows"
@@ -8,7 +12,7 @@
       :search="search"
     >
       <template #top>
-        <div class="d-flex justify-space-between">
+        <div class="d-flex justify-space-between pa-2">
           <div class="d-flex">
             <v-btn
               id="points-configuration-btn"
@@ -30,8 +34,14 @@
           <v-text-field
             v-model="search"
             label="Search"
-            class="leaderboard-search"
+            class="leaderboard-search mb-1"
+            hide-details
           />
+        </div>
+      </template>
+      <template v-if="$currentUser.course.protectsAssetsPerSection && ($currentUser.isAdmin || $currentUser.isTeaching)" #header.canvasCourseSections>
+        <div class="float-left">
+          Course Sections
         </div>
       </template>
       <template #header.canvasFullName>
@@ -43,6 +53,11 @@
         <div class="float-left">
           Last Activity
         </div>
+      </template>
+      <template #item.canvasCourseSections="{ item }">
+        <template v-for="(section, index) in item.canvasCourseSections">
+          <div :key="index">{{ section }}</div>
+        </template>
       </template>
       <template #item.rank="{ item }">
         <div align="center">
@@ -112,6 +127,11 @@ export default {
       window.location.href = `${this.$config.apiBaseUrl}/api/activities/csv`
     },
     getHeaders() {
+      const compareSections = (a, b) => {
+        const a_ = this.$_.join(this.$_.map(a, this.$_.trim), ',')
+        const b_ = this.$_.join(this.$_.map(b, this.$_.trim), ',')
+        return a_.localeCompare(b_)
+      }
       const headers = [
         {text: 'Rank', 'value': 'rank'},
         {text: 'Name', 'value': 'canvasFullName'},
@@ -125,6 +145,9 @@ export default {
       if (this.$currentUser.course.impactStudioUrl) {
         headers.splice(2, 0, {text: 'Collaborate', value: 'lookingForCollaborators'})
       }
+      if (this.$currentUser.course.protectsAssetsPerSection && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)) {
+        headers.splice(0, 0, {text: 'Course Sections', sort: compareSections, 'value': 'canvasCourseSections'})
+      }
       return headers
     }
   }
@@ -135,6 +158,9 @@ export default {
 .leaderboard table {
   border: 1px solid #ccc;
 }
+.leaderboard.dark table {
+  border: 1px solid #444;
+}
 .leaderboard tbody tr:nth-of-type(even) {
   background-color: rgba(0, 0, 0, .03);
 }
@@ -144,6 +170,10 @@ export default {
   color: #000 !important;
   font-size: 14px !important;
   text-align: center !important;
+}
+.leaderboard.dark thead th {
+  border-color: #444 !important;
+  color: #aaa !important;
 }
 .leaderboard thead th.text-start {
   text-align: center !important;

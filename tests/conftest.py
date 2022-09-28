@@ -235,7 +235,10 @@ def mock_asset_course(mock_asset):
 
 @pytest.fixture(scope='function')
 def mock_other_course_user(app, db_session):
-    course = Course.query.order_by(Course.name).all()[1]
+    course = Course.find_by_canvas_course_id(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=1502871,
+    )
     canvas_user_id = str(randint(1000000, 9999999))
     user = User.create(
         canvas_course_role='Student',

@@ -34,6 +34,7 @@ from squiggy import db, std_commit
 from squiggy.lib.util import isoformat, utc_now
 from squiggy.models.activity_type import activities_type, ActivityType
 from squiggy.models.base import Base
+from squiggy.models.course import Course
 from squiggy.models.user import User
 
 
@@ -156,16 +157,19 @@ class Activity(Base):
     def get_activities_as_csv(cls, course_id):
         configuration = ActivityType.get_activity_type_configuration(course_id=course_id)
         configuration_by_type = {c['type']: c for c in configuration}
+        course = Course.find_by_id(course_id)
         rows = []
         total_scores = {}
-        headers = ('user_id', 'user_name', 'action', 'date', 'score', 'running_total')
+        headers = ('course_sections', 'user_id', 'user_name', 'action', 'date', 'score', 'running_total') if course.protects_assets_per_section \
+            else ('user_id', 'user_name', 'action', 'date', 'score', 'running_total')
         results = cls.query.filter_by(course_id=course_id).order_by(cls.created_at).options(joinedload(cls.user)).all()
 
         for activity in results:
             if configuration_by_type.get(activity.activity_type, {}).get('enabled', None):
                 score = configuration_by_type[activity.activity_type]['points']
                 total_scores[activity.user_id] = total_scores.get(activity.user_id, 0) + score
-                rows.append({
+                row = {'course_sections': ', '.join(activity.user.canvas_course_sections or [])} if course.protects_assets_per_section else {}
+                row.update({
                     'user_id': activity.user_id,
                     'user_name': activity.user.canvas_full_name,
                     'action': activity.activity_type,
@@ -173,6 +177,7 @@ class Activity(Base):
                     'score': score,
                     'running_total': total_scores[activity.user_id],
                 })
+                rows.append(row)
         return headers, rows
 
     @classmethod
