@@ -134,7 +134,7 @@ export default {
         .attr('height', '100%')
         .attr('patternContentUnits', 'objectBoundingBox')
         .append('svg:image')
-        .attr('xlink:href', d.canvas_image)
+        .attr('xlink:href', d.canvasImage)
         .attr('width', 1)
         .attr('height', 1)
         .attr('preserveAspectRatio', 'none')
