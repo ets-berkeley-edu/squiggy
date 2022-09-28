@@ -37,6 +37,7 @@ from squiggy.models.activity import Activity
 from squiggy.models.activity_type import activities_type
 from squiggy.models.asset import Asset, assets_type
 from squiggy.models.canvas import Canvas
+from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
@@ -88,6 +89,11 @@ def assets_type_enums():
 
 def can_update_asset(user, asset):
     user_id = get_user_id(user)
+    if user.is_student and user_id != asset.created_by and user.course.protects_assets_per_section:
+        asset_owner = User.find_by_id(asset.created_by)
+        user_sections = current_user.user.canvas_course_sections
+        if len(list(set(user_sections) & set(asset_owner.canvas_course_sections))) == 0:
+            return False
     user_ids = [user.id for user in asset.users]
     return user.course.id == asset.course_id and (is_teaching(user) or is_admin(user) or user_id in user_ids)
 
@@ -97,10 +103,10 @@ def can_view_asset(asset, user):
         return True
     if not user or user.course.id != asset.course_id:
         return False
-    if user.course.protects_assets_per_section:
-        asset_sections = [section for sections in [u.canvas_course_sections for u in asset.users] for section in sections]
+    if user.is_student and user.course.protects_assets_per_section:
+        asset_owner = User.find_by_id(asset.created_by)
         user_sections = current_user.user.canvas_course_sections
-        if len(list(set(user_sections) & set(asset_sections))) == 0:
+        if len(list(set(user_sections) & set(asset_owner.canvas_course_sections))) == 0:
             return False
     return asset.visible or (asset.id in [a.id for a in current_user.user.assets])
 
@@ -152,7 +158,7 @@ def start_login_session(login_session, redirect_path=None, tool_id=None):
 
 
 def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
-    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+    if not Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
         raise UnauthorizedRequestError('Unauthorized')
     if not socket_id:
         raise BadRequestError('socket_id is required')

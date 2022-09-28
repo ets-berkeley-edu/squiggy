@@ -47,7 +47,7 @@ def order_whiteboard_elements():
     socket_id = params.get('socketId')
     uuids = params.get('uuids')
     whiteboard_id = params.get('whiteboardId')
-    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+    if not Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
         raise UnauthorizedRequestError('Unauthorized')
     if not direction:
         raise BadRequestError('direction is required')
@@ -111,7 +111,7 @@ def delete_whiteboard_elements():
     whiteboard_id = params.get('whiteboardId')
     if not socket_id:
         raise BadRequestError('socket_id is required')
-    if not Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+    if not Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
         raise UnauthorizedRequestError('Unauthorized')
 
     whiteboard_elements = WhiteboardElement.find_all(uuids=uuids, whiteboard_id=whiteboard_id)
