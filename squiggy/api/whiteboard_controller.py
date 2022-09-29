@@ -99,6 +99,7 @@ def export_as_asset(whiteboard_id):
                 asset_type='whiteboard',
                 categories=[Category.find_by_id(category_id=category_id) for category_id in category_ids],
                 course_id=current_user.course.id,
+                created_by=current_user.user_id,
                 description=description,
                 download_url=whiteboard['imageUrl'],
                 source=str(whiteboard['id']),
@@ -224,6 +225,7 @@ def create_whiteboard():
     user_ids = params.get('userIds')
     whiteboard = Whiteboard.create(
         course_id=current_user.course.id,
+        created_by=current_user.user_id,
         title=title,
         users=User.find_by_ids(user_ids),
     )

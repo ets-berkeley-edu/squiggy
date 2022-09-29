@@ -44,6 +44,7 @@ class Whiteboard(Base):
 
     id = db.Column(db.Integer, nullable=False, primary_key=True)  # noqa: A003
     course_id = db.Column(db.Integer, nullable=False)
+    created_by = db.Column(db.Integer, nullable=False)
     deleted_at = db.Column(db.DateTime)
     image_url = db.Column(db.Text)
     thumbnail_url = db.Column(db.Text)
@@ -57,12 +58,14 @@ class Whiteboard(Base):
     def __init__(
         self,
         course_id,
+        created_by,
         users,
         image_url=None,
         thumbnail_url=None,
         title=None,
     ):
         self.course_id = course_id
+        self.created_by = created_by
         self.image_url = image_url
         self.thumbnail_url = thumbnail_url
         self.title = title
@@ -73,6 +76,7 @@ class Whiteboard(Base):
             id={self.id},
             course_id={self.course_id},
             created_at={self.created_at},
+            created_by={self.created_by},
             deleted_at={self.deleted_at}>
             image_url={self.image_url},
             thumbnail_url={self.thumbnail_url},
@@ -156,11 +160,13 @@ class Whiteboard(Base):
     def create(
         cls,
         course_id,
+        created_by,
         title,
         users,
     ):
         whiteboard = cls(
             course_id=course_id,
+            created_by=created_by,
             title=title,
             users=users,
         )
@@ -287,6 +293,7 @@ class Whiteboard(Base):
     def remix(cls, asset_id, course_id, created_by, title, whiteboard_users):
         whiteboard = cls.create(
             course_id=course_id,
+            created_by=created_by.id,
             title=title,
             users=[created_by],
         )
@@ -371,6 +378,7 @@ class Whiteboard(Base):
             'users': [_user_api_json(user) for user in self.users if user.canvas_enrollment_state != 'inactive'],
             'whiteboardElements': [e.to_api_json() for e in WhiteboardElement.find_by_whiteboard_id(self.id)],
             'createdAt': isoformat(self.created_at),
+            'createdBy': self.created_by,
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }

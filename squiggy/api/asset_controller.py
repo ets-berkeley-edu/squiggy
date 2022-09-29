@@ -140,6 +140,7 @@ def create_asset():
         asset_type=asset_type,
         categories=category_id and [Category.find_by_id(category_id)],
         course_id=current_user.course.id,
+        created_by=current_user.user_id,
         description=description,
         download_url=s3_attrs.get('download_url', None),
         mime=s3_attrs.get('content_type', None),
