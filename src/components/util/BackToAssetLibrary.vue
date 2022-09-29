@@ -10,7 +10,7 @@
         @keypress.enter="navigate"
       >
         <font-awesome-icon class="mr-2" icon="less-than" size="sm" />
-        Back to Asset Library
+        Back to {{ previousTool === 'impactStudio' ? 'Impact Studio' : 'Asset Library' }}
       </v-btn>
     </router-link>
   </div>
@@ -33,10 +33,20 @@ export default {
       type: Boolean
     }
   },
+  data: () => ({
+    previousTool: null
+  }),
   methods: {
     linkBack() {
-      return this.anchor ? `/assets?anchor=${this.anchor}` : '/assets'
+      if (this.previousTool === 'impactStudio') {
+        return '/impact_studio'
+      } else {
+        return this.anchor ? `/assets?anchor=${this.anchor}` : '/assets'
+      }
     }
+  },
+  created() {
+    this.previousTool = this.$_.get(this.$route.query, 'from') || 'assetLibrary'
   }
 }
 </script>

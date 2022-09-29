@@ -32,6 +32,7 @@
         v-for="(asset, index) in assets"
         :key="index"
         :asset="asset"
+        :on-asset-click="goToAsset(asset)"
         class="asset-card ma-3"
       />
       <div v-if="showMore" class="asset-card ma-3 d-flex align-center" align-center>
@@ -48,10 +49,12 @@
 
 <script>
 import AssetCard from '@/components/assets/AssetCard'
+import Utils from '@/mixins/Utils'
 
 export default {
   name: 'AssetSwimlane',
   components: {AssetCard},
+  mixins: [Utils],
   props: {
     assets: {
       required: true,
@@ -96,6 +99,9 @@ export default {
     }
   },
   methods: {
+    goToAsset(asset) {
+      return () => this.go(`/asset/${asset.id}`, {from: 'impactStudio'})
+    },
     sortAssets() {
       this.fetchAssets(this.orderBy).then(() => this.$announcer.polite(`Resorted assets by ${this.orderBy}`))
     }
