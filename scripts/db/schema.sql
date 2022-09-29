@@ -215,6 +215,7 @@ CREATE TABLE assets (
     views integer DEFAULT 0,
     visible boolean DEFAULT true NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    created_by integer NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
@@ -483,6 +484,7 @@ CREATE TABLE whiteboards (
     thumbnail_url character varying(255),
     title character varying(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    created_by integer NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );

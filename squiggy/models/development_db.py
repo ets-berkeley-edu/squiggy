@@ -268,6 +268,7 @@ def _create_assets(courses, users):
             asset_type=a['asset_type'],
             categories=[category_hidden, category_visible],
             course_id=course_id,
+            created_by=users[0].id,
             description=None,
             title=a['title'],
             url=a['url'],
@@ -313,6 +314,7 @@ def _create_whiteboards(course):
     for w in _test_whiteboards:
         whiteboard = Whiteboard.create(
             course_id=course.id,
+            created_by=student.id,
             title=w['title'],
             users=[student],
         )

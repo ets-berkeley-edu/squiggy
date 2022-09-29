@@ -160,6 +160,7 @@ class TestGetWhiteboards:
         # Deleted whiteboard
         deleted_whiteboard = Whiteboard.create(
             course_id=course.id,
+            created_by=student.id,
             title='Deleted',
             users=[student],
         )
@@ -536,6 +537,7 @@ def _create_student_whiteboard():
     )
     whiteboard = Whiteboard.create(
         course_id=course.id,
+        created_by=student.id,
         title='CyberCulture',
         users=[student],
     )

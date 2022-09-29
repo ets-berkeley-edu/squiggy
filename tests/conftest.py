@@ -276,14 +276,14 @@ def mock_whiteboard(app, db_session):
             canvas_user_id=canvas_user_id,
             course_id=course.id,
         ))
+    student_1 = users[0]
     whiteboard = Whiteboard.create(
         course_id=course.id,
+        created_by=student_1.id,
         title=f'Mock Whiteboard of users {[u.canvas_user_id for u in users]}',
         users=users,
     )
     std_commit(allow_test_environment=True)
-
-    student_1 = users[0]
     asset = _create_asset(app=app, course=course, users=[student_1])
     for (z_index, element) in enumerate([
         {
@@ -349,6 +349,7 @@ def _create_asset(app, course, users, categories=None):
         asset_type='link',
         categories=categories,
         course_id=course.id,
+        created_by=users[0].id,
         description=None,
         download_url=f"s3://{app.config['AWS_S3_BUCKET_FOR_ASSETS']}/asset/{course.id}_{unique_token}.pdf",
         title=f'Mock Asset created at {unique_token}',

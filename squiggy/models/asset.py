@@ -64,6 +64,7 @@ class Asset(Base):
     canvas_assignment_id = db.Column(db.Integer)
     comment_count = db.Column(db.Integer, nullable=False, default=0)
     course_id = db.Column(db.Integer, nullable=False)
+    created_by = db.Column(db.Integer, nullable=False)
     deleted_at = db.Column(db.DateTime)
     description = db.Column(db.Text)
     dislikes = db.Column(db.Integer, nullable=False, default=0)
@@ -92,6 +93,7 @@ class Asset(Base):
         self,
         asset_type,
         course_id,
+        created_by,
         canvas_assignment_id=None,
         categories=None,
         description=None,
@@ -107,6 +109,7 @@ class Asset(Base):
         self.canvas_assignment_id = canvas_assignment_id
         self.categories = categories or []
         self.course_id = course_id
+        self.created_by = created_by
         self.description = description
         self.download_url = download_url
         self.mime = mime
@@ -129,7 +132,8 @@ class Asset(Base):
                     url={self.url},
                     visible={self.visible},
                     created_at={self.created_at},
-                    updated_at={self.updated_at}>,
+                    created_by={self.created_by},
+                    updated_at={self.updated_at},
                     deleted_at={self.deleted_at}>
                 """
 
@@ -142,6 +146,7 @@ class Asset(Base):
         cls,
         asset_type,
         course_id,
+        created_by,
         title,
         users,
         canvas_assignment_id=None,
@@ -159,6 +164,7 @@ class Asset(Base):
             canvas_assignment_id=canvas_assignment_id,
             categories=categories,
             course_id=course_id,
+            created_by=created_by,
             description=description,
             download_url=download_url,
             mime=mime,
@@ -448,6 +454,7 @@ class Asset(Base):
             'views': self.views,
             'visible': self.visible,
             'createdAt': isoformat(self.created_at),
+            'createdBy': self.created_by,
             'deletedAt': isoformat(self.deleted_at),
             'updatedAt': isoformat(self.updated_at),
         }
