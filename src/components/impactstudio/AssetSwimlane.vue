@@ -3,27 +3,23 @@
     <h2 class="impact-studio-section-header my-3">
       {{ title }}
     </h2>
-    <v-row v-if="assets.length" no-gutters>
-      <v-col class="pr-4 pt-2 text-right" cols="1">
+    <v-row v-if="assets.length || orderBy !== 'recent'" no-gutters class="mb-4">
+      <div class="px-4 d-flex align-center">
         Sort by
-      </v-col>
-      <v-col>
-        <select :id="`${idPrefix}-sort-select`" v-model="orderBy" class="native-select">
-          <option v-for="(optionText, optionValue) in $config.orderByOptions" :key="optionValue" :value="optionValue">
-            {{ optionText }}
-          </option>
-        </select>
-      </v-col>
-      <v-col>
-        <v-btn
-          :id="`${idPrefix}-sort-apply`"
-          color="primary"
-          @click="sortAssets(orderBy)"
-          @keypress.enter.prevent="sortAssets(orderBy)"
-        >
-          Apply
-        </v-btn>
-      </v-col>
+      </div>
+      <select :id="`${idPrefix}-sort-select`" v-model="orderBy" class="native-select mr-4">
+        <option v-for="(optionText, optionValue) in $config.orderByOptions" :key="optionValue" :value="optionValue">
+          {{ optionText }}
+        </option>
+      </select>
+      <v-btn
+        :id="`${idPrefix}-sort-apply`"
+        color="primary"
+        @click="sortAssets(orderBy)"
+        @keypress.enter.prevent="sortAssets(orderBy)"
+      >
+        Apply
+      </v-btn>
     </v-row>
     <v-card
       v-if="assets.length"
@@ -44,7 +40,7 @@
         </a>
       </div>
     </v-card>
-    <div v-if="!assets.length" :id="`${idPrefix}-no-assets-msg`">
+    <div v-if="!assets.length" :id="`${idPrefix}-no-assets-msg`" class="px-4">
       No assets.
     </div>
   </div>
