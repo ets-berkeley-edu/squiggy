@@ -283,7 +283,7 @@ export default {
       this.alertType = null
     },
     fetch() {
-      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.userId) {
+      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.section || this.userId) {
         this.resetSearch()
         this.isBusy = true
         this.$announcer.polite('Searching')
@@ -304,6 +304,7 @@ export default {
       this.setCategoryId(null)
       this.setOrderBy(this.orderByDefault)
       this.setUserId(null)
+      this.setSection(null)
       this.rewriteBookmarkHash({orderBy: this.orderByDefault})
       this.alert = null
       this.alertType = null
@@ -321,9 +322,6 @@ export default {
     },
     putFocus() {
       this.$putFocusNextTick(this.isAdvancedSearchOpen ? 'adv-search-keywords-input' : 'basic-search-input')
-    },
-    setSection(section) {
-      console.log(section)
     }
   }
 }
