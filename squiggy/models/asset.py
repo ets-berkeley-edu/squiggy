@@ -233,6 +233,7 @@ class Asset(Base):
             'user_id': session.user.id,
         }
         from_clause = """FROM assets a
+            LEFT JOIN users asset_owner ON a.created_by = asset_owner.id
             LEFT JOIN asset_categories ac ON a.id = ac.asset_id
             LEFT JOIN categories c ON c.id = ac.category_id
             LEFT JOIN asset_users au ON a.id = au.asset_id
@@ -516,9 +517,11 @@ def _build_where_clause(filters, include_hidden, params, session):
         where_clause += ' AND (a.visible = TRUE OR a.id = ANY(:my_asset_ids))'
     if session.course.protects_assets_per_section and session.is_student:
         where_clause += """ AND (
-            to_jsonb(u.canvas_course_sections) ?| (SELECT canvas_course_sections FROM users WHERE id = :user_id)
-            OR NOT lower(u.canvas_course_role) SIMILAR TO '%(student|learner)%'
+            asset_owner.id = :user_id
+            OR to_jsonb(asset_owner.canvas_course_sections) ?| :user_course_sections
+            OR NOT lower(asset_owner.canvas_course_role) SIMILAR TO '%(student|learner)%'
         )"""
+        params['user_course_sections'] = session.user.canvas_course_sections
     if filters.get('keywords'):
         where_clause += ' AND (a.title ILIKE :keywords OR a.description ILIKE :keywords)'
         params['keywords'] = '%' + re.sub(r'\s+', '%', filters['keywords'].strip()) + '%'

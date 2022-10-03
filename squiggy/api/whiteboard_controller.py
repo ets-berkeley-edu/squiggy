@@ -48,7 +48,7 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 @feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
-    if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+    if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
         whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
         return tolerant_jsonify(whiteboard)
     else:
@@ -63,6 +63,7 @@ def remix_whiteboard():
     asset_id = params.get('assetId')
     title = params.get('title')
     asset = Asset.find_by_id(asset_id=asset_id)
+    print(asset)
     if not asset or not can_view_asset(asset=asset, user=current_user):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
     if asset.asset_type != 'whiteboard':
@@ -155,7 +156,7 @@ def export_as_png(whiteboard_id):
 @feature_flag_whiteboards
 @login_required
 def undelete_whiteboard(whiteboard_id):
-    if Whiteboard.can_update_whiteboard(include_deleted=True, user=current_user, whiteboard_id=whiteboard_id):
+    if Whiteboard.can_update_whiteboard(include_deleted=True, current_user=current_user, whiteboard_id=whiteboard_id):
         params = request.get_json()
         socket_id = params.get('socketId')
         if not socket_id:
@@ -236,7 +237,7 @@ def create_whiteboard():
 @feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
-    if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+    if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
         params = request.args
         socket_id = params.get('socketId')
         if not socket_id:
@@ -283,7 +284,7 @@ def eligible_collaborators():
 @feature_flag_whiteboards
 @login_required
 def update_whiteboard(whiteboard_id):
-    if Whiteboard.can_update_whiteboard(user=current_user, whiteboard_id=whiteboard_id):
+    if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
         params = request.get_json()
         socket_id = params.get('socketId')
         title = params.get('title')

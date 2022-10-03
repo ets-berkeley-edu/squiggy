@@ -86,21 +86,29 @@ class Whiteboard(Base):
         """
 
     @classmethod
-    def can_update_whiteboard(cls, user, whiteboard_id, include_deleted=False):
-        if is_admin(user) or is_teaching(user):
+    def can_update_whiteboard(cls, current_user, whiteboard_id, include_deleted=False):
+        if is_admin(current_user) or is_teaching(current_user):
             return True
-        sql = """
-            SELECT user_id
-            FROM whiteboard_users u
-            JOIN whiteboards w ON w.id = u.whiteboard_id
-            WHERE u.whiteboard_id = :whiteboard_id AND u.user_id = :user_id
-        """
-        if not include_deleted:
-            sql += ' AND w.deleted_at IS NULL'
         args = {
-            'user_id': get_user_id(user),
+            'user_id': get_user_id(current_user),
             'whiteboard_id': whiteboard_id,
         }
+        sql = """
+            SELECT u.user_id
+            FROM whiteboard_users u
+            JOIN whiteboards w ON w.id = u.whiteboard_id
+            LEFT JOIN users whiteboard_owner ON w.created_by = whiteboard_owner.id
+            WHERE u.whiteboard_id = :whiteboard_id AND u.user_id = :user_id
+        """
+        if current_user.course.protects_assets_per_section and current_user.is_student:
+            sql += """ AND (
+                whiteboard_owner.id = :user_id
+                OR to_jsonb(whiteboard_owner.canvas_course_sections) ?| :current_user_sections
+                OR NOT lower(whiteboard_owner.canvas_course_role) SIMILAR TO '%(student|learner)%'
+            )"""
+            args['current_user_sections'] = current_user.user.canvas_course_sections
+        if not include_deleted:
+            sql += ' AND w.deleted_at IS NULL'
         result = db.session.execute(text(sql), args).first()
         return bool(result and result['user_id'])
 
@@ -251,6 +259,7 @@ class Whiteboard(Base):
                 'id': whiteboard_id,
                 'courseId': row['course_id'],
                 'createdAt': isoformat(row['created_at']),
+                'createdBy': row['created_by'],
                 'deletedAt': isoformat(deleted_at),
                 'imageUrl': row['image_url'],
                 'thumbnailUrl': row['thumbnail_url'],
@@ -405,7 +414,17 @@ def _get_whiteboards_where_clause(
     if whiteboard_id:
         where_clause += ' AND w.id = :whiteboard_id'
     if current_user and (current_user.is_student or current_user.is_observer):
-        sql = 'SELECT whiteboard_id FROM whiteboard_users WHERE user_id = :current_user_id'
+        sql = """SELECT whiteboard_id FROM whiteboards w
+            JOIN whiteboard_users wu ON w.id = wu.whiteboard_id
+            LEFT JOIN users whiteboard_owner ON w.created_by = whiteboard_owner.id
+            WHERE wu.user_id = :current_user_id"""
+        if current_user.course.protects_assets_per_section and current_user.is_student:
+            sql += """ AND (
+                whiteboard_owner.id = :current_user_id
+                OR to_jsonb(whiteboard_owner.canvas_course_sections) ?| :user_course_sections
+                OR NOT lower(whiteboard_owner.canvas_course_role) SIMILAR TO '%(student|learner)%'
+            )"""
+            params['user_course_sections'] = current_user.user.canvas_course_sections
         params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
         where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
     return where_clause

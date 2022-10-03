@@ -79,7 +79,7 @@ class TestGetWhiteboard:
         assert asset['id'] == mock_whiteboard['id']
 
     def test_teacher_view_whiteboard(self, client, fake_auth, mock_whiteboard):
-        """Authorized user can view whiteboard."""
+        """Teacher can view whiteboard."""
         course = Course.find_by_canvas_course_id(
             canvas_api_domain='bcourses.berkeley.edu',
             canvas_course_id=1502870,
@@ -88,6 +88,43 @@ class TestGetWhiteboard:
         fake_auth.login(instructors[0].id)
         asset = _api_get_whiteboard(whiteboard_id=mock_whiteboard['id'], client=client)
         assert asset['id'] == mock_whiteboard['id']
+
+    def test_student_view_whiteboard(self, client, fake_auth, mock_whiteboard):
+        """Collaborator can view whiteboard created by student in other section."""
+        collaborators = mock_whiteboard['users']
+        assert collaborators[0]['canvasCourseSections'] != collaborators[1]['canvasCourseSections']
+        for collaborator in collaborators:
+            fake_auth.login(collaborator['id'])
+            asset = _api_get_whiteboard(whiteboard_id=mock_whiteboard['id'], client=client)
+            assert asset['id'] == mock_whiteboard['id']
+
+    def test_view_whiteboard_protected_per_section(self, client, fake_auth):
+        """Collaborator in an asset-siloed course can no longer see whiteboard created by student in other section."""
+        course, student_1, whiteboard = _create_student_whiteboard()
+        std_commit(allow_test_environment=True)
+        student_2 = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='Hamlet Oxbridge',
+            canvas_user_id=858937298,
+            course_id=course.id,
+            canvas_course_sections=['section B'],
+        )
+        whiteboard = Whiteboard.update(whiteboard['title'], [student_1, student_2], whiteboard['id'])
+        # Expect whiteboard to have two users in two different sections
+        users = whiteboard.to_api_json()['users']
+        assert len(users) == 2
+        assert users[0]['canvasCourseSections'] != users[1]['canvasCourseSections']
+
+        # Enable section siloing
+        course.protects_assets_per_section = True
+        std_commit(allow_test_environment=True)
+        # Verify: the whiteboard goes with student who created it; the other loses access
+        fake_auth.login(student_1.id)
+        api_json = _api_get_whiteboard(whiteboard_id=whiteboard.id, client=client)
+        assert api_json['id'] == whiteboard.id
+        fake_auth.login(student_2.id)
+        _api_get_whiteboard(whiteboard_id=whiteboard.id, client=client, expected_status_code=404)
 
 
 class TestGetWhiteboards:
@@ -198,6 +235,65 @@ class TestGetWhiteboards:
             else:
                 assert len(whiteboards_deleted) == 0
 
+    def test_creator_changes_section(self, client, fake_auth):
+        """Student in an asset-siloed course who changes section takes their whiteboards with them."""
+        course, student_1, whiteboard = _create_student_whiteboard()
+        course.protects_assets_per_section = True
+        std_commit(allow_test_environment=True)
+        student_2 = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='McGeorge Pie',
+            canvas_user_id=426910492,
+            course_id=course.id,
+            canvas_course_sections=['section A'],
+        )
+        whiteboard = Whiteboard.update(whiteboard['title'], [student_1, student_2], whiteboard['id'])
+        # Expect whiteboard to have two users in the same section
+        users = whiteboard.to_api_json()['users']
+        assert len(users) == 2
+        assert users[0]['canvasCourseSections'] == ['section A']
+        assert users[1]['canvasCourseSections'] == ['section A']
+        # The user who created the whiteboard swiches to a different section
+        section_b_student = User.find_by_id(student_1.id)
+        section_b_student.canvas_course_sections = ['section B']
+        db.session.add(section_b_student)
+        std_commit(allow_test_environment=True)
+
+        # Verify: the whiteboard goes with student who created it; the other loses access
+        fake_auth.login(section_b_student.id)
+        api_json = self._api_get_whiteboards(
+            client=client,
+            order_by='collaborator',
+        )
+        whiteboards = api_json['results']
+        assert len(whiteboards) == api_json['total']
+        assert len(whiteboards) == 1
+        fake_auth.login(student_2.id)
+        api_json = self._api_get_whiteboards(
+            client=client,
+            order_by='collaborator',
+        )
+        whiteboards = api_json['results']
+        assert len(whiteboards) == api_json['total']
+        assert len(whiteboards) == 0
+
+    def test_view_whiteboard_protected_per_section(self, client, fake_auth, mock_whiteboard, mock_whiteboard_course):
+        """Student in an asset-siloed course cannot view whiteboard created by student in other section."""
+        mock_whiteboard_course.protects_assets_per_section = True
+        collaborators = mock_whiteboard['users']
+        assert collaborators[0]['canvasCourseSections'] != collaborators[1]['canvasCourseSections']
+        for collaborator in collaborators:
+            fake_auth.login(collaborator['id'])
+            api_json = self._api_get_whiteboards(
+                client=client,
+                order_by='collaborator',
+            )
+            expected_count = 1 if collaborator['id'] == mock_whiteboard['createdBy'] else 0
+            whiteboards = api_json['results']
+            assert len(whiteboards) == api_json['total']
+            assert len(whiteboards) == expected_count
+
 
 class TestExportAsAsset:
 
@@ -271,6 +367,20 @@ class TestExportAsAsset:
                 assert len(add_asset_activities) == 1
                 assert add_asset_activities[0].user_id == user['id']
 
+    def test_export_whiteboard_protected_per_section(self, client, fake_auth, mock_whiteboard, mock_whiteboard_course):
+        """Student in an asset-siloed course cannot export whiteboard created by student in other section."""
+        mock_whiteboard_course.protects_assets_per_section = True
+        collaborators = mock_whiteboard['users']
+        assert collaborators[0]['canvasCourseSections'] != collaborators[1]['canvasCourseSections']
+        for collaborator in collaborators:
+            fake_auth.login(collaborator['id'])
+            self._api_export(
+                client,
+                expected_status_code=200 if collaborator['id'] == mock_whiteboard['createdBy'] else 404,
+                title='Asset of a section A student',
+                whiteboard_id=mock_whiteboard['id'],
+            )
+
 
 class TestUndeleteWhiteboard:
 
@@ -301,6 +411,19 @@ class TestUndeleteWhiteboard:
         api_json = self._api_undelete_whiteboard(client, whiteboard_id=mock_whiteboard['id'])
         assert api_json['deletedAt'] is None
         assert client.get(f"/api/whiteboard/{mock_whiteboard['id']}").json['deletedAt'] is None
+
+    def test_undelete_whiteboard_protected_per_section(self, client, fake_auth, mock_whiteboard, mock_whiteboard_course):
+        """Student in an asset-siloed course cannot undelete whiteboard created by student in other section."""
+        mock_whiteboard_course.protects_assets_per_section = True
+        collaborators = mock_whiteboard['users']
+        assert collaborators[0]['canvasCourseSections'] != collaborators[1]['canvasCourseSections']
+        for collaborator in collaborators:
+            fake_auth.login(collaborator['id'])
+            self._api_undelete_whiteboard(
+                client,
+                expected_status_code=200 if collaborator['id'] == mock_whiteboard['createdBy'] else 404,
+                whiteboard_id=mock_whiteboard['id'],
+            )
 
 
 class TestGetEligibleCollaborators:
@@ -401,8 +524,8 @@ class TestGetEligibleCollaborators:
                 api_json,
                 key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
             )}
-            sections = list(users_by_section.keys())
-            assert sections == [None, section]
+            sections = set(users_by_section.keys())
+            assert sections == {None, section}
 
 
 class TestRemixWhiteboard:
@@ -432,7 +555,7 @@ class TestRemixWhiteboard:
         self._api_remix_whiteboard(client, asset_id=1, expected_status_code=401, title='Unauthorized remix')
 
     def test_authorized(self, client, fake_auth, mock_whiteboard, mock_whiteboard_course):
-        """Authorized user can update whiteboard."""
+        """Authorized user can remix whiteboard."""
         student_id = mock_whiteboard['users'][0]['id']
         fake_auth.login(student_id)
         whiteboard_id = mock_whiteboard['id']
@@ -490,6 +613,32 @@ class TestRemixWhiteboard:
         for activity in activities_get_whiteboard_remix:
             assert activity.user_id in collaborator_user_ids
 
+    def test_undelete_whiteboard_protected_per_section(self, client, fake_auth, mock_whiteboard, mock_whiteboard_course):
+        """Student in an asset-siloed course cannot remix whiteboard created by student in other section."""
+        mock_whiteboard_course.protects_assets_per_section = True
+        whiteboard_id = mock_whiteboard['id']
+        whiteboard_owner_id = mock_whiteboard['createdBy']
+        collaborators = mock_whiteboard['users']
+        assert collaborators[0]['canvasCourseSections'] != collaborators[1]['canvasCourseSections']
+
+        fake_auth.login(whiteboard_owner_id)
+        response = client.post(
+            f'/api/whiteboard/{whiteboard_id}/export/asset',
+            data=json.dumps({'title': 'Exported whiteboard'}),
+            content_type='application/json',
+        )
+        assert response.status_code == 200
+        asset_original = json.loads(response.data)
+
+        for collaborator in collaborators:
+            fake_auth.login(collaborator['id'])
+            self._api_remix_whiteboard(
+                client,
+                expected_status_code=200 if collaborator['id'] == whiteboard_owner_id else 404,
+                asset_id=asset_original['id'],
+                title=f'Remix of original by user_id={whiteboard_owner_id}',
+            )
+
 
 class TestDeleteWhiteboard:
 
@@ -534,6 +683,7 @@ def _create_student_whiteboard():
         canvas_full_name='Born to Collaborate',
         canvas_user_id=987654321,
         course_id=course.id,
+        canvas_course_sections=['section A'],
     )
     whiteboard = Whiteboard.create(
         course_id=course.id,

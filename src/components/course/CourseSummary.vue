@@ -66,6 +66,7 @@
                 <td>{{ user.id }}</td>
                 <td>{{ user.canvasFullName }}<span v-if="user.id === $currentUser.id"> (you)</span></td>
                 <td>{{ user.canvasCourseRole }}</td>
+                <td v-if="course.protectsAssetsPerSection">{{ user.canvasCourseSections }}</td>
                 <td v-if="allowMasquerade">
                   <v-btn
                     v-if="user.id !== $currentUser.id"

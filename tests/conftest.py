@@ -26,13 +26,14 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from datetime import datetime
 import json
 import os
-from random import randint, randrange
+from random import randint
 from uuid import uuid4
 
 from moto import mock_sts  # noqa
 import pytest  # noqa
 from squiggy import std_commit
 from squiggy.lib.login_session import LoginSession
+from squiggy.lib.util import is_student
 from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.comment import Comment
@@ -234,6 +235,21 @@ def mock_asset_course(mock_asset):
 
 
 @pytest.fixture(scope='function')
+def mock_asset_users(mock_asset):
+    asset_owner = User.find_by_id(mock_asset.created_by)
+    course_users = Course.find_by_id(mock_asset.course_id).users
+    same_section_student = next(user for user in course_users if _is_same_section_student(asset_owner, user))
+    different_section_student = next(
+        (user for user in course_users if _is_different_section_student(asset_owner, user) and user.id != same_section_student.id),
+    )
+    mock_asset.users = [mock_asset.users[0], same_section_student, different_section_student]
+    std_commit(allow_test_environment=True)
+    yield asset_owner, same_section_student, different_section_student
+    mock_asset.users = [asset_owner]
+    std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
 def mock_other_course_user(app, db_session):
     course = Course.find_by_canvas_course_id(
         canvas_api_domain='bcourses.berkeley.edu',
@@ -257,19 +273,15 @@ def mock_other_course_user(app, db_session):
 
 @pytest.fixture(scope='function')
 def mock_whiteboard(app, db_session):
-    Course.create(
-        canvas_api_domain='bcourses.berkeley.edu',
-        canvas_course_id=randrange(1000000),
-    )
     course = Course.find_by_canvas_course_id(
         canvas_api_domain='bcourses.berkeley.edu',
         canvas_course_id=1502870,
     )
     users = []
-    for canvas_user_id in [randint(1000000, 9999999), randint(1000000, 9999999)]:
+    for canvas_user_id, section in zip([randint(1000000, 9999999), randint(1000000, 9999999)], ['section A', 'section B']):
         users.append(User.create(
             canvas_course_role='Student',
-            canvas_course_sections=[],
+            canvas_course_sections=[section],
             canvas_email=f'{canvas_user_id}@berkeley.edu',
             canvas_enrollment_state='active',
             canvas_full_name=f'Student {canvas_user_id}',
@@ -379,3 +391,15 @@ def _get_mock_comments():
 
 def _get_student():
     return User.query.filter_by(canvas_course_role='Student', canvas_enrollment_state='active').first()
+
+
+def _is_different_section_student(asset_owner, user):
+    return user.id != asset_owner.id and is_student(user) and len(
+        list(set(user.canvas_course_sections) & set(asset_owner.canvas_course_sections)),
+    ) == 0
+
+
+def _is_same_section_student(asset_owner, user):
+    return user.id != asset_owner.id and is_student(user) and len(
+        list(set(user.canvas_course_sections) & set(asset_owner.canvas_course_sections)),
+    ) > 0
