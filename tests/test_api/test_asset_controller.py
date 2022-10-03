@@ -153,7 +153,7 @@ class TestGetAssets:
             limit=20,
             offset=0,
             order_by=None,
-            section_id=None,
+            section=None,
             user_id=None,
     ):
         params = {
@@ -163,7 +163,7 @@ class TestGetAssets:
             'limit': limit,
             'offset': offset,
             'orderBy': order_by,
-            'sectionId': section_id,
+            'section': section,
             'userId': user_id,
         }
         response = client.post(

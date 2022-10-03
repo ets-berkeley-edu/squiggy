@@ -86,7 +86,7 @@ def get_assets():
         'has_views': (order_by == 'views'),
         'keywords': _get(params, 'keywords', None),
         'owner_id': _get(params, 'userId', None),
-        'section_id': _get(params, 'sectionId', None),
+        'section': _get(params, 'section', None),
     }
     results = Asset.get_assets(session=current_user, order_by=order_by, offset=offset, limit=limit, filters=filters)
     return tolerant_jsonify(results)

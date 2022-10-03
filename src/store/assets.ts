@@ -14,7 +14,7 @@ function $_search(commit, state, addToExisting?: boolean) {
       limit: state.limit,
       offset: state.offset,
       orderBy: state.orderBy,
-      sectionId: state.sectionId,
+      section: state.section,
       userId: state.userId
     }).then(data => {
       const assets = _.get(data, 'results')
@@ -36,7 +36,7 @@ const state = {
   limit: 20,
   offset: 0,
   orderBy: orderByDefault,
-  sectionId: undefined,
+  section: undefined,
   sections: undefined,
   totalAssetCount: undefined,
   userId: undefined,
@@ -79,6 +79,10 @@ const mutations = {
   setOffset: (state: any, offset: number) => state.offset = offset,
   setOrderBy: (state: any, orderBy: string) => {
     state.orderBy = orderBy
+    state.isDirty = true
+  },
+  setSection: (state: any, section: string) => {
+    state.section = section
     state.isDirty = true
   },
   setUserId: (state: any, userId: number) => {
@@ -132,6 +136,7 @@ const actions = {
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
   setUserId: ({commit}, userId) => commit('setUserId', userId),
+  setSection: ({commit}, section) => commit('setSection', section),
   updateAssetStore: ({commit}, updatedAsset) => commit('updateAssetStore', updatedAsset)
 }
 

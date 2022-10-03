@@ -41,6 +41,7 @@ export default {
       'setCategoryId',
       'setKeywords',
       'setOrderBy',
+      'setSection',
       'setUserId',
       'updateAssetStore'
     ])

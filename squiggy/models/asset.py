@@ -229,7 +229,7 @@ class Asset(Base):
             'my_asset_ids': [a.id for a in session.user.assets],
             'offset': offset,
             'owner_id': filters.get('owner_id'),
-            'section_id': filters.get('section_id'),
+            'section': filters.get('section'),
             'user_id': session.user.id,
         }
         from_clause = """FROM assets a
@@ -532,8 +532,8 @@ def _build_where_clause(filters, include_hidden, params, session):
     if filters.get('owner_id'):
         where_clause += ' AND au.user_id = :owner_id'
 
-    if filters.get('section_id'):
-        where_clause += ' AND (array_position(u.canvas_course_sections, :section_id) > 0)'
+    if filters.get('section'):
+        where_clause += ' AND (array_position(u.canvas_course_sections, :section) > 0)'
 
     if filters.get('has_comments'):
         where_clause += ' AND a.comment_count > 0'
