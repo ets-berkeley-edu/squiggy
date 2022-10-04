@@ -23,9 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
 from squiggy.models.asset import assets_type
-from tests.util import override_config
 
 
 class TestConfigController:
@@ -42,15 +40,14 @@ class TestConfigController:
 
     def test_logged_in(self, client, fake_auth, authorized_user_id):
         """Returns a well-formed response to logged-in user."""
-        with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', False):
-            fake_auth.login(authorized_user_id)
-            response = client.get('/api/config')
-            assert response.status_code == 200
-            assert 'squiggyEnv' in response.json
-            data = response.json
-            assert data['assetTypes'] == ['file', 'link']
-            assert data['ebEnvironment'] is None
-            assert data['timezone'] == 'America/Los_Angeles'
+        fake_auth.login(authorized_user_id)
+        response = client.get('/api/config')
+        assert response.status_code == 200
+        assert 'squiggyEnv' in response.json
+        data = response.json
+        assert data['assetTypes'] == ['file', 'link', 'whiteboard']
+        assert data['ebEnvironment'] is None
+        assert data['timezone'] == 'America/Los_Angeles'
 
     def test_anonymous_version_request(self, client):
         """Returns a well-formed response."""

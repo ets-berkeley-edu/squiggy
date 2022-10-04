@@ -23,7 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app
 from sqlalchemy.dialects.postgresql import ENUM
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
@@ -96,15 +95,9 @@ class ActivityType(Base):
 
     @classmethod
     def get_activity_type_configuration(cls, course_id):
-        def _default_configurations():
-            feature_flag = app.config['FEATURE_FLAG_WHITEBOARDS']
-            if feature_flag:
-                return DEFAULT_ACTIVITY_TYPE_CONFIGURATION
-            else:
-                return list(filter(lambda c: 'whiteboard' not in c['type'], DEFAULT_ACTIVITY_TYPE_CONFIGURATION))
         activity_configs = []
         per_course_configs = cls.query.filter_by(course_id=course_id).all()
-        for default_config in _default_configurations():
+        for default_config in DEFAULT_ACTIVITY_TYPE_CONFIGURATION:
             activity_config = default_config.copy()
             per_course_config = next((c for c in per_course_configs if c.activity_type == activity_config['type']), None)
             if per_course_config:

@@ -28,7 +28,7 @@ import re
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
 from flask_socketio import emit
-from squiggy.api.api_util import can_view_asset, feature_flag_whiteboards, get_socket_io_room, SOCKET_IO_NAMESPACE
+from squiggy.api.api_util import can_view_asset, get_socket_io_room, SOCKET_IO_NAMESPACE
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_student, isoformat, local_now
@@ -45,7 +45,6 @@ from squiggy.models.whiteboard_session import WhiteboardSession
 
 
 @app.route('/api/whiteboard/<whiteboard_id>')
-@feature_flag_whiteboards
 @login_required
 def get_whiteboard(whiteboard_id):
     if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
@@ -56,7 +55,6 @@ def get_whiteboard(whiteboard_id):
 
 
 @app.route('/api/whiteboard/remix', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def remix_whiteboard():
     params = request.get_json()
@@ -82,7 +80,6 @@ def remix_whiteboard():
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def export_as_asset(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
@@ -124,7 +121,6 @@ def export_as_asset(whiteboard_id):
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/download/png')
-@feature_flag_whiteboards
 @login_required
 def export_as_png(whiteboard_id):
     whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
@@ -153,7 +149,6 @@ def export_as_png(whiteboard_id):
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/undelete', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def undelete_whiteboard(whiteboard_id):
     if Whiteboard.can_update_whiteboard(include_deleted=True, current_user=current_user, whiteboard_id=whiteboard_id):
@@ -192,7 +187,6 @@ def undelete_whiteboard(whiteboard_id):
 
 
 @app.route('/api/whiteboards', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def get_whiteboards():
     params = request.get_json()
@@ -216,7 +210,6 @@ def get_whiteboards():
 
 
 @app.route('/api/whiteboard/create', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def create_whiteboard():
     if not current_user.course:
@@ -234,7 +227,6 @@ def create_whiteboard():
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/delete', methods=['DELETE'])
-@feature_flag_whiteboards
 @login_required
 def delete_whiteboard(whiteboard_id):
     if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
@@ -281,7 +273,6 @@ def eligible_collaborators():
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/update', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def update_whiteboard(whiteboard_id):
     if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):

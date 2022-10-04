@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from flask import current_app as app, request
 from flask_login import current_user, login_required
 from flask_socketio import emit
-from squiggy.api.api_util import feature_flag_whiteboards, get_socket_io_room, upsert_whiteboard_elements
+from squiggy.api.api_util import get_socket_io_room, upsert_whiteboard_elements
 from squiggy.lib.errors import BadRequestError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
@@ -39,7 +39,6 @@ from squiggy.sockets import SOCKET_IO_NAMESPACE
 
 
 @app.route('/api/whiteboard_elements/order', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def order_whiteboard_elements():
     params = request.form or request.get_json()
@@ -85,7 +84,6 @@ def order_whiteboard_elements():
 
 
 @app.route('/api/whiteboard_elements/upsert', methods=['POST'])
-@feature_flag_whiteboards
 @login_required
 def upsert():
     params = request.form or request.get_json()
@@ -102,7 +100,6 @@ def upsert():
 
 
 @app.route('/api/whiteboard_elements/delete', methods=['DELETE'])
-@feature_flag_whiteboards
 @login_required
 def delete_whiteboard_elements():
     params = request.form or request.get_json()
