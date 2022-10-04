@@ -56,17 +56,6 @@ def admin_required(func):
     return _admin_required
 
 
-def feature_flag_whiteboards(func):
-    @wraps(func)
-    def _feature_flag_required(*args, **kw):
-        if app.config['FEATURE_FLAG_WHITEBOARDS']:
-            return func(*args, **kw)
-        else:
-            logger.warning('Feature flag is false.')
-            return app.login_manager.unauthorized()
-    return _feature_flag_required
-
-
 def teacher_required(func):
     @wraps(func)
     def _teacher_required(*args, **kw):
@@ -80,11 +69,11 @@ def teacher_required(func):
 
 
 def activities_type_enums():
-    return _filter_per_feature_flag(activities_type.enums)
+    return activities_type.enums
 
 
 def assets_type_enums():
-    return _filter_per_feature_flag(assets_type.enums)
+    return assets_type.enums
 
 
 def can_update_asset(user, asset):
@@ -208,11 +197,6 @@ def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
         whiteboard_id=whiteboard_id,
     )
     return results
-
-
-def _filter_per_feature_flag(enums):
-    feature_flag = app.config['FEATURE_FLAG_WHITEBOARDS']
-    return enums if feature_flag else list(filter(lambda enum: 'whiteboard' not in enum, enums))
 
 
 def _create_whiteboard_element(

@@ -39,7 +39,7 @@ from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_element import WhiteboardElement
 from squiggy.models.whiteboard_session import WhiteboardSession
-from tests.util import mock_s3_bucket, override_config
+from tests.util import mock_s3_bucket
 
 unauthorized_user_id = '666'
 
@@ -161,12 +161,6 @@ class TestGetWhiteboards:
         """Denies unauthorized user."""
         fake_auth.login(unauthorized_user_id)
         self._api_get_whiteboards(client, expected_status_code=401)
-
-    def test_false_feature_flag(self, authorized_user_id, client, fake_auth, mock_whiteboard):
-        """Denies authorized user when feature flag is false."""
-        with override_config(app, 'FEATURE_FLAG_WHITEBOARDS', False):
-            fake_auth.login(authorized_user_id)
-            self._api_get_whiteboards(client, expected_status_code=401)
 
     def test_inactive_collaborator(self, client, fake_auth):
         course, student_1, whiteboard = _create_student_whiteboard()

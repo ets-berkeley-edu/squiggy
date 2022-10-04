@@ -52,7 +52,6 @@ def create_app():
         if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             if app.config['CANVAS_POLLER']:
                 launch_pollers()
-            if app.config['FEATURE_FLAG_WHITEBOARDS']:
-                launch_whiteboard_housekeeping()
+            launch_whiteboard_housekeeping()
 
     return app, socketio
