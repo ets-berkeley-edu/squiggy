@@ -40,7 +40,7 @@ def app_config():
         'assetTypes': assets_type_enums(),
         'baseUrl': app.config['VUE_LOCALHOST_BASE_URL'] or request.url_root,
         'browserKbUrl': app.config['BROWSER_KB_URL'],
-        'ebEnvironment': app.config['EB_ENVIRONMENT'] if 'EB_ENVIRONMENT' in app.config else None,
+        'ebEnvironment': app.config.get('EB_ENVIRONMENT'),
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
         'developerAuthEnabled': app.config['DEVELOPER_AUTH_ENABLED'],
         'featureFlagWhiteboards': app.config['FEATURE_FLAG_WHITEBOARDS'],

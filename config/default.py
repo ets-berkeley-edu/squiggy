@@ -58,6 +58,7 @@ EMAIL_ADDRESS_SUPPORT = 'bcourseshelp@berkeley.edu'
 SERVICE_PAGE_URL = 'https://rtl.berkeley.edu/services-programs/suitec'
 BROWSER_KB_URL = 'https://berkeley.service-now.com/kb?id=kb_article_view&sysparm_article=KB0014417'
 
+FEATURE_FLAG_PROD_DATA_IMPORTER = False
 FEATURE_FLAG_WHITEBOARDS = False
 
 # Directory to search for mock fixtures, if running in "test" or "demo" mode.
@@ -80,6 +81,9 @@ PREVIEWS_API_KEY = 'someKey'
 PREVIEWS_CALLBACK_API_PREFIX = None
 PREVIEWS_ENABLED = True
 PREVIEWS_URL = 'https://example.com/previews'
+
+PROD_DATA_IMPORTER_SOURCE_URI = 'postgresql://squiggy:squiggy@localhost:5432/squiggy'
+PROD_DATA_IMPORTER_CANVAS_API_DOMAIN = None
 
 # Where file assets go.
 S3_BUCKET = 'some-bucket'

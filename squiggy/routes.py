@@ -41,6 +41,7 @@ def register_routes(app):
 
     # Register API routes.
     import squiggy.api.activity_controller
+    import squiggy.api.admin_controller
     import squiggy.api.asset_controller
     import squiggy.api.auth_controller
     import squiggy.api.canvas_controller
