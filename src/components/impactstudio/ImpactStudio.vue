@@ -132,66 +132,39 @@
           No activity detected in this course.
         </div>
       </div>
-      <div v-if="userActivities" id="activity-timeline" class="my-4 w-100">
+      <div id="activity-timeline" class="my-4 w-100">
         <div class="mb-3">
           <h2 class="impact-studio-section-header">Activity Timeline</h2>
           <div>
             Your individual actions and others' responses to your actions over time.
           </div>
         </div>
-        <div id="activity-timeline-contributions" class="mb-3">
-          <h3>Contributions (activities you do)</h3>
-          <div>
-            <h4>Views/Likes</h4>
-            <div>
-              {{ userActivities.actions.engagements }}
-            </div>
-            <h4>Interactions</h4>
-            <div>
-              {{ userActivities.actions.interactions }}
-            </div>
-            <h4>Creations</h4>
-            <div>
-              {{ userActivities.actions.creations }}
-            </div>
-          </div>
-        </div>
-        <div id="activity-timeline-impacts" class="mb-3">
-          <h3>Impacts (others responding to your activities)</h3>
-          <div>
-            <h4>Views/Likes</h4>
-            <div>
-              {{ userActivities.impacts.engagements }}
-            </div>
-            <h4>Interactions</h4>
-            <div>
-              {{ userActivities.impacts.interactions }}
-            </div>
-            <h4>Reuses</h4>
-            <div>
-              {{ userActivities.impacts.creations }}
-            </div>
-          </div>
-        </div>
-        <AssetSwimlane
-          id-prefix="user-assets"
-          :assets="userAssets"
-          :fetch-assets="fetchUserAssets"
-          :show-more="userAssetsMore"
-          :title="isMyProfile ? 'My Assets' : `${user.canvasFullName}'s Assets`"
-          :user="user"
-          class="my-4"
+        <ActivityTimeline
+          v-if="showActivities"
+          :activities="userActivities"
         />
-        <AssetSwimlane
-          v-if="isMyProfile"
-          id-prefix="everyones-assets"
-          :assets="everyonesAssets"
-          :fetch-assets="fetchEveryonesAssets"
-          :show-more="everyonesAssetsMore"
-          title="Everyone's Assets"
-          class="my-4"
-        />
+        <div v-if="!userActivities.length" class="mb-3">
+          No activity detected for this user.
+        </div>
       </div>
+      <AssetSwimlane
+        id-prefix="user-assets"
+        :assets="userAssets"
+        :fetch-assets="fetchUserAssets"
+        :show-more="userAssetsMore"
+        :title="isMyProfile ? 'My Assets' : `${user.canvasFullName}'s Assets`"
+        :user="user"
+        class="my-4"
+      />
+      <AssetSwimlane
+        v-if="isMyProfile"
+        id-prefix="everyones-assets"
+        :assets="everyonesAssets"
+        :fetch-assets="fetchEveryonesAssets"
+        :show-more="everyonesAssetsMore"
+        title="Everyone's Assets"
+        class="my-4"
+      />
     </div>
     <div v-if="!isLoading && !user">
       No user.
@@ -204,6 +177,7 @@ import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
 import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
 import ActivityNetwork from '@/components/impactstudio/ActivityNetwork'
+import ActivityTimeline from '@/components/impactstudio/ActivityTimeline'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
 import CanvasConversation from '@/mixins/CanvasConversation'
 import Context from '@/mixins/Context'
@@ -213,7 +187,7 @@ import Utils from '@/mixins/Utils'
 export default {
   name: 'ImpactStudio',
   mixins: [CanvasConversation, Context, Utils],
-  components: {ActivityNetwork, AssetSwimlane, SyncDisabled},
+  components: {ActivityNetwork, ActivityTimeline, AssetSwimlane, SyncDisabled},
   data: () => ({
     courseInteractions: null,
     everyonesAssets: [],
@@ -224,8 +198,9 @@ export default {
     nextUser: null,
     personalDescription: null,
     previousUser: null,
+    showActivities: false,
     user: undefined,
-    userActivities: null,
+    userActivities: {},
     userAssets: [],
     userAssetsMore: false,
     users: []
@@ -247,6 +222,7 @@ export default {
         if (this.user) {
           getUserActivities(this.user.id).then(data => {
             this.userActivities = data
+            this.showActivities = true
           })
         }
         getCourseInteractions().then(data => {
