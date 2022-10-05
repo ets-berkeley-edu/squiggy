@@ -23,29 +23,21 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import csv
 import tempfile
 
 from flask import current_app as app
 from squiggy.api.api_util import admin_required
 from squiggy.lib.errors import ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.prod_data_importer import get_prod_data_importer_sql, safe_execute_prod_data_importer_sql
+from squiggy.lib.prod_data_importer import write_prod_data_csv_files
 
 
 @app.route('/api/schlemiel/schlimazel/hasenpfeffer_incorporated')
 @admin_required
 def import_prod_data():
     if _is_prod_data_importer_enabled():
-        canvas_api_domain = app.config['PROD_DATA_IMPORTER_CANVAS_API_DOMAIN']
-        # TODO: Include all squiggy db tables.
-        db_tables = ['activities']
         with tempfile.TemporaryDirectory() as temp_directory:
-            for db_table in db_tables:
-                sql = get_prod_data_importer_sql(table_name=db_table, canvas_api_domain=canvas_api_domain)
-                rows = safe_execute_prod_data_importer_sql(sql)
-                _write_csv(f'{temp_directory}/{db_table}.csv', rows)
-                # TODO: load CSV data to local db.
+            write_prod_data_csv_files(temp_directory)
             return tolerant_jsonify({})
     else:
         raise ResourceNotFoundError('Vo-dee-oh-doh-doh!')
@@ -54,13 +46,3 @@ def import_prod_data():
 def _is_prod_data_importer_enabled():
     is_production = 'prod' in app.config.get('EB_ENVIRONMENT', '').lower()
     return not is_production and app.config['FEATURE_FLAG_PROD_DATA_IMPORTER']
-
-
-def _write_csv(filename, rows):
-    with open(filename, 'w') as csvfile:
-        if rows:
-            fieldnames = list(rows[0].keys())
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in rows:
-                writer.writerow(row)

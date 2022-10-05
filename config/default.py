@@ -81,7 +81,7 @@ PREVIEWS_CALLBACK_API_PREFIX = None
 PREVIEWS_ENABLED = True
 PREVIEWS_URL = 'https://example.com/previews'
 
-PROD_DATA_IMPORTER_SOURCE_URI = 'postgresql://squiggy:squiggy@localhost:5432/squiggy'
+PROD_DATA_IMPORTER_SOURCE_URI = 'postgresql://foo:foo@localhost:5432/squiggy_foo'
 PROD_DATA_IMPORTER_CANVAS_API_DOMAIN = None
 
 # Where file assets go.
