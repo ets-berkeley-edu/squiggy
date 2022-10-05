@@ -83,6 +83,7 @@ PREVIEWS_URL = 'https://example.com/previews'
 
 PROD_DATA_IMPORTER_SOURCE_URI = 'postgresql://foo:foo@localhost:5432/squiggy_foo'
 PROD_DATA_IMPORTER_CANVAS_API_DOMAIN = None
+PROD_DATA_IMPORTER_CANVAS_API_DOMAIN_REPOINT = None
 
 # Where file assets go.
 S3_BUCKET = 'some-bucket'
