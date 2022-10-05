@@ -20,6 +20,7 @@ requests==2.28.1
 simplejson==3.17.6
 smart-open==4.2.0
 SQLAlchemy==1.4.39
+sqlvalidator==0.0.19
 Werkzeug==2.1.2
 https://github.com/python-cas/python-cas/archive/master.zip
 

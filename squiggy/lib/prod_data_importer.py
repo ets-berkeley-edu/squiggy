@@ -31,6 +31,7 @@ from flask import current_app as app
 import psycopg2
 import psycopg2.extras
 from psycopg2.pool import ThreadedConnectionPool
+from squiggy.lib.prod_data_importer_sql_factory import get_prod_data_importer_sql
 from squiggy.logger import logger
 
 connection_pool = None
@@ -56,10 +57,9 @@ DB_TABLES_TO_IMPORT_FROM_PROD = [
 
 
 def write_prod_data_csv_files(directory):
-    canvas_api_domain = app.config['PROD_DATA_IMPORTER_CANVAS_API_DOMAIN']
     for db_table in DB_TABLES_TO_IMPORT_FROM_PROD:
         try:
-            sql = _get_prod_data_importer_sql(table_name=db_table, canvas_api_domain=canvas_api_domain)
+            sql = get_prod_data_importer_sql(db_table)
             rows = _safe_execute_prod_data_importer_sql(sql)
             _write_csv(f'{directory}/{db_table}.csv', rows)
             # TODO: load CSV data to local db.
@@ -75,48 +75,6 @@ def _cursor_from_pool():
         yield connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     finally:
         connection_pool.putconn(connection)
-
-
-def _get_prod_data_importer_sql(table_name, canvas_api_domain=None):  # noqa: C901
-    def _join_condition():
-        return f"""
-          JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
-        """ if canvas_api_domain else ''
-    if table_name == 'activities':
-        sql = f'SELECT t.* FROM activities t {_join_condition()} ORDER BY t.id'
-    elif table_name == 'activity_types':
-        sql = f'SELECT t.* FROM activity_types t {_join_condition()}'
-    elif table_name == 'asset_categories':
-        sql = 'SELECT a.* FROM assets_categories a'
-        if canvas_api_domain:
-            sql += f' JOIN (categories t {_join_condition()}) ON a.category_id = t.id'
-    elif table_name == 'assets':
-        sql = f'SELECT t.* FROM assets t {_join_condition()}'
-    elif table_name == 'asset_users':
-        sql = f'SELECT u.* FROM asset_users u JOIN (users t {_join_condition()}) on u.user_id = t.id'
-    elif table_name == 'asset_whiteboard_elements':
-        sql = f"""
-          SELECT awe.*
-          FROM asset_whiteboard_elements awe
-          JOIN (assets t {_join_condition()}) ON awe.asset_id = t.id
-        """
-    elif table_name == 'categories':
-        sql = 'SELECT 1'
-    elif table_name == 'comments':
-        sql = 'SELECT 1'
-    elif table_name == 'courses':
-        sql = 'SELECT 1'
-    elif table_name == 'whiteboard_elements':
-        sql = 'SELECT 1'
-    elif table_name == 'whiteboard_members':
-        sql = 'SELECT 1'
-    elif table_name == 'whiteboards':
-        sql = 'SELECT 1'
-    elif table_name == 'users':
-        sql = 'SELECT 1'
-    else:
-        raise ValueError(f'Unrecognized table_name: "{table_name}"')
-    return sql
 
 
 def _safe_execute(sql, cursor, **kwargs):
