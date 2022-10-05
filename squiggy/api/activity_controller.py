@@ -72,7 +72,8 @@ def get_activity_csv():
 @app.route('/api/activities/interactions', methods=['GET'])
 @login_required
 def get_interactions():
-    interactions = Activity.get_interactions_for_course(course_id=current_user.course.id)
+    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
+    interactions = Activity.get_interactions_for_course(course_id=current_user.course.id, sections=sections)
     return tolerant_jsonify(interactions)
 
 
@@ -82,5 +83,6 @@ def get_user_activities(user_id):
     user = User.find_by_id(user_id)
     if not user or user.course.id != current_user.course.id:
         raise ResourceNotFoundError('User not found.')
-    activities_feed = Activity.get_activities_for_user_id(user_id)
+    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
+    activities_feed = Activity.get_activities_for_user_id(user_id, sections)
     return tolerant_jsonify(activities_feed)

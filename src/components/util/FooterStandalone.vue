@@ -12,7 +12,12 @@
                 @click="go('/squiggy')"
               >
                 <span class="sr-only">Go home</span>
-                <font-awesome-icon icon="home" size="lg" />
+                <font-awesome-icon
+                  aria-hidden="true"
+                  icon="home"
+                  size="lg"
+                  title="Home"
+                />
               </v-btn>
             </div>
             <div>
@@ -22,19 +27,25 @@
             <div>
               <v-btn id="go-asset-library-btn" icon @click="go('/assets')">
                 <span class="sr-only">Go to Asset Library</span>
-                <font-awesome-icon icon="images" />
+                <font-awesome-icon aria-hidden="true" icon="images" title="Asset Library" />
               </v-btn>
             </div>
             <div>
               <v-btn id="go-engagement-index-btn" icon @click="go('/engage')">
                 <span class="sr-only">Go to Engagement Index</span>
-                <font-awesome-icon icon="list-ol" />
+                <font-awesome-icon aria-hidden="true" icon="list-ol" title="Engagement Index" />
+              </v-btn>
+            </div>
+            <div>
+              <v-btn id="go-impact-studio-btn" icon @click="go('/impact_studio')">
+                <span class="sr-only">Go to Impact Studio</span>
+                <font-awesome-icon aria-hidden="true" icon="users" title="Impact Studio" />
               </v-btn>
             </div>
             <div>
               <v-btn id="go-whiteboards-btn" icon @click="go('/whiteboards')">
                 <span class="sr-only">Go to Whiteboards</span>
-                <font-awesome-icon icon="palette" />
+                <font-awesome-icon aria-hidden="true" icon="palette" title="Whiteboards" />
               </v-btn>
             </div>
           </div>
