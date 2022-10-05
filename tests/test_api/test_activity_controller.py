@@ -210,31 +210,43 @@ class TestActivityCsvDownload:
 
 class TestActivitiesForUser:
 
-    def _api_download_user_activities(self, client, user_id, expected_status_code=200):
+    def _api_download_user_activities(self, client, user_id, expected_status_code=200, expected_sections=None):
         path = f'/api/activities/user/{user_id}'
         response = client.get(path)
         assert response.status_code == expected_status_code
-        return response.json
+        data = response.json
+        if expected_sections:
+            activities = (
+                data['actions']['interactions']
+                + data['actions']['creations']
+                + data['impacts']['interactions']
+                + data['impacts']['creations']
+            )
+            user_ids = set([i['user']['id'] for i in activities])
+            users = User.find_by_ids(user_ids=user_ids)
+            sections = [section for user in users for section in user.canvas_course_sections]
+            assert set(sections) == set(expected_sections)
+        return data
 
     def test_anonymous_activities(self, client, mock_asset):
         """Denies anonymous user."""
-        self._api_download_user_activities(client, user_id=mock_asset.users[0].id, expected_status_code=401)
+        self._api_download_user_activities(client, user_id=mock_asset.created_by, expected_status_code=401)
 
     def test_different_course_user(self, client, fake_auth, mock_asset, mock_other_course_user):
         """Denies user in another course."""
         fake_auth.login(mock_other_course_user.id)
-        user_id = mock_asset.users[0].id
+        user_id = mock_asset.created_by
         self._api_download_user_activities(client, user_id=user_id, expected_status_code=404)
 
     def test_get_ones_own_activities(self, client, fake_auth, mock_asset):
-        user_id = mock_asset.users[0].id
+        user_id = mock_asset.created_by
         fake_auth.login(user_id)
         response = self._api_download_user_activities(client, user_id=user_id)
         creations = response['actions']['creations']
         assert len(creations) == 1
         assert creations[0]['type'] == 'asset_add'
         assert creations[0]['date']
-        assert creations[0]['user']['id'] == mock_asset.users[0].id
+        assert creations[0]['user']['id'] == mock_asset.created_by
         assert creations[0]['user']['name'] == mock_asset.users[0].canvas_full_name
         assert creations[0]['user']['image'] == mock_asset.users[0].canvas_image
         assert creations[0]['asset']['id'] == mock_asset.id
@@ -246,7 +258,7 @@ class TestActivitiesForUser:
         for interaction in interactions:
             assert interaction['type'] == 'get_asset_comment'
             assert interaction['asset']['id'] == mock_asset.id
-            assert interaction['user']['id'] == mock_asset.users[0].id
+            assert interaction['user']['id'] == mock_asset.created_by
             assert interaction['actorId'] == mock_asset.comments[0].user_id
             assert interaction['comment']['id']
 
@@ -254,13 +266,65 @@ class TestActivitiesForUser:
         assert interactions[1]['comment']['body'] == 'And where will she go, and what shall she do, when midnight comes around?'
 
     def test_get_someone_elses_activities(self, client, fake_auth, mock_asset):
-        user1_id = mock_asset.users[0].id
+        user1_id = mock_asset.created_by
+        user2_id = mock_asset.comments[0].user_id
+        user3_id = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='Grent Fiskar',
+            canvas_user_id=121212121,
+            course_id=mock_asset.course_id,
+            canvas_course_sections=['section B'],
+        ).id
+        assert user1_id != user2_id
+        assert user2_id != user3_id
+
+        fake_auth.login(user1_id)
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section B'])
+
+        fake_auth.login(user2_id)
+        self._api_download_user_activities(client, user_id=user1_id, expected_sections=['section A'])
+
+        fake_auth.login(user3_id)
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section B'])
+
+    def test_own_activities_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course):
+        """Student in an asset-siloed course can see their own activities."""
+        mock_asset_course.protects_assets_per_section = True
+        user1_id = mock_asset.created_by
         user2_id = mock_asset.comments[0].user_id
         assert user1_id != user2_id
+
+        fake_auth.login(user1_id)
+        self._api_download_user_activities(client, user_id=user1_id, expected_sections=['section A'])
+
         fake_auth.login(user2_id)
-        response = self._api_download_user_activities(client, user_id=user2_id)
-        assert len(response['actions']['interactions'])
-        assert len(response['impacts']['interactions'])
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section B'])
+
+    def test_someone_elses_activities_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course):
+        """Student in an asset-siloed course cannot see activities of student in other section."""
+        mock_asset_course.protects_assets_per_section = True
+        user1_id = mock_asset.created_by
+        user2_id = mock_asset.comments[0].user_id
+        user3_id = User.create(
+            canvas_course_role='Student',
+            canvas_enrollment_state='active',
+            canvas_full_name='Grent Fiskar',
+            canvas_user_id=121212121,
+            course_id=mock_asset.course_id,
+            canvas_course_sections=['section B'],
+        ).id
+        assert user1_id != user2_id
+        assert user2_id != user3_id
+
+        fake_auth.login(user1_id)
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=[])
+
+        fake_auth.login(user2_id)
+        self._api_download_user_activities(client, user_id=user1_id, expected_sections=[])
+
+        fake_auth.login(user3_id)
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section B'])
 
 
 class TestActivityInteractions:
@@ -281,10 +345,17 @@ class TestActivityInteractions:
         assert response == []
 
     def test_interactions(self, client, fake_auth, mock_asset):
-        fake_auth.login(mock_asset.users[0].id)
+        fake_auth.login(mock_asset.created_by)
         response = self._api_download_interactions(client)
         assert len(response) == 1
         assert response[0]['type'] == 'get_asset_comment'
         assert response[0]['count'] == 2
         assert response[0]['source']
-        assert response[0]['target']
+        assert response[0]['target'] == mock_asset.created_by
+
+    def test_interactions_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course):
+        """Student in an asset-siloed course cannot see interactions with student in other section."""
+        mock_asset_course.protects_assets_per_section = True
+        fake_auth.login(mock_asset.created_by)
+        response = self._api_download_interactions(client)
+        assert len(response) == 0

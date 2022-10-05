@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from flask import current_app as app
-from flask_login import current_user
 import pytz
 from sqlalchemy import and_, func
 from sqlalchemy.dialects.postgresql import ENUM, JSON
@@ -95,6 +94,7 @@ class Activity(Base):
 
     def __repr__(self):
         return f"""<Activity
+                    id={self.id},
                     type={self.activity_type},
                     course_id={self.course_id},
                     user_id={self.user_id},
@@ -181,69 +181,45 @@ class Activity(Base):
         return headers, rows
 
     @classmethod
-    def get_activities_for_user_id(cls, user_id):
-        activities = cls.query.filter_by(user_id=user_id).order_by(cls.created_at).options(
-            joinedload(cls.actor),
-            joinedload(cls.asset),
-            joinedload(cls.comment),
-            joinedload(cls.user),
-        ).all()
-
-        activities_by_type = {
-            'actions': {
-                'engagements': [],
-                'interactions': [],
-                'creations': [],
-            },
-            'impacts': {
-                'engagements': [],
-                'interactions': [],
-                'creations': [],
-            },
-        }
-
-        for activity in activities:
-            activity_json = {
-                'id': activity.id,
-                'type': activity.activity_type,
-                'date': isoformat(activity.created_at),
-                'user': {},
-            }
-
-            if activity.asset:
-                activity_json['asset'] = {
-                    'id': activity.asset.id,
-                    'title': activity.asset.title,
-                    'thumbnailUrl': activity.asset.thumbnail_url,
-                }
-            if activity.comment:
-                activity_json['comment'] = {
-                    'id': activity.comment.id,
-                    'body': activity.comment.body,
-                }
-            if activity.actor_id:
-                activity_json['actorId'] = activity.actor_id
-
-            user = activity.user or activity.actor or (current_user and current_user.user)
-            if user:
-                activity_json['user']['id'] = user.id
-                activity_json['user']['name'] = user.canvas_full_name
-                activity_json['user']['image'] = user.canvas_image
-
-            if activity.activity_type in {'asset_like', 'asset_view'}:
-                activities_by_type['actions']['engagements'].append(activity_json)
-            elif activity.activity_type in {'asset_comment', 'discussion_entry', 'discussion_topic'}:
-                activities_by_type['actions']['interactions'].append(activity_json)
-            elif activity.activity_type in {'asset_add', 'whiteboard_add_asset', 'whiteboard_export', 'whiteboard_remix'}:
-                activities_by_type['actions']['creations'].append(activity_json)
-            elif activity.activity_type in {'get_view_asset', 'get_like'}:
-                activities_by_type['impacts']['engagements'].append(activity_json)
-            elif activity.activity_type in {'get_asset_comment', 'get_asset_comment_reply', 'get_discussion_entry_reply'}:
-                activities_by_type['impacts']['interactions'].append(activity_json)
-            elif activity.activity_type in {'get_whiteboard_add_asset', 'get_whiteboard_remix'}:
-                activities_by_type['impacts']['creations'].append(activity_json)
-
-        return activities_by_type
+    def get_activities_for_user_id(cls, user_id, sections=None):
+        params = {'user_id': user_id}
+        query = """
+            SELECT
+                a.type AS activity_type,
+                a.created_at,
+                a.id AS activity_id,
+                a.object_id,
+                a.object_type,
+                a.asset_id,
+                a.course_id,
+                a.user_id,
+                a.actor_id,
+                u.canvas_full_name AS user_name,
+                u.canvas_image AS user_image,
+                u.canvas_course_sections AS user_sections,
+                actor.canvas_full_name AS actor_name,
+                actor.canvas_image AS actor_image,
+                actor.canvas_course_sections AS actor_sections,
+                assets.title AS asset_title,
+                assets.thumbnail_url AS asset_thumbnail_url,
+                c.id AS comment_id,
+                c.body AS comment_body
+            FROM activities a
+            JOIN users u ON a.user_id = u.id
+            LEFT JOIN users actor ON a.actor_id = actor.id
+            LEFT JOIN assets ON assets.id = a.asset_id
+            LEFT JOIN comments c ON c.id = a.object_id AND a.object_type = 'comment'
+            WHERE a.user_id = :user_id"""
+        if sections:
+            params['user_course_sections'] = sections
+            query += """
+                AND (
+                    to_jsonb(actor.canvas_course_sections) ?| :user_course_sections
+                    OR a.actor_id IS NULL
+                )
+                AND to_jsonb(u.canvas_course_sections) ?| :user_course_sections"""
+        activities = db.session.execute(text(query), params)
+        return _to_api_json_by_type(activities)
 
     @classmethod
     def get_last_activity_for_course(cls, course_id):
@@ -252,8 +228,23 @@ class Activity(Base):
         return db.session.query(func.max(User.last_activity)).filter_by(course_id=course_id).scalar()
 
     @classmethod
-    def get_interactions_for_course(cls, course_id):
-        interactions_query = text("""
+    def get_interactions_for_course(cls, course_id, sections=None):
+        params = {'course_id': course_id}
+        interactions_where_clause = """WHERE a.course_id = :course_id
+            AND a.reciprocal_id IS NOT NULL
+            AND assets.deleted_at IS NULL"""
+        whiteboards_where_clause = """WHERE a.course_id = :course_id
+            AND a.type = 'whiteboard'"""
+        if sections:
+            params['user_course_sections'] = sections
+            interactions_where_clause += """
+            AND to_jsonb(act.canvas_course_sections) ?| :user_course_sections
+            AND to_jsonb(u.canvas_course_sections) ?| :user_course_sections"""
+            whiteboards_where_clause += """
+            AND to_jsonb(u1.canvas_course_sections) ?| :user_course_sections
+            AND to_jsonb(u2.canvas_course_sections) ?| :user_course_sections"""
+
+        interactions_query = text(f"""
         SELECT a.type AS type, a.actor_id as source, a.user_id as target, COUNT(a.type)::int AS count
         FROM activities a
             LEFT JOIN assets ON a.asset_id = assets.id
@@ -261,14 +252,12 @@ class Activity(Base):
                 (a.user_id = u.id AND u.canvas_course_role IN ('Learner', 'Student') AND u.canvas_enrollment_state != 'inactive')
             JOIN users AS act ON
                 (a.actor_id = act.id AND act.canvas_course_role IN ('Learner', 'Student') AND act.canvas_enrollment_state != 'inactive')
-        WHERE a.course_id = :course_id
-            AND a.reciprocal_id IS NOT NULL
-            AND assets.deleted_at IS NULL
+        {interactions_where_clause}
         GROUP BY a.type, a.user_id, a.actor_id""")
 
         # Co-creation of whiteboards is a special "activity" type, not captured in the activities table but extractable
         # from the assets table.
-        whiteboard_co_creation_query = text("""
+        whiteboard_co_creation_query = text(f"""
         SELECT 'co_create_whiteboard' AS type, au1.user_id AS source, au2.user_id AS target, count(*)::int AS count
         FROM assets a
             JOIN (
@@ -279,12 +268,8 @@ class Activity(Base):
                 asset_users au2 JOIN users u2 ON au2.user_id = u2.id
                 AND u2.canvas_course_role IN ('Learner', 'Student') AND u2.canvas_enrollment_state != 'inactive'
             ) ON a.id = au2.asset_id AND au1.user_id < au2.user_id
-        WHERE a.course_id = :course_id
-        AND a.type = 'whiteboard'
+        {whiteboards_where_clause}
         GROUP BY au1.user_id, au2.user_id""")
-
-        params = {'course_id': course_id}
-
         return list(db.session.execute(interactions_query, params)) + list(db.session.execute(whiteboard_co_creation_query, params))
 
     @classmethod
@@ -336,3 +321,59 @@ class Activity(Base):
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
+
+
+def _to_api_json_by_type(activities):
+    activities_by_type = {
+        'actions': {
+            'engagements': [],
+            'interactions': [],
+            'creations': [],
+        },
+        'impacts': {
+            'engagements': [],
+            'interactions': [],
+            'creations': [],
+        },
+    }
+    for activity in activities:
+        activity_json = {
+            'id': activity['activity_id'],
+            'type': activity['activity_type'],
+            'date': isoformat(activity['created_at']),
+            'user': {},
+        }
+
+        if activity['asset_id']:
+            activity_json['asset'] = {
+                'id': activity['asset_id'],
+                'title': activity['asset_title'],
+                'thumbnailUrl': activity['asset_thumbnail_url'],
+            }
+        if activity['comment_id']:
+            activity_json['comment'] = {
+                'id': activity['comment_id'],
+                'body': activity['comment_body'],
+            }
+        if activity['actor_id']:
+            activity_json['actorId'] = activity['actor_id']
+
+        if activity['user_id']:
+            activity_json['user']['id'] = activity['user_id']
+            activity_json['user']['name'] = activity['user_name']
+            activity_json['user']['image'] = activity['user_image']
+            activity_json['user']['sections'] = activity['user_sections']
+
+        if activity['activity_type'] in {'asset_like', 'asset_view'}:
+            activities_by_type['actions']['engagements'].append(activity_json)
+        elif activity['activity_type'] in {'asset_comment', 'discussion_entry', 'discussion_topic'}:
+            activities_by_type['actions']['interactions'].append(activity_json)
+        elif activity['activity_type'] in {'asset_add', 'whiteboard_add_asset', 'whiteboard_export', 'whiteboard_remix'}:
+            activities_by_type['actions']['creations'].append(activity_json)
+        elif activity['activity_type'] in {'get_view_asset', 'get_like'}:
+            activities_by_type['impacts']['engagements'].append(activity_json)
+        elif activity['activity_type'] in {'get_asset_comment', 'get_asset_comment_reply', 'get_discussion_entry_reply'}:
+            activities_by_type['impacts']['interactions'].append(activity_json)
+        elif activity['activity_type'] in {'get_whiteboard_add_asset', 'get_whiteboard_remix'}:
+            activities_by_type['impacts']['creations'].append(activity_json)
+    return activities_by_type

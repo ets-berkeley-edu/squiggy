@@ -199,30 +199,31 @@ def mock_asset(app, db_session):
         canvas_user_id=canvas_user_id_2,
         course_id=course.id,
     )
-    asset = _create_asset(
+    asset1 = _create_asset(
         app=app,
         categories=[category_hidden, category_visible],
         course=course,
         users=[user_1],
     )
-    _create_asset(
+    asset2 = _create_asset(
         app=app,
         categories=[category_hidden, category_visible],
         course=course,
         users=[user_2],
     )
     for test_comment in _get_mock_comments():
-        comment = Comment.create(asset=asset, body=test_comment['body'], user_id=user_2.id)
+        comment = Comment.create(asset=asset1, body=test_comment['body'], user_id=user_2.id)
         for reply in test_comment.get('replies', []):
             Comment.create(
-                asset=asset,
+                asset=asset1,
                 body=reply['body'],
                 parent_id=comment.id,
                 user_id=user_1.id,
             )
     std_commit(allow_test_environment=True)
-    yield asset
-    db_session.delete(asset)
+    yield asset1
+    db_session.delete(asset1)
+    db_session.delete(asset2)
     std_commit(allow_test_environment=True)
 
 

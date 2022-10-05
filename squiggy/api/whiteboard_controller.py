@@ -61,7 +61,6 @@ def remix_whiteboard():
     asset_id = params.get('assetId')
     title = params.get('title')
     asset = Asset.find_by_id(asset_id=asset_id)
-    print(asset)
     if not asset or not can_view_asset(asset=asset, user=current_user):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
     if asset.asset_type != 'whiteboard':
