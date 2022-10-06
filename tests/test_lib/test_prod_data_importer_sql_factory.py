@@ -29,8 +29,8 @@ from tests.util import override_config
 
 
 def assert_sql(app, table_name, include_canvas_api_domain=False):
-    canvas_api_domain = 'bcourses.berkeley.edu' if include_canvas_api_domain else None
-    canvas_api_domain_repoint = 'https://ucberkeley.beta.instructure.com' if include_canvas_api_domain else None
+    canvas_api_domain = 'bcourses.berkeley.edu'
+    canvas_api_domain_repoint = 'https://ucberkeley.beta.instructure.com'
     with override_config(app, 'PROD_DATA_IMPORTER_CANVAS_API_DOMAIN', canvas_api_domain):
         with override_config(app, 'PROD_DATA_IMPORTER_CANVAS_API_DOMAIN_REPOINT', canvas_api_domain_repoint):
             sql = get_prod_data_importer_sql(table_name)
@@ -128,11 +128,11 @@ class TestSqlGeneration:
                 include_canvas_api_domain=include_canvas_api_domain,
             )
 
-    def test_get_whiteboard_members_sql(self, app):
+    def test_get_whiteboard_users_sql(self, app):
         for include_canvas_api_domain in [False, True]:
             assert_sql(
                 app,
-                table_name='whiteboard_members',
+                table_name='whiteboard_users',
                 include_canvas_api_domain=include_canvas_api_domain,
             )
 
