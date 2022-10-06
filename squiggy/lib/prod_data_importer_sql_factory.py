@@ -29,19 +29,19 @@ from flask import current_app as app
 
 def get_prod_data_importer_sql(table_name):
     sql_factory_methods = {
-        'activities': get_activities_sql,
-        'activity_types': get_activity_types_sql,
-        'asset_categories': get_asset_categories_sql,
-        'asset_users': get_asset_users_sql,
-        'asset_whiteboard_elements': get_asset_whiteboard_elements_sql,
-        'assets': get_assets_sql,
-        'categories': get_categories_sql,
-        'comments': get_comments_sql,
-        'courses': get_courses_sql,
-        'users': get_users_sql,
-        'whiteboard_elements': get_whiteboard_elements_sql,
-        'whiteboard_members': get_whiteboard_members_sql,
-        'whiteboards': get_whiteboards_sql,
+        'activities': _get_activities_sql,
+        'activity_types': _get_activity_types_sql,
+        'asset_categories': _get_asset_categories_sql,
+        'asset_users': _get_asset_users_sql,
+        'asset_whiteboard_elements': _get_asset_whiteboard_elements_sql,
+        'assets': _get_assets_sql,
+        'categories': _get_categories_sql,
+        'comments': _get_comments_sql,
+        'courses': _get_courses_sql,
+        'users': _get_users_sql,
+        'whiteboard_elements': _get_whiteboard_elements_sql,
+        'whiteboard_users': _get_whiteboard_users_sql,
+        'whiteboards': _get_whiteboards_sql,
     }
     method = sql_factory_methods[table_name]
     method_args = inspect.getfullargspec(method).args
@@ -54,44 +54,62 @@ def get_prod_data_importer_sql(table_name):
     return sql
 
 
-def get_activities_sql(canvas_api_domain=None):
-    join = _join_condition(canvas_api_domain=canvas_api_domain)
-    return f'SELECT t.* FROM activities t {join} ORDER BY t.id'
-
-
-def get_activity_types_sql(canvas_api_domain=None):
-    join = _join_condition(canvas_api_domain=canvas_api_domain)
-    return f'SELECT t.* FROM activity_types t {join}'
-
-
-def get_assets_sql(canvas_api_domain=None):
-    join = _join_condition(canvas_api_domain=canvas_api_domain)
-    return f'SELECT t.* FROM assets t {join}'
-
-
-def get_asset_users_sql(canvas_api_domain=None):
-    join = _join_condition(canvas_api_domain=canvas_api_domain)
-    return f'SELECT u.* FROM asset_users u JOIN (users t {join}) ON u.user_id = t.id'
-
-
-def get_asset_categories_sql(canvas_api_domain=None):
-    sql = 'SELECT a.* FROM assets_categories a'
-    if canvas_api_domain:
-        join = _join_condition(canvas_api_domain=canvas_api_domain)
-        sql += f' JOIN (categories t {join}) ON a.category_id = t.id'
-    return sql
-
-
-def get_asset_whiteboard_elements_sql(canvas_api_domain=None):
-    join = _join_condition(canvas_api_domain=canvas_api_domain)
+def _get_activities_sql(canvas_api_domain):
     return f"""
-      SELECT awe.*
-      FROM asset_whiteboard_elements awe
-      JOIN (assets t {join}) ON awe.asset_id = t.id
+        SELECT t.*
+        FROM activities t
+        JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
+        ORDER BY t.id
     """
 
 
-def get_categories_sql(canvas_api_domain=None):
+def _get_activity_types_sql(canvas_api_domain):
+    return f"""
+        SELECT t.*
+        FROM activity_types t
+        JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
+    """
+
+
+def _get_asset_categories_sql(canvas_api_domain):
+    return f"""
+        SELECT a.*
+        FROM asset_categories a
+        JOIN (
+            categories t JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
+        ) ON a.category_id = t.id
+    """
+
+
+def _get_asset_users_sql(canvas_api_domain):
+    return f"""
+        SELECT u.*
+        FROM asset_users u
+        JOIN (
+            users t JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
+        ) ON u.user_id = t.id
+    """
+
+
+def _get_asset_whiteboard_elements_sql(canvas_api_domain):
+    return f"""
+      SELECT awe.*
+      FROM asset_whiteboard_elements awe
+      JOIN (
+          assets t JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
+      ) ON awe.asset_id = t.id
+    """
+
+
+def _get_assets_sql(canvas_api_domain):
+    return f"""
+        SELECT t.*
+        FROM assets t
+        JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
+    """
+
+
+def _get_categories_sql(canvas_api_domain):
     return f"""
         SELECT cat.*
         FROM categories cat
@@ -99,7 +117,7 @@ def get_categories_sql(canvas_api_domain=None):
     """
 
 
-def get_comments_sql(canvas_api_domain=None):
+def _get_comments_sql(canvas_api_domain):
     return f"""
         SELECT com.*
         FROM comments com
@@ -109,13 +127,13 @@ def get_comments_sql(canvas_api_domain=None):
     """
 
 
-def get_courses_sql(canvas_api_domain=None, canvas_api_domain_repoint=None):
+def _get_courses_sql(canvas_api_domain, canvas_api_domain_repoint):
     return f"""
         SELECT
             c.id, c.canvas_course_id, c.enable_upload, c.name,
-            REPLACE(c.assetlibrary_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS assetlibrary_url,
-            REPLACE(c.dashboard_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS dashboard_url,
-            REPLACE(c.engagementindex_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS engagementindex_url,
+            REPLACE(c.asset_library_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS asset_library_url,
+            REPLACE(c.impact_studio_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS impact_studio_url,
+            REPLACE(c.engagement_index_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS engagement_index_url,
             REPLACE(c.whiteboards_url, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS whiteboards_url,
             '{canvas_api_domain_repoint}' AS canvas_api_domain,
             c.active, c.created_at, c.updated_at, c.enable_daily_notifications, c.enable_weekly_notifications
@@ -124,7 +142,7 @@ def get_courses_sql(canvas_api_domain=None, canvas_api_domain_repoint=None):
     """
 
 
-def get_users_sql(canvas_api_domain=None):
+def _get_users_sql(canvas_api_domain):
     return f"""
         SELECT u.*
         FROM users u
@@ -132,10 +150,10 @@ def get_users_sql(canvas_api_domain=None):
     """
 
 
-def get_whiteboard_elements_sql(canvas_api_domain=None, canvas_api_domain_repoint=None):
+def _get_whiteboard_elements_sql(canvas_api_domain, canvas_api_domain_repoint):
     return f"""
         SELECT
-            we.uid,
+            we.uuid,
             REPLACE(we.element::text, '{canvas_api_domain}', '{canvas_api_domain_repoint}') AS element,
             we.created_at, we.updated_at, we.whiteboard_id, we.asset_id
         FROM whiteboard_elements we
@@ -145,9 +163,9 @@ def get_whiteboard_elements_sql(canvas_api_domain=None, canvas_api_domain_repoin
     """
 
 
-def get_whiteboard_members_sql(canvas_api_domain=None):
+def _get_whiteboard_users_sql(canvas_api_domain):
     return f"""
-        SELECT wm.* FROM whiteboard_members wm
+        SELECT wm.* FROM whiteboard_users wm
         JOIN (
             whiteboards w
             JOIN courses c ON w.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
@@ -155,7 +173,7 @@ def get_whiteboard_members_sql(canvas_api_domain=None):
     """
 
 
-def get_whiteboards_sql(canvas_api_domain=None, canvas_api_domain_repoint=None):
+def _get_whiteboards_sql(canvas_api_domain, canvas_api_domain_repoint):
     return f"""
         SELECT
             w.id, w.title,
@@ -165,9 +183,3 @@ def get_whiteboards_sql(canvas_api_domain=None, canvas_api_domain_repoint=None):
         FROM whiteboards w
         JOIN courses c ON w.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
     """
-
-
-def _join_condition(canvas_api_domain):
-    return f"""
-      JOIN courses c ON t.course_id = c.id AND c.canvas_api_domain = '{canvas_api_domain}'
-    """ if canvas_api_domain else ''

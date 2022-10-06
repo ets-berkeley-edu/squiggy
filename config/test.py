@@ -41,6 +41,8 @@ LOGGING_LOCATION = 'STDOUT'
 
 PREVIEWS_ENABLED = False
 
+PROD_DATA_IMPORTER_SOURCE_URI = f"postgresql://squiggy:squiggy@localhost:{os.getenv('PGPORT', '5432')}/squiggy_test"
+
 SQLALCHEMY_DATABASE_URI = f"postgresql://squiggy:squiggy@localhost:{os.getenv('PGPORT', '5432')}/squiggy_test"
 
 TESTING = True

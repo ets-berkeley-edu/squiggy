@@ -45,7 +45,7 @@ DB_TABLES_TO_IMPORT_FROM_PROD = [
     'asset_users',
     'categories',
     'comments',
-    'whiteboard_members',
+    'whiteboard_users',
     'users',
     # Next, tables that contain references to specific Canvas hostnames.
     'assets',
@@ -57,15 +57,23 @@ DB_TABLES_TO_IMPORT_FROM_PROD = [
 
 
 def write_prod_data_csv_files(directory):
+    csv_files = {}
     for db_table in DB_TABLES_TO_IMPORT_FROM_PROD:
         try:
             sql = get_prod_data_importer_sql(db_table)
             rows = _safe_execute_prod_data_importer_sql(sql)
-            _write_csv(f'{directory}/{db_table}.csv', rows)
-            # TODO: load CSV data to local db.
+            csv_filename = f'{directory}/{db_table}.csv'
+            csv_files[db_table] = csv_filename
+            _write_csv(filename=csv_filename, rows=rows)
         except Exception as e:
             logger.error(f'Prod data import failed on database table \'{db_table}\'')
             raise e
+    for db_table in DB_TABLES_TO_IMPORT_FROM_PROD:
+        csv_filename = csv_files[db_table]
+        with open(csv_filename) as csv_file:
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                logger.warn(f'XXX: {row}')
 
 
 @contextmanager
@@ -90,15 +98,12 @@ def _safe_execute(sql, cursor, **kwargs):
     return rows
 
 
-def _safe_execute_prod_data_importer_sql(string, **kwargs):
-    if app.config['TESTING']:
-        return []
-    else:
-        global connection_pool
-        if connection_pool is None:
-            connection_pool = ThreadedConnectionPool(1, 1, app.config['PROD_DATA_IMPORTER_SOURCE_URI'])
-        with _cursor_from_pool() as cursor:
-            return _safe_execute(string, cursor, **kwargs)
+def _safe_execute_prod_data_importer_sql(sql, **kwargs):
+    global connection_pool
+    if connection_pool is None:
+        connection_pool = ThreadedConnectionPool(1, 1, app.config['PROD_DATA_IMPORTER_SOURCE_URI'])
+    with _cursor_from_pool() as cursor:
+        return _safe_execute(sql, cursor, **kwargs)
 
 
 def _write_csv(filename, rows):
