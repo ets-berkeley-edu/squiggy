@@ -38,6 +38,8 @@ from squiggy.models.asset import Asset
 from squiggy.models.category import Category
 from squiggy.models.comment import Comment
 from squiggy.models.course import Course
+from squiggy.models.course_group import CourseGroup
+from squiggy.models.course_group_membership import CourseGroupMembership
 from squiggy.models.user import User
 import squiggy.factory  # noqa
 from squiggy.models.whiteboard import Whiteboard
@@ -179,26 +181,8 @@ def mock_asset(app, db_session):
         canvas_assignment_id=98765,
         visible=True,
     )
-    canvas_user_id_1 = str(randint(1000000, 9999999))
-    canvas_user_id_2 = str(randint(1000000, 9999999))
-    user_1 = User.create(
-        canvas_course_role='Student',
-        canvas_course_sections=['section A'],
-        canvas_email=f'{canvas_user_id_1}@berkeley.edu',
-        canvas_enrollment_state='active',
-        canvas_full_name=f'Student {canvas_user_id_1}',
-        canvas_user_id=canvas_user_id_1,
-        course_id=course.id,
-    )
-    user_2 = User.create(
-        canvas_course_role='Student',
-        canvas_course_sections=['section B'],
-        canvas_email=f'{canvas_user_id_2}@berkeley.edu',
-        canvas_enrollment_state='active',
-        canvas_full_name=f'Student {canvas_user_id_2}',
-        canvas_user_id=canvas_user_id_2,
-        course_id=course.id,
-    )
+    user_1 = _create_student(course.id, canvas_course_sections=['section A'])
+    user_2 = _create_student(course.id, canvas_course_sections=['section B'])
     asset1 = _create_asset(
         app=app,
         categories=[category_hidden, category_visible],
@@ -251,21 +235,47 @@ def mock_asset_users(mock_asset):
 
 
 @pytest.fixture(scope='function')
+def mock_course_group(app, db_session):
+    course = Course.find_by_canvas_course_id(
+        canvas_api_domain='bcourses.berkeley.edu',
+        canvas_course_id=1502870,
+    )
+    group = CourseGroup.create(
+        course_id=course.id,
+        canvas_group_id=363901,
+        name='Laverne & Shirley',
+        category_name='Happy Days Televisual Universe (HDTU)',
+    )
+    user1 = _create_student(course.id)
+    user2 = _create_student(course.id)
+    membership1 = CourseGroupMembership.create(course_id=course.id, course_group_id=group.id, canvas_user_id=user1.canvas_user_id)
+    membership2 = CourseGroupMembership.create(course_id=course.id, course_group_id=group.id, canvas_user_id=user2.canvas_user_id)
+    other_group = CourseGroup.create(
+        course_id=course.id,
+        canvas_group_id=363901,
+        name='Mork & Mindy',
+        category_name='Happy Days Televisual Universe (HDTU)',
+    )
+    user3 = _create_student(course.id)
+    membership3 = CourseGroupMembership.create(course_id=course.id, course_group_id=other_group.id, canvas_user_id=user3.canvas_user_id)
+    std_commit(allow_test_environment=True)
+    yield group
+    db_session.delete(membership1)
+    db_session.delete(membership2)
+    db_session.delete(membership3)
+    std_commit(allow_test_environment=True)
+    db_session.delete(group)
+    db_session.delete(other_group)
+    std_commit(allow_test_environment=True)
+
+
+@pytest.fixture(scope='function')
 def mock_other_course_user(app, db_session):
     course = Course.find_by_canvas_course_id(
         canvas_api_domain='bcourses.berkeley.edu',
         canvas_course_id=1502871,
     )
-    canvas_user_id = str(randint(1000000, 9999999))
-    user = User.create(
-        canvas_course_role='Student',
-        canvas_course_sections=[],
-        canvas_email=f'{canvas_user_id}@berkeley.edu',
-        canvas_enrollment_state='active',
-        canvas_full_name=f'Student {canvas_user_id}',
-        canvas_user_id=canvas_user_id,
-        course_id=course.id,
-    )
+    user = _create_student(course.id)
     std_commit(allow_test_environment=True)
     yield user
     db_session.delete(user)
@@ -279,16 +289,8 @@ def mock_whiteboard(app, db_session):
         canvas_course_id=1502870,
     )
     users = []
-    for canvas_user_id, section in zip([randint(1000000, 9999999), randint(1000000, 9999999)], ['section A', 'section B']):
-        users.append(User.create(
-            canvas_course_role='Student',
-            canvas_course_sections=[section],
-            canvas_email=f'{canvas_user_id}@berkeley.edu',
-            canvas_enrollment_state='active',
-            canvas_full_name=f'Student {canvas_user_id}',
-            canvas_user_id=canvas_user_id,
-            course_id=course.id,
-        ))
+    for section in ['section A', 'section B']:
+        users.append(_create_student(course.id, canvas_course_sections=[section]))
     student_1 = users[0]
     whiteboard = Whiteboard.create(
         course_id=course.id,
@@ -368,6 +370,19 @@ def _create_asset(app, course, users, categories=None):
         title=f'Mock Asset created at {unique_token}',
         url=f'https://en.wikipedia.org/wiki/{unique_token}',
         users=users,
+    )
+
+
+def _create_student(course_id, canvas_course_sections=None):
+    canvas_user_id = str(randint(1000000, 9999999))
+    return User.create(
+        canvas_course_role='Student',
+        canvas_course_sections=canvas_course_sections or [],
+        canvas_email=f'{canvas_user_id}@berkeley.edu',
+        canvas_enrollment_state='active',
+        canvas_full_name=f'Student {canvas_user_id}',
+        canvas_user_id=canvas_user_id,
+        course_id=course_id,
     )
 
 

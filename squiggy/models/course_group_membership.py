@@ -58,3 +58,16 @@ class CourseGroupMembership(Base):
         db.session.add(membership)
         std_commit()
         return membership
+
+    @classmethod
+    def find_by_course_and_user(cls, course_id, canvas_user_id):
+        return cls.query.filter_by(course_id=course_id, canvas_user_id=canvas_user_id).all()
+
+    def to_api_json(self):
+        return {
+            'canvasUserId': self.canvas_user_id,
+            'categoryName': self.course_group.category_name,
+            'courseGroupId': self.course_group_id,
+            'courseGroupName': self.course_group.name,
+            'courseId': self.course_id,
+        }

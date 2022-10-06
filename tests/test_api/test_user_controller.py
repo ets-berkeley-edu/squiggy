@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from itertools import groupby
 import json
 
+from squiggy.lib.util import is_teaching
 from squiggy.models.user import User
 
 unauthorized_user_id = '666'
@@ -76,16 +77,57 @@ class TestMyProfile:
         assert not api_json['isAdmin']
         assert not api_json.get('id')
         assert not api_json.get('course')
+        assert not api_json.get('courseGroups')
 
-    def test_admin_profile(self, client, fake_auth, authorized_user_id):
-        fake_auth.login(authorized_user_id)
+    def test_admin_profile(self, client, fake_auth):
+        admin = User.query.filter_by(canvas_course_role='Administrator', canvas_enrollment_state='active').first()
+        fake_auth.login(admin.id)
         api_json = _api_my_profile(client)
-        assert api_json['id'] == authorized_user_id
+        assert api_json['id'] == admin.id
         course = api_json.get('course')
         assert course
+        assert api_json['courseGroups'] == []
         canvas = course.get('canvas')
         assert canvas
         assert canvas['canvasApiDomain'] == 'bcourses.berkeley.edu'
+        assert api_json['isAdmin'] is True
+        assert api_json['isAuthenticated'] is True
+        assert api_json['isObserver'] is False
+        assert api_json['isStudent'] is False
+        assert api_json['isTeaching'] is False
+
+    def test_student_profile(self, client, fake_auth, mock_course_group):
+        canvas_user_id = mock_course_group.memberships[0].canvas_user_id
+        student = User.find_by_canvas_user_id(canvas_user_id)
+        fake_auth.login(student.id)
+        api_json = _api_my_profile(client)
+        assert api_json['id'] == student.id
+        course_groups = api_json['courseGroups']
+        assert len(course_groups) == 1
+        print(course_groups)
+        assert course_groups[0]['canvasUserId'] == canvas_user_id
+        assert course_groups[0]['categoryName'] == 'Happy Days Televisual Universe (HDTU)'
+        assert course_groups[0]['courseGroupName'] == 'Laverne & Shirley'
+        assert course_groups[0]['courseId'] == mock_course_group.course_id
+        assert api_json['isAdmin'] is False
+        assert api_json['isAuthenticated'] is True
+        assert api_json['isObserver'] is False
+        assert api_json['isStudent'] is True
+        assert api_json['isTeaching'] is False
+
+    def test_teacher_profile(self, client, fake_auth, mock_course_group):
+        course = mock_course_group.course
+        teacher = list(filter(lambda u: is_teaching(u), course.users))[0]
+        fake_auth.login(teacher.id)
+        api_json = _api_my_profile(client)
+        assert api_json['id'] == teacher.id
+        assert api_json['course']
+        assert api_json['courseGroups'] == []
+        assert api_json['isAdmin'] is False
+        assert api_json['isAuthenticated'] is True
+        assert api_json['isObserver'] is False
+        assert api_json['isStudent'] is False
+        assert api_json['isTeaching'] is True
 
 
 class TestGetUsers:

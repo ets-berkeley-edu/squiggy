@@ -35,6 +35,7 @@ from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, iso
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.course import Course
+from squiggy.models.course_group_membership import CourseGroupMembership
 from squiggy.models.whiteboard_user import whiteboard_user_table
 
 canvas_enrollment_state_type = ENUM(
@@ -223,6 +224,7 @@ class User(Base):
 
     def to_api_json(self, include_points=False, include_sharing=False):
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
+        group_memberships = CourseGroupMembership.find_by_course_and_user(course_id=self.course_id, canvas_user_id=self.canvas_user_id)
         json = {
             'id': self.id,
             'assets': [{'id': asset.id, 'title': asset.title} for asset in self.assets],
@@ -236,6 +238,7 @@ class User(Base):
             'canvasFullName': self.canvas_full_name,
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
+            'courseGroups': [g.to_api_json() for g in group_memberships],
             'personalDescription': self.personal_description,
             'lookingForCollaborators': self.looking_for_collaborators,
             'whiteboards': [{'id': w.id, 'title': w.title} for w in self.whiteboards],
