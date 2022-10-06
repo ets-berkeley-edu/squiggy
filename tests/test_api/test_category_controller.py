@@ -75,7 +75,7 @@ class TestDeleteCategory:
         fake_auth.login(student.id)
         assert client.delete(f'/api/category/{mock_category.id}/delete').status_code == 401
 
-    def test_delete_group(self, client, fake_auth, mock_category):
+    def test_delete_category(self, client, fake_auth, mock_category):
         """Teacher can delete category."""
         teacher = User.find_by_canvas_user_id(9876543)
         fake_auth.login(teacher.id)
