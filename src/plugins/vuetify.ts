@@ -44,7 +44,7 @@ export default new Vuetify( {
         'table-border': '#979797'
       },
       dark: {
-        primary: '#173c55',
+        primary: '#1B4663',
         secondary: '#2a5f83',
         accent: '#0d202c',
         error: colors.red.accent3,
