@@ -125,17 +125,17 @@ export default {
     }
   },
   methods: {
-    activityLabelDetails(element) {
-      element.selectAll('.label')
+    activityLabelDetails(yAxisGroup) {
+      yAxisGroup.selectAll('.tick text')
         .classed('activity-timeline-label-hoverable', true)
-        .on('mouseover', obj => {
-          this.activityType = obj.name.trim()
+        .on('mouseover', label => {
+          console.log('mouse over')
 
           var pageX = d3.event.pageX
           var pageY = d3.event.pageY
 
           var eventDetails = d3
-            .select('.activity-timeline-chart')
+            .select('#activity-timeline-chart')
             .append('div')
             .classed('details-popover', true)
             .classed('details-popover-label', true)
@@ -148,12 +148,24 @@ export default {
 
           var detailsDiv = document.createElement('div')
           // TODO add template HTML
-          detailsDiv.innerHTML = 'No details yet'
+          detailsDiv.innerHTML = '<div class="profile-activity-breakdown-popover-outer">'
+          detailsDiv.innerHTML += `<h4 class="profile-activity-breakdown-header">${this.translateLabel(label)}</h4>`
+          detailsDiv.innerHTML += '<div class="profile-activity-breakdown-popover-details">'
+          if (label === 'actions.engagements' || label === 'impacts.engagements') {
+            detailsDiv.innerHTML += 'Includes the activities: views and likes.'
+          } else if (label === 'actions.interactions' || label === 'impacts.interactions') {
+            detailsDiv.innerHTML += 'Includes the activities: comments and discussion posts.'
+          } else if (label === 'actions.creations') {
+            detailsDiv.innerHTML += 'Includes the activities: add new assets, add assets to whiteboard, export whiteboards, and remix whiteboards.'
+          } else if (label === 'impacts.creations') {
+            detailsDiv.innerHTML += 'Includes the activities: asset used in whiteboards and whiteboard remixed.'
+          }
+          detailsDiv.innerHTML += '</div></div>'
           eventDetails.append(() => detailsDiv)
           eventDetails.style('opacity', 1)
         })
         .on('mouseout', () => {
-          d3.select('.activity-timeline-chart').selectAll('.details-popover').remove()
+          d3.select('#activity-timeline-chart').selectAll('.details-popover').remove()
         })
     },
     drawTimeline(element) {
@@ -176,20 +188,7 @@ export default {
       var yAxis = g => g
         .attr('transform', `translate(${margin.left},0)`)
         .attr('class', 'activity-timeline-chart-ticks')
-        .call(d3.axisLeft(y).tickFormat(d => {
-          return this.$_.get({
-            actions: {
-              engagements: 'Views/Likes',
-              interactions: 'Interactions',
-              creations: 'Creations'
-            },
-            impacts: {
-              engagements: 'Views/Likes',
-              interactions: 'Interactions',
-              creations: 'Reuses'
-            }
-          }, d)
-        }))
+        .call(d3.axisLeft(y).tickFormat(this.translateLabel))
         .call(g => g.selectAll('.tick line').clone().attr('stroke-opacity', 0.1).attr('x2', this.timelineWidth - margin.right - margin.left))
         .call(g => g.selectAll('.domain').remove())
 
@@ -205,7 +204,9 @@ export default {
         .attr('width', this.timelineWidth + 'px')
 
       svg.append('g').call(xAxis)
-      svg.append('g').call(yAxis)
+
+      const yAxisGroup = svg.append('g').call(yAxis)
+      this.activityLabelDetails(yAxisGroup)
 
       const timeFormat = d3.timeFormat('%c')
 
@@ -221,11 +222,6 @@ export default {
         .attr('cy', d => y(d.label))
         .append('title')
         .text(d => ` ${d.type} ${timeFormat(d.date)}`)
-
-      this.element.selectAll('.label').classed('activity-timeline-label', true)
-      if (this.labelDetailsTemplate) {
-        this.activityLabelDetails(this.element)
-      }
 
       this.zoom = d3.zoom()
 
@@ -331,6 +327,20 @@ export default {
         this.fadeout(eventDetails)
       })
     },
+    translateLabel(label) {
+      return this.$_.get({
+        actions: {
+          engagements: 'Views/Likes',
+          interactions: 'Interactions',
+          creations: 'Creations'
+        },
+        impacts: {
+          engagements: 'Views/Likes',
+          interactions: 'Interactions',
+          creations: 'Reuses'
+        }
+      }, label)
+    },
     zoomDays(days, transition) {
       var scaleFactor = this.maxZoom / days
       var translateX = (1 - scaleFactor) * this.timelineWidth
@@ -406,27 +416,6 @@ export default {
     }
   },
   mounted() {
-    /* TODO
-    const labelDetailsTemplate = `
-    <div class="profile-activity-breakdown-popover-outer">
-      <h4 class="profile-activity-breakdown-header">{{ activityType }}</h4>
-      <div class="profile-activity-breakdown-popover-details">
-        <div v-if="activityType === 'Views/Likes'"
-          Includes the activities: views and likes.
-        </div>
-        <div v-if="activityType === 'Interactions'"
-          Includes the activities: comments and discussion posts.
-        </div>
-        <div v-if="activityType === 'Creations'"
-          Includes the activities: add new assets, add assets to whiteboard, export whiteboards, and remix whiteboards.
-        </div>
-        <div v-if="activityType === 'Reuses'"
-          Includes the activities: asset used in whiteboards and whiteboard remixed.
-        </div>
-      </div>
-    </div>`
-    */
-
     this.drawTimeline(document.getElementById('activity-timeline-chart'))
 
     // Redraw the timeline when the window is resized.
