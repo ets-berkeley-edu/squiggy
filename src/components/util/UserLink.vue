@@ -51,7 +51,11 @@ export default {
     destination: null
   }),
   created() {
-    if (this.$currentUser.course.impactStudioUrl) {
+    if (this.source === 'assetlibrary') {
+      this.destination = `/assets?userId=${this.user.id}`
+      this.ariaLabel = `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
+    }
+    else if (this.$currentUser.course.impactStudioUrl) {
       if (this.source === 'impactstudio') {
         this.destination = `/profile/user/${this.user.id}`
         this.ariaLabel = `View Impact Studio profile for ${this.user.canvasFullName}`
@@ -59,12 +63,7 @@ export default {
         this.crossToolLink = true
       }
     } else {
-      if (this.source === 'assetlibrary') {
-        this.destination = `/assets?userId=${this.user.id}`
-        this.ariaLabel = `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
-      } else {
-        this.crossToolLink = true
-      }
+      this.crossToolLink = true
     }
   }
 }
