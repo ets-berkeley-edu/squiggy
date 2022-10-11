@@ -100,7 +100,7 @@ const mutations = {
     _.each(state.users, (user: any) => {
       _.each(user.canvasCourseSections, (canvasCourseSection: string) => {
         const section = {text: canvasCourseSection, value: canvasCourseSection}
-        if (!_.find(state.sections, s => s.value = section.value)) {
+        if (!_.find(state.sections, s => s.value === section.value)) {
           state.sections.push(section)
         }
       })

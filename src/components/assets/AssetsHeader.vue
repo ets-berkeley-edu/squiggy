@@ -137,7 +137,7 @@
                     :dense="true"
                     :disabled="isBusy"
                     id-prefix="adv-search-section"
-                    :items="sections"
+                    :items="$_.orderBy(sections, 'text')"
                     item-text="text"
                     item-value="value"
                     label="Section"
