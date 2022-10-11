@@ -97,6 +97,11 @@
 </template>
 
 <script>
+import ActivityTimelineEventDetails from '@/components/impactstudio/ActivityTimelineEventDetails'
+import Vue from 'vue'
+
+const ActivityTimelineEventDetailsComponent = Vue.extend(ActivityTimelineEventDetails)
+
 const d3 = require('d3')
 
 export default {
@@ -109,10 +114,8 @@ export default {
   },
   data() {
     return {
-      activity: null,
       arrowOffset: 25,
       currentZoomPreset: null,
-      display: {},
       element: null,
       eventSeries: [],
       isZoomingToPreset: false,
@@ -129,8 +132,6 @@ export default {
       yAxisGroup.selectAll('.tick text')
         .classed('activity-timeline-label-hoverable', true)
         .on('mouseover', label => {
-          console.log('mouse over')
-
           var pageX = d3.event.pageX
           var pageY = d3.event.pageY
 
@@ -147,7 +148,6 @@ export default {
             .classed('left', true)
 
           var detailsDiv = document.createElement('div')
-          // TODO add template HTML
           detailsDiv.innerHTML = '<div class="profile-activity-breakdown-popover-outer">'
           detailsDiv.innerHTML += `<h4 class="profile-activity-breakdown-header">${this.translateLabel(label)}</h4>`
           detailsDiv.innerHTML += '<div class="profile-activity-breakdown-popover-details">'
@@ -210,7 +210,7 @@ export default {
 
       const timeFormat = d3.timeFormat('%c')
 
-      svg.append('g')
+      const eventsGroup = svg.append('g')
         .attr('fill', 'none')
         .attr('pointer-events', 'all')
         .selectAll('circle')
@@ -220,8 +220,10 @@ export default {
         .attr('r', 5)
         .attr('cx', d => x(d.date))
         .attr('cy', d => y(d.label))
-        .append('title')
-        .text(d => ` ${d.type} ${timeFormat(d.date)}`)
+        .on('mouseover', this.showEventDetails)
+        .on('mouseout', this.hideEventDetails)
+
+      eventsGroup.append('title').text(d => ` ${d.type} ${timeFormat(d.date)}`)
 
       this.zoom = d3.zoom()
 
@@ -253,33 +255,34 @@ export default {
     hideEventDetails() {
       this.fadeout(d3.select('.details-popover'))
     },
-    showEventDetail(activity) {
+    showEventDetails(activity) {
       // Hide any existing event details.
-      d3.select('.activity-timeline-chart').selectAll('.details-popover').remove()
-
-      this.activity = activity
+      d3.select('#activity-timeline-chart').selectAll('.details-popover').remove()
 
       // Format properties for display.
-      this.display = {
-        'date': d3.timeFormat('%B %d, %Y @ %H:%M')(new Date(activity.date))
+      const displayProperties = {
+        activityType: activity.type,
+        asset: activity.asset,
+        date: d3.timeFormat('%B %d, %Y @ %H:%M')(new Date(activity.date)),
+        user: activity.user
       }
 
       if (activity.asset) {
-        this.display.title = activity.asset.title
+        displayProperties.title = activity.asset.title
       } else {
-        this.display.title = this.description
+        displayProperties.title = this.description
       }
 
       if (activity.comment && activity.comment.body) {
-        this.display.comment = true
+        displayProperties.comment = activity.comment
         if (activity.comment.body.length > 100) {
-          this.display.snippet = activity.comment.body.substring(0, 100)
+          displayProperties.snippet = activity.comment.body.substring(0, 100)
         }
       }
 
       // The details window starts out hidden...
       var eventDetails = d3
-        .select('.activity-timeline-chart')
+        .select('#activity-timeline-chart')
         .append('div')
         .classed('details-popover', true)
         .classed('details-popover-activity', true)
@@ -311,10 +314,11 @@ export default {
         .classed(direction, true)
 
       eventDetails.append(() => {
-        var detailsDiv = document.createElement('div')
-        // TODO add template HTML
-        detailsDiv.innerHTML = 'No event details yet'
-        return detailsDiv
+        const eventDetailsComponent = new ActivityTimelineEventDetailsComponent({
+          propsData: displayProperties
+        })
+        eventDetailsComponent.$mount()
+        return eventDetailsComponent.$el
       })
 
       // Cancel pending fadeout if hovering over detail window.
@@ -532,83 +536,6 @@ export default {
 
 .details-popover.right::after {
   right: 15px;
-}
-
-.details-popover .details-popover-avatar {
-  background: #fff;
-  border: 1px solid #c2c8d0;
-  border-radius: 100%;
-  overflow: hidden;
-}
-
-.details-popover .details-popover-avatar img {
-  height: 100%;
-  width: 100%;
-}
-
-.details-popover .details-popover-avatar-large {
-  flex: 0 0 100px;
-  height: 100px;
-  margin-right: 15px;
-  width: 100px;
-}
-
-.details-popover .details-popover-avatar-small {
-  height: 50px;
-  left: 65px;
-  position: absolute;
-  top: 65px;
-  width: 50px;
-}
-
-.details-popover .details-popover-comment {
-  font-style: italic;
-}
-
-.details-popover .details-popover-container {
-  display: flex;
-  flex-direction: row;
-  position: relative;
-  z-index: 2;
-}
-
-.details-popover .details-popover-description {
-  color: #777;
-  font-size: 13px;
-}
-
-.details-popover .details-popover-strong {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.details-popover .details-popover-thumbnail {
-  border: 1px solid #c2c8d0;
-  height: 100px;
-  margin: 1px 25px 15px 1px;
-  width: 100px;
-}
-
-.details-popover .details-popover-thumbnail-default {
-  align-items: center;
-  background-color: #E8E8E8;
-  display: flex;
-  justify-content: center;
-}
-
-.details-popover .details-popover-thumbnail-default i {
-  color: #ADABAA;
-  font-size: 50px;
-}
-
-.details-popover .details-popover-timestamp {
-  color: #777;
-  font-size: 12px;
-}
-
-.details-popover .details-popover-title {
-  font-size: 15px;
-  margin-bottom: 10px;
 }
 
 profile-activity-timeline-legend {
