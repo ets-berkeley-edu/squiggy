@@ -71,3 +71,13 @@ class CourseGroup(Base):
         db.session.add(course_group)
         std_commit()
         return course_group
+
+    def to_api_json(self):
+        return {
+            'id': self.id,
+            'canvasGroupId': self.canvas_group_id,
+            'categoryName': self.category_name,
+            'courseId': self.course_id,
+            'name': self.name,
+            'label': f'{self.category_name} - {self.name}',
+        }

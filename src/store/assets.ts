@@ -10,6 +10,7 @@ function $_search(commit, state, addToExisting?: boolean) {
     getAssets({
       assetType: state.assetType,
       categoryId: state.categoryId,
+      groupId: state.groupId,
       keywords: state.keywords,
       limit: state.limit,
       offset: state.offset,
@@ -31,6 +32,7 @@ const state = {
   assetType: undefined,
   categories: undefined,
   categoryId: undefined,
+  groupId: undefined,
   isDirty: false,
   keywords: undefined,
   limit: 20,
@@ -48,6 +50,7 @@ const getters = {
   assetType: (state: any): string => state.assetType,
   categories: (state: any): any[] => state.categories,
   categoryId: (state: any): number => state.categoryId,
+  groupId: (state: any): string[] => state.groupId,
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
   limit: (state: any): number => state.limit,
@@ -72,6 +75,7 @@ const mutations = {
     state.isDirty = true
   },
   setDirty: (state: any, dirty: boolean) => state.isDirty = dirty,
+  setGroupId: (state: any, groupId: number) => state.groupId = groupId,
   setKeywords: (state: any, keywords: string) => {
     state.keywords = keywords
     state.isDirty = true
@@ -133,6 +137,7 @@ const actions = {
   search: ({commit, state}) => $_search(commit, state),
   setAssetType: ({commit}, assetType) => commit('setAssetType', assetType),
   setCategoryId: ({commit}, categoryId) => commit('setCategoryId', categoryId),
+  setGroupId: ({commit}, groupId) => commit('setGroupId', groupId),
   setKeywords: ({commit}, keywords) => commit('setKeywords', keywords),
   setOrderBy: ({commit}, orderBy) => commit('setOrderBy', orderBy),
   setUserId: ({commit}, userId) => commit('setUserId', userId),

@@ -18,6 +18,10 @@
       </v-list-item-content>
     </v-list-item>
     <v-list-item>
+      <v-list-item-content>Canvas Course Groups</v-list-item-content>
+      <v-list-item-content class="align-end">{{ oxfordJoin(canvasGroups) }}</v-list-item-content>
+    </v-list-item>
+    <v-list-item>
       <v-list-item-content>Notifications, Daily?</v-list-item-content>
       <v-list-item-content class="align-end">{{ displayBoolean(course.enableDailyNotifications) }}</v-list-item-content>
     </v-list-item>
@@ -106,12 +110,16 @@ export default {
   },
   data: () => ({
     allowMasquerade: undefined,
-    course: undefined
+    course: undefined,
+    canvasGroups: undefined
   }),
   created() {
     this.allowMasquerade = this.$config.developerAuthEnabled && (this.$currentUser.isAdmin || this.$config.isVueAppDebugMode)
     getCourse(this.courseId).then(course => {
       this.course = course
+      this.canvasGroups = this.$_.map(this.course.canvasGroups, canvasGroup => {
+        return `${canvasGroup.categoryName} - ${canvasGroup.name}`
+      })
     })
   },
   methods: {

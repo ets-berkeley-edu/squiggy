@@ -224,7 +224,10 @@ class User(Base):
 
     def to_api_json(self, include_points=False, include_sharing=False):
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
-        group_memberships = CourseGroupMembership.find_by_course_and_user(course_id=self.course_id, canvas_user_id=self.canvas_user_id)
+        group_memberships = CourseGroupMembership.find_by_course_and_user(
+            canvas_user_id=self.canvas_user_id,
+            course_id=self.course_id,
+        )
         json = {
             'id': self.id,
             'assets': [{'id': asset.id, 'title': asset.title} for asset in self.assets],
@@ -236,9 +239,9 @@ class User(Base):
             'canvasEmail': self.canvas_email,
             'canvasEnrollmentState': self.canvas_enrollment_state,
             'canvasFullName': self.canvas_full_name,
+            'canvasGroups': [g.to_api_json() for g in group_memberships],
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
-            'courseGroups': [g.to_api_json() for g in group_memberships],
             'personalDescription': self.personal_description,
             'lookingForCollaborators': self.looking_for_collaborators,
             'whiteboards': [{'id': w.id, 'title': w.title} for w in self.whiteboards],

@@ -171,6 +171,7 @@ class Course(Base):
             'canvas': canvas.to_api_json(),
             'canvasApiDomain': self.canvas_api_domain,
             'canvasCourseId': self.canvas_course_id,
+            'canvasGroups': [g.to_api_json() for g in self.groups],
             'enableDailyNotifications': self.enable_daily_notifications,
             'enableUpload': self.enable_upload,
             'enableWeeklyNotifications': self.enable_weekly_notifications,
