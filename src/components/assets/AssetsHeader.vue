@@ -145,6 +145,21 @@
                   />
                 </v-col>
               </v-row>
+              <v-row no-gutters>
+                <v-col v-if="$currentUser.course.canvasGroups.length" class="w-50">
+                  <AccessibleSelect
+                    :key="keyForSelectReset"
+                    :dense="true"
+                    :disabled="isBusy"
+                    id-prefix="adv-search-group-set"
+                    :items="$currentUser.course.canvasGroups"
+                    item-text="label"
+                    item-value="id"
+                    label="Group"
+                    @input="setGroupId"
+                  />
+                </v-col>
+              </v-row>
             </v-col>
           </v-row>
           <v-row no-gutters>
@@ -283,7 +298,7 @@ export default {
       this.alertType = null
     },
     fetch() {
-      if (this.assetType || this.categoryId || this.keywords || this.orderBy || this.section || this.userId) {
+      if (this.assetType || this.categoryId || this.groupId || this.keywords || this.orderBy || this.section || this.userId) {
         this.resetSearch()
         this.isBusy = true
         this.$announcer.polite('Searching')
@@ -302,6 +317,7 @@ export default {
     reset(openAdvancedSearch, fetchAgain) {
       this.setAssetType(null)
       this.setCategoryId(null)
+      this.setGroupId(null)
       this.setOrderBy(this.orderByDefault)
       this.setUserId(null)
       this.setSection(null)

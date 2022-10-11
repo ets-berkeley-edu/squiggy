@@ -65,9 +65,9 @@ class CourseGroupMembership(Base):
 
     def to_api_json(self):
         return {
+            'canvasGroupId': self.course_group_id,
+            'canvasGroupName': self.course_group.name,
             'canvasUserId': self.canvas_user_id,
             'categoryName': self.course_group.category_name,
-            'courseGroupId': self.course_group_id,
-            'courseGroupName': self.course_group.name,
             'courseId': self.course_id,
         }

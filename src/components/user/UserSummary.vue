@@ -17,6 +17,10 @@
       <v-list-item-content class="align-end">{{ oxfordJoin(user.canvasCourseSections) }}</v-list-item-content>
     </v-list-item>
     <v-list-item>
+      <v-list-item-content>Canvas Course Groups</v-list-item-content>
+      <v-list-item-content class="align-end">{{ oxfordJoin(canvasGroups) }}</v-list-item-content>
+    </v-list-item>
+    <v-list-item>
       <v-list-item-content>Canvas Course Role</v-list-item-content>
       <v-list-item-content class="align-end">{{ user.canvasCourseRole }}</v-list-item-content>
     </v-list-item>
@@ -46,6 +50,14 @@ export default {
       required: true,
       type: Object
     }
+  },
+  data: () => ({
+    canvasGroups: undefined
+  }),
+  created () {
+    this.canvasGroups = this.$_.map(this.user.canvasGroups, canvasGroup => {
+      return `${canvasGroup.categoryName} - ${canvasGroup.canvasGroupName}`
+    })
   },
   methods: {
     displayBoolean(b) {

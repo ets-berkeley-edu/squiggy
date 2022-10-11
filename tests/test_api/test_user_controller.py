@@ -77,7 +77,7 @@ class TestMyProfile:
         assert not api_json['isAdmin']
         assert not api_json.get('id')
         assert not api_json.get('course')
-        assert not api_json.get('courseGroups')
+        assert not api_json.get('canvasGroups')
 
     def test_admin_profile(self, client, fake_auth):
         admin = User.query.filter_by(canvas_course_role='Administrator', canvas_enrollment_state='active').first()
@@ -86,7 +86,7 @@ class TestMyProfile:
         assert api_json['id'] == admin.id
         course = api_json.get('course')
         assert course
-        assert api_json['courseGroups'] == []
+        assert api_json['canvasGroups'] == []
         canvas = course.get('canvas')
         assert canvas
         assert canvas['canvasApiDomain'] == 'bcourses.berkeley.edu'
@@ -102,12 +102,12 @@ class TestMyProfile:
         fake_auth.login(student.id)
         api_json = _api_my_profile(client)
         assert api_json['id'] == student.id
-        course_groups = api_json['courseGroups']
+        course_groups = api_json['canvasGroups']
         assert len(course_groups) == 1
         print(course_groups)
         assert course_groups[0]['canvasUserId'] == canvas_user_id
         assert course_groups[0]['categoryName'] == 'Happy Days Televisual Universe (HDTU)'
-        assert course_groups[0]['courseGroupName'] == 'Laverne & Shirley'
+        assert course_groups[0]['canvasGroupName'] == 'Laverne & Shirley'
         assert course_groups[0]['courseId'] == mock_course_group.course_id
         assert api_json['isAdmin'] is False
         assert api_json['isAuthenticated'] is True
@@ -122,7 +122,7 @@ class TestMyProfile:
         api_json = _api_my_profile(client)
         assert api_json['id'] == teacher.id
         assert api_json['course']
-        assert api_json['courseGroups'] == []
+        assert api_json['canvasGroups'] == []
         assert api_json['isAdmin'] is False
         assert api_json['isAuthenticated'] is True
         assert api_json['isObserver'] is False
