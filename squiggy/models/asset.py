@@ -538,15 +538,6 @@ def _build_where_clause(filters, include_hidden, params, session):
     if filters.get('section'):
         where_clause += ' AND (array_position(u.canvas_course_sections, :section) > 0)'
 
-    if filters.get('has_comments'):
-        where_clause += ' AND a.comment_count > 0'
-
-    if filters.get('has_likes'):
-        where_clause += ' AND a.likes > 0'
-
-    if filters.get('has_views'):
-        where_clause += ' AND a.views > 0'
-
     return where_clause
 
 
