@@ -87,7 +87,10 @@
             <v-text-field
               id="profile-personal-description-input"
               v-model="personalDescription"
+              counter
               label="Short Personal Description or Collaboration Interests"
+              maxlength="255"
+              :rules="[v => (!v || v.length <= 255) || 'Personal Description must be 255 characters or less']"
               solo
               @keydown.enter.prevent
             />
