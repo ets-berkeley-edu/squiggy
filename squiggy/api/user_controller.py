@@ -72,7 +72,8 @@ def update_personal_description():
     params = request.get_json()
     if 'personalDescription' not in params:
         raise BadRequestError('No personal description provided.')
-    current_user.user.update_personal_description(params['personalDescription'])
+    personal_description = params['personalDescription']
+    current_user.user.update_personal_description(personal_description[:255] if personal_description else None)
     return tolerant_jsonify(current_user.to_api_json())
 
 

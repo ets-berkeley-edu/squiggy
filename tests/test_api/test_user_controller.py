@@ -448,6 +448,16 @@ class TestUpdatePersonalDescription:
         profile = _api_my_profile(client)
         assert profile['personalDescription'] is None
 
+    def test_text_exceeds_max_length(self, client, fake_auth, authorized_user_id):
+        """Truncates the provided text at 255 characters."""
+        long_text = 'ʬ' * 256
+        expected_text = 'ʬ' * 255
+        fake_auth.login(authorized_user_id)
+        response = _api_update_personal_description(client, {'personalDescription': long_text})
+        assert response['personalDescription'] == expected_text
+        profile = _api_my_profile(client)
+        assert profile['personalDescription'] == expected_text
+
 
 class TestUpdateSharePoints:
 
