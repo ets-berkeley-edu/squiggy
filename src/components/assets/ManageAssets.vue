@@ -34,8 +34,8 @@ export default {
   components: {BackToAssetLibrary, ManageAssignments, ManageCategories},
   mixins: [Context, Utils],
   data: () => ({
-    assignments: undefined,
-    categories: undefined,
+    assignments: [],
+    categories: [],
     checkbox: undefined
   }),
   created() {
