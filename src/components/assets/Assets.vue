@@ -74,6 +74,7 @@ export default {
             this.consoleLog(`Bookmark-hash for /assets: ${JSON.stringify(bookmarkHash)}`)
             this.setAssetType(bookmarkHash.assetType)
             this.setCategoryId(bookmarkHash.categoryId)
+            this.setKeywords(bookmarkHash.keywords)
             this.setOrderBy(bookmarkHash.orderBy)
             this.setUserId(parseInt(bookmarkHash.userId, 10))
             this.$announcer.polite('Searching for matching assets')

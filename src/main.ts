@@ -3,7 +3,8 @@ import 'vuetify/dist/vuetify.min.css'
 import _ from 'lodash'
 import App from './App.vue'
 import axios from 'axios'
-import linkify from 'vue-linkify'
+import linkifyHtml from 'linkify-html'
+import 'linkify-plugin-hashtag'
 import HighchartsVue from 'highcharts-vue'
 import moment from 'moment-timezone'
 import router from './router'
@@ -34,7 +35,10 @@ Vue.use(VueAnnouncer)
 Vue.use(VueMoment, {moment})
 Vue.use(VueKinesis)
 
-Vue.directive('linkified', linkify)
+const linkifyDirective = (el, binding) => {
+  el.innerHTML = linkifyHtml(el.innerHTML, binding.value)
+}
+Vue.directive('linkified', linkifyDirective)
 
 // Axios
 axios.defaults.withCredentials = true

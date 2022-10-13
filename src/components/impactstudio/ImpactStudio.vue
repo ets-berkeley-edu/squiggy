@@ -69,10 +69,12 @@
             <span v-if="!user.lastActivity">Never</span>
           </div>
           <div v-if="!isEditingPersonalDescription" id="profile-personal-description" class="my-4">
-            <div>
-              {{ user.personalDescription }}
-            </div>
-            <div>
+            <div
+              v-linkified:options="linkifyOptions"
+              class="my-4 pt-1 pb-2"
+              v-html="user.personalDescription"
+            />
+            <div class="pt-3">
               <v-btn
                 v-if="isMyProfile"
                 id="profile-personal-description-edit-btn"
@@ -83,10 +85,11 @@
               </v-btn>
             </div>
           </div>
-          <div v-if="isEditingPersonalDescription" id="profile-personal-description-edit">
+          <div v-if="isEditingPersonalDescription" id="profile-personal-description-edit" class="my-4">
             <v-text-field
               id="profile-personal-description-input"
               v-model="personalDescription"
+              class="mt-4"
               counter
               label="Short Personal Description or Collaboration Interests"
               maxlength="255"
@@ -198,6 +201,7 @@ export default {
     findUserId: null,
     isMyProfile: false,
     isEditingPersonalDescription: false,
+    linkifyOptions: {},
     nextUser: null,
     personalDescription: null,
     previousUser: null,
@@ -210,6 +214,12 @@ export default {
   }),
   created() {
     this.$loading()
+    const baseUrl = this.$config.baseUrl
+    this.linkifyOptions = {
+      formatHref: {
+        hashtag: href => `${baseUrl}/assets#suitec_keywords=${href.substring(1)}`
+      }
+    }
     getUsers().then(data => {
       this.users = data
       const userId = parseInt(this.$route.params.id || this.$currentUser.id)
