@@ -123,9 +123,6 @@
             See how you and others are connected.
           </div>
         </div>
-        <div v-for="(interaction, index) in courseInteractions" :key="index">
-          {{ interaction }}
-        </div>
         <ActivityNetwork
           :course-interactions="courseInteractions"
           :user="user"
@@ -146,9 +143,6 @@
           v-if="showActivities"
           :activities="userActivities"
         />
-        <div v-if="!userActivities.length" class="mb-3">
-          No activity detected for this user.
-        </div>
       </div>
       <AssetSwimlane
         id-prefix="user-assets"

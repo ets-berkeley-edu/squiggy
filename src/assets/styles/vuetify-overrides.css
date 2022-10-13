@@ -8,6 +8,10 @@
   color: white;
 }
 
+.btn-narrow {
+  min-width: 0 !important;
+}
+
 .native-select {
   appearance: auto !important;
   border-style: solid !important;
