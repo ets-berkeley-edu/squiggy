@@ -1,95 +1,76 @@
 <template>
   <div>
-    <div class="d-flex">
-      <div class="profile-activity-timeline-legend hidden-xs">
-        <div class="profile-activity-timeline-legend-row">
-          <div class="profile-activity-timeline-legend-label">
-            Contributions
-            <div class="profile-activity-timeline-legend-label-explanation">Activities you do</div>
+    <div v-if="!eventSeries.length" id="activity-timeline-no-activity-detected">
+      No activity detected for this user.
+    </div>
+    <div v-if="eventSeries.length">
+      <div class="d-flex">
+        <div id="activity-timeline-legend" class="activity-timeline-legend">
+          <div class="activity-timeline-legend-row">
+            <div class="activity-timeline-legend-label">
+              Contributions
+              <div class="activity-timeline-legend-label-explanation">Activities you do</div>
+            </div>
+            <div class="activity-timeline-legend-bar activity-timeline-blue" />
           </div>
-          <div class="profile-activity-timeline-legend-bar activity-timeline-blue" />
-        </div>
-        <div class="profile-activity-timeline-legend-row">
-          <div class="profile-activity-timeline-legend-label">
-            Impacts
-            <div class="profile-activity-timeline-legend-label-explanation">Others responding to your activities</div>
+          <div class="activity-timeline-legend-row">
+            <div class="activity-timeline-legend-label">
+              Impacts
+              <div class="activity-timeline-legend-label-explanation">Others responding to your activities</div>
+            </div>
+            <div class="activity-timeline-legend-bar activity-timeline-red" />
           </div>
-          <div class="profile-activity-timeline-legend-bar activity-timeline-red" />
         </div>
+        <div id="activity-timeline-chart" class="activity-timeline-chart flex-grow-1 flex-shrink-0 mb-0" />
       </div>
-      <div id="activity-timeline-chart" class="flex-grow-1 flex-shrink-0" />
-    </div>
-    <!-- TODO footer controls don't work yet
-    <div class="activity-timeline-footer">
-      <div>
-        <v-btn @click="zoomRelative(2)">+</v-btn>
-        <v-btn :disabled="zoomScale === 1" @click="zoomRelative(0.5)">-</v-btn>
-      </div>
-      <div>
-        <strong>View by:</strong>
-        <button
-          :class="{'btn-link-disabled': currentZoomPreset === 'week'}"
-          :disabled="currentZoomPreset === 'week'"
-          @click="zoomPreset('week')"
-        >
-          Week
-        </button> |
-        <button
-          :class="{'btn-link-disabled': currentZoomPreset === 'month'}"
-          :disabled="currentZoomPreset === 'month'"
-          @click="zoomPreset('month')"
-        >
-          Month
-        </button>
-        <span v-if="zoomAllEnabled">|</span>
-        <button
-          v-if="zoomAllEnabled"
-          :class="{'btn-link-disabled': currentZoomPreset === 'all'}"
-          :disabled="currentZoomPreset === 'all'"
-          @click="zoomPreset('all')"
-        >
-          All
-        </button>
-      </div>
-    </div>
-    -->
-    <div id="activity-timeline-contributions" class="mb-3">
-      <h3>Contributions (activities you do)</h3>
-      <div>
-        <h4>Views/Likes</h4>
-        <div id="activity-timeline-actions-engagements" />
-        <div>
-          {{ activities.actions.engagements }}
+      <div class="activity-timeline-footer">
+        <div class="mx-4">
+          <strong>View by: </strong>
+          <button
+            id="activity-timeline-view-by-week-btn"
+            :class="{'btn-link-disabled': currentZoomPreset === 'week'}"
+            :disabled="currentZoomPreset === 'week'"
+            @click="zoomPreset('week')"
+          >
+            Week
+          </button> |
+          <button
+            id="activity-timeline-view-by-month-btn"
+            :class="{'btn-link-disabled': currentZoomPreset === 'month'}"
+            :disabled="currentZoomPreset === 'month'"
+            @click="zoomPreset('month')"
+          >
+            Month
+          </button>
+          <span v-if="zoomAllEnabled">|</span>
+          <button
+            v-if="zoomAllEnabled"
+            id="activity-timeline-view-by-all-btn"
+            :class="{'btn-link-disabled': currentZoomPreset === 'all'}"
+            :disabled="currentZoomPreset === 'all'"
+            @click="zoomPreset('all')"
+          >
+            All
+          </button>
         </div>
-        <h4>Interactions</h4>
-        <div id="activity-timeline-actions-interactions" />
         <div>
-          {{ activities.actions.interactions }}
-        </div>
-        <h4>Creations</h4>
-        <div id="activity-timeline-actions-creations" />
-        <div>
-          {{ activities.actions.creations }}
-        </div>
-      </div>
-    </div>
-    <div id="activity-timeline-impacts" class="mb-3">
-      <h3>Impacts (others responding to your activities)</h3>
-      <div>
-        <h4>Views/Likes</h4>
-        <div id="activity-timeline-impacts-engagements" />
-        <div>
-          {{ activities.impacts.engagements }}
-        </div>
-        <h4>Interactions</h4>
-        <div id="activity-timeline-impacts-interactions" />
-        <div>
-          {{ activities.impacts.interactions }}
-        </div>
-        <h4>Reuses</h4>
-        <div id="activity-timeline-impacts-creations" />
-        <div>
-          {{ activities.impacts.creations }}
+          <v-btn
+            id="activity-timeline-zoom-in-btn"
+            outlined
+            class="btn-narrow px-3 mx-1"
+            @click="zoomRelative(2)"
+          >
+            +
+          </v-btn>
+          <v-btn
+            id="activity-timeline-zoom-out-btn"
+            outlined
+            class="btn-narrow px-3 mx-1"
+            :disabled="zoomScale === 1.0"
+            @click="zoomRelative(0.5)"
+          >
+            -
+          </v-btn>
         </div>
       </div>
     </div>
@@ -169,63 +150,95 @@ export default {
         })
     },
     drawTimeline(element) {
+      // Clear out any previously drawn timeline.
+
       this.element = d3.select(element)
       this.element.selectAll('*').remove()
 
-      var margin = ({top: 0, right: 10, bottom: 10, left: 100})
-      var height = 260
+      // Set initial dimensions and draw container elements.
+
+      const margin = ({top: 0, right: 10, bottom: 0, left: 100})
+      const height = 240
       this.timelineWidth = this.element.node().getBoundingClientRect().width
-
-      var y = d3.scalePoint()
-        .domain(['actions.engagements', 'actions.interactions', 'actions.creations', 'impacts.engagements', 'impacts.interactions', 'impacts.creations'])
-        .rangeRound([margin.top, height - margin.bottom])
-        .padding(1)
-
-      var x = d3.scaleTime()
-        .domain([this.start, this.end])
-        .rangeRound([margin.left + 10, this.timelineWidth - margin.right])
-
-      var yAxis = g => g
-        .attr('transform', `translate(${margin.left},0)`)
-        .attr('class', 'activity-timeline-chart-ticks')
-        .call(d3.axisLeft(y).tickFormat(this.translateLabel))
-        .call(g => g.selectAll('.tick line').clone().attr('stroke-opacity', 0.1).attr('x2', this.timelineWidth - margin.right - margin.left))
-        .call(g => g.selectAll('.domain').remove())
-
-      var xAxis = g => g
-        .attr('transform', 'translate(0,20)')
-        .attr('class', 'activity-timeline-chart-ticks')
-        .call(d3.axisTop(x).ticks(8))
-        .call(g => g.selectAll('.tick line').clone().attr('stroke-opacity', 0.1).attr('y2', height - margin.bottom - margin.top))
-        .call(g => g.selectAll('.domain').remove())
 
       const svg = this.element.append('svg')
         .attr('height', height + 'px')
         .attr('width', this.timelineWidth + 'px')
 
-      svg.append('g').call(xAxis)
+      svg
+        .append('svg:defs')
+        .append('svg:clipPath')
+        .attr('id', 'clip-inner')
+        .append('svg:rect')
+        .attr('id', 'clip-rect-inner')
+        .attr('x', 100)
+        .attr('y', 0)
+        .attr('width', this.timelineWidth - 100 + 'px')
+        .attr('height', height + 'px')
 
+      // Define axis behavior.
+
+      const x = d3.scaleTime()
+        .domain([this.start, this.end])
+        .rangeRound([margin.left, this.timelineWidth - margin.right])
+
+      const x0 = x.copy()
+
+      const y = d3.scalePoint()
+        .domain(['actions.engagements', 'actions.interactions', 'actions.creations', 'impacts.engagements', 'impacts.interactions', 'impacts.creations'])
+        .rangeRound([0, height+10])
+        .padding(1)
+
+      var xAxis = g => g
+        .attr('transform', 'translate(0,20)')
+        .attr('class', 'activity-timeline-chart-ticks')
+        .call(d3.axisTop(x).ticks(8))
+        .call(g => g.selectAll('.domain').remove())
+
+      var yAxis = g => g
+        .attr('transform', `translate(${margin.left},0)`)
+        .attr('class', 'activity-timeline-chart-ticks')
+        .call(d3.axisLeft(y).tickFormat(this.translateLabel))
+        .call(g => g.selectAll('.tick line').attr('stroke-opacity', 0.1).attr('x2', this.timelineWidth - margin.right - margin.left))
+        .call(g => g.selectAll('.domain').remove())
+
+      const xAxisGroup = svg.append('g').call(xAxis)
       const yAxisGroup = svg.append('g').call(yAxis)
       this.activityLabelDetails(yAxisGroup)
 
-      const timeFormat = d3.timeFormat('%c')
+      // Plot events.
 
-      const eventsGroup = svg.append('g')
+      svg.append('g')
         .attr('fill', 'none')
         .attr('pointer-events', 'all')
+        .attr('clip-path', 'url(#clip-inner)')
         .selectAll('circle')
         .data(this.eventSeries)
         .join('circle')
         .attr('stroke', d => this.$_.startsWith(d.label, 'actions') ? '#8dcffd' : '#fea5a0')
         .attr('r', 5)
+        .attr('class', 'event')
         .attr('cx', d => x(d.date))
         .attr('cy', d => y(d.label))
         .on('mouseover', this.showEventDetails)
         .on('mouseout', this.hideEventDetails)
 
-      eventsGroup.append('title').text(d => ` ${d.type} ${timeFormat(d.date)}`)
+      // Define zoom behavior.
 
       this.zoom = d3.zoom()
+        .scaleExtent([1, 50])
+        .translateExtent([[0, 0], [this.timelineWidth, height]])
+        .extent([[0, 0], [this.timelineWidth, height]])
+        .on('zoom', function() {
+          var transform = d3.event.transform
+          x.domain(transform.rescaleX(x0).domain())
+          // Redraw x-axis.
+          xAxisGroup.call(d3.axisTop(x).ticks(8))
+          // Adjust horizontal position of events.
+          svg.selectAll('circle.event').attr('cx', d => x(d.date))
+          // Store the new zoom scale for future reference.
+          this.zoomScale = transform.k
+        })
 
       this.isZoomingToPreset = false
 
@@ -236,8 +249,6 @@ export default {
         } else {
           this.isZoomingToPreset = false
         }
-        // Update with the current zoom scale.
-        this.zoomScale = d3.zoomTransform(this.element.select('.chart-wrapper').node()).k
       })
 
       // Initial zoom level depends on how much activity there is to see.
@@ -246,9 +257,12 @@ export default {
       } else {
         this.zoomPreset('all', false)
       }
+
+      this.element.call(this.zoom)
     },
     fadeout(element) {
-      element.transition(d3.transition().duration(500))
+      element
+        .transition(d3.transition().duration(500))
         .on('end', this.remove)
         .style('opacity', 0)
     },
@@ -369,14 +383,14 @@ export default {
       this.currentZoomPreset = preset
     },
     zoomRelative(scale) {
-      this.zoomTransition().call(this.zoom.scaleBy, scale)
+      var t = this.zoomTransition()
+      this.zoom.scaleBy(t, scale)
     },
     zoomTransition(transition) {
-      var wrapper = this.element.select('.chart-wrapper')
       if (transition === false) {
-        return wrapper
+        return this.element
       } else {
-        return wrapper.transition().duration(300)
+        return this.element.transition().duration(300)
       }
     }
   },
@@ -453,6 +467,10 @@ export default {
 
 .activity-timeline-chart {
   flex: 1;
+  cursor: pointer; /* fallback if grab cursor is unsupported */
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+  cursor: grab;
 }
 
 .activity-timeline-chart-ticks {
@@ -460,9 +478,10 @@ export default {
 }
 
 .activity-timeline-footer {
+  align-items: center;
   display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
+  justify-content: right;
+  margin-top: 0px;
   padding-left: 130px;
 }
 
@@ -476,15 +495,48 @@ export default {
   fill: #4172b4;
 }
 
-.activity-timeline-red {
-  background-color: #fea5a0;
+activity-timeline-legend {
+  padding-top: 60px;
+  width: 124px;
 }
 
-.chart-wrapper {
-  cursor: pointer; /* fallback if grab cursor is unsupported */
-  cursor: -moz-grab;
-  cursor: -webkit-grab;
-  cursor: grab;
+.activity-timeline-legend-bar {
+  display: table-cell;
+  flex: 4px;
+}
+
+.activity-timeline-legend-label {
+  align-self: center;
+  flex: 120px;
+  font-size: 13px;
+  font-weight: 600;
+  padding-right: 10px;
+  text-align: left;
+}
+
+.activity-timeline-legend-label-explanation {
+  font-weight: 300;
+}
+
+.activity-timeline-legend-label-small {
+  text-align: right;
+}
+
+.activity-timeline-legend-row {
+  display: flex;
+  height: 120px;
+  padding: 8px 0;
+  width: 124px;
+}
+
+.activity-timeline-legend-small {
+  display: flex;
+  margin: 0 0 15px 120px;
+  width: 280px;
+}
+
+.activity-timeline-red {
+  background-color: #fea5a0;
 }
 
 .details-popover {
@@ -536,45 +588,5 @@ export default {
 
 .details-popover.right::after {
   right: 15px;
-}
-
-profile-activity-timeline-legend {
-  padding-top: 60px;
-  width: 124px;
-}
-
-.profile-activity-timeline-legend-bar {
-  display: table-cell;
-  flex: 4px;
-}
-
-.profile-activity-timeline-legend-label {
-  align-self: center;
-  flex: 120px;
-  font-size: 13px;
-  font-weight: 600;
-  padding-right: 10px;
-  text-align: left;
-}
-
-.profile-activity-timeline-legend-label-explanation {
-  font-weight: 300;
-}
-
-.profile-activity-timeline-legend-label-small {
-  text-align: right;
-}
-
-.profile-activity-timeline-legend-row {
-  display: flex;
-  height: 120px;
-  padding: 8px 0;
-  width: 124px;
-}
-
-.profile-activity-timeline-legend-small {
-  display: flex;
-  margin: 0 0 15px 120px;
-  width: 280px;
 }
 </style>
