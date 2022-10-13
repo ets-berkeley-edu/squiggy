@@ -31,7 +31,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
 from sqlalchemy.sql import desc
 from squiggy import db, std_commit
-from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, to_int, utc_now
+from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, to_int
 from squiggy.models.asset_user import asset_user_table
 from squiggy.models.base import Base
 from squiggy.models.course import Course
@@ -66,7 +66,7 @@ class User(Base):
     points = db.Column(db.Integer, default=0, nullable=False)
     share_points = db.Column(db.Boolean, default=None)
     looking_for_collaborators = db.Column(db.Boolean, default=False, nullable=False)
-    last_activity = db.Column(db.DateTime, nullable=False, default=utc_now)
+    last_activity = db.Column(db.DateTime, default=None)
 
     assets = db.relationship(
         'Asset',
