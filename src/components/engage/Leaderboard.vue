@@ -73,7 +73,7 @@
         </div>
       </template>
       <template #item.lastActivity="{ item }">
-        {{ item.lastActivity ? new Date(item.lastActivity).toLocaleString() : '' }}
+        {{ item.lastActivity | moment('from', 'now') }}
       </template>
       <template #item.lookingForCollaborators="{ item }">
         <div align="center">
