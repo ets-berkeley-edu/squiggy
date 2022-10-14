@@ -230,13 +230,16 @@ export default {
           getUserActivities(this.user.id).then(data => {
             this.userActivities = data
             this.showActivities = true
+            this.$nextTick(this.resizeIFrame)
           })
         }
         getCourseInteractions().then(data => {
           this.courseInteractions = data
+          this.$nextTick(this.resizeIFrame)
         })
       }
       this.$ready()
+      this.$nextTick(this.resizeIFrame)
     })
   },
   methods: {

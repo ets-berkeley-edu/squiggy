@@ -67,7 +67,7 @@ export default {
       return (`${substitutions[count] || substitutions['other'] || count} ` + (count === 1 ? noun : `${noun}${pluralSuffix}`))
     },
     resizeIFrame() {
-      if (this.isInIframe && Vue.prototype.$supportsCustomMessaging) {
+      if (this.isInIframe) {
         // If Canvas instance supports custom messaging then send our custom 'changeParent' event.
         const generator = () => ({
           height: document.body.offsetHeight,
