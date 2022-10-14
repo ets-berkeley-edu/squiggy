@@ -65,7 +65,7 @@
           </div>
           <div id="profile-last-activity">
             Last activity:
-            <span v-if="user.lastActivity">{{ user.lastActivity | moment('lll') }}</span>
+            <span v-if="user.lastActivity">{{ user.lastActivity | moment('from', 'now') }}</span>
             <span v-if="!user.lastActivity">Never</span>
           </div>
           <div v-if="!isEditingPersonalDescription" id="profile-personal-description" class="my-4">

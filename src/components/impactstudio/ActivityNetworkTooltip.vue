@@ -42,7 +42,7 @@
           </div>
         </a>
         Last activity:
-        <span v-if="selectedUser.lastActivity">{{ selectedUser.lastActivity | moment('lll') }}</span>
+        <span v-if="selectedUser.lastActivity">{{ selectedUser.lastActivity | moment('from', 'now') }}</span>
         <span v-if="!selectedUser.lastActivity">Never</span>
       </div>
       <div v-if="selectedUser.lookingForCollaborators" class="profile-activity-network-tooltip-content">
