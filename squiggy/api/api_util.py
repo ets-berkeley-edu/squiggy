@@ -153,7 +153,6 @@ def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
         raise BadRequestError('socket_id is required')
 
     queue_for_preview_image = False
-    all_existing_whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id)
     results = []
     for whiteboard_element in whiteboard_elements:
         element = whiteboard_element.get('element') if whiteboard_element else None
@@ -167,10 +166,8 @@ def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
                 whiteboard_id=whiteboard_id,
             )
         else:
-            if len(all_existing_whiteboard_elements):
-                next_available_z_index = max([w.z_index for w in all_existing_whiteboard_elements]) + 1
-            else:
-                next_available_z_index = 0
+            z_indexes = [w.z_index for w in WhiteboardElement.find_by_whiteboard_id(whiteboard_id)]
+            next_available_z_index = max(z_indexes) + 1 if z_indexes else 0
             upserted = _create_whiteboard_element(
                 asset_id=whiteboard_element.get('assetId'),
                 element=element,
