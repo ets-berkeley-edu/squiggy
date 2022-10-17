@@ -30,6 +30,7 @@ from flask_login import current_user, login_required
 from flask_socketio import emit
 from squiggy.api.api_util import can_view_asset, get_socket_io_room, SOCKET_IO_NAMESPACE
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
+from squiggy.lib.file_remover import file_remover
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import is_student, isoformat, local_now
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
@@ -138,11 +139,14 @@ def export_as_png(whiteboard_id):
     filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
     png_file = to_png_file(whiteboard)
     if png_file:
-        return send_file(
+        path_to_file = png_file.name
+        response = send_file(
             as_attachment=True,
-            attachment_filename=f'{filename}_{now}.png',
-            path_or_file=png_file.name,
+            download_name=f'{filename}_{now}.png',
+            path_or_file=path_to_file,
         )
+        file_remover.clean_up_when_done(response, path_to_file)
+        return response
     else:
         raise BadRequestError('Failed to generate whiteboard PNG')
 
