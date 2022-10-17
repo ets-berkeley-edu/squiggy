@@ -58,6 +58,7 @@
                 <th>Id</th>
                 <th>Name</th>
                 <th>Role</th>
+                <th v-if="course.protectsAssetsPerSection">Sections</th>
                 <th v-if="allowMasquerade">Action</th>
               </tr>
             </thead>
