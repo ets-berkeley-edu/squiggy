@@ -4,6 +4,7 @@
     :close-on-content-click="false"
     max-width="500"
     scrollable
+    @click:outside="reset"
   >
     <template #activator="{on, attrs}">
       <v-btn
@@ -166,10 +167,12 @@ export default {
   methods: {
     onClickCancel() {
       this.dialog = false
+      this.reset()
       this.$announcer.polite('Canceled')
     },
     onClickClose() {
       this.dialog = false
+      this.reset()
       this.$announcer.polite('Closed')
     },
     onClickSave() {
@@ -189,6 +192,13 @@ export default {
         })
       }
     },
+    reset() {
+      this.asset = {
+        categoryId: undefined,
+        description: '',
+        title: ''
+      }
+    }
   }
 }
 </script>
