@@ -91,6 +91,7 @@
                   />
                 </v-avatar>
                 {{ data.item.canvasFullName }}
+                <v-subheader v-if="showCourseSections(data.item)" class="text--secondary pa-0">&nbsp;({{ data.item.canvasCourseSections.join(', ') }})</v-subheader>
               </v-chip>
             </template>
             <template #item="data">
@@ -116,6 +117,7 @@
                 <v-list-item-content>
                   <v-list-item-title v-html="data.item.canvasFullName"></v-list-item-title>
                   <v-list-item-subtitle v-html="data.item.group"></v-list-item-subtitle>
+                  <v-list-item-subtitle v-if="showCourseSections(data.item)" v-html="data.item.canvasCourseSections.join(', ')"></v-list-item-subtitle>
                 </v-list-item-content>
               </template>
             </template>
@@ -316,6 +318,11 @@ export default {
           createWhiteboard(this.title, this.selectedUserIds).then(done)
         }
       }
+    },
+    showCourseSections(user) {
+      return this.$currentUser.course.protectsAssetsPerSection
+        && this.$_.size(user.canvasCourseSections)
+        && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
     }
   }
 }
