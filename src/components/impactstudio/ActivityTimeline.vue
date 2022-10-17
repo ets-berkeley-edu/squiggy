@@ -42,7 +42,7 @@
           >
             Month
           </button>
-          <span v-if="zoomAllEnabled">|</span>
+          <span v-if="zoomAllEnabled"> | </span>
           <button
             v-if="zoomAllEnabled"
             id="activity-timeline-view-by-all-btn"
@@ -84,6 +84,8 @@ import Vue from 'vue'
 const ActivityTimelineEventDetailsComponent = Vue.extend(ActivityTimelineEventDetails)
 
 const d3 = require('d3')
+
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24
 
 export default {
   name: 'ActivityTimeline',
@@ -149,10 +151,14 @@ export default {
           d3.select('#activity-timeline-chart').selectAll('.details-popover').remove()
         })
     },
-    drawTimeline(element) {
-      // Clear out any previously drawn timeline.
+    drawTimeline() {
+      // Draw no timeline if nothing to draw.
+      if (!this.eventSeries.length) return
+      const chart = document.getElementById('activity-timeline-chart')
+      if (!chart) return
 
-      this.element = d3.select(element)
+      // Clear out any previously drawn timeline.
+      this.element = d3.select(chart)
       this.element.selectAll('*').remove()
 
       // Set initial dimensions and draw container elements.
@@ -268,6 +274,20 @@ export default {
     },
     hideEventDetails() {
       this.fadeout(d3.select('.details-popover'))
+    },
+    parseEvents(category) {
+      this.$_.forOwn(this.activities[category], (eventSeries, key) => {
+        if (eventSeries.length) {
+          var firstEventDate = new Date(eventSeries[0].date)
+          // If pushing back the start date, set to one day before the first event for visual padding.
+          this.start = this.$_.min([this.start, firstEventDate - MILLISECONDS_PER_DAY])
+        }
+        this.$_.each(eventSeries, e => {
+          var event = {label: `${category}.${key}`, ...e}
+          event.date = new Date(event.date)
+          this.eventSeries.push(event)
+        })
+      })
     },
     showEventDetails(activity) {
       // Hide any existing event details.
@@ -395,30 +415,12 @@ export default {
     }
   },
   created() {
-    const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24
-
     // Default to showing at least one week of activity, even if no events go back that far.
     this.start = Date.now() - (7 * MILLISECONDS_PER_DAY)
     this.end = Date.now()
 
-    this.$_.forOwn(this.activities.actions, (eventSeries, key) => {
-      if (eventSeries.length) {
-        var firstEventDate = new Date(eventSeries[0].date)
-        this.start = this.$_.min([this.start, firstEventDate])
-      }
-      this.$_.each(eventSeries, e => {
-        var event = {label: `actions.${key}`, ...e}
-        event.date = new Date(event.date)
-        this.eventSeries.push(event)
-      })
-    })
-    this.$_.forOwn(this.activities.impacts, (eventSeries, key) => {
-      if (eventSeries.length) {
-        var firstEventDate = new Date(eventSeries[0].date)
-        this.start = this.$_.min([this.start, firstEventDate])
-      }
-      this.$_.each(eventSeries, e => eventSeries.push({label: `impacts.${key}`, ...e}))
-    })
+    this.parseEvents('actions')
+    this.parseEvents('impacts')
 
     this.totalDays = parseFloat(this.end - this.start) / MILLISECONDS_PER_DAY
 
@@ -434,12 +436,8 @@ export default {
     }
   },
   mounted() {
-    this.drawTimeline(document.getElementById('activity-timeline-chart'))
-
-    // Redraw the timeline when the window is resized.
-    d3.select(window).on('resize', () => {
-      this.drawTimeline(document.getElementById('activity-timeline-chart'))
-    })
+    this.drawTimeline()
+    d3.select(window).on('resize', this.drawTimeline)
   }
 }
 </script>
