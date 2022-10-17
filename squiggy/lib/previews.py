@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import base64
 import hashlib
 import hmac
+import os
 import re
 
 from flask import current_app as app
@@ -74,7 +75,8 @@ def generate_whiteboard_preview(whiteboard):
     if app.config['PREVIEWS_ENABLED']:
         png_file = to_png_file(whiteboard)
         now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
-        with open(png_file.name, mode='rb') as f:
+        file_name = png_file.name
+        with open(file_name, mode='rb') as f:
             filename = re.sub(r'[^a-zA-Z0-9]', '_', whiteboard['title'])
             s3_attrs = upload_to_s3(
                 byte_stream=f.read(),
@@ -88,6 +90,7 @@ def generate_whiteboard_preview(whiteboard):
             ):
                 # TODO: If preview-image status is needed then the 'whiteboards' table needs 'preview_status' column.
                 pass
+        os.remove(file_name)
 
 
 def get_s3_key_prefix(course_id, object_type):
