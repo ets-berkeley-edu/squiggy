@@ -638,11 +638,11 @@ export default {
 }
 
 .profile-activity-network .node-unconnected text {
-  fill: #bbb;
+  fill: #999;
 }
 
 .profile-activity-network .node-unconnected circle {
-  stroke: #ddd;
+  stroke: #bbb;
 }
 
 .profile-activity-network .node-looking-for-collaborators circle {
