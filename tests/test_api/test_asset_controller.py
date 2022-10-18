@@ -104,6 +104,22 @@ class TestGetAsset:
         fake_auth.login(section_b_student.id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client, expected_status_code=404)
 
+    def test_view_public_asset_protected_course(self, client, fake_auth, mock_asset_course, authorized_user_id):
+        """Student in an asset-siloed course can view assets created by instructors."""
+        course = mock_asset_course
+        course.protects_assets_per_section = True
+
+        fake_auth.login(authorized_user_id)
+        api_json = TestCreateAsset._api_create_link_asset(client)
+
+        student = User.query.filter_by(course_id=course.id, canvas_course_role='Student')[1]
+        fake_auth.login(student.id)
+        asset_feed = _api_get_asset(asset_id=api_json['id'], client=client)
+        assert asset_feed['id'] == api_json['id']
+
+        fake_auth.login(authorized_user_id)
+        TestDeleteAsset._api_delete_asset(api_json['id'], client)
+
 
 class TestDownloadAsset:
 
