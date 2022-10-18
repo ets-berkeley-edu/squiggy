@@ -232,7 +232,7 @@ export default {
       // Define zoom behavior.
 
       this.zoom = d3.zoom()
-        .scaleExtent([1, 50])
+        .scaleExtent([1, 2000])
         .translateExtent([[0, 0], [this.timelineWidth, height]])
         .extent([[0, 0], [this.timelineWidth, height]])
         .on('zoom', function() {
