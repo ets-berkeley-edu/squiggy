@@ -36,7 +36,11 @@ Vue.use(VueMoment, {moment})
 Vue.use(VueKinesis)
 
 const linkifyDirective = (el, binding) => {
-  el.innerHTML = linkifyHtml(el.innerHTML, binding.value)
+  const options = {
+    defaultProtocol: 'https'
+  }
+  _.assign(options, binding.value)
+  el.innerHTML = linkifyHtml(el.innerHTML, options)
 }
 Vue.directive('linkified', linkifyDirective)
 
