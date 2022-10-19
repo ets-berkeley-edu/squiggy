@@ -477,6 +477,8 @@ class CanvasPoller(BackgroundJob):
                     f'Failed to create file asset for an attachment: '
                     f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
                 logger.exception(e)
+                logger.debug(attachment)
+                logger.debug(submission)
 
     def poll_discussions(self, db_course, api_course, users_by_canvas_id):
         discussion_topics = list(api_course.get_discussion_topics())
