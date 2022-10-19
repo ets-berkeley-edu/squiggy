@@ -445,10 +445,10 @@ class CanvasPoller(BackgroundJob):
             f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
         for attachment in getattr(submission, 'attachments', []):
             try:
-                if attachment['size'] > 10485760:
+                if attachment.size > 10485760:
                     logger.debug('Attachment too large, will not process.')
                     continue
-                existing_submission_asset = file_submission_tracker.get(attachment['id'], None)
+                existing_submission_asset = file_submission_tracker.get(attachment.id, None)
                 if existing_submission_asset:
                     logger.debug(f'Adding new user to existing file asset: user {user.canvas_user_id}, asset {existing_submission_asset.id}.')
                     existing_submission_asset.users.append(user)
@@ -456,11 +456,11 @@ class CanvasPoller(BackgroundJob):
                     std_commit()
                 else:
                     s3_attrs = upload_to_s3(
-                        filename=attachment['display_name'],
-                        byte_stream=urlopen(attachment['url']).read(),
+                        filename=attachment.display_name,
+                        byte_stream=urlopen(attachment.url).read(),
                         s3_key_prefix=get_s3_key_prefix(course.id, 'asset'),
                     )
-                    file_submission_tracker[attachment['id']] = Asset.create(
+                    file_submission_tracker[attachment.id] = Asset.create(
                         asset_type='file',
                         canvas_assignment_id=assignment.id,
                         categories=[category],
@@ -468,7 +468,7 @@ class CanvasPoller(BackgroundJob):
                         created_by=user.id,
                         download_url=s3_attrs.get('download_url', None),
                         mime=s3_attrs.get('content_type', None),
-                        title=attachment['display_name'],
+                        title=attachment.display_name,
                         users=[user],
                         create_activity=False,
                     )
@@ -477,8 +477,6 @@ class CanvasPoller(BackgroundJob):
                     f'Failed to create file asset for an attachment: '
                     f'user {user.canvas_user_id}, submission {submission.id}, assignment {assignment.id}, {_format_course(course)}')
                 logger.exception(e)
-                logger.debug(attachment)
-                logger.debug(submission)
 
     def poll_discussions(self, db_course, api_course, users_by_canvas_id):
         discussion_topics = list(api_course.get_discussion_topics())
