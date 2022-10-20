@@ -46,6 +46,9 @@
   margin-bottom: 2px;
   margin-left: 2px;
 }
+.position-relative {
+  position: relative;
+}
 .sr-only {
   position: absolute;
   left: -10000px;
