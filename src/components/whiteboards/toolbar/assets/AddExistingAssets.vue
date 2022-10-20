@@ -2,7 +2,6 @@
   <v-dialog
     v-model="dialog"
     fullscreen
-    scrollable
   >
     <template #activator="activator">
       <v-tooltip bottom :disabled="mode === 'assets'">
@@ -116,16 +115,17 @@ import AssetCard from '@/components/assets/AssetCard'
 import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
+import InfiniteScrolling from '@/mixins/InfiniteScrolling'
 import Utils from '@/mixins/Utils'
 import Whiteboarding from '@/mixins/Whiteboarding'
 
 export default {
   name: 'AddExistingAssets',
   components: {AssetCard, AssetsHeader},
-  mixins: [AssetsSearch, Context, Utils, Whiteboarding],
+  mixins: [AssetsSearch, Context, InfiniteScrolling, Utils, Whiteboarding],
   data: () => ({
-    allAssetsLoaded: false,
     dialog: false,
+    isComplete: false,
     isDialogReady: false,
     isSaving: false,
     selectedAssetIds: [],
@@ -133,20 +133,16 @@ export default {
   }),
   computed: {
     assetGrid() {
-      if (this.isDialogReady) {
-        this.checkAssetsLoaded()
-        if (this.allAssetsLoaded) {
-          return this.assets
-        } else {
-          let skeletonCount = 10
-          if (this.totalAssetCount && (this.totalAssetCount - this.assets.length) < skeletonCount) {
-            skeletonCount = Math.max(0, this.totalAssetCount - this.assets.length)
-          }
-          this.nextPage()
-          return (this.assets || []).concat(this.getSkeletons(skeletonCount))
-        }
-      } else {
+      if (!this.isDialogReady) {
         return this.getSkeletons(20)
+      } else if (this.isComplete) {
+        return this.assets
+      } else {
+        let skeletonCount = 10
+        if (this.totalAssetCount && (this.totalAssetCount - this.assets.length) < skeletonCount) {
+          skeletonCount = Math.max(0, this.totalAssetCount - this.assets.length)
+        }
+        return (this.assets || []).concat(this.getSkeletons(skeletonCount))
       }
     },
     disableSave() {
@@ -156,13 +152,19 @@ export default {
   watch: {
     dialog(value) {
       this.resetSearch()
-      this.allAssetsLoaded = false
+      this.stopInfiniteLoading()
+      this.isComplete = false
       this.selectedAssetIds = []
       if (value) {
         this.initAssetSearchOptions().then(() => {
           this.search().then(() => {
             if (!this.totalAssetCount) {
-              this.allAssetsLoaded = true
+              this.isComplete = true
+            } else {
+              this.checkAssetsLoaded()
+              if (!this.isComplete) {
+                this.startInfiniteLoading(this.fetch, {dialog: true, threshold: 800})
+              }
             }
             this.isDialogReady = true
             this.$putFocusNextTick('modal-header')
@@ -174,13 +176,6 @@ export default {
     }
   },
   methods: {
-    onClickAssetImage(asset) {
-      if (this.selectedAssetIds.includes(asset.id)) {
-        this.selectedAssetIds = this.$_.filter(this.selectedAssetIds, id => id !== asset.id)
-      } else {
-        this.selectedAssetIds.push(asset.id)
-      }
-    },
     cancel() {
       this.$announcer.polite('Canceled.')
       this.reset()
@@ -188,16 +183,35 @@ export default {
       this.isDialogReady = false
     },
     checkAssetsLoaded() {
-      if (!this.allAssetsLoaded && this.$_.size(this.assets) >= this.totalAssetCount) {
-        this.allAssetsLoaded = true
+      if (!this.isComplete && this.$_.size(this.assets) >= this.totalAssetCount) {
+        this.isComplete = true
       }
     },
+    fetch() {
+      return this.nextPage().then(data => {
+        if (data.results.length) {
+          this.$announcer.polite(`${this.assets.length} of ${this.totalAssetCount} assets loaded.`)
+        } else {
+          this.isComplete = true
+          this.$announcer.polite(`All ${this.totalAssetCount} assets have loaded.`)
+        }
+        this.checkAssetsLoaded()
+      })
+    },
     getSkeletons: count => Array.from(new Array(count), () => ({isLoading: true})),
+    onClickAssetImage(asset) {
+      if (this.selectedAssetIds.includes(asset.id)) {
+        this.selectedAssetIds = this.$_.filter(this.selectedAssetIds, id => id !== asset.id)
+      } else {
+        this.selectedAssetIds.push(asset.id)
+      }
+    },
     reset() {
-      this.allAssetsLoaded = false
+      this.isComplete = false
       this.isDialogReady = false
       this.isSaving = false
       this.selectedAssetIds = []
+      this.stopInfiniteLoading()
     },
     save() {
       if (this.selectedAssetIds.length) {
