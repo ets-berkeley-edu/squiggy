@@ -25,7 +25,10 @@
             <AddLinkAsset />
             <UploadNewAsset />
           </v-btn-toggle>
-          <Zoom />
+          <Zoom
+            color="teal lighten-3"
+            :dark-theme-buttons="true"
+          />
           <div v-if="whiteboard.deletedAt" class="pl-2">
             This whiteboard was deleted on {{ whiteboard.deletedAt | moment('dddd, MMMM Do YYYY') }}.
           </div>
