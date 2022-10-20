@@ -208,10 +208,16 @@ export default {
   }),
   created() {
     this.$loading()
-    const baseUrl = this.$config.baseUrl
     this.linkifyOptions = {
       formatHref: {
-        hashtag: href => `${baseUrl}/assets#suitec_keywords=${href.substring(1)}`
+        hashtag: href => {
+          const hash = `suitec_keywords=${href.substring(1)}`
+          if (this.$isInIframe) {
+            return this.$currentUser.course.assetLibraryUrl + '#' + hash
+          } else {
+            return '/assets#' + hash
+          }
+        }
       }
     }
     getUsers().then(data => {

@@ -37,7 +37,10 @@ Vue.use(VueKinesis)
 
 const linkifyDirective = (el, binding) => {
   const options = {
-    defaultProtocol: 'https'
+    defaultProtocol: 'https',
+    target: {
+      url: '_blank'
+    }
   }
   _.assign(options, binding.value)
   el.innerHTML = linkifyHtml(el.innerHTML, options)
