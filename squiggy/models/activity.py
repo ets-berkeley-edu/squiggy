@@ -357,8 +357,11 @@ def _to_api_json_by_type(activities):
             }
         if activity['actor_id']:
             activity_json['actorId'] = activity['actor_id']
-
-        if activity['user_id']:
+            activity_json['user']['id'] = activity['actor_id']
+            activity_json['user']['name'] = activity['actor_name']
+            activity_json['user']['image'] = activity['actor_image']
+            activity_json['user']['sections'] = activity['actor_sections']
+        else:
             activity_json['user']['id'] = activity['user_id']
             activity_json['user']['name'] = activity['user_name']
             activity_json['user']['image'] = activity['user_image']
@@ -370,7 +373,7 @@ def _to_api_json_by_type(activities):
             activities_by_type['actions']['interactions'].append(activity_json)
         elif activity['activity_type'] in {'asset_add', 'whiteboard_add_asset', 'whiteboard_export', 'whiteboard_remix'}:
             activities_by_type['actions']['creations'].append(activity_json)
-        elif activity['activity_type'] in {'get_view_asset', 'get_like'}:
+        elif activity['activity_type'] in {'get_asset_view', 'get_asset_like'}:
             activities_by_type['impacts']['engagements'].append(activity_json)
         elif activity['activity_type'] in {'get_asset_comment', 'get_asset_comment_reply', 'get_discussion_entry_reply'}:
             activities_by_type['impacts']['interactions'].append(activity_json)
