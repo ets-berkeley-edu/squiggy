@@ -5,8 +5,8 @@
         id="asset-library-btn"
         class="bg-transparent"
         elevation="0"
-        @click="go(`/asset/${asset.id}`)"
-        @keypress.enter="go(`/asset/${asset.id}`)"
+        @click="backToAsset"
+        @keypress.enter="backToAsset"
       >
         <font-awesome-icon class="mr-2" icon="less-than" size="sm" />
         Back to Asset
@@ -126,14 +126,17 @@ export default {
     })
   },
   methods: {
+    backToAsset() {
+      this.go(`/asset/${this.asset.id}`, {from: this.$_.get(this.$route.query, 'from')})
+    },
     cancel() {
       this.$announcer.polite('Canceled')
-      this.go(`/asset/${this.asset.id}`)
+      this.backToAsset()
     },
     submit() {
       this.$announcer.polite('Updating asset')
       updateAsset(this.asset.id, this.categoryId, this.description, this.title).then(() => {
-        this.go(`/asset/${this.asset.id}`)
+        this.backToAsset()
       })
     }
   }

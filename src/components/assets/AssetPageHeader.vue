@@ -42,7 +42,7 @@
         </v-btn>
       </div>
       <div v-if="canDeleteAsset">
-        <v-dialog v-model="dialogConfirmDelete" width="500">
+        <v-dialog v-model="dialogConfirmDelete" content-class="overflow-x-hidden" width="500">
           <template #activator="{}">
             <v-btn
               id="delete-asset-btn"
@@ -57,7 +57,7 @@
           <v-card>
             <v-card-title id="delete-dialog-title" tabindex="-1">Delete Asset?</v-card-title>
             <v-card-text class="pt-3">
-              Are you sure you want to delete <span class="font-weight-bold text-no-wrap">{{ asset.title }}</span>?
+              Are you sure you want to delete <span class="d-block font-weight-bold text-no-wrap text-truncate" :title="asset.title">{{ asset.title }}</span>?
             </v-card-text>
             <v-divider />
             <v-card-actions>
@@ -138,7 +138,7 @@ export default {
   methods: {
     cancelDelete() {
       this.dialogConfirmDelete = false
-      this.$announcer.polite('Canceled')
+      this.$announcer.polite('Canceled. Nothing deleted')
       this.$putFocusNextTick('asset-title')
     },
     confirmDelete() {
@@ -149,8 +149,9 @@ export default {
     deleteConfirmed() {
       this.dialogConfirmDelete = false
       deleteAsset(this.asset.id).then(() => {
-        this.$announcer.polite('Deleted')
-        this.go('/assets', {m: `Asset '${this.asset.title}' deleted.`})
+        this.$announcer.polite('Deleted asset')
+        const next = 'impactStudio' === this.$_.get(this.$route.query, 'from') ? '/impact_studio' : '/assets'
+        this.go(next, {m: `Asset '${this.asset.title}' deleted.`})
       })
     },
     downloadAsset() {
@@ -158,7 +159,7 @@ export default {
     },
     edit() {
       this.$announcer.polite(`Edit asset ${this.asset.title}`)
-      this.go(`/asset/${this.asset.id}/edit`)
+      this.go(`/asset/${this.asset.id}/edit`, {from: this.$_.get(this.$route.query, 'from')})
     }
   }
 }
