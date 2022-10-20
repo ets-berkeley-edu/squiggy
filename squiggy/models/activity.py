@@ -209,7 +209,8 @@ class Activity(Base):
             LEFT JOIN users actor ON a.actor_id = actor.id
             LEFT JOIN assets ON assets.id = a.asset_id
             LEFT JOIN comments c ON c.id = a.object_id AND a.object_type = 'comment'
-            WHERE a.user_id = :user_id"""
+            WHERE a.user_id = :user_id
+                AND assets.deleted_at IS NULL"""
         if sections:
             params['user_course_sections'] = sections
             query += """
