@@ -109,6 +109,12 @@ export function initialize(state: any) {
   $_log('Initialize')
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
+    const done = () => {
+      // Recalculate the size of the p.$canvas when the window is resized
+      window.addEventListener('resize', () => setCanvasDimensions(state))
+      store.commit('whiteboarding/setIsInitialized', true)
+      resolve()
+    }
     if (state.disableAll) {
       // The /asset page uses this code to render assets of type 'whiteboard' and does not need a socket.io connection.
       if (!$_isAsset(state.whiteboard)) {
@@ -117,8 +123,7 @@ export function initialize(state: any) {
       $_initCanvas(state)
       $_renderWhiteboard(state, true).then(() => {
         $_enableCanvasElements(false)
-        store.commit('whiteboarding/setIsInitialized', true)
-        resolve()
+        done()
       })
     } else {
       $_initSocket(state)
@@ -129,8 +134,7 @@ export function initialize(state: any) {
       $_renderWhiteboard(state, true).then(() => {
         $_addSocketListeners(state)
         $_addCanvasListeners(state)
-        store.commit('whiteboarding/setIsInitialized', true)
-        resolve()
+        done()
       })
     }
   })
@@ -891,8 +895,6 @@ const $_initFabricPrototypes = (state: any) => {
       }
     }
   })
-  // Recalculate the size of the p.$canvas when the window is resized
-  window.addEventListener('resize', () => setCanvasDimensions(state))
 }
 
 const $_initSocket = (state: any) => {
