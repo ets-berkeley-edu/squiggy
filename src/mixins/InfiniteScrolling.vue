@@ -8,6 +8,7 @@ export default {
   data() {
     return {
       active: true,
+      element: null,
       infiniteScrollInterval: null,
       loadFunction: undefined,
       loading: false,
@@ -30,8 +31,7 @@ export default {
             }
           })
         } else {
-          const doc = document.documentElement
-          this.handleInfiniteScrollLoad(doc.scrollHeight - doc.clientHeight - doc.scrollTop)
+          this.handleInfiniteScrollLoad(this.element.scrollHeight - this.element.clientHeight - this.element.scrollTop)
         }
       }
     },
@@ -45,6 +45,13 @@ export default {
     },
     startInfiniteLoading(loadFunction, props) {
       this.loadFunction = loadFunction
+      if (props.dialog) {
+        // This brittle selector based on an internal Vuetify class name seems to be our current best shot, as we don't have a way
+        // to pass an id through to the element.
+        this.element = document.getElementsByClassName('v-dialog--active')[0]
+      } else {
+        this.element = document.documentElement
+      }
       if (props.threshold) {
         this.threshold = props.threshold
       }
