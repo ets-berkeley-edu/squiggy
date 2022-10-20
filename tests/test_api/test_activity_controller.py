@@ -258,7 +258,7 @@ class TestActivitiesForUser:
         for interaction in interactions:
             assert interaction['type'] == 'get_asset_comment'
             assert interaction['asset']['id'] == mock_asset.id
-            assert interaction['user']['id'] == mock_asset.created_by
+            assert interaction['user']['id'] == mock_asset.comments[0].user_id
             assert interaction['actorId'] == mock_asset.comments[0].user_id
             assert interaction['comment']['id']
 
@@ -280,13 +280,13 @@ class TestActivitiesForUser:
         assert user2_id != user3_id
 
         fake_auth.login(user1_id)
-        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section B'])
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section A', 'section B'])
 
         fake_auth.login(user2_id)
-        self._api_download_user_activities(client, user_id=user1_id, expected_sections=['section A'])
+        self._api_download_user_activities(client, user_id=user1_id, expected_sections=['section A', 'section B'])
 
         fake_auth.login(user3_id)
-        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section B'])
+        self._api_download_user_activities(client, user_id=user2_id, expected_sections=['section A', 'section B'])
 
     def test_own_activities_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course):
         """Student in an asset-siloed course can see their own activities."""
