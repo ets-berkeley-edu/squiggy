@@ -94,7 +94,12 @@ class WhiteboardHousekeeping(BackgroundJob):
                     whiteboard_id=whiteboard_id,
                 )
                 self.logger.info(f'Generating preview image for whiteboard {whiteboard_id}')
-                generate_whiteboard_preview(whiteboard=whiteboard)
+                image_url = generate_whiteboard_preview(whiteboard=whiteboard)
+                if image_url:
+                    Whiteboard.update_preview(
+                        whiteboard_id=whiteboard['id'],
+                        image_url=image_url,
+                    )
             else:
                 self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
 
