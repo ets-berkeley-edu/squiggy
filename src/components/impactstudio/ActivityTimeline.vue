@@ -295,6 +295,7 @@ export default {
 
       // Format properties for display.
       const displayProperties = {
+        activityId: activity.id,
         activityType: activity.type,
         asset: activity.asset,
         date: d3.timeFormat('%B %d, %Y @ %H:%M')(new Date(activity.date)),
@@ -549,6 +550,7 @@ activity-timeline-legend {
   padding: 10px;
   position: absolute;
   width: 480px;
+  z-index: 1;
 }
 
 .details-popover::after {
