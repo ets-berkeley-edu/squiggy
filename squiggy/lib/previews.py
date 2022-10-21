@@ -30,6 +30,7 @@ import os
 import re
 
 from flask import current_app as app
+from squiggy import db, std_commit
 from squiggy.lib import http
 from squiggy.lib.aws import upload_to_s3
 from squiggy.lib.util import local_now, to_int, utc_now
@@ -83,6 +84,9 @@ def generate_whiteboard_preview(whiteboard):
                 filename=f'{filename}_{now}.png',
                 s3_key_prefix=get_s3_key_prefix(whiteboard['courseId'], 'whiteboard'),
             )
+            whiteboard.image_url = s3_attrs['download_url']
+            db.session.add(whiteboard)
+            std_commit()
             if not generate_previews(
                 object_id=whiteboard['id'],
                 object_type='whiteboard',
