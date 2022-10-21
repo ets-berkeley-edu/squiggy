@@ -109,10 +109,10 @@ function $_render() {
   let height = bottom - top
   // Neither width nor height should exceed 2048px.
   let scale_factor = 1
-  if (width > 2048 && width >= height) {
-    scale_factor = 2048 / width
-  } else if (height > 2048 && height > width) {
-    scale_factor = 2048 / height
+  if (width > 3000 && width >= height) {
+    scale_factor = 3000 / width
+  } else if (height > 3000 && height > width) {
+    scale_factor = 3000 / height
   }
   if (scale_factor < 1) {
     // If scaling down is required, first change the canvas dimensions.
@@ -133,6 +133,7 @@ function $_render() {
   // Create a canvas and pan it to the top-left corner
   const canvas = new fabric.Canvas(null, {backgroundColor: '#fff', width, height})
   canvas.absolutePan(new fabric.Point(left - WHITEBOARD_PADDING, top - WHITEBOARD_PADDING))
+  canvas.setZoom(scale_factor)
 
   // Render canvas AFTER all elements have been added. This is significantly faster
   canvas.renderOnAddRemove = false
@@ -140,43 +141,7 @@ function $_render() {
   // Add elements to the canvas
   const sorted = _.sortBy(deserializedElements, ['zIndex', 'uuid'])
   _.each(sorted, (whiteboardElement: any) => canvas.add(whiteboardElement.element))
-  $_setCanvasDimensions(canvas)
   canvas.renderAll()
   canvas.createPNGStream().pipe(fs.createWriteStream(pngFile))
   $_log('Done.')
-}
-
-function $_setCanvasDimensions(canvas: any) {
-  const canvasBaseWidth = 1000
-  const canvasPadding = 100
-  const viewportHeight = 600
-  const viewportWidth = 800
-  let maxRight = viewportWidth
-  let maxBottom = viewportHeight
-
-  const ratio = viewportWidth / canvasBaseWidth
-  canvas.setZoom(ratio)
-
-  _.each(canvas.getObjects(), (element: any) => {
-    const bound = element.group ? element.group.getBoundingRect() : element.getBoundingRect()
-    maxRight = Math.max(maxRight, bound.left + bound.width)
-    maxBottom = Math.max(maxBottom, bound.top + bound.height)
-  })
-  if (maxRight > viewportWidth || maxBottom > viewportHeight) {
-    if (maxRight > viewportWidth) {
-      maxRight += canvasPadding
-    }
-    if (maxBottom > viewportHeight) {
-      maxBottom += canvasPadding
-    }
-  }
-  // Calculate the actual un-zoomed width of the whiteboard.
-  const realWidth = maxRight / canvas.getZoom()
-  const realHeight = maxBottom / canvas.getZoom()
-  const widthRatio = viewportWidth / realWidth
-  const heightRatio = viewportHeight / realHeight
-
-  canvas.setZoom(Math.min(widthRatio, heightRatio))
-  canvas.setHeight(viewportHeight)
-  canvas.setWidth(viewportWidth)
 }
