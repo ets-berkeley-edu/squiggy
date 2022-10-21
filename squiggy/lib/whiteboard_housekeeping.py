@@ -27,6 +27,7 @@ from time import sleep
 
 from sqlalchemy import text
 from squiggy import db
+from squiggy.lib.aws import get_s3_signed_url
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
@@ -98,7 +99,7 @@ class WhiteboardHousekeeping(BackgroundJob):
                 if image_url:
                     Whiteboard.update_preview(
                         whiteboard_id=whiteboard['id'],
-                        image_url=image_url,
+                        image_url=get_s3_signed_url(image_url),
                     )
             else:
                 self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
