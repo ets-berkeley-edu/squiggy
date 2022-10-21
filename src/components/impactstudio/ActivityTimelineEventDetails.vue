@@ -17,26 +17,37 @@
         :title="user.name"
       />
     </div>
-    <div>
+    <div class="text-truncate">
       <h3 class="event-details-popover-title">
-        <a @click="go(`/asset/${asset.id}`, {from: 'impactStudio'})">{{ title }}</a>
+        <a
+          :id="`event-details-popover-${activityId}-asset-link`"
+          class="d-block text-truncate"
+          @click="go(`/asset/${asset.id}`, {from: 'impactStudio'})"
+        >
+          {{ title }}
+        </a>
       </h3>
-      <p class="event-details-popover-description">
-        <a :href="`/impact_studio/profile/${user.id}`">{{ user.name }}</a>
+      <p class="event-details-popover-description text-wrap">
+        <a :id="`event-details-popover-${activityId}-profile-link`" :href="`/impact_studio/profile/${user.id}`">{{ user.name }}</a>
         {{ $_.get(eventDescriptions, activityType) }}
         <span v-if="comment">
           <span
             v-if="!snippet"
+            :id="`event-details-popover-${activityId}-comment`"
             class="event-details-popover-comment"
             v-html="comment.body"
           />
           <span v-if="snippet">
-            <span class="event-details-popover-comment" v-html="snippet" />
-            <btn @click="go(`/asset/${asset.id}`, {from: 'impactStudio'})">Read more &raquo;</btn>
+            <span
+              :id="`event-details-popover-${activityId}-comment`"
+              class="event-details-popover-comment"
+              v-html="snippet"
+            />
+            <btn :id="`event-details-popover-${activityId}-asset-btn`" @click="go(`/asset/${asset.id}`, {from: 'impactStudio'})">Read more &raquo;</btn>
           </span>
         </span>
       </p>
-      <p class="event-details-popover-timestamp">{{ date }}</p>
+      <p :id="`event-details-popover-${activityId}-timestamp`" class="event-details-popover-timestamp">{{ date }}</p>
     </div>
   </div>
 </template>
@@ -48,6 +59,10 @@ export default {
   name: 'ActivityNetworkTooltip',
   mixins: [Utils],
   props: {
+    activityId: {
+      required: true,
+      type: Number
+    },
     activityType: {
       required: true,
       type: String
@@ -156,6 +171,7 @@ export default {
   border: 1px solid #c2c8d0;
   height: 100px;
   margin: 1px 25px 15px 1px;
+  min-width: 100px;
   width: 100px;
 }
 
