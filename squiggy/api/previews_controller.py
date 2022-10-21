@@ -77,8 +77,8 @@ def _handle_previews_callback(object_type):
         success = _update_asset_preview(metadata=metadata, params=params)
     elif object_type == 'whiteboard' and params.get('thumbnail'):
         success = Whiteboard.update_preview(
-            thumbnail_url=params.get('thumbnail'),
             whiteboard_id=params['id'],
+            thumbnail_url=params.get('thumbnail'),
         )
     if success:
         return tolerant_jsonify({'status': 'success'})
