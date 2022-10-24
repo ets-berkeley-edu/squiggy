@@ -110,14 +110,17 @@ export function initialize(state: any) {
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
     const done = () => {
+      $_addCanvasPanningListeners()
       // Recalculate the size of the p.$canvas when the window is resized
       window.addEventListener('resize', () => setCanvasDimensions(state))
       store.commit('whiteboarding/setIsInitialized', true)
       resolve()
     }
     if (state.disableAll) {
-      // The /asset page uses this code to render assets of type 'whiteboard' and does not need a socket.io connection.
-      if (!$_isAsset(state.whiteboard)) {
+      // The /asset page uses this code to render assets of type 'whiteboard'.
+      // No need for socket.io connection.
+      const isAsset = state.whiteboard.assetType
+      if (!isAsset) {
         $_initSocket(state)
       }
       $_initCanvas(state)
@@ -481,6 +484,16 @@ const $_addCanvasListeners = (state: any) => {
     $_enableCanvasElements(true)
   })
 
+  const setActiveCanvasObject = (object: any) => store.commit('whiteboarding/setActiveCanvasObject', object)
+  p.$canvas.on('selection:created', () => {
+    setActiveCanvasObject(p.$canvas.getActiveObject())
+    $_setModifyingElement(false)
+  })
+  p.$canvas.on('selection:cleared', () => setActiveCanvasObject(null))
+  p.$canvas.on('selection:updated', () => setActiveCanvasObject(p.$canvas.getActiveObject()))
+}
+
+const $_addCanvasPanningListeners = () => {
   p.$canvas.on('mouse:down', function(opt) {
     const evt = opt.e
     if (evt.altKey === true) {
@@ -510,14 +523,6 @@ const $_addCanvasListeners = (state: any) => {
     this.isDragging = false
     this.selection = true
   })
-
-  const setActiveCanvasObject = (object: any) => store.commit('whiteboarding/setActiveCanvasObject', object)
-  p.$canvas.on('selection:created', () => {
-    setActiveCanvasObject(p.$canvas.getActiveObject())
-    $_setModifyingElement(false)
-  })
-  p.$canvas.on('selection:cleared', () => setActiveCanvasObject(null))
-  p.$canvas.on('selection:updated', () => setActiveCanvasObject(p.$canvas.getActiveObject()))
 }
 
 const $_addSocketListeners = (state: any) => {
@@ -941,8 +946,6 @@ function $_invokeWithSocketConnectRetry(description: string, operation: () => vo
   }
 }
 
-const $_isAsset = (object: any) => !!object.assetType
-
 const $_join = (state: any) => {
   return new Promise<void>(resolve => {
     $_log('Join')
@@ -986,8 +989,6 @@ const $_paste = (state: any): void => {
           clone.uuid = uuid
           $_deserializeElement(state, clone).then((object: any) => {
             p.$canvas.add(object)
-            // $_ensureWithinCanvas(_.find(p.$canvas.getObjects(), ['uuid', uuid]))
-            // p.$canvas.requestRenderAll()
             whiteboardElements.push({
               assetId: clone.assetId,
               element: clone,
