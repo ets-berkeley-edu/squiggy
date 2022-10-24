@@ -40,6 +40,39 @@
           :open-advanced-search="!!(assetType || categoryId || (orderBy !== orderByDefault) || userId)"
           put-focus-on-load="basic-search-input"
         />
+        <v-card-actions v-if="isDialogReady" class="pt-5">
+          <div class="font-weight-bold pl-3 text--secondary">
+            {{ selectedAssetIds.length }} selected
+          </div>
+          <v-spacer></v-spacer>
+          <div class="pb-3 pr-2">
+            <v-btn
+              id="save-btn"
+              color="primary"
+              :disabled="disableSave"
+              @click="save"
+            >
+              <span v-if="isSaving" class="mt-1">
+                <v-progress-circular
+                  class="mr-1"
+                  :indeterminate="true"
+                  rotate="5"
+                  size="18"
+                  width="2"
+                />
+                Saving
+              </span>
+              <span v-if="!isSaving">Save</span>
+            </v-btn>
+            <v-btn
+              id="cancel-btn"
+              text
+              @click="cancel"
+            >
+              Cancel
+            </v-btn>
+          </div>
+        </v-card-actions>
         <v-card class="d-flex flex-wrap" flat tile>
           <div
             v-for="(asset, index) in assetGrid"
@@ -73,39 +106,6 @@
           </div>
         </v-card>
       </v-card-text>
-      <v-card-actions v-if="isDialogReady" class="pt-5">
-        <div class="font-weight-bold pl-3 text--secondary">
-          {{ selectedAssetIds.length }} selected
-        </div>
-        <v-spacer></v-spacer>
-        <div class="pb-3 pr-2">
-          <v-btn
-            id="save-btn"
-            color="primary"
-            :disabled="disableSave"
-            @click="save"
-          >
-            <span v-if="isSaving" class="mt-1">
-              <v-progress-circular
-                class="mr-1"
-                :indeterminate="true"
-                rotate="5"
-                size="18"
-                width="2"
-              />
-              Saving
-            </span>
-            <span v-if="!isSaving">Save</span>
-          </v-btn>
-          <v-btn
-            id="cancel-btn"
-            text
-            @click="cancel"
-          >
-            Cancel
-          </v-btn>
-        </div>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
