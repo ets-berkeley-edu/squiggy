@@ -6,7 +6,7 @@
           id="zoom-in-btn"
           alt="Zoom out"
           :color="color"
-          dark
+          :dark="darkThemeButtons"
           fab
           small
           v-bind="attrs"
@@ -24,7 +24,7 @@
           id="zoom-fit-to-screen-btn"
           :alt="tooltipText"
           :color="color"
-          dark
+          :dark="darkThemeButtons"
           fab
           small
           v-bind="attrs"
@@ -45,7 +45,7 @@
           id="zoom-in-btn"
           alt="Zoom in"
           :color="color"
-          dark
+          :dark="darkThemeButtons"
           fab
           small
           v-bind="attrs"
@@ -66,9 +66,17 @@ import Whiteboarding from '@/mixins/Whiteboarding'
 export default {
   name: 'Zoom',
   mixins: [Whiteboarding],
-  data: () => ({
-    color: 'teal lighten-3'
-  }),
+  props: {
+    color: {
+      default: undefined,
+      required: false,
+      type: String
+    },
+    darkThemeButtons: {
+      required: false,
+      type: Boolean
+    }
+  },
   computed: {
     tooltipText() {
       return this.isFitToScreen ? 'Actual size' : 'Fit to screen'
