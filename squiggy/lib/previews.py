@@ -91,6 +91,10 @@ def generate_whiteboard_preview(whiteboard):
                 # TODO: If preview-image status is needed then the 'whiteboards' table needs 'preview_status' column.
                 pass
         os.remove(file_name)
+        if s3_attrs and s3_attrs.get('download_url'):
+            return s3_attrs['download_url']
+        else:
+            return None
 
 
 def get_s3_key_prefix(course_id, object_type):

@@ -345,7 +345,7 @@ class Whiteboard(Base):
         return whiteboard
 
     @classmethod
-    def update_preview(cls, image_url, thumbnail_url, whiteboard_id):
+    def update_preview(cls, whiteboard_id, thumbnail_url=None, image_url=None):
         whiteboard = cls.query.filter_by(id=whiteboard_id).first()
         if thumbnail_url:
             whiteboard.thumbnail_url = thumbnail_url
