@@ -1,5 +1,5 @@
 <template>
-  <v-btn-toggle class="ml-8 mr-3" rounded>
+  <v-btn-toggle :class="btnToggleClass" rounded>
     <v-tooltip bottom :color="color">
       <template #activator="{on, attrs}">
         <v-btn
@@ -67,6 +67,11 @@ export default {
   name: 'Zoom',
   mixins: [Whiteboarding],
   props: {
+    btnToggleClass: {
+      default: 'ml-8 mr-3',
+      required: false,
+      type: String
+    },
     color: {
       default: undefined,
       required: false,

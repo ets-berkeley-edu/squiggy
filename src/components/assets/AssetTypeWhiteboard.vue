@@ -1,7 +1,25 @@
 <template>
-  <v-main class="h-100 overflow-hidden whiteboard-container">
-    <Zoom />
-    <div id="whiteboard-viewport" class="h-100" tabindex="0">
+  <v-main class="h-100 overflow-hidden py-0 whiteboard-container">
+    <div class="align-center d-flex mb-3">
+      <div class="pr-3">
+        <Zoom btn-toggle-class="justify-start" />
+      </div>
+      <div class="pr-1 subtitle-1">
+        <font-awesome-icon
+          class="yellow--text"
+          icon="exclamation-triangle"
+          size="lg"
+        />
+      </div>
+      <div class="subtitle-1">
+        <span class="font-weight-bold">To re-position the image, hold down the Option (or Alt) key and then drag your mouse cursor.</span>
+      </div>
+    </div>
+    <div
+      id="whiteboard-viewport"
+      class="canvas-container h-100"
+      tabindex="0"
+    >
       <canvas id="canvas" />
     </div>
   </v-main>
@@ -36,7 +54,6 @@ export default {
 
 <style scoped>
 .whiteboard-container {
-  background-color: #fdfbf7;
   position: relative;
   z-index: 1000;
 }

@@ -41,6 +41,7 @@ const state = {
   clipboard: [],
   disableAll: false,
   // Variable that will keep track of whether a shape is currently being drawn
+  isAssetView: undefined,
   isDrawingShape: false,
   isFitToScreen: true,
   isInitialized: false,
@@ -191,6 +192,7 @@ const mutations = {
   setViewport: (state: any, viewport: any) => state.viewport = viewport,
   setWhiteboard: (state: any, whiteboard: any) => {
     state.whiteboard = whiteboard
+    state.isAssetView = !!state.whiteboard.assetType
     _.each(whiteboard.users, user => {
       if (user.id === p.$currentUser.id) {
         user.isOnline = true

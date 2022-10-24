@@ -110,7 +110,7 @@ export function initialize(state: any) {
   store.commit('whiteboarding/setIsInitialized', false)
   return new Promise<void>(resolve => {
     const done = () => {
-      $_addCanvasPanningListeners()
+      $_addCanvasPanningListeners(state)
       // Recalculate the size of the p.$canvas when the window is resized
       window.addEventListener('resize', () => setCanvasDimensions(state))
       store.commit('whiteboarding/setIsInitialized', true)
@@ -493,9 +493,12 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('selection:updated', () => setActiveCanvasObject(p.$canvas.getActiveObject()))
 }
 
-const $_addCanvasPanningListeners = () => {
+const $_addCanvasPanningListeners = (state: any) => {
   p.$canvas.on('mouse:down', function(opt) {
     const evt = opt.e
+    if (state.isAssetView || this.isDragging) {
+      p.$canvas.defaultCursor = 'grabbing'
+    }
     if (evt.altKey === true) {
       this.isDragging = true
       this.selection = false
@@ -522,6 +525,7 @@ const $_addCanvasPanningListeners = () => {
     this.setViewportTransform(this.viewportTransform)
     this.isDragging = false
     this.selection = true
+    p.$canvas.defaultCursor = state.isAssetView ? 'grab' : 'default'
   })
 }
 
@@ -847,6 +851,9 @@ const $_initCanvas = (state: any) => {
     fabric.Object.prototype.rotatingPointOffset = 30
     // Set the pencil brush as the drawing brush
     p.$canvas.pencilBrush = new fabric.PencilBrush(p.$canvas)
+  }
+  if (state.isAssetView) {
+    p.$canvas.defaultCursor = 'grab'
   }
 }
 
