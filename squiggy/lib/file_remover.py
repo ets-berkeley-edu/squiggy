@@ -23,10 +23,8 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import shutil
+import os
 import weakref
-
-from squiggy.logger import logger
 
 
 class FileRemover(object):
@@ -40,8 +38,7 @@ class FileRemover(object):
 
     def _do_cleanup(self, wr):
         file_path = self.weak_references[wr]
-        logger.info(f'Delete transient file {file_path}')
-        shutil.rmtree(file_path, ignore_errors=True)
+        os.remove(file_path)
 
 
 file_remover = FileRemover()
