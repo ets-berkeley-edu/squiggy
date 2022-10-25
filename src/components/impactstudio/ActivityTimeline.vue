@@ -269,11 +269,13 @@ export default {
     fadeout(element) {
       element
         .transition(d3.transition().duration(500))
-        .on('end', this.remove)
+        .on('end', () => {
+          element.remove()
+        })
         .style('opacity', 0)
     },
     hideEventDetails() {
-      this.fadeout(d3.select('.details-popover'))
+      this.fadeout(d3.select('#activity-timeline-chart').selectAll('.details-popover'))
     },
     parseEvents(category) {
       this.$_.forOwn(this.activities[category], (eventSeries, key) => {
@@ -344,8 +346,8 @@ export default {
         pageX - this.arrowOffset
 
       eventDetails
-        .style('left', (left + 'px'))
-        .style('top', (pageY - (eventDetailsDimensions.height + 16) + 'px'))
+        .style('left', left - 12 + 'px')
+        .style('top', (pageY - eventDetailsDimensions.height - 30 + 'px'))
         .classed(direction, true)
 
       eventDetails.append(() => {
