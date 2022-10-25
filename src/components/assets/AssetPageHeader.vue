@@ -57,7 +57,7 @@
           <v-card>
             <v-card-title id="delete-dialog-title" tabindex="-1">Delete Asset?</v-card-title>
             <v-card-text class="pt-3">
-              Are you sure you want to delete <span class="font-weight-bold text-no-wrap">{{ asset.title }}</span>?
+              Are you sure you want to delete <span class="font-weight-bold">{{ asset.title }}</span>?
             </v-card-text>
             <v-divider />
             <v-card-actions>

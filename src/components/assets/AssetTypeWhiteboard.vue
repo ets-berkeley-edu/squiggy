@@ -55,6 +55,6 @@ export default {
 <style scoped>
 .whiteboard-container {
   position: relative;
-  z-index: 1000;
+  z-index: 100;
 }
 </style>
