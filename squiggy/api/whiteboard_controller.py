@@ -149,6 +149,7 @@ def export_as_png(whiteboard_id):
             path_or_file=path_to_file,
         )
         file_remover.clean_up_when_done(response, path_to_file)
+        logger.info(f'Delete transient file {path_to_file}')
         return response
     else:
         raise BadRequestError('Failed to generate whiteboard PNG')
