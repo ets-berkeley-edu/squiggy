@@ -32,20 +32,17 @@ from threading import current_thread
 def initialize_app_logger(app):
     from werkzeug.serving import WSGIRequestHandler
 
-    level = app.config['LOGGING_LEVEL']
-    location = app.config['LOGGING_LOCATION']
-    log_propagation_level = app.config['LOGGING_PROPAGATION_LEVEL']
-
     # Configure app and library loggers.
-    loggers = [
-        app.logger,
-        logging.getLogger('werkzeug'),
-    ]
+    loggers = [app.logger]
+    third_parties = ['boto3', 'botocore', 's3transfer', 'werkzeug', 'sqlalchemy.engine']
+    for third_party in third_parties:
+        loggers.append(logging.getLogger(third_party))
 
     # Capture runtime warnings so that we'll see them.
     logging.captureWarnings(True)
 
     # If location is configured as "STDOUT", don't create a new log file.
+    location = app.config['LOGGING_LOCATION']
     if location == 'STDOUT':
         handlers = app.logger.handlers
     else:
@@ -53,7 +50,7 @@ def initialize_app_logger(app):
         handlers = [file_handler]
 
     for handler in handlers:
-        handler.setLevel(level)
+        handler.setLevel(app.config['LOGGING_LEVEL'])
         formatter = logging.Formatter(app.config['LOGGING_FORMAT'])
         handler.setFormatter(formatter)
 
@@ -61,12 +58,12 @@ def initialize_app_logger(app):
         logger.handlers = []
         for handler in handlers:
             logger.addHandler(handler)
-        logger.setLevel(level)
-
-    logging.getLogger('boto3').setLevel(log_propagation_level)
-    logging.getLogger('botocore').setLevel(log_propagation_level)
-    logging.getLogger('s3transfer').setLevel(log_propagation_level)
-    logging.getLogger('werkzeug').setLevel(log_propagation_level)
+        if 'sqlalchemy' in logger.name:
+            logger.setLevel(app.config['LOGGING_LEVEL_SQLALCHEMY'])
+        elif logger.name in third_parties:
+            logger.setLevel(app.config['LOGGING_PROPAGATION_LEVEL'])
+        else:
+            logger.setLevel(app.config['LOGGING_LEVEL'])
 
     def address_string(self):
         forwarded_for = self.headers.get('X-Forwarded-For')
