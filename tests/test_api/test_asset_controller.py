@@ -32,6 +32,7 @@ import responses
 from squiggy import std_commit
 from squiggy.lib.util import is_student, is_teaching
 from squiggy.models.activity import Activity
+from squiggy.models.asset import Asset
 from squiggy.models.course import Course
 from squiggy.models.user import User
 from tests.util import mock_s3_bucket
@@ -95,12 +96,14 @@ class TestGetAsset:
         course = mock_asset_course
         course.protects_assets_per_section = True
 
-        section_a_student = User.query.filter_by(course_id=course.id, canvas_course_role='Student', canvas_course_sections=['section A']).first()
+        section_a_student = User.query.filter_by(course_id=course.id, canvas_course_role='Student',
+                                                 canvas_course_sections=['section A']).first()
         fake_auth.login(section_a_student.id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client)
         assert asset['id'] == mock_asset.id
 
-        section_b_student = User.query.filter_by(course_id=course.id, canvas_course_role='Student', canvas_course_sections=['section B']).first()
+        section_b_student = User.query.filter_by(course_id=course.id, canvas_course_role='Student',
+                                                 canvas_course_sections=['section B']).first()
         fake_auth.login(section_b_student.id)
         asset = _api_get_asset(asset_id=mock_asset.id, client=client, expected_status_code=404)
 
@@ -166,6 +169,7 @@ class TestGetAssets:
             asset_type=None,
             category_id=None,
             expected_status_code=200,
+            group_id=None,
             keywords=None,
             limit=20,
             offset=0,
@@ -176,6 +180,7 @@ class TestGetAssets:
         params = {
             'assetType': asset_type,
             'categoryId': category_id,
+            'groupId': group_id,
             'keywords': keywords,
             'limit': limit,
             'offset': offset,
@@ -242,7 +247,15 @@ class TestGetAssets:
                 assert key in asset, f'{key} not present in asset JSON'
 
             assert len(asset['users']) == 1
-            for key in ('id', 'canvasFullName', 'canvasUserId', 'canvasCourseRole', 'canvasEnrollmentState', 'canvasCourseSections', 'canvasImage'):
+            for key in (
+                'id',
+                'canvasFullName',
+                'canvasUserId',
+                'canvasCourseRole',
+                'canvasEnrollmentState',
+                'canvasCourseSections',
+                'canvasImage',
+            ):
                 assert key in asset['users'][0]
 
     def test_teacher_assets_protected_per_section(self, authorized_user_id, client, fake_auth, mock_asset_course):
@@ -253,8 +266,10 @@ class TestGetAssets:
         fake_auth.login(user.id)
         api_json = self._api_get_assets(client)
         assert api_json['total'] > 2
-        assert next(asset for asset in api_json['results'] if asset['users'][0]['canvasCourseSections'] == ['section A'])
-        assert next(asset for asset in api_json['results'] if asset['users'][0]['canvasCourseSections'] == ['section B'])
+        assert next(
+            asset for asset in api_json['results'] if asset['users'][0]['canvasCourseSections'] == ['section A'])
+        assert next(
+            asset for asset in api_json['results'] if asset['users'][0]['canvasCourseSections'] == ['section B'])
         assert next(asset for asset in api_json['results'] if asset['users'][0]['canvasCourseRole'] != 'Student')
 
     def test_student_assets_protected_per_section(self, client, fake_auth, mock_asset_course):
@@ -262,13 +277,45 @@ class TestGetAssets:
         mock_asset_course.protects_assets_per_section = True
         # Students can see the instructor's assets plus any other assets for their section
         for section in ('section A', 'section B'):
-            student = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Student', canvas_course_sections=[section]).first()
+            student = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Student',
+                                           canvas_course_sections=[section]).first()
             fake_auth.login(student.id)
             api_json = self._api_get_assets(client)
             assert api_json['total'] > 1
             for asset in api_json['results']:
                 assert len(asset['users']) == 1
-                assert asset['users'][0]['canvasCourseRole'] != 'Student' or asset['users'][0]['canvasCourseSections'] == [section]
+                assert asset['users'][0]['canvasCourseRole'] != 'Student' or asset['users'][0][
+                    'canvasCourseSections'] == [section]
+
+    def test_get_assets_per_group(self, client, fake_auth, mock_course_group):
+        """Search returns assets from the specified group."""
+        membership1 = mock_course_group.memberships[0]
+        membership2 = mock_course_group.memberships[1]
+        student1 = User.find_by_course_id(membership1.canvas_user_id, membership1.course_id)
+        student2 = User.find_by_course_id(membership2.canvas_user_id, membership2.course_id)
+        fake_auth.login(student2.id)
+        asset1 = Asset.create(
+            asset_type='link',
+            course_id=mock_course_group.course_id,
+            created_by=student1.id,
+            title='mock link',
+            users=[],
+            url='https://www.example.com',
+        )
+        api_json = self._api_get_assets(
+            client=client,
+            asset_type='link',
+            group_id=mock_course_group.id,
+        )
+        assert api_json['total'] == 1
+        assert api_json['results'][0]['id'] == asset1.id
+        bogus_group_id = mock_course_group.id + 1
+        api_json = self._api_get_assets(
+            client=client,
+            asset_type='link',
+            group_id=bogus_group_id,
+        )
+        assert api_json['total'] == 0
 
 
 class TestCreateAsset:
@@ -395,7 +442,8 @@ class TestCreateAsset:
         )
         fake_auth.login(authorized_user_id)
         api_json = self._api_create_link_asset(client, url=sad_jamboard_url, expected_status_code=400)
-        assert api_json['message'] == 'In order to add a Google Jamboard to the Asset Library, sharing must be set to "Anyone with the link."'
+        assert api_json[
+            'message'] == 'In order to add a Google Jamboard to the Asset Library, sharing must be set to "Anyone with the link."'
 
     @mock_s3
     def test_create_file_asset(self, client, app, fake_auth, authorized_user_id):
@@ -508,7 +556,8 @@ class TestUpdateAsset:
         fake_auth.login(instructors[0].id)
         self._verify_update_asset(client, mock_asset, mock_category)
 
-    def test_teacher_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_category):
+    def test_teacher_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                        mock_category):
         """Teacher in an asset-siloed course can update asset."""
         mock_asset_course.protects_assets_per_section = True
         # Instructor can update asset
@@ -516,7 +565,8 @@ class TestUpdateAsset:
         fake_auth.login(instructors[0].id)
         self._verify_update_asset(client, mock_asset, mock_category)
 
-    def test_owner_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_asset_users, mock_category):
+    def test_owner_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                      mock_asset_users, mock_category):
         """Asset owner in an asset-siloed course can update asset."""
         mock_asset_course.protects_assets_per_section = True
         asset_owner, same_section_student, different_section_student = mock_asset_users
@@ -524,7 +574,8 @@ class TestUpdateAsset:
         fake_auth.login(asset_owner.id)
         self._verify_update_asset(client, mock_asset, mock_category)
 
-    def test_student_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_asset_users, mock_category):
+    def test_student_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                        mock_asset_users, mock_category):
         """Student in an asset-siloed course cannot update asset created by student in other section."""
         mock_asset_course.protects_assets_per_section = True
         asset_owner, same_section_student, different_section_student = mock_asset_users
@@ -617,7 +668,8 @@ class TestRefreshAssetPreview:
         api_json = _api_get_asset(mock_asset.id, client)
         assert api_json['previewStatus'] == 'pending'
 
-    def test_owner_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_asset_users):
+    def test_owner_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                      mock_asset_users):
         """Asset owner in an asset-siloed course can refresh asset preview."""
         asset_owner, same_section_student, different_section_student = mock_asset_users
         mock_asset_course.protects_assets_per_section = True
@@ -629,7 +681,8 @@ class TestRefreshAssetPreview:
         api_json = _api_get_asset(mock_asset.id, client)
         assert api_json['previewStatus'] == 'pending'
 
-    def test_student_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_asset_users):
+    def test_student_update_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                        mock_asset_users):
         """Student in an asset-siloed course cannot refresh asset created by student in other section."""
         asset_owner, same_section_student, different_section_student = mock_asset_users
         mock_asset_course.protects_assets_per_section = True
@@ -696,7 +749,8 @@ class TestDeleteAsset:
         fake_auth.login(instructors[0].id)
         self._verify_delete_asset(mock_asset.id, client)
 
-    def test_student_delete_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_asset_users):
+    def test_student_delete_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                        mock_asset_users):
         """Student in an asset-siloed course cannot delete asset created by student in other section."""
         asset_owner, same_section_student, different_section_student = mock_asset_users
         mock_asset_course.protects_assets_per_section = True
@@ -780,7 +834,8 @@ class TestLikeAsset:
         assert User.find_by_id(different_user.id).points == asset_liker_points + 1
         self._api_remove_like_asset(asset_id=mock_asset.id, client=client, expected_status_code=200)
 
-    def test_student_like_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course, mock_asset_users):
+    def test_student_like_asset_protected_per_section(self, client, fake_auth, mock_asset, mock_asset_course,
+                                                      mock_asset_users):
         """Student in an asset-siloed course cannot like asset created by student in other section."""
         asset_owner, same_section_student, different_section_student = mock_asset_users
         mock_asset_course.protects_assets_per_section = True
@@ -812,11 +867,13 @@ class TestLikeAsset:
 
     def test_likes_multiple_users_increment_remove_likes_decrement(self, client, fake_auth, mock_asset):
         course_users = Course.find_by_id(mock_asset.course_id).users
-        user_iterator = (user for user in course_users if user not in mock_asset.users and user.canvas_enrollment_state == 'active')
+        user_iterator = (user for user in course_users if
+                         user not in mock_asset.users and user.canvas_enrollment_state == 'active')
         different_user_1 = next(user_iterator)
         different_user_2 = next(user_iterator)
         # Clean up any point values out of sync from earlier tests.
-        Activity.recalculate_points(course_id=mock_asset.course_id, user_ids=[mock_asset.created_by, different_user_1.id, different_user_2.id])
+        Activity.recalculate_points(course_id=mock_asset.course_id,
+                                    user_ids=[mock_asset.created_by, different_user_1.id, different_user_2.id])
         asset_owner_points = User.find_by_id(mock_asset.created_by).points
         asset_liker_1_points = User.find_by_id(different_user_1.id).points
         asset_liker_2_points = User.find_by_id(different_user_2.id).points

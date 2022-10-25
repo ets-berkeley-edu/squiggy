@@ -75,7 +75,10 @@ const mutations = {
     state.isDirty = true
   },
   setDirty: (state: any, dirty: boolean) => state.isDirty = dirty,
-  setGroupId: (state: any, groupId: number) => state.groupId = groupId,
+  setGroupId: (state: any, groupId: number) => {
+    state.groupId = groupId
+    state.isDirty = true
+  },
   setKeywords: (state: any, keywords: string) => {
     state.keywords = keywords
     state.isDirty = true
