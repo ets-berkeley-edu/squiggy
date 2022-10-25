@@ -69,6 +69,7 @@ INACTIVE_SESSION_LIFETIME = 20
 LOGGING_FORMAT = '[%(asctime)s] - %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 LOGGING_LOCATION = 'squiggy.log'
 LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL_SQLALCHEMY = logging.ERROR
 LOGGING_PROPAGATION_LEVEL = logging.INFO
 
 NODE_EXECUTABLE = '/usr/bin/node'
