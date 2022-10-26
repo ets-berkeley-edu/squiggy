@@ -31,7 +31,10 @@ const $_getIFrameBookmarkHash = () => {
     // See getParentUrlData() in legacy SuiteC
     $_postIFrameMessage(
       () => ({subject: 'getParent'}),
-      parentMessage => resolve($_extractBookmarkHash(parentMessage))
+      parentMessage => {
+        console.log('getParent message response:', parentMessage)
+        return resolve($_extractBookmarkHash(parentMessage))
+      }
     )
   })
 }
@@ -47,6 +50,7 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
           try {
             const parsed = JSON.parse(event.data)
             window.removeEventListener(eventType, processor)
+            console.log('Successfully parsed message from parent window:', parsed)
             callback(parsed)
           } catch {
             console.log('Error parsing message from parent window:', event.data)
