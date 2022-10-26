@@ -126,7 +126,7 @@ export default {
     }
   },
   created() {
-    if (this.asset.assetType === 'file' || this.asset.assetType === 'whiteboard') {
+    if (this.asset.assetType === 'file') {
       this.downloadUrl = `${this.$config.apiBaseUrl}/api/asset/${this.asset.id}/download`
     }
     const isTeacherOrAdmin = this.$currentUser.isAdmin || this.$currentUser.isTeaching
