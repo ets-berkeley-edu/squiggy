@@ -81,6 +81,7 @@ def get_assets():
     filters = {
         'asset_type': _get(params, 'assetType', None),
         'category_id': _get(params, 'categoryId', None),
+        'group_id': _get(params, 'groupId', None),
         'keywords': _get(params, 'keywords', None),
         'owner_id': _get(params, 'userId', None),
         'section': _get(params, 'section', None),

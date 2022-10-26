@@ -225,6 +225,7 @@ class Asset(Base):
             'asset_types': filters.get('asset_type'),
             'category_id': filters.get('category_id'),
             'course_id': session.course.id,
+            'group_id': filters.get('group_id'),
             'limit': limit,
             'my_asset_ids': [a.id for a in session.user.assets],
             'offset': offset,
@@ -232,18 +233,8 @@ class Asset(Base):
             'section': filters.get('section'),
             'user_id': session.user.id,
         }
-        from_clause = """FROM assets a
-            LEFT JOIN users asset_owner ON a.created_by = asset_owner.id
-            LEFT JOIN asset_categories ac ON a.id = ac.asset_id
-            LEFT JOIN categories c ON c.id = ac.category_id
-            LEFT JOIN asset_users au ON a.id = au.asset_id
-            LEFT JOIN users u ON au.user_id = u.id
-            LEFT JOIN activities act ON a.id = act.asset_id
-                AND act.course_id = :course_id
-                AND act.user_id = :user_id
-                AND act.object_type = 'asset'
-                AND act.type = 'asset_like'"""
 
+        from_clause = _build_from_clause(filters, session)
         where_clause = _build_where_clause(filters, include_hidden, params, session)
         order_clause = _build_order_clause(order_by)
 
@@ -490,6 +481,33 @@ def validate_asset_url(url):
         if response and urlparse(response.url).netloc == 'accounts.google.com' and urlparse(response.url).path == '/ServiceLogin':
             error_message = 'In order to add a Google Jamboard to the Asset Library, sharing must be set to "Anyone with the link."'
     return error_message
+
+
+def _build_from_clause(filters, session):
+    from_clause = """
+        FROM assets a
+            LEFT JOIN asset_categories ac ON a.id = ac.asset_id
+            LEFT JOIN categories c ON c.id = ac.category_id
+            LEFT JOIN asset_users au ON a.id = au.asset_id
+            LEFT JOIN users u ON au.user_id = u.id
+            LEFT JOIN activities act ON a.id = act.asset_id
+                AND act.course_id = :course_id
+                AND act.user_id = :user_id
+                AND act.object_type = 'asset'
+                AND act.type = 'asset_like'
+    """
+    if session.course.protects_assets_per_section and session.is_student or filters.get('group_id'):
+        from_clause += """
+            LEFT JOIN users asset_owner
+                ON a.created_by = asset_owner.id
+        """
+    if filters.get('group_id'):
+        from_clause += """
+            JOIN course_group_memberships cgm ON
+                cgm.canvas_user_id IN (u.canvas_user_id, asset_owner.canvas_user_id)
+                AND cgm.course_group_id = :group_id
+        """
+    return from_clause
 
 
 def _build_order_clause(order_by):
