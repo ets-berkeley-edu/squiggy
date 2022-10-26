@@ -131,19 +131,16 @@ export default {
             .classed('left', true)
 
           var detailsDiv = document.createElement('div')
-          detailsDiv.innerHTML = '<div class="profile-activity-breakdown-popover-outer">'
           detailsDiv.innerHTML += `<h4 class="profile-activity-breakdown-header">${this.translateLabel(label)}</h4>`
-          detailsDiv.innerHTML += '<div class="profile-activity-breakdown-popover-details">'
           if (label === 'actions.engagements' || label === 'impacts.engagements') {
-            detailsDiv.innerHTML += 'Includes the activities: views and likes.'
+            detailsDiv.innerHTML += '<div class="profile-activity-breakdown-details">Includes the activities: views and likes.</div>'
           } else if (label === 'actions.interactions' || label === 'impacts.interactions') {
-            detailsDiv.innerHTML += 'Includes the activities: comments and discussion posts.'
+            detailsDiv.innerHTML += '<div class="profile-activity-breakdown-details">Includes the activities: comments and discussion posts.</div>'
           } else if (label === 'actions.creations') {
-            detailsDiv.innerHTML += 'Includes the activities: add new assets, add assets to whiteboard, export whiteboards, and remix whiteboards.'
+            detailsDiv.innerHTML += '<div class="profile-activity-breakdown-details">Includes the activities: add new assets, add assets to whiteboard, export whiteboards, and remix whiteboards.</div>'
           } else if (label === 'impacts.creations') {
-            detailsDiv.innerHTML += 'Includes the activities: asset used in whiteboards and whiteboard remixed.'
+            detailsDiv.innerHTML += '<div class="profile-activity-breakdown-details">Includes the activities: asset used in whiteboards and whiteboard remixed.</div>'
           }
-          detailsDiv.innerHTML += '</div></div>'
           eventDetails.append(() => detailsDiv)
           eventDetails.style('opacity', 1)
         })
@@ -590,5 +587,13 @@ activity-timeline-legend {
 
 .details-popover.right::after {
   right: 15px;
+}
+
+.profile-activity-breakdown-header {
+  color: #333;
+}
+
+.profile-activity-breakdown-details {
+  color: #333;
 }
 </style>
