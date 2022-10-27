@@ -224,7 +224,10 @@ export default {
       this.users = data
       const userId = parseInt(this.$route.params.id || this.$currentUser.id)
       if (this.users) {
-        const userIndex = this.$_.findIndex(this.users, {'id': userId}) || 0
+        let userIndex = this.$_.findIndex(this.users, {'id': userId})
+        if (userIndex === -1) {
+          userIndex = 0
+        }
         this.user = this.users[userIndex]
         this.nextUser = this.users[(userIndex + 1) % this.users.length]
         this.previousUser = this.users[(userIndex || this.users.length) - 1]
