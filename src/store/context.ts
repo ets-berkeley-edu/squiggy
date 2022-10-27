@@ -53,7 +53,11 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
             console.log('Successfully parsed message from parent window:', parsed)
             callback(parsed)
           } catch {
-            console.log('Error parsing message from parent window:', event.data)
+            if (_.get(event.data, 'error.code') === 'unsupported_subject') {
+              console.log('Received unsupported_subject message from Canvas, will ignore')
+            } else {
+              console.log('Error parsing message from parent window:', event.data)
+            }
           }
         }
       }
