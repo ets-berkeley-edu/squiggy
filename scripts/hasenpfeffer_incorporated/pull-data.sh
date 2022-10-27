@@ -64,11 +64,16 @@ else
 fi
 echo
 
+SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+CSV_HOME_DIRECTORY="${SCRIPT_DIR}/csv_files"
+
+mkdir -p "${CSV_HOME_DIRECTORY}"
+
 output_csv() {
   # Connect to the source database and pipe the results of a supplied query to a CSV file in the local directory.
   echo "Copying ${1} from database..."
   PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" \
-  -c "copy (${2}) to stdout with (format csv, header true, force_quote *, delimiter '|')" > "${1}.csv"
+  -c "copy (${2}) to stdout with (format csv, header true, force_quote *, delimiter '|')" > "${CSV_HOME_DIRECTORY}/${1}.csv"
 }
 
 # Query each table for data associated with the supplied Canvas instance. The only table we do not query is the
@@ -107,6 +112,15 @@ if [[ "${source_canvas}" ]]; then
                 on u.course_id = c.id and c.canvas_api_domain = '${source_canvas}')
               on com.user_id = u.id"
 
+  output_csv "course_group_memberships" "select g.* from course_group_memberships g
+              join (users u join courses c
+                on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}')
+              on g.canvas_user_id = u.canvas_user_id"
+
+  output_csv "course_groups" "select g.* from course_groups g
+              join courses c
+              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
+
   output_csv "whiteboard_users" "select wm.* from whiteboard_users wm
               join (whiteboards w join courses c
                 on w.course_id = c.id and c.canvas_api_domain = '${source_canvas}')
@@ -126,6 +140,8 @@ else
   output_csv "asset_users" "select * from asset_users"
   output_csv "categories" "select * from categories"
   output_csv "comments" "select * from comments"
+  output_csv "course_group_memberships" "select * from comments"
+  output_csv "course_groups" "select * from comments"
   output_csv "whiteboard_users" "select * from whiteboard_users"
   output_csv "users" "select * from users"
 
@@ -197,6 +213,14 @@ elif [[ "${source_canvas}" ]]; then
   output_csv "courses" "select c.* from courses c
               where c.canvas_api_domain = '${source_canvas}'"
 
+  output_csv "course_groups" "select g.* from course_groups g
+              join courses c
+              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
+
+  output_csv "course_group_memberships" "select g.* from course_group_memberships g
+              join courses c
+              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
+
   output_csv "whiteboards" "select w.* from whiteboards w
               join courses c
               on w.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
@@ -213,6 +237,8 @@ else
   output_csv "assets" "select * from assets"
   output_csv "asset_whiteboard_elements" "select * from asset_whiteboard_elements"
   output_csv "courses" "select * from courses"
+  output_csv "course_groups" "select * from course_groups"
+  output_csv "course_group_memberships" "select * from course_group_memberships"
   output_csv "whiteboards" "select * from whiteboards"
   output_csv "whiteboard_elements" "select * from whiteboard_elements"
 

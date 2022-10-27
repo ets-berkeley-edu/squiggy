@@ -41,3 +41,4 @@ tmp/
 *.log.*
 .cache
 .pytest_cache/
+scripts/hasenpfeffer_incorporated/csv_files
