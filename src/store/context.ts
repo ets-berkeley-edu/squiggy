@@ -50,12 +50,11 @@ const $_postIFrameMessage = (generator: () => any, callback?: (data: any) => any
           try {
             const parsed = JSON.parse(event.data)
             window.removeEventListener(eventType, processor)
-            console.log('Successfully parsed message from parent window:', parsed)
             callback(parsed)
           } catch {
-            if (_.get(event.data, 'error.code') === 'unsupported_subject') {
-              console.log('Received unsupported_subject message from Canvas, will ignore')
-            } else {
+            // We ignore unsupported_subject responses from Canvas, as they won't stop our own code on the parent side
+            // from returning a response.
+            if (_.get(event.data, 'error.code') !== 'unsupported_subject') {
               console.log('Error parsing message from parent window:', event.data)
             }
           }
