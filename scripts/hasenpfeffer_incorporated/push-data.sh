@@ -44,22 +44,27 @@ done
   exit 1
 }
 
+SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+CSV_HOME_DIRECTORY="${SCRIPT_DIR}/csv_files"
+
 # Because of foreign key constraints, we must populate tables in order of association.
 declare -a tables=(courses
                    users assets asset_users comments
                    activity_types activities
                    categories asset_categories
+                   course_groups course_group_memberships
                    whiteboards whiteboard_users asset_whiteboard_elements whiteboard_elements)
 
-# Prepend the canvas table only if requested.
+# If requested, include the 'canvas' table.
 if [[ "${all_tables}" ]]; then
-  tables=(canvas "${tables[*]}")
+  tables=(canvas ${tables[*]})
 fi
 
-# Check that all CSV files exist in the local directory.
+# Verify the presence of CSV files.
 for table in "${tables[@]}"; do
-  [[ -f "${table}.csv" ]] || {
-    echo "Aborting: file ${table}.csv not found in local directory."
+  csv_file="${CSV_HOME_DIRECTORY}/${table}.csv"
+  [[ -f "${csv_file}" ]] || {
+    echo "[ERROR] ${csv_file} not found. Aborting."
     exit 1
   }
 done
@@ -96,7 +101,7 @@ push_csv() {
   echo "Copying ${1} to database..."
 
   # Format the header row as a comma-separated list for the Postgres copy command.
-  header_row=$(head -1 "${1}.csv")
+  header_row=$(head -1 "${CSV_HOME_DIRECTORY}/${1}.csv")
   columns=${header_row//|/,}
 
   # Load local CSV file contents into table.
@@ -112,7 +117,7 @@ push_csv() {
   fi
 
   # Connect to the database and execute SQL.
-  cat "${1}.csv" | PGPASSWORD=${db_password} psql -h ${db_host} -p ${db_port} -d ${db_database} --username ${db_username} -c "${sql}"
+  cat "${CSV_HOME_DIRECTORY}/${1}.csv" | PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "${sql}"
 }
 
 # Push CSV file contents to the database.
