@@ -72,7 +72,7 @@
             <v-col class="pr-4 pt-2 text-right" cols="1">
               Search
             </v-col>
-            <v-col>
+            <v-col class="ps-1">
               <v-text-field
                 id="adv-search-keywords-input"
                 clearable
@@ -87,9 +87,9 @@
           </v-row>
           <v-row no-gutters>
             <v-col class="pr-4 pt-2 text-right" cols="1">Filter by</v-col>
-            <v-col class="w-75">
-              <v-row no-gutters>
-                <v-col class="pr-2 w-50">
+            <v-col>
+              <v-row no-gutters class="d-flex flex-wrap w-100">
+                <div class="ps-1 w-50">
                   <AccessibleSelect
                     :key="keyForSelectReset"
                     :dense="true"
@@ -102,8 +102,8 @@
                     :value="categoryId"
                     @input="setCategoryId"
                   />
-                </v-col>
-                <v-col class="w-50">
+                </div>
+                <div class="ps-1 w-50">
                   <AccessibleSelect
                     :key="keyForSelectReset"
                     :dense="true"
@@ -114,10 +114,8 @@
                     :value="assetType"
                     @input="setAssetType"
                   />
-                </v-col>
-              </v-row>
-              <v-row no-gutters>
-                <v-col class="w-50">
+                </div>
+                <div class="ps-1 w-50">
                   <AccessibleSelect
                     :key="keyForSelectReset"
                     :dense="true"
@@ -130,8 +128,8 @@
                     :value="userId"
                     @input="setUserId"
                   />
-                </v-col>
-                <v-col v-if="$currentUser.isAdmin || $currentUser.isTeaching" class="pl-2 w-50">
+                </div>
+                <div v-if="$currentUser.isAdmin || $currentUser.isTeaching" class="ps-1 w-50">
                   <AccessibleSelect
                     :key="keyForSelectReset"
                     :dense="true"
@@ -143,10 +141,8 @@
                     label="Section"
                     @input="setSection"
                   />
-                </v-col>
-              </v-row>
-              <v-row no-gutters>
-                <v-col v-if="$currentUser.course.canvasGroups.length" class="w-50">
+                </div>
+                <div v-if="$currentUser.course.canvasGroups.length" class="ps-1 w-50">
                   <AccessibleSelect
                     :key="keyForSelectReset"
                     :dense="true"
@@ -158,7 +154,7 @@
                     label="Group"
                     @input="setGroupId"
                   />
-                </v-col>
+                </div>
               </v-row>
             </v-col>
           </v-row>
@@ -169,7 +165,7 @@
             <v-col>
               <AccessibleSelect
                 :key="keyForSelectReset"
-                class="w-50"
+                class="ps-1 w-50"
                 :dense="true"
                 :disabled="isBusy"
                 id-prefix="adv-search-order-by"
