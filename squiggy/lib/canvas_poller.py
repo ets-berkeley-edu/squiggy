@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from time import sleep
 from urllib.request import urlopen
 
+from canvasapi.exceptions import ResourceDoesNotExist
 from flask import current_app as app
 from sqlalchemy import nullsfirst
 from sqlalchemy.orm import joinedload
@@ -84,6 +85,8 @@ class CanvasPoller(BackgroundJob):
 
                 try:
                     self.poll_course(course)
+                except ResourceDoesNotExist:
+                    logger.warn(f'Poller, using Canvas API, did not find course {_format_course(course)}')
                 except Exception as e:
                     logger.error(f'Failed to poll course {_format_course(course)}')
                     logger.exception(e)
