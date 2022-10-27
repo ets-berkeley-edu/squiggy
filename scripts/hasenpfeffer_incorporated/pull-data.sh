@@ -8,10 +8,12 @@ echo_usage() {
   echo "     ${0} -d db_connection [-c canvas_hostname [-r replacement_canvas_hostname]] [-a]"; echo
   echo "DESCRIPTION"
   echo "Available options"
-  echo "     -d      Database connection information in the form 'host:port:database:username'. Required."
-  echo "     -a      Pull all database tables including the canvas table. Optional."
-  echo "     -c      Hostname of the Canvas instance for which SuiteC course data should be pulled. Optional, defaults to all instances."
-  echo "     -r      If provided, all references to Canvas-hosted resources will be changed to this hostname. Optional, requires -c."
+  echo "     -d      Database connection information in the form 'host:port:database:username'"
+  echo "     -a      [OPTIONAL] Pull all database tables including the canvas table."
+  echo "     -c      [OPTIONAL] Hostname of the Canvas instance for which SuiteC course data should be pulled."
+  echo "                 Defaults to all instances."
+  echo "     -r      [OPTIONAL] If provided, all references to Canvas-hosted resources will be changed to this hostname."
+  echo "                 You must include the '-c' flag when using this option."
 }
 
 while getopts "ac:d:r:" arg; do
