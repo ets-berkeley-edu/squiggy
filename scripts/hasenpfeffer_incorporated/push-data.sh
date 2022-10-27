@@ -9,8 +9,9 @@ echo_usage() {
   echo "DESCRIPTION"
   echo "Available options"
   echo "     -d      Database connection information in the form 'host:port:database:username'. Required."
-  echo "     -a      Push all database tables including the canvas table. Optional."
-  echo "     -i      Mark all courses as inactive after push (may be desirable when populating a test environment). Optional."
+  echo "     -a      [OPTIONAL] Push all database tables including the canvas table."
+  echo "     -i      [OPTIONAL] Mark all courses as inactive after push."
+  echo "                 This may be desirable when populating a test environment."
 }
 
 # Default

@@ -7,15 +7,20 @@ Real-world data, from production, in a test environment promotes effective testi
 ## Pull data from production
 
 ```
-./scripts/hasenpfeffer_incorporated/pull-data.sh -d db_connection [-c canvas_hostname [-r replacement_canvas_hostname]] [-a]
+./scripts/hasenpfeffer_incorporated/pull-data.sh \
+  -d db_connection \
+  [-a] \
+  [-c canvas_hostname [-r replacement_canvas_hostname]]
 ```
 
 ### Available options
 ```
-     -d      Database connection information in the form 'host:port:database:username'. Required.
-     -a      Pull all database tables including the canvas table. Optional.
-     -c      Hostname of the Canvas instance for which SuiteC course data should be pulled. Optional, defaults to all instances.
-     -r      If provided, all references to Canvas-hosted resources will be changed to this hostname. Optional, requires -c.
+-d  Database connection information in the form 'host:port:database:username'
+-a  [OPTIONAL] Pull all database tables including the canvas table.
+-c  [OPTIONAL] Hostname of the Canvas instance for which SuiteC course data
+      should be pulled. Defaults to all instances.
+-r  [OPTIONAL] If provided, all references to Canvas-hosted resources will
+      be changed to this hostname. You must include the '-c' flag when using this option.
 ```
 ### Fun facts about _pull-data.sh_
 
@@ -29,7 +34,8 @@ Real-world data, from production, in a test environment promotes effective testi
 
 ### Available options
 ```
-     -d      Database connection information in the form 'host:port:database:username'. Required.
-     -a      Push all database tables including the canvas table. Optional.
-     -i      Mark all courses as inactive after push (may be desirable when populating a test environment). Optional.
+-d  Database connection information in the form 'host:port:database:username'
+-a  [OPTIONAL] Push all database tables including the canvas table.
+-i  [OPTIONAL] Mark all courses as inactive after push. This may be desirable
+      when populating a test environment.
 ```
