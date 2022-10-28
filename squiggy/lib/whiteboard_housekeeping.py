@@ -62,9 +62,11 @@ class WhiteboardHousekeeping(BackgroundJob):
         while True:
             if not self.is_running:
                 self.is_running = True
-                self._generate_whiteboard_previews()
-                WhiteboardSession.delete_stale_sessions()
-                self.is_running = False
+                try:
+                    self._generate_whiteboard_previews()
+                    WhiteboardSession.delete_stale_sessions()
+                finally:
+                    self.is_running = False
             sleep(15)
 
     def _generate_whiteboard_previews(self):

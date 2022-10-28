@@ -155,13 +155,14 @@ class Whiteboard(Base):
                     if asset_image_url != element.get('src'):
                         # Update preview image. Front-end will re-render the element.
                         element['src'] = asset_image_url
-                        w = WhiteboardElement.update(
+                        updated_element = WhiteboardElement.update(
                             asset_id=asset_id,
                             element=element,
                             uuid=whiteboard_element['uuid'],
                             whiteboard_id=whiteboard_id,
                         )
-                        whiteboard_element['element'] = w.element
+                        if updated_element:
+                            whiteboard_element['element'] = updated_element.element
         return whiteboard
 
     @classmethod
