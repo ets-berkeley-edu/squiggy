@@ -26,7 +26,10 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import os
 import subprocess
 
-from squiggy.factory import create_app
+import eventlet
+# https://eventlet.net/doc/patching.html
+eventlet.monkey_patch()
+from squiggy.factory import create_app  # noqa E402
 
 """Squiggy says HELLO!
 
