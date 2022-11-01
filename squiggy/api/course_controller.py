@@ -33,7 +33,8 @@ from squiggy.models.course import Course
 @app.route('/api/course/activate', methods=['POST'])
 @teacher_required
 def activate():
-    current_user.course.activate()
+    course = Course.find_by_id(current_user.course_id)
+    course.activate()
     return tolerant_jsonify({'status': 'success'})
 
 
@@ -48,5 +49,5 @@ def get_course(course_id):
 def update_protect_assets_per_section_checkbox():
     params = request.get_json()
     protect_assets_per_section = params.get('protectSectionCheckbox')
-    Course.update_protect_assets_per_section(current_user.course.id, protect_assets_per_section)
+    Course.update_protect_assets_per_section(current_user.course_id, protect_assets_per_section)
     return tolerant_jsonify({'status': 'success'})

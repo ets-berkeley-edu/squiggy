@@ -29,7 +29,7 @@ from cryptography.fernet import Fernet
 from flask import current_app as app
 from sqlalchemy import and_, or_
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
-from sqlalchemy.sql import desc
+from sqlalchemy.sql import desc, text
 from squiggy import db, std_commit
 from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, to_int
 from squiggy.models.asset_user import asset_user_table
@@ -207,19 +207,30 @@ class User(Base):
     def find_by_ids(cls, user_ids):
         return cls.query.filter(cls.id.in_(user_ids)).all()
 
-    def update_personal_description(self, personal_description):
-        self.personal_description = personal_description
-        db.session.add(self)
+    @classmethod
+    def is_sharing_points(cls, user_id):
+        sql = 'SELECT share_points FROM users WHERE id = :id'
+        result = db.session.execute(text(sql), {'id': user_id}).first()
+        return bool(result and result['share_points'])
+
+    @classmethod
+    def update_personal_description(cls, personal_description, user_id):
+        user = cls.query.filter_by(id=user_id).first()
+        user.personal_description = personal_description
+        db.session.add(user)
         std_commit()
 
-    def update_looking_for_collaborators(self, looking_for_collaborators):
-        self.looking_for_collaborators = True if looking_for_collaborators else False
-        db.session.add(self)
+    @classmethod
+    def update_looking_for_collaborators(cls, is_looking_for_collaborators, user_id):
+        user = cls.query.filter_by(id=user_id).first()
+        user.looking_for_collaborators = True if is_looking_for_collaborators else False
+        db.session.add(user)
         std_commit()
 
-    def update_share_points(self, share):
-        self.share_points = True if share else False
-        db.session.add(self)
+    @classmethod
+    def update_share_points(cls, share, user_id):
+        user = cls.query.filter_by(id=user_id).first()
+        user.share_points = True if share else False
         std_commit()
 
     def to_api_json(self, include_points=False, include_sharing=False):
@@ -228,7 +239,7 @@ class User(Base):
             canvas_user_id=self.canvas_user_id,
             course_id=self.course_id,
         )
-        json = {
+        api_json = {
             'id': self.id,
             'assets': [{'id': asset.id, 'title': asset.title} for asset in self.assets],
             'bookmarkletAuth': Fernet(encryption_key).encrypt(f'{self.id}_{self.course_id}_{self.bookmarklet_token}'.encode()),
@@ -242,7 +253,10 @@ class User(Base):
             'canvasGroups': [g.to_api_json() for g in group_memberships],
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
+            'courseId': self.course_id,
             'personalDescription': self.personal_description,
+            'points': self.points,
+            'sharePoints': True if self.share_points else False,
             'lookingForCollaborators': self.looking_for_collaborators,
             'whiteboards': [{'id': w.id, 'title': w.title} for w in self.whiteboards],
             'isAdmin': is_admin(self),
@@ -253,8 +267,8 @@ class User(Base):
             'createdAt': isoformat(self.created_at),
             'updatedAt': isoformat(self.updated_at),
         }
-        if include_points:
-            json['points'] = self.points
-        if include_sharing:
-            json['sharePoints'] = self.share_points
-        return json
+        if not include_points:
+            api_json.pop('points')
+        if not include_sharing:
+            api_json.pop('sharePoints')
+        return api_json

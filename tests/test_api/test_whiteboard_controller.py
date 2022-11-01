@@ -69,7 +69,11 @@ class TestGetWhiteboard:
         std_commit(allow_test_environment=True)
 
         fake_auth.login(student.id)
-        assert Whiteboard.find_by_id(LoginSession(student.id), whiteboard_id)['deletedAt']
+        whiteboard = Whiteboard.find_by_id(
+            current_user=LoginSession(student.id),
+            whiteboard_id=whiteboard_id,
+        )
+        assert whiteboard['deletedAt']
         _api_get_whiteboard(client, expected_status_code=404, whiteboard_id=whiteboard_id)
 
     def test_owner_view_whiteboard(self, client, fake_auth, mock_whiteboard):
@@ -440,11 +444,11 @@ class TestGetEligibleCollaborators:
     def test_authorized(self, client, fake_auth, authorized_user_id):
         """Authorized user can get /students_by_section."""
         fake_auth.login(authorized_user_id)
-        current_user = User.find_by_id(authorized_user_id)
         eligible_collaborators = self._api_eligible_collaborators(client)
         user_count = len(eligible_collaborators)
         assert user_count > 1
-        users_of_all_types = User.get_users_by_course_id(course_id=current_user.course.id)
+        user = User.find_by_id(authorized_user_id)
+        users_of_all_types = User.get_users_by_course_id(course_id=user.course.id)
         assert user_count == len(users_of_all_types)
 
     def test_course_all_users(self, client, fake_auth, mock_asset_course):

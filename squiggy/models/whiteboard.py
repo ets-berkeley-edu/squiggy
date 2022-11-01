@@ -29,7 +29,7 @@ from uuid import uuid4
 from sqlalchemy import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url, is_s3_preview_url
-from squiggy.lib.util import get_user_id, is_admin, is_observer, is_student, is_teaching, isoformat, utc_now
+from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset import Asset
 from squiggy.models.asset_whiteboard_element import AssetWhiteboardElement
@@ -87,10 +87,10 @@ class Whiteboard(Base):
 
     @classmethod
     def can_update_whiteboard(cls, current_user, whiteboard_id, include_deleted=False):
-        if is_admin(current_user) or is_teaching(current_user):
+        if current_user.is_admin or current_user.is_teaching:
             return True
         args = {
-            'user_id': get_user_id(current_user),
+            'user_id': current_user.id,
             'whiteboard_id': whiteboard_id,
         }
         sql = """
@@ -100,13 +100,13 @@ class Whiteboard(Base):
             LEFT JOIN users whiteboard_owner ON w.created_by = whiteboard_owner.id
             WHERE u.whiteboard_id = :whiteboard_id AND u.user_id = :user_id
         """
-        if current_user.course.protects_assets_per_section and current_user.is_student:
+        if current_user.protect_assets_per_section:
             sql += """ AND (
                 whiteboard_owner.id = :user_id
                 OR to_jsonb(whiteboard_owner.canvas_course_sections) ?| :current_user_sections
                 OR NOT lower(whiteboard_owner.canvas_course_role) SIMILAR TO '%(student|learner)%'
             )"""
-            args['current_user_sections'] = current_user.user.canvas_course_sections
+            args['current_user_sections'] = current_user.canvas_course_sections
         if not include_deleted:
             sql += ' AND w.deleted_at IS NULL'
         result = db.session.execute(text(sql), args).first()
@@ -138,12 +138,12 @@ class Whiteboard(Base):
 
         if asset_ids:
             assets = Asset.get_assets(
+                current_user=current_user,
                 filters={'asset_ids': asset_ids},
                 include_hidden=True,
                 limit=100000,
                 offset=0,
                 order_by='id',
-                session=current_user,
             )
             assets_by_id = dict((asset['id'], asset) for asset in assets['results'])
             for whiteboard_element in [w for w in whiteboard['whiteboardElements'] if w['assetId']]:
@@ -206,7 +206,7 @@ class Whiteboard(Base):
     ):
         params = {
             'course_id': course_id,
-            'current_user_id': current_user.user_id if current_user else None,
+            'current_user_id': current_user.id if current_user else None,
             'keywords': ('%' + re.sub(r'\s+', '%', keywords.strip()) + '%') if keywords else None,
             'limit': limit,
             'offset': offset,
@@ -236,7 +236,13 @@ class Whiteboard(Base):
         }.get(order_by) or default_order_by
 
         # First, get whiteboard_ids
-        sql = f'SELECT DISTINCT w.id FROM whiteboards w {join_clause} {where_clause} ORDER BY w.id LIMIT :limit OFFSET :offset'
+        sql = f"""
+            SELECT DISTINCT w.id
+            FROM whiteboards w
+            {join_clause}
+            {where_clause}
+            ORDER BY w.id LIMIT :limit OFFSET :offset
+        """
         all_whiteboard_ids = list({row['id'] for row in list(db.session.execute(sql, params))})
         params['whiteboard_ids'] = all_whiteboard_ids
 
@@ -418,14 +424,15 @@ def _get_whiteboards_where_clause(
         sql = """SELECT whiteboard_id FROM whiteboards w
             JOIN whiteboard_users wu ON w.id = wu.whiteboard_id
             LEFT JOIN users whiteboard_owner ON w.created_by = whiteboard_owner.id
-            WHERE wu.user_id = :current_user_id"""
-        if current_user.course.protects_assets_per_section and current_user.is_student:
+            WHERE wu.user_id = :current_user_id
+        """
+        if current_user.protect_assets_per_section and current_user.is_student:
             sql += """ AND (
                 whiteboard_owner.id = :current_user_id
                 OR to_jsonb(whiteboard_owner.canvas_course_sections) ?| :user_course_sections
                 OR NOT lower(whiteboard_owner.canvas_course_role) SIMILAR TO '%(student|learner)%'
             )"""
-            params['user_course_sections'] = current_user.user.canvas_course_sections
+            params['user_course_sections'] = current_user.canvas_course_sections
         params['my_whiteboard_ids'] = [row['whiteboard_id'] for row in list(db.session.execute(sql, params))]
         where_clause += ' AND w.id = ANY(:my_whiteboard_ids)'
     return where_clause

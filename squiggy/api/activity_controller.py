@@ -36,7 +36,7 @@ from squiggy.models.user import User
 @app.route('/api/activities/configuration', methods=['GET'])
 @login_required
 def get_activity_configuration():
-    configuration = ActivityType.get_activity_type_configuration(course_id=current_user.course.id)
+    configuration = ActivityType.get_activity_type_configuration(course_id=current_user.course_id)
     return tolerant_jsonify(configuration)
 
 
@@ -53,27 +53,30 @@ def update_activity_configuration():
         ):
             raise BadRequestError('Activity updates not properly formatted.')
     ActivityType.update_activity_type_configuration(
-        course_id=current_user.course.id,
+        course_id=current_user.course_id,
         updates=params,
     )
-    Activity.recalculate_points(course_id=current_user.course.id)
+    Activity.recalculate_points(course_id=current_user.course_id)
     return tolerant_jsonify({'updated': True})
 
 
 @app.route('/api/activities/csv', methods=['GET'])
 @teacher_required
 def get_activity_csv():
-    course_id = current_user.course.id
+    course_id = current_user.course_id
     fieldnames, rows = Activity.get_activities_as_csv(course_id=course_id)
-    filename_prefix = f'engagement_index_activities_{current_user.course.canvas_course_id}'
+    filename_prefix = f'engagement_index_activities_{current_user.canvas_course_id}'
     return response_with_csv_download(rows, filename_prefix, fieldnames)
 
 
 @app.route('/api/activities/interactions', methods=['GET'])
 @login_required
 def get_interactions():
-    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
-    interactions = Activity.get_interactions_for_course(course_id=current_user.course.id, sections=sections)
+    sections = current_user.canvas_course_sections if current_user.protect_assets_per_section else None
+    interactions = Activity.get_interactions_for_course(
+        course_id=current_user.course_id,
+        sections=sections,
+    )
     return tolerant_jsonify(interactions)
 
 
@@ -81,8 +84,10 @@ def get_interactions():
 @login_required
 def get_user_activities(user_id):
     user = User.find_by_id(user_id)
-    if not user or user.course.id != current_user.course.id:
+    if not user or user.course.id != current_user.course_id:
         raise ResourceNotFoundError('User not found.')
-    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
-    activities_feed = Activity.get_activities_for_user_id(user_id, sections)
+    activities_feed = Activity.get_activities_for_user_id(
+        sections=current_user.canvas_course_sections if current_user.protect_assets_per_section else None,
+        user_id=user.id,
+    )
     return tolerant_jsonify(activities_feed)

@@ -38,19 +38,20 @@ def my_profile():
 @app.route('/api/users')
 @login_required
 def get_users():
-    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
-    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=current_user.course.id, sections=sections)])
+    sections = current_user.canvas_course_sections if current_user.protect_assets_per_section else None
+    users = User.get_users_by_course_id(course_id=current_user.course_id, sections=sections)
+    return tolerant_jsonify([u.to_api_json() for u in users])
 
 
 @app.route('/api/users/leaderboard')
 @login_required
 def get_leaderboard():
-    if (current_user.is_admin or current_user.is_teaching):
-        users = User.get_leaderboard(course_id=current_user.course.id, sharing_only=False)
+    if current_user.is_admin or current_user.is_teaching:
+        users = User.get_leaderboard(course_id=current_user.course_id, sharing_only=False)
         return tolerant_jsonify([u.to_api_json(include_points=True, include_sharing=True) for u in users])
-    elif current_user.user.share_points:
-        sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
-        users = User.get_leaderboard(course_id=current_user.course.id, sections=sections, sharing_only=True)
+    elif User.is_sharing_points(current_user.id):
+        sections = current_user.canvas_course_sections if current_user.protect_assets_per_section else None
+        users = User.get_leaderboard(course_id=current_user.course_id, sections=sections, sharing_only=True)
         return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
     else:
         raise ForbiddenRequestError('Leaderboard disallowed for users not sharing points.')
@@ -62,7 +63,11 @@ def update_looking_for_collaborators():
     params = request.get_json()
     if 'lookingForCollaborators' not in params:
         raise BadRequestError('No looking for collaborators status provided.')
-    current_user.user.update_looking_for_collaborators(params['lookingForCollaborators'])
+    User.update_looking_for_collaborators(
+        is_looking_for_collaborators=params['lookingForCollaborators'],
+        user_id=current_user.id,
+    )
+    current_user.refresh()
     return tolerant_jsonify(current_user.to_api_json())
 
 
@@ -73,7 +78,11 @@ def update_personal_description():
     if 'personalDescription' not in params:
         raise BadRequestError('No personal description provided.')
     personal_description = params['personalDescription']
-    current_user.user.update_personal_description(personal_description[:255] if personal_description else None)
+    User.update_personal_description(
+        personal_description=personal_description[:255] if personal_description else None,
+        user_id=current_user.id,
+    )
+    current_user.refresh()
     return tolerant_jsonify(current_user.to_api_json())
 
 
@@ -83,5 +92,9 @@ def update_share_points():
     params = request.get_json()
     if 'share' not in params:
         raise BadRequestError('No share status provided.')
-    current_user.user.update_share_points(params['share'])
+    User.update_share_points(
+        share=params['share'],
+        user_id=current_user.id,
+    )
+    current_user.refresh()
     return tolerant_jsonify(current_user.to_api_json())

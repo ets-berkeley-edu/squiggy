@@ -219,23 +219,28 @@ class Asset(Base):
         return asset
 
     @classmethod
-    def get_assets(cls, session, order_by, offset, limit, filters, include_hidden=False):
+    def get_assets(cls, current_user, filters, offset, order_by, limit, include_hidden=False):
         params = {
             'asset_ids': filters.get('asset_ids'),
             'asset_types': filters.get('asset_type'),
             'category_id': filters.get('category_id'),
-            'course_id': session.course.id,
+            'course_id': current_user.course_id,
             'group_id': filters.get('group_id'),
             'limit': limit,
-            'my_asset_ids': [a.id for a in session.user.assets],
+            'my_asset_ids': current_user.asset_ids,
             'offset': offset,
             'owner_id': filters.get('owner_id'),
             'section': filters.get('section'),
-            'user_id': session.user.id,
+            'user_id': current_user.id,
         }
 
-        from_clause = _build_from_clause(filters, session)
-        where_clause = _build_where_clause(filters, include_hidden, params, session)
+        from_clause = _build_from_clause(filters=filters, current_user=current_user)
+        where_clause = _build_where_clause(
+            filters=filters,
+            include_hidden=include_hidden,
+            params=params,
+            current_user=current_user,
+        )
         order_clause = _build_order_clause(order_by)
 
         assets_query = text(f"""SELECT DISTINCT ON (a.id, a.likes, a.views, a.comment_count) a.*, act.type AS activity_type
@@ -249,11 +254,14 @@ class Asset(Base):
 
         asset_ids = [r['id'] for r in assets_result]
 
-        users_query = text("""SELECT au.asset_id,
-            u.id, u.canvas_user_id, u.canvas_course_role, u.canvas_course_sections, u.canvas_enrollment_state, u.canvas_full_name, u.canvas_image
+        users_query = text("""
+            SELECT
+                au.asset_id, u.id, u.canvas_user_id, u.canvas_course_role, u.canvas_course_sections,
+                u.canvas_enrollment_state, u.canvas_full_name, u.canvas_image
             FROM users u JOIN asset_users au
             ON au.user_id = u.id AND au.asset_id = ANY(:asset_ids)
-            ORDER BY au.asset_id""")
+            ORDER BY au.asset_id
+        """)
         users_result = db.session.execute(users_query, {'asset_ids': asset_ids})
         users_by_asset = dict()
         for asset_id, user_rows in groupby(users_result, lambda r: r['asset_id']):
@@ -262,7 +270,7 @@ class Asset(Base):
         def _row_to_json_asset(row):
             json_asset = db_row_to_dict(row)
 
-            # Has the current user liked the asset?
+            # Has the user liked the asset?
             json_asset['liked'] = (json_asset['activityType'] == 'asset_like')
 
             if json_asset['id'] in users_by_asset:
@@ -303,11 +311,11 @@ class Asset(Base):
         count = db.session.execute(sql, {'asset_id': self.id}).first()[0]
         return count > 0
 
-    def add_like(self, user):
+    def add_like(self, user_id):
         like_activity = Activity.create_unless_exists(
             activity_type='asset_like',
             course_id=self.course_id,
-            user_id=user.get_id(),
+            user_id=user_id,
             object_type='asset',
             object_id=self.id,
             asset_id=self.id,
@@ -321,7 +329,7 @@ class Asset(Base):
                     object_type='asset',
                     object_id=self.id,
                     asset_id=self.id,
-                    actor_id=user.get_id(),
+                    actor_id=user_id,
                     reciprocal_id=like_activity.id,
                 )
         self.likes = Activity.query.filter_by(asset_id=self.id, activity_type='asset_like').count()
@@ -329,8 +337,7 @@ class Asset(Base):
         std_commit()
         return True
 
-    def remove_like(self, user):
-        user_id = user.get_id()
+    def remove_like(self, user_id):
         db.session.query(Activity).filter_by(
             object_id=self.id,
             object_type='asset',
@@ -350,11 +357,11 @@ class Asset(Base):
         std_commit()
         return True
 
-    def increment_views(self, user):
+    def increment_views(self, user_id):
         view_activity = Activity.create(
             activity_type='asset_view',
             course_id=self.course_id,
-            user_id=user.id,
+            user_id=user_id,
             object_type='asset',
             object_id=self.id,
             asset_id=self.id,
@@ -368,7 +375,7 @@ class Asset(Base):
                     object_type='asset',
                     object_id=self.id,
                     asset_id=self.id,
-                    actor_id=user.id,
+                    actor_id=user_id,
                     reciprocal_id=view_activity.id,
                 )
         self.views = Activity.query.filter_by(asset_id=self.id, activity_type='asset_view').count()
@@ -483,7 +490,7 @@ def validate_asset_url(url):
     return error_message
 
 
-def _build_from_clause(filters, session):
+def _build_from_clause(filters, current_user):
     from_clause = """
         FROM assets a
             LEFT JOIN asset_categories ac ON a.id = ac.asset_id
@@ -496,7 +503,7 @@ def _build_from_clause(filters, session):
                 AND act.object_type = 'asset'
                 AND act.type = 'asset_like'
     """
-    if session.course.protects_assets_per_section and session.is_student or filters.get('group_id'):
+    if current_user.is_student and current_user.protect_assets_per_section or filters.get('group_id'):
         from_clause += """
             LEFT JOIN users asset_owner
                 ON a.created_by = asset_owner.id
@@ -523,7 +530,7 @@ def _build_order_clause(order_by):
         return ' ORDER BY a.id DESC'
 
 
-def _build_where_clause(filters, include_hidden, params, session):
+def _build_where_clause(filters, include_hidden, params, current_user):
     where_clause = """WHERE
         a.deleted_at IS NULL
         AND a.course_id = :course_id
@@ -531,15 +538,15 @@ def _build_where_clause(filters, include_hidden, params, session):
 
     if not include_hidden:
         where_clause += ' AND a.visible = TRUE'
-    if not session.is_admin and not session.is_teaching:
+    if not current_user.is_admin and not current_user.is_teaching:
         where_clause += ' AND (a.visible = TRUE OR a.id = ANY(:my_asset_ids))'
-    if session.course.protects_assets_per_section and session.is_student:
+    if current_user.is_student and current_user.protect_assets_per_section:
         where_clause += """ AND (
             asset_owner.id = :user_id
             OR to_jsonb(asset_owner.canvas_course_sections) ?| :user_course_sections
             OR NOT lower(asset_owner.canvas_course_role) SIMILAR TO '%(student|learner)%'
         )"""
-        params['user_course_sections'] = session.user.canvas_course_sections
+        params['user_course_sections'] = current_user.canvas_course_sections
     if filters.get('keywords'):
         where_clause += ' AND (a.title ILIKE :keywords OR a.description ILIKE :keywords)'
         params['keywords'] = '%' + re.sub(r'\s+', '%', filters['keywords'].strip()) + '%'

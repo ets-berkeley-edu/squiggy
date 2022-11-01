@@ -289,55 +289,62 @@ class TestBookmarkletAuth:
             expected_status_code=401,
         )
 
-    def test_authorized_admin(self, client):
+    def test_authorized_admin(self, app, client):
         """Admin only needs valid Squiggy-Bookmarklet-Auth header value."""
-        course = Course.find_by_canvas_course_id(canvas_api_domain='bcourses.berkeley.edu', canvas_course_id=1502871)
-        user = User.create(
-            canvas_course_role='Admin',
-            canvas_email='admin@berkeley.edu',
-            canvas_enrollment_state='inactive',
-            canvas_full_name='Jane Admin',
-            canvas_user_id='24680',
-            course_id=course.id,
-        )
-        std_commit(allow_test_environment=True)
-        # Expect authorized
-        bookmarklet_auth = user.to_api_json()['bookmarkletAuth']
-        self._api_assets_with_bookmarklet_auth(bookmarklet_auth_header=bookmarklet_auth, client=client)
+        with app.app_context():
+            course = Course.find_by_canvas_course_id(
+                canvas_api_domain='bcourses.berkeley.edu',
+                canvas_course_id=1502871,
+            )
+            user = User.create(
+                canvas_course_role='Admin',
+                canvas_email='admin@berkeley.edu',
+                canvas_enrollment_state='inactive',
+                canvas_full_name='Jane Admin',
+                canvas_user_id='24680',
+                course_id=course.id,
+            )
+            std_commit(allow_test_environment=True)
+            # Expect authorized
+            bookmarklet_auth = user.to_api_json()['bookmarkletAuth']
+            self._api_assets_with_bookmarklet_auth(bookmarklet_auth_header=bookmarklet_auth, client=client)
 
-    def test_authorized_to_unauthorized(self, client):
+    def test_authorized_to_unauthorized(self, app, client):
         """Deny Squiggy-Bookmarklet-Auth when course_id does not match."""
-        canvas_course_id = 1502871
-        course = Course.find_by_canvas_course_id(
-            canvas_api_domain='bcourses.berkeley.edu',
-            canvas_course_id=canvas_course_id,
-        )
-        user = User.create(
-            canvas_course_role='Student',
-            canvas_course_sections=[],
-            canvas_email='nico@berkeley.edu',
-            canvas_enrollment_state='active',
-            canvas_full_name='Nico ',
-            canvas_user_id='13579',
-            course_id=course.id,
-        )
-        std_commit(allow_test_environment=True)
+        with app.app_context():
+            canvas_course_id = 1502871
+            course = Course.find_by_canvas_course_id(
+                canvas_api_domain='bcourses.berkeley.edu',
+                canvas_course_id=canvas_course_id,
+            )
+            user = User.create(
+                canvas_course_role='Student',
+                canvas_course_sections=[],
+                canvas_email='nico@berkeley.edu',
+                canvas_enrollment_state='active',
+                canvas_full_name='Nico ',
+                canvas_user_id='13579',
+                course_id=course.id,
+            )
+            std_commit(allow_test_environment=True)
 
-        # Expect authorized
-        bookmarklet_auth = user.to_api_json()['bookmarkletAuth']
-        self._api_assets_with_bookmarklet_auth(bookmarklet_auth_header=bookmarklet_auth, client=client)
+            # Expect authorized
+            bookmarklet_auth = user.to_api_json()['bookmarkletAuth']
+            self._api_assets_with_bookmarklet_auth(bookmarklet_auth_header=bookmarklet_auth, client=client)
 
-        # Student becomes inactive and we try to hack our way in with the old bookmarklet auth header.
-        user.canvas_enrollment_state = 'inactive'
-        db.session.add(user)
-        std_commit(allow_test_environment=True)
+            # Student becomes inactive and we try to hack our way in with the old bookmarklet auth header.
+            user.canvas_enrollment_state = 'inactive'
+            db.session.add(user)
+            std_commit(allow_test_environment=True)
 
-        # Expect unauthorized
-        self._api_assets_with_bookmarklet_auth(
-            bookmarklet_auth_header=bookmarklet_auth,
-            client=client,
-            expected_status_code=401,
-        )
+            client.post('/api/auth/logout')
+
+            # Expect unauthorized
+            self._api_assets_with_bookmarklet_auth(
+                bookmarklet_auth_header=bookmarklet_auth,
+                client=client,
+                expected_status_code=401,
+            )
 
 
 class TestCookieAuth:
@@ -385,28 +392,29 @@ class TestCookieAuth:
             expected_status_code=401,
         )
 
-    def test_authorized(self, client):
+    def test_authorized(self, app, client):
         """Cookie auth for authorized user."""
-        canvas_course_id = 1502870
-        authorized_user = User.find_by_canvas_user_id(canvas_user_id=654321)
-        assert authorized_user
-        assert authorized_user.course.canvas_course_id == canvas_course_id
+        with app.app_context():
+            canvas_course_id = 1502870
+            authorized_user = User.find_by_canvas_user_id(canvas_user_id=654321)
+            assert authorized_user
+            assert authorized_user.course.canvas_course_id == canvas_course_id
 
-        canvas_api_domain = authorized_user.course.canvas_api_domain
-        client.set_cookie('localhost', f'{canvas_api_domain}|{canvas_course_id}', str(authorized_user.id))
-        self._api_assets_with_cookie_auth(
-            canvas_api_domain=canvas_api_domain,
-            canvas_course_id=canvas_course_id,
-            client=client,
-        )
-        # Finally, log out and verify that cookie has been removed.
-        assert client.post('/api/auth/logout').status_code == 200
-        self._api_assets_with_cookie_auth(
-            canvas_api_domain=canvas_api_domain,
-            canvas_course_id=canvas_course_id,
-            client=client,
-            expected_status_code=401,
-        )
+            canvas_api_domain = authorized_user.course.canvas_api_domain
+            client.set_cookie('localhost', f'{canvas_api_domain}|{canvas_course_id}', str(authorized_user.id))
+            self._api_assets_with_cookie_auth(
+                canvas_api_domain=canvas_api_domain,
+                canvas_course_id=canvas_course_id,
+                client=client,
+            )
+            # Finally, log out and verify that cookie has been removed.
+            assert client.post('/api/auth/logout').status_code == 200
+            self._api_assets_with_cookie_auth(
+                canvas_api_domain=canvas_api_domain,
+                canvas_course_id=canvas_course_id,
+                client=client,
+                expected_status_code=401,
+            )
 
 
 class TestMasquerade:
