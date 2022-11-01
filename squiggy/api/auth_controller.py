@@ -60,9 +60,9 @@ def dev_auth_login():
 def logout():
     response = tolerant_jsonify(current_user.to_api_json())
     # Delete our custom cookies
-    canvas_api_domain = current_user.course.canvas_api_domain
+    canvas_api_domain = current_user.canvas_api_domain
     keys = [
-        f'{canvas_api_domain}|{current_user.course.canvas_course_id}',
+        f'{canvas_api_domain}|{current_user.canvas_course_id}',
         f'{canvas_api_domain}_supports_custom_messaging',
     ]
     for key in keys:

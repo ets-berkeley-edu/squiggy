@@ -25,7 +25,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app, request
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_delete_comment, can_update_comment, can_view_asset
+from squiggy.api.api_util import can_current_user_delete_comment, can_current_user_update_comment, can_current_user_view_asset
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
@@ -39,7 +39,7 @@ def create_comment():
     params = request.get_json()
     asset_id = params.get('assetId')
     asset = Asset.find_by_id(asset_id=asset_id)
-    if asset and can_view_asset(asset=asset, user=current_user):
+    if asset and can_current_user_view_asset(asset=asset):
         body = params.get('body', '').strip()
         if not body:
             raise BadRequestError('Comment body is required.')
@@ -59,7 +59,7 @@ def create_comment():
 @login_required
 def get_comments(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
-    if asset and can_view_asset(asset=asset, user=current_user):
+    if asset and can_current_user_view_asset(asset=asset):
         return tolerant_jsonify(_decorate_comments(Comment.get_comments(asset.id)))
     else:
         raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
@@ -69,7 +69,7 @@ def get_comments(asset_id):
 @login_required
 def delete_comment(comment_id):
     comment = Comment.find_by_id(comment_id=comment_id)
-    if comment and can_delete_comment(comment=comment, user=current_user):
+    if comment and can_current_user_delete_comment(comment=comment):
         Comment.delete(comment_id=comment_id)
         return tolerant_jsonify({'message': f'Comment {comment_id} deleted'}), 200
     else:
@@ -81,7 +81,7 @@ def delete_comment(comment_id):
 def update_comment(comment_id):
     params = request.get_json()
     comment = Comment.find_by_id(comment_id=comment_id)
-    if comment and can_update_comment(comment=comment, user=current_user):
+    if comment and can_current_user_update_comment(comment=comment):
         body = params.get('body', '').strip()
         if not body:
             raise BadRequestError('Comment body is required.')

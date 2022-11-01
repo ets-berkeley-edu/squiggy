@@ -28,12 +28,12 @@ import re
 
 from flask import current_app as app, request, Response
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_update_asset, can_view_asset
+from squiggy.api.api_util import can_current_user_update_asset, can_current_user_view_asset
 from squiggy.lib.aws import stream_object, upload_to_s3
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import retrieve_to_file, tolerant_jsonify
 from squiggy.lib.previews import get_s3_key_prefix
-from squiggy.lib.util import is_admin, is_teaching, local_now, to_bool_or_none
+from squiggy.lib.util import local_now, to_bool_or_none
 from squiggy.models.asset import Asset, validate_asset_url
 from squiggy.models.category import Category
 from squiggy.models.user import User
@@ -44,7 +44,7 @@ from squiggy.models.user import User
 def download(asset_id):
     asset = Asset.find_by_id(asset_id)
     s3_url = asset.download_url
-    if asset and s3_url and can_view_asset(asset=asset, user=current_user):
+    if asset and s3_url and can_current_user_view_asset(asset=asset):
         stream = stream_object(s3_url)
         if stream:
             now = local_now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -63,10 +63,10 @@ def download(asset_id):
 @login_required
 def get_asset(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
-    if asset and can_view_asset(asset=asset, user=current_user):
-        if current_user.user not in asset.users:
-            asset.increment_views(current_user.user)
-        return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
+    if asset and can_current_user_view_asset(asset=asset):
+        if current_user.id not in [user.id for user in asset.users]:
+            asset.increment_views(current_user.id)
+        return tolerant_jsonify(asset.to_api_json(user_id=current_user.id))
     else:
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
 
@@ -86,7 +86,13 @@ def get_assets():
         'owner_id': _get(params, 'userId', None),
         'section': _get(params, 'section', None),
     }
-    results = Asset.get_assets(session=current_user, order_by=order_by, offset=offset, limit=limit, filters=filters)
+    results = Asset.get_assets(
+        current_user=current_user,
+        filters=filters,
+        limit=limit,
+        offset=offset,
+        order_by=order_by,
+    )
     return tolerant_jsonify(results)
 
 
@@ -112,7 +118,7 @@ def create_asset():
         if url_error:
             raise BadRequestError(url_error)
 
-    if not current_user.course:
+    if not current_user.course_id:
         raise BadRequestError('Course data not found')
 
     s3_attrs = {}
@@ -131,13 +137,13 @@ def create_asset():
         s3_attrs = upload_to_s3(
             filename=file_upload['name'],
             byte_stream=file_upload['byte_stream'],
-            s3_key_prefix=get_s3_key_prefix(current_user.course.id, 'asset'),
+            s3_key_prefix=get_s3_key_prefix(current_user.course_id, 'asset'),
         )
 
     asset = Asset.create(
         asset_type=asset_type,
         categories=category_id and [Category.find_by_id(category_id)],
-        course_id=current_user.course.id,
+        course_id=current_user.course_id,
         created_by=current_user.user_id,
         description=description,
         download_url=s3_attrs.get('download_url', None),
@@ -145,7 +151,7 @@ def create_asset():
         source=source,
         title=title,
         url=url,
-        users=[User.find_by_id(current_user.get_id())],
+        users=[User.find_by_id(current_user.id)],
         visible=visible,
     )
     return tolerant_jsonify(asset.to_api_json())
@@ -157,9 +163,9 @@ def delete_asset(asset_id):
     asset = Asset.find_by_id(asset_id) if asset_id else None
     if not asset:
         raise ResourceNotFoundError('Asset not found.')
-    if not can_update_asset(asset=asset, user=current_user):
+    if not can_current_user_update_asset(asset=asset):
         raise BadRequestError('To delete this asset you must own it or be a teacher or admin in the course.')
-    if (not is_admin(current_user) and not is_teaching(current_user)) and (asset.comment_count or asset.likes or asset.is_used_in_whiteboards()):
+    if not current_user.is_admin and not current_user.is_teaching and (asset.comment_count or asset.likes or asset.is_used_in_whiteboards()):
         raise BadRequestError('You cannot delete an asset with comments, likes, or whiteboard usages.')
     Asset.delete(asset_id=asset_id)
     return tolerant_jsonify({'message': f'Asset {asset_id} deleted'}), 200
@@ -169,8 +175,8 @@ def delete_asset(asset_id):
 @login_required
 def like_asset(asset_id):
     asset = _get_asset_for_like(asset_id)
-    asset.add_like(user=current_user)
-    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
+    asset.add_like(user_id=current_user.id)
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.id))
 
 
 @app.route('/api/asset/<asset_id>/refresh_preview', methods=['POST'])
@@ -179,18 +185,18 @@ def refresh_preview(asset_id):
     asset = Asset.find_by_id(asset_id) if asset_id else None
     if not asset or asset.asset_type != 'link':
         raise BadRequestError('Preview refresh requires a valid link asset.')
-    if not can_update_asset(asset=asset, user=current_user):
+    if not can_current_user_update_asset(asset=asset):
         raise BadRequestError('To refresh an asset preview you must own it or be a teacher in the course.')
     asset.refresh_link_preview()
-    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.id))
 
 
 @app.route('/api/asset/<asset_id>/remove_like', methods=['POST'])
 @login_required
 def remove_like_asset(asset_id):
     asset = _get_asset_for_like(asset_id)
-    asset.remove_like(user=current_user)
-    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
+    asset.remove_like(user_id=current_user.id)
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.id))
 
 
 @app.route('/api/asset/update', methods=['POST'])
@@ -204,7 +210,7 @@ def update_asset():
     asset = Asset.find_by_id(asset_id) if asset_id else None
     if not asset or not title:
         raise BadRequestError('Asset update requires a valid ID and title.')
-    if not can_update_asset(asset=asset, user=current_user):
+    if not can_current_user_update_asset(asset=asset):
         raise BadRequestError('To update an asset you must own it or be a teacher in the course.')
     asset = Asset.update(
         asset_id=asset_id,
@@ -212,7 +218,7 @@ def update_asset():
         description=description,
         title=title,
     )
-    return tolerant_jsonify(asset.to_api_json(user_id=current_user.get_id()))
+    return tolerant_jsonify(asset.to_api_json(user_id=current_user.id))
 
 
 def _get(_dict, key, default_value=None):
@@ -229,9 +235,9 @@ def _load_json(path):
 
 def _get_asset_for_like(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
-    if not asset or not can_view_asset(asset=asset, user=current_user):
+    if not asset or not can_current_user_view_asset(asset=asset):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
-    elif current_user.user in asset.users:
+    elif current_user.id in [user.id for user in asset.users]:
         raise BadRequestError('You cannot like your own asset.')
     else:
         return asset

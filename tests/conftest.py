@@ -29,8 +29,11 @@ import os
 from random import randint
 from uuid import uuid4
 
+from flask_login import logout_user
 from moto import mock_sts  # noqa
 import pytest  # noqa
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 from squiggy import std_commit
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.util import is_student
@@ -118,15 +121,18 @@ def db_session(db):
     # or not it has an explicit database dependency.
     db.session.rollback()
     try:
-        db.session.get_bind().close()
+        bind = db.session.get_bind()
+        if isinstance(bind, Engine):
+            bind.dispose()
+        else:
+            bind.close()
     # The session bind will close only if it was provided a specific connection via this fixture.
     except TypeError:
         pass
     db.session.remove()
 
     connection = db.engine.connect()
-    options = dict(bind=connection, binds={})
-    _session = db.create_scoped_session(options=options)
+    _session = scoped_session(sessionmaker(bind=connection))
     db.session = _session
 
     return _session
@@ -150,7 +156,8 @@ def student_id():
 @pytest.fixture(scope='function')
 def fake_auth(app, db, client):
     """Shortcut to start an authenticated session."""
-    return FakeAuth(app, client)
+    yield FakeAuth(app, client)
+    logout_user()
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -300,6 +307,7 @@ def mock_whiteboard(app, db_session):
     )
     std_commit(allow_test_environment=True)
     asset = _create_asset(app=app, course=course, users=[student_1])
+    whiteboard_id = whiteboard['id']
     for (z_index, element) in enumerate([
         {
             'assetId': asset.id,
@@ -327,15 +335,17 @@ def mock_whiteboard(app, db_session):
             asset_id=element.get('assetId'),
             element=element,
             uuid=element['uuid'],
-            whiteboard_id=whiteboard['id'],
+            whiteboard_id=whiteboard_id,
             z_index=z_index,
         )
         std_commit(allow_test_environment=True)
 
-    whiteboard = Whiteboard.find_by_id(current_user=LoginSession(student_1.id), whiteboard_id=whiteboard['id'])
-    yield whiteboard
+    yield Whiteboard.find_by_id(
+        current_user=LoginSession(student_1.id),
+        whiteboard_id=whiteboard_id,
+    )
 
-    Whiteboard.delete(whiteboard_id=whiteboard['id'])
+    Whiteboard.delete(whiteboard_id=whiteboard_id)
     std_commit(allow_test_environment=True)
 
 

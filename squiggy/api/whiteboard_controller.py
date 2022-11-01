@@ -28,11 +28,11 @@ import re
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
 from flask_socketio import emit
-from squiggy.api.api_util import can_view_asset, get_socket_io_room, SOCKET_IO_NAMESPACE
+from squiggy.api.api_util import can_current_user_view_asset, get_socket_io_room, SOCKET_IO_NAMESPACE
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.file_remover import file_remover
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import is_student, isoformat, local_now
+from squiggy.lib.util import isoformat, local_now
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.logger import logger
@@ -62,7 +62,7 @@ def remix_whiteboard():
     asset_id = params.get('assetId')
     title = params.get('title')
     asset = Asset.find_by_id(asset_id=asset_id)
-    if not asset or not can_view_asset(asset=asset, user=current_user):
+    if not asset or not can_current_user_view_asset(asset=asset):
         raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
     if asset.asset_type != 'whiteboard':
         raise BadRequestError('Asset type is not \'whiteboard\'.')
@@ -76,13 +76,19 @@ def remix_whiteboard():
         whiteboard_users=asset.users,
     )
     WhiteboardHousekeeping.queue_for_preview_image(whiteboard['id'])
-    return tolerant_jsonify(Whiteboard.find_by_id(current_user, whiteboard_id=whiteboard['id']))
+    return tolerant_jsonify(Whiteboard.find_by_id(
+        current_user=current_user,
+        whiteboard_id=whiteboard['id'],
+    ))
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/export/asset', methods=['POST'])
 @login_required
 def export_as_asset(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(
+        current_user=current_user,
+        whiteboard_id=whiteboard_id,
+    )
     if whiteboard:
         whiteboard_elements = WhiteboardElement.find_by_whiteboard_id(whiteboard_id=whiteboard_id)
         if whiteboard_elements:
@@ -96,7 +102,7 @@ def export_as_asset(whiteboard_id):
             asset = Asset.create(
                 asset_type='whiteboard',
                 categories=[Category.find_by_id(category_id=category_id) for category_id in category_ids],
-                course_id=current_user.course.id,
+                course_id=current_user.course_id,
                 created_by=current_user.user_id,
                 description=description,
                 download_url=whiteboard['imageUrl'],
@@ -123,7 +129,10 @@ def export_as_asset(whiteboard_id):
 @app.route('/api/whiteboard/<whiteboard_id>/download/png')
 @login_required
 def export_as_png(whiteboard_id):
-    whiteboard = Whiteboard.find_by_id(current_user=current_user, whiteboard_id=whiteboard_id)
+    whiteboard = Whiteboard.find_by_id(
+        current_user=current_user,
+        whiteboard_id=whiteboard_id,
+    )
     if not whiteboard:
         raise ResourceNotFoundError('Not found')
 
@@ -179,7 +188,7 @@ def undelete_whiteboard(whiteboard_id):
                 skip_sid=socket_id,
                 to=get_socket_io_room(whiteboard_id),
             )
-        if is_student(current_user):
+        if current_user.is_student:
             WhiteboardSession.update_updated_at(
                 socket_id=socket_id,
                 user_id=current_user.user_id,
@@ -201,7 +210,7 @@ def get_whiteboards():
     order_by = params.get('orderBy') or 'recent'
     user_id = params.get('userId')
     summary = Whiteboard.get_whiteboards(
-        course_id=current_user.course.id,
+        course_id=current_user.course_id,
         current_user=current_user,
         include_deleted=include_deleted,
         keywords=keywords,
@@ -222,7 +231,7 @@ def create_whiteboard():
     title = params.get('title')
     user_ids = params.get('userIds')
     whiteboard = Whiteboard.create(
-        course_id=current_user.course.id,
+        course_id=current_user.course_id,
         created_by=current_user.user_id,
         title=title,
         users=User.find_by_ids(user_ids),
@@ -233,7 +242,10 @@ def create_whiteboard():
 @app.route('/api/whiteboard/<whiteboard_id>/delete', methods=['DELETE'])
 @login_required
 def delete_whiteboard(whiteboard_id):
-    if Whiteboard.can_update_whiteboard(current_user=current_user, whiteboard_id=whiteboard_id):
+    if Whiteboard.can_update_whiteboard(
+            current_user=current_user,
+            whiteboard_id=whiteboard_id,
+    ):
         params = request.args
         socket_id = params.get('socketId')
         if not socket_id:
@@ -257,7 +269,7 @@ def delete_whiteboard(whiteboard_id):
                 skip_sid=socket_id,
                 to=get_socket_io_room(whiteboard_id),
             )
-        if is_student(current_user):
+        if current_user.is_student:
             WhiteboardSession.update_updated_at(
                 socket_id=socket_id,
                 user_id=current_user.user_id,
@@ -271,9 +283,11 @@ def delete_whiteboard(whiteboard_id):
 @app.route('/api/whiteboards/eligible_collaborators')
 @login_required
 def eligible_collaborators():
-    course_id = current_user.course.id
-    sections = current_user.user.canvas_course_sections if current_user.is_student and current_user.course.protects_assets_per_section else None
-    return tolerant_jsonify([u.to_api_json() for u in User.get_users_by_course_id(course_id=course_id, sections=sections)])
+    users = User.get_users_by_course_id(
+        course_id=current_user.course_id,
+        sections=current_user.canvas_course_sections if current_user.protect_assets_per_section else None,
+    )
+    return tolerant_jsonify([u.to_api_json() for u in users])
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/update', methods=['POST'])
@@ -310,7 +324,7 @@ def update_whiteboard(whiteboard_id):
                 skip_sid=socket_id,
                 to=get_socket_io_room(whiteboard_id),
             )
-        if is_student(current_user):
+        if current_user.is_student:
             WhiteboardSession.update_updated_at(
                 socket_id=socket_id,
                 user_id=current_user.user_id,

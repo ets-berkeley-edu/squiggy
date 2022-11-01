@@ -30,6 +30,7 @@ from flask import jsonify, make_response, redirect, request, session
 from flask_login import LoginManager
 from squiggy.api.api_util import start_login_session
 from squiggy.lib.util import is_admin, to_int
+from squiggy.models.course import Course
 from squiggy.models.user import User
 
 
@@ -122,7 +123,7 @@ def _user_loader(user_id=None):
     canvas_course_id = request.headers.get('Squiggy-Canvas-Course-Id')
 
     if bookmarklet_auth:
-        user_session.logout()
+        user_session._logout()
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
         try:
             args = Fernet(encryption_key).decrypt(bytes(bookmarklet_auth, 'utf-8')).decode().rsplit('_')
@@ -135,17 +136,23 @@ def _user_loader(user_id=None):
                 if _is_authorized_bookmarklet(bookmarklet_token=bookmarklet_token, course_id=course_id, user=user):
                     user_session = LoginSession(user_id)
                     start_login_session(user_session)
+                else:
+                    app.logger.error(f'User {user_id} failed bookmarklet-authentication')
+
         except InvalidToken as e:
             app.logger.error('Failed to authenticate per Squiggy-Bookmarklet-Auth header')
             app.logger.exception(e)
     elif user_session.is_authenticated and canvas_api_domain and canvas_course_id:
         # Check for conflicts between existing login session and course headers.
-        course = user_session.course
-        if canvas_api_domain != course.canvas_api_domain or str(canvas_course_id) != str(course.canvas_course_id):
-            app.logger.info(
-                f'Session data (canvas_api_domain={course.canvas_api_domain}, canvas_course_id={course.canvas_course_id}) '
-                f'conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}, logging out user')
-            user_session.logout()
+        canvas_api_domain = user_session.get('course.canvasApiDomain')
+        canvas_course_id = user_session.get('course.canvasCourseId')
+        if canvas_api_domain != canvas_api_domain or str(canvas_course_id) != str(canvas_course_id):
+            app.logger.info(f"""
+                Session data (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id})
+                conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}.
+                This user session will be terminated.
+            """)
+            user_session._logout()
 
     if not user_session.is_authenticated:
         app.logger.info(f'_user_loader: canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}')
@@ -153,12 +160,14 @@ def _user_loader(user_id=None):
             cookie_value = request.cookies.get(f'{canvas_api_domain}|{canvas_course_id}')
             user_id = cookie_value and to_int(cookie_value)
             if user_id:
-                candidate = LoginSession(user_id)
-                course = candidate.course
-                is_matching_domain = course and course.canvas_api_domain == canvas_api_domain
-                if is_matching_domain and str(course.canvas_course_id) == str(canvas_course_id):
+                is_user_in_course = Course.is_user_in_course(
+                    canvas_api_domain=canvas_api_domain,
+                    canvas_course_id=canvas_course_id,
+                    user_id=user_id,
+                )
+                if is_user_in_course:
                     # User must be a member of the Canvas course site.
-                    user_session = candidate
+                    user_session = LoginSession(user_id)
                     app.logger.info(f'User {user_id} loaded.')
                     start_login_session(user_session)
     return user_session

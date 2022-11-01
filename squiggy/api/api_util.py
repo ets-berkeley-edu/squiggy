@@ -24,13 +24,14 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from functools import wraps
+from urllib.parse import urljoin, urlparse
 
-from flask import current_app as app, redirect, request
+from flask import abort, current_app as app, redirect, request
 from flask_login import current_user, login_user
 from flask_socketio import emit
 from squiggy.lib.errors import BadRequestError, UnauthorizedRequestError
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.util import get_user_id, is_admin, is_teaching, safe_strip
+from squiggy.lib.util import is_admin, is_teaching, safe_strip
 from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.logger import logger
 from squiggy.models.activity import Activity
@@ -76,39 +77,36 @@ def assets_type_enums():
     return assets_type.enums
 
 
-def can_update_asset(user, asset):
-    user_id = get_user_id(user)
-    if user.is_student and user_id != asset.created_by and user.course.protects_assets_per_section:
+def can_current_user_update_asset(asset):
+    if current_user.id != asset.created_by and current_user.protect_assets_per_section:
         asset_owner = User.find_by_id(asset.created_by)
-        user_sections = current_user.user.canvas_course_sections
+        user_sections = current_user.canvas_course_sections
         if len(list(set(user_sections) & set(asset_owner.canvas_course_sections))) == 0:
             return False
     user_ids = [user.id for user in asset.users]
-    return user.course.id == asset.course_id and (is_teaching(user) or is_admin(user) or user_id in user_ids)
+    return current_user.course_id == asset.course_id and (current_user.is_teaching or current_user.is_admin or current_user.id in user_ids)
 
 
-def can_view_asset(asset, user):
-    if user and user.is_admin:
+def can_current_user_view_asset(asset):
+    if current_user.is_admin:
         return True
-    if not user or user.course.id != asset.course_id:
+    if current_user.course_id != asset.course_id:
         return False
-    if user.is_student and user.course.protects_assets_per_section:
+    if current_user.protect_assets_per_section:
         asset_owner = User.find_by_id(asset.created_by)
         if not (is_teaching(asset_owner) or is_admin(asset_owner)):
-            user_sections = current_user.user.canvas_course_sections
+            user_sections = current_user.canvas_course_sections
             if len(list(set(user_sections) & set(asset_owner.canvas_course_sections))) == 0:
                 return False
-    return asset.visible or (asset.id in [a.id for a in current_user.user.assets])
+    return asset.visible or (asset.id in current_user.asset_ids)
 
 
-def can_delete_comment(comment, user):
-    user_id = get_user_id(user)
-    return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
+def can_current_user_delete_comment(comment):
+    return current_user.id and (comment.user_id == current_user.id or current_user.is_admin or current_user.is_teaching)
 
 
-def can_update_comment(comment, user):
-    user_id = get_user_id(user)
-    return user_id and (comment.user_id == user_id or user.is_admin or user.is_teaching)
+def can_current_user_update_comment(comment):
+    return current_user.id and (comment.user_id == current_user.id or current_user.is_admin or current_user.is_teaching)
 
 
 def get_socket_io_room(whiteboard_id):
@@ -117,25 +115,24 @@ def get_socket_io_room(whiteboard_id):
 
 def start_login_session(login_session, redirect_path=None, tool_id=None):
     authenticated = login_user(login_session, remember=True) and current_user.is_authenticated
+    if not _is_safe_url(request.args.get('next')):
+        return abort(400)
+
     if authenticated:
         if redirect_path:
             response = redirect(location=f"{app.config['VUE_LOCALHOST_BASE_URL'] or ''}{redirect_path}")
         else:
             response = tolerant_jsonify(current_user.to_api_json())
-        canvas_api_domain = current_user.course.canvas_api_domain
-        canvas = Canvas.find_by_domain(canvas_api_domain)
-        canvas_course_id = current_user.course.canvas_course_id
+        canvas = Canvas.find_by_domain(current_user.canvas_api_domain)
         # Yummy cookies!
-        key = f'{canvas_api_domain}|{canvas_course_id}'
-        value = str(current_user.user_id)
         response.set_cookie(
-            key=key,
-            value=value,
+            key=f'{current_user.canvas_api_domain}|{current_user.canvas_course_id}',
+            value=str(current_user.id),
             samesite='None',
             secure=True,
         )
         response.set_cookie(
-            key=f'{canvas_api_domain}_supports_custom_messaging',
+            key=f'{current_user.canvas_api_domain}_supports_custom_messaging',
             value=str(canvas.supports_custom_messaging),
             samesite='None',
             secure=True,
@@ -191,7 +188,7 @@ def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
         )
     WhiteboardSession.update_updated_at(
         socket_id=socket_id,
-        user_id=current_user.user_id,
+        user_id=current_user.id,
         whiteboard_id=whiteboard_id,
     )
     return results
@@ -214,9 +211,9 @@ def _create_whiteboard_element(
     if asset_id:
         asset = Asset.find_by_id(asset_id)
         if asset:
-            user_id = current_user.user_id
+            user_id = current_user.id
             if user_id not in [user.id for user in asset.users]:
-                course_id = current_user.course.id
+                course_id = current_user.course_id
                 whiteboard_activity = Activity.create(
                     activity_type='whiteboard_add_asset',
                     course_id=course_id,
@@ -237,6 +234,14 @@ def _create_whiteboard_element(
                         reciprocal_id=whiteboard_activity.id,
                     )
     return whiteboard_element.to_api_json()
+
+
+def _is_safe_url(target):
+    # Check if the URL is safe for redirects.
+    # See http://flask.pocoo.org/snippets/62/ for an example.
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 
 def _update_whiteboard_element(whiteboard_element, whiteboard_id):

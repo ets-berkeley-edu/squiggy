@@ -24,6 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from dateutil.tz import tzutc
+from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.models.base import Base
 from squiggy.models.canvas import Canvas
@@ -131,6 +132,22 @@ class Course(Base):
         db.session.add(course)
         std_commit()
         return course
+
+    @classmethod
+    def is_user_in_course(cls, canvas_api_domain, canvas_course_id, user_id):
+        sql = """
+            SELECT u.id
+            FROM users u
+            JOIN courses c ON c.id = u.course_id
+            WHERE u.id = :user_id AND c.canvas_api_domain = :canvas_api_domain AND c.canvas_course_id = :canvas_course_id
+        """
+        args = {
+            'canvas_api_domain': canvas_api_domain,
+            'canvas_course_id': canvas_course_id,
+            'user_id': user_id,
+        }
+        result = db.session.execute(text(sql), args).first()
+        return bool(len(result or []))
 
     @classmethod
     def update(

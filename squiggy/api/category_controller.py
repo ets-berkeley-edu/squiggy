@@ -37,7 +37,7 @@ from squiggy.models.category import Category
 def get_categories():
     include_hidden = to_bool_or_none(request.args.get('includeHidden'))
     categories = Category.get_categories_by_course_id(
-        course_id=current_user.course.id,
+        course_id=current_user.course_id,
         include_hidden=include_hidden,
     )
     return tolerant_jsonify(Category.to_decorated_json(categories))
@@ -52,7 +52,7 @@ def create_category():
         raise BadRequestError('Category creation requires title.')
     category = Category.create(
         canvas_assignment_name=title,
-        course_id=current_user.course.id,
+        course_id=current_user.course_id,
         title=title,
     )
     return tolerant_jsonify(category.to_api_json())
