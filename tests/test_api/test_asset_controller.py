@@ -272,13 +272,36 @@ class TestGetAssets:
             asset for asset in api_json['results'] if asset['users'][0]['canvasCourseSections'] == ['section B'])
         assert next(asset for asset in api_json['results'] if asset['users'][0]['canvasCourseRole'] != 'Student')
 
+    def test_teacher_assets_protected_per_section_with_filter(
+            self,
+            authorized_user_id,
+            client,
+            fake_auth,
+            mock_asset_course,
+    ):
+        """Teacher in an asset-siloed course sees assets for a specific section when filter is applied."""
+        mock_asset_course.protects_assets_per_section = True
+        user = User.find_by_id(authorized_user_id)
+        fake_auth.login(user.id)
+        for section in ('section A', 'section B'):
+            # Filter results for a specific section
+            api_json = self._api_get_assets(client, section=section)
+            assert len(api_json['results'])
+            for asset in api_json['results']:
+                for user in asset['users']:
+                    for canvas_section in user['canvasCourseSections']:
+                        assert canvas_section == section
+
     def test_student_assets_protected_per_section(self, client, fake_auth, mock_asset_course):
         """Student in an asset-siloed course can see assets created by teacher or other student in their section."""
         mock_asset_course.protects_assets_per_section = True
         # Students can see the instructor's assets plus any other assets for their section
         for section in ('section A', 'section B'):
-            student = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Student',
-                                           canvas_course_sections=[section]).first()
+            student = User.query.filter_by(
+                course_id=mock_asset_course.id,
+                canvas_course_role='Student',
+                canvas_course_sections=[section],
+            ).first()
             fake_auth.login(student.id)
             api_json = self._api_get_assets(client)
             assert api_json['total'] > 1

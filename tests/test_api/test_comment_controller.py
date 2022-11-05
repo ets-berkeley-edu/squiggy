@@ -189,7 +189,8 @@ class TestUpdateComment:
         std_commit(allow_test_environment=True)
         # Verify update
         comments = _api_get_comments(asset_id=comment.asset_id, client=client)
-        updated_comment = next(c for c in comments if c['id'] == comment.id)
+        updated_comment = next((c for c in comments if c['id'] == comment.id), None)
+        assert updated_comment
         assert updated_comment['body'] == body
 
 
