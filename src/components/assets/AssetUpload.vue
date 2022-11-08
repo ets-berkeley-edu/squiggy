@@ -67,6 +67,16 @@
               :rules="titleRules"
               @keydown.enter.prevent="upload"
             />
+            <v-alert
+              v-if="['image/webp', 'image/heic'].includes(type)"
+              border="bottom"
+              colored-border
+              type="warning"
+              elevation="2"
+            >
+              The format of the file you are uploading ({{ type }}) is not supported by SuiteC. You may upload the file, but it
+              will not generate a preview.
+            </v-alert>
           </v-col>
         </v-row>
         <v-row v-if="categories.length">
@@ -187,6 +197,7 @@ export default {
         } else {
           this.file = files[0]
           this.title = this.file.name
+          this.type = this.file.type
           this.$announcer.polite(`${this.file.name} added`)
         }
       }
