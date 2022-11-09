@@ -233,6 +233,16 @@ ALTER TABLE ONLY assets
 
 --
 
+CREATE TABLE background_jobs (
+    job_name character varying(255) NOT NULL,
+    last_run TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE ONLY background_jobs
+    ADD CONSTRAINT background_jobs_pkey PRIMARY KEY (job_name);
+
+--
+
 CREATE TABLE canvas (
     canvas_api_domain character varying(255) NOT NULL,
     api_key character varying(255) NOT NULL,

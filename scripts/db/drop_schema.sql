@@ -99,6 +99,8 @@ ALTER TABLE IF EXISTS ONLY public.asset_whiteboard_elements DROP CONSTRAINT IF E
 ALTER TABLE IF EXISTS ONLY public.assets DROP CONSTRAINT IF EXISTS assets_pkey;
 ALTER TABLE IF EXISTS public.assets ALTER COLUMN id DROP DEFAULT;
 
+ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS background_jobs_pkey;
+
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_key_key;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_lti_secret_key;
 ALTER TABLE IF EXISTS ONLY public.canvas DROP CONSTRAINT IF EXISTS canvas_pkey;
@@ -157,6 +159,7 @@ DROP TABLE IF EXISTS public.asset_users;
 DROP TABLE IF EXISTS public.asset_whiteboard_elements;
 DROP SEQUENCE IF EXISTS public.assets_id_seq;
 DROP TABLE IF EXISTS public.assets;
+DROP TABLE IF EXISTS public.background_jobs;
 DROP TABLE IF EXISTS public.canvas;
 DROP TABLE IF EXISTS public.canvas_poller_api_keys;
 DROP SEQUENCE IF EXISTS public.categories_id_seq;

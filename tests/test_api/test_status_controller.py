@@ -26,6 +26,7 @@ from datetime import timedelta
 
 from squiggy import db, std_commit
 from squiggy.lib.util import utc_now
+from squiggy.lib.whiteboard_housekeeping import update_timestamp
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 
@@ -51,13 +52,17 @@ class TestStatusController:
             assert response.json['app'] is True
             assert response.json['db'] is True
             assert response.json['poller'] is expected_ping_value
+            assert response.json['whiteboards'] is expected_ping_value
 
         for minutes_ago in [59, 61]:
-            course.last_polled = utc_now() - timedelta(minutes=minutes_ago)
+            the_past = utc_now() - timedelta(minutes=minutes_ago)
+            course.last_polled = the_past
             db.session.add(course)
+            update_timestamp(the_past)
             std_commit(allow_test_environment=True)
             _ping(minutes_ago < 60)
 
         # Teardown
         db.session.execute(f'DELETE FROM courses WHERE id = {course.id}')
+        db.session.execute('DELETE FROM background_jobs')
         std_commit(allow_test_environment=True)

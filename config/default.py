@@ -118,6 +118,7 @@ TIMEZONE = 'America/Los_Angeles'
 # This base-URL config should only be non-None in the "local" env where the Vue front-end runs on port 8080.
 VUE_LOCALHOST_BASE_URL = None
 
+WHITEBOARD_HOUSEKEEPING_ACCEPTABLE_MINUTES_SINCE_LAST = 60
 WHITEBOARD_SESSION_EXPIRATION_MINUTES = 2
 # The following value is in milliseconds.
 WHITEBOARDS_REFRESH_INTERVAL = 15000
