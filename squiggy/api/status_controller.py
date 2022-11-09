@@ -36,6 +36,7 @@ def app_status():
         'app': True,
         'db': _db_status(),
         'poller': _poller_status(),
+        'whiteboards': _whiteboard_housekeeping_status(),
     }
     return tolerant_jsonify(resp)
 
@@ -55,6 +56,19 @@ def _poller_status():
         if first_row:
             diff_in_hours = (utc_now() - first_row['last_polled']).total_seconds() / 3600
             return diff_in_hours < app.config['CANVAS_POLLER_ACCEPTABLE_HOURS_SINCE_LAST']
+        else:
+            return False
+    except SQLAlchemyError:
+        logger.exception('Database connection error')
+        return None
+
+
+def _whiteboard_housekeeping_status():
+    try:
+        first_row = db.session.execute("SELECT last_run FROM background_jobs WHERE job_name = 'whiteboard_housekeeping'").first()
+        if first_row:
+            diff_in_minutes = (utc_now() - first_row['last_run']).total_seconds() / 60
+            return diff_in_minutes < app.config['WHITEBOARD_HOUSEKEEPING_ACCEPTABLE_MINUTES_SINCE_LAST']
         else:
             return False
     except SQLAlchemyError:

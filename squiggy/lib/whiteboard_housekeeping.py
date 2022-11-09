@@ -30,6 +30,7 @@ from squiggy import db
 from squiggy.lib.background_job import BackgroundJob
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
+from squiggy.lib.util import utc_now
 from squiggy.logger import initialize_background_logger, logger
 from squiggy.models.whiteboard import Whiteboard
 from squiggy.models.whiteboard_session import WhiteboardSession
@@ -105,6 +106,9 @@ class WhiteboardHousekeeping(BackgroundJob):
             else:
                 self.logger.error(f'Whiteboard {whiteboard_id} gets no preview because instructor not found.')
 
+        update_timestamp(utc_now())
+        self.logger.info('Generation job cycle complete, updated timestamp.')
+
     @classmethod
     def start(cls):
         cls.whiteboard_housekeeping = WhiteboardHousekeeping()
@@ -113,3 +117,13 @@ class WhiteboardHousekeeping(BackgroundJob):
     @classmethod
     def queue_for_preview_image(cls, whiteboard_id):
         cls.whiteboard_id_queue.add(whiteboard_id)
+
+
+def update_timestamp(time):
+    update_timestamp_sql = text("""
+        INSERT INTO background_jobs (job_name, last_run)
+        VALUES('whiteboard_housekeeping', now())
+        ON CONFLICT (job_name) DO
+        UPDATE SET last_run = :time
+    """)
+    db.session.execute(update_timestamp_sql, {'time': time})
