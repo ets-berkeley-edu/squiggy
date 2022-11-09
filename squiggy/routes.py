@@ -144,11 +144,9 @@ def _user_loader(user_id=None):
             app.logger.exception(e)
     elif user_session.is_authenticated and canvas_api_domain and canvas_course_id:
         # Check for conflicts between existing login session and course headers.
-        canvas_api_domain = user_session.get('course.canvasApiDomain')
-        canvas_course_id = user_session.get('course.canvasCourseId')
-        if canvas_api_domain != canvas_api_domain or str(canvas_course_id) != str(canvas_course_id):
+        if canvas_api_domain != user_session.canvas_api_domain or str(canvas_course_id) != str(user_session.canvas_course_id):
             app.logger.info(f"""
-                Session data (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id})
+                Session data (canvas_api_domain={user_session.canvas_api_domain}, canvas_course_id={user_session.canvas_course_id})
                 conflicts with headers (canvas_api_domain={canvas_api_domain}, canvas_course_id={canvas_course_id}.
                 This user session will be terminated.
             """)
