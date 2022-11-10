@@ -225,7 +225,7 @@ def get_whiteboards():
 @app.route('/api/whiteboard/create', methods=['POST'])
 @login_required
 def create_whiteboard():
-    if not current_user.course:
+    if not current_user.course_id:
         raise ResourceNotFoundError('Course not found.')
     params = request.form or request.get_json()
     title = params.get('title')
