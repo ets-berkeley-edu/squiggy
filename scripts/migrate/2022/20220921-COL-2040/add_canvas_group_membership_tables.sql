@@ -36,10 +36,10 @@ ALTER TABLE ONLY course_group_memberships
 CREATE INDEX course_group_memberships_canvas_user_id_idx ON course_group_memberships USING btree (canvas_user_id);
 
 ALTER TABLE ONLY course_group_memberships
-    ADD CONSTRAINT course_group_memberships_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE SET NULL;
+    ADD CONSTRAINT course_group_memberships_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY course_group_memberships
-    ADD CONSTRAINT course_group_memberships_course_group_id_fkey FOREIGN KEY (course_group_id) REFERENCES course_groups(id) ON UPDATE CASCADE ON DELETE SET NULL;
+    ADD CONSTRAINT course_group_memberships_course_group_id_fkey FOREIGN KEY (course_group_id) REFERENCES course_groups(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY course_groups
-    ADD CONSTRAINT course_groups_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE SET NULL;
+    ADD CONSTRAINT course_groups_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 COMMIT;
