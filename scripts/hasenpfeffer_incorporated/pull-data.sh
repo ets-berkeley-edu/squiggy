@@ -114,14 +114,15 @@ if [[ "${source_canvas}" ]]; then
                 on u.course_id = c.id and c.canvas_api_domain = '${source_canvas}')
               on com.user_id = u.id"
 
-  output_csv "course_group_memberships" "select g.* from course_group_memberships g
-              join (users u join courses c
-                on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}')
-              on g.canvas_user_id = u.canvas_user_id"
-
-  output_csv "course_groups" "select g.* from course_groups g
-              join courses c
-              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
+  # TODO: When course-groups feature is live, un-comment the following.
+  #  output_csv "course_group_memberships" "select g.* from course_group_memberships g
+  #              join (users u join courses c
+  #                on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}')
+  #              on g.canvas_user_id = u.canvas_user_id"
+  #
+  #  output_csv "course_groups" "select g.* from course_groups g
+  #              join courses c
+  #              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
 
   output_csv "whiteboard_users" "select wm.* from whiteboard_users wm
               join (whiteboards w join courses c
@@ -142,8 +143,9 @@ else
   output_csv "asset_users" "select * from asset_users"
   output_csv "categories" "select * from categories"
   output_csv "comments" "select * from comments"
-  output_csv "course_group_memberships" "select * from comments"
-  output_csv "course_groups" "select * from comments"
+  # TODO: When course-groups feature is live, un-comment the following two lines.
+  #  output_csv "course_group_memberships" "select * from comments"
+  #  output_csv "course_groups" "select * from comments"
   output_csv "whiteboard_users" "select * from whiteboard_users"
   output_csv "users" "select * from users"
 
@@ -215,13 +217,14 @@ elif [[ "${source_canvas}" ]]; then
   output_csv "courses" "select c.* from courses c
               where c.canvas_api_domain = '${source_canvas}'"
 
-  output_csv "course_groups" "select g.* from course_groups g
-              join courses c
-              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
-
-  output_csv "course_group_memberships" "select g.* from course_group_memberships g
-              join courses c
-              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
+  # TODO: When course-groups feature is live, un-comment the following.
+  #  output_csv "course_groups" "select g.* from course_groups g
+  #              join courses c
+  #              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
+  #
+  #  output_csv "course_group_memberships" "select g.* from course_group_memberships g
+  #              join courses c
+  #              on g.course_id = c.id and c.canvas_api_domain = '${source_canvas}'"
 
   output_csv "whiteboards" "select w.* from whiteboards w
               join courses c
@@ -239,8 +242,9 @@ else
   output_csv "assets" "select * from assets"
   output_csv "asset_whiteboard_elements" "select * from asset_whiteboard_elements"
   output_csv "courses" "select * from courses"
-  output_csv "course_groups" "select * from course_groups"
-  output_csv "course_group_memberships" "select * from course_group_memberships"
+  # TODO: When course-groups feature is live, un-comment the following two lines.
+  #  output_csv "course_groups" "select * from course_groups"
+  #  output_csv "course_group_memberships" "select * from course_group_memberships"
   output_csv "whiteboards" "select * from whiteboards"
   output_csv "whiteboard_elements" "select * from whiteboard_elements"
 

@@ -49,11 +49,11 @@ SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 CSV_HOME_DIRECTORY="${SCRIPT_DIR}/csv_files"
 
 # Because of foreign key constraints, we must populate tables in order of association.
+# TODO: When course-groups feature is live, add "course_groups course_group_memberships" after asset_categories below.
 declare -a tables=(courses
                    users assets asset_users comments
                    activity_types activities
                    categories asset_categories
-                   course_groups course_group_memberships
                    whiteboards whiteboard_users asset_whiteboard_elements whiteboard_elements)
 
 # If requested, include the 'canvas' table.
