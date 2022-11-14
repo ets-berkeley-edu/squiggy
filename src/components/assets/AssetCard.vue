@@ -17,8 +17,7 @@
         :aria-pressed="ariaPressed"
         class="card-class"
         hover
-        role="button"
-        tabindex="0"
+        tabindex="-1"
         @keypress.enter="onClick"
         @click="onClick"
       >
@@ -31,40 +30,44 @@
           >
             <v-card-text :class="`${context}-asset-metadata`">
               <slot>
-                <div class="mb-3">
-                  {{ asset.title }}
-                </div>
-                <div>
-                  by {{ oxfordJoin($_.map(asset.users, 'canvasFullName')) }}
-                </div>
+                <a
+                  href="#"
+                  class="d-flex flex-column text-decoration-none white--text"
+                  @click="onClick"
+                  @keydown.enter="onClick"
+                >
+                  <span class="font-weight-bold mb-1">
+                    {{ asset.title }}
+                  </span>
+                  <span>
+                    by {{ oxfordJoin($_.map(asset.users, 'canvasFullName')) }}
+                  </span>
+                </a>
               </slot>
             </v-card-text>
           </v-img>
         </v-sheet>
-        <v-card-actions v-if="!hideEngagementCounts" class="actions">
-          <div class="d-flex justify-end w-100">
-            <div>
-              <div class="align-center d-flex">
-                <div class="pr-3">
-                  <font-awesome-icon icon="thumbs-up" :class="{'asset-icon-liked': asset.liked}" />
-                  {{ asset.likes }}
-                  <span class="sr-only">{{ asset.likes === 1 ? 'like' : 'likes' }}</span>
-                </div>
-                <div class="pr-3">
-                  <font-awesome-icon icon="eye" />
-                  {{ asset.views }}
-                  <span class="sr-only">{{ asset.views === 1 ? 'view' : 'views' }}</span>
-                </div>
-                <div>
-                  <font-awesome-icon icon="comment" />
-                  {{ asset.commentCount }}
-                  <span class="sr-only">{{ asset.commentCount === 1 ? 'comment' : 'comments' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </v-card-actions>
       </v-card>
+      <div
+        v-if="!hideEngagementCounts"
+        class="actions align-center d-flex justify-end w-100"
+      >
+        <div class="pr-3">
+          <font-awesome-icon icon="thumbs-up" :class="{'asset-icon-liked': asset.liked}" />
+          {{ asset.likes }}
+          <span class="sr-only">{{ asset.likes === 1 ? 'like' : 'likes' }}</span>
+        </div>
+        <div class="pr-3">
+          <font-awesome-icon icon="eye" />
+          {{ asset.views }}
+          <span class="sr-only">{{ asset.views === 1 ? 'view' : 'views' }}</span>
+        </div>
+        <div>
+          <font-awesome-icon icon="comment" />
+          {{ asset.commentCount }}
+          <span class="sr-only">{{ asset.commentCount === 1 ? 'comment' : 'comments' }}</span>
+        </div>
+      </div>
     </kinesis-element>
   </kinesis-container>
 </template>
