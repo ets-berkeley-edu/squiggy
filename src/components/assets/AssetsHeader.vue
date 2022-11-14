@@ -37,11 +37,7 @@
                 @click="fetch"
                 @keypress.enter="fetch"
               >
-                <font-awesome-icon
-                  class="mb-3"
-                  icon="search"
-                  size="lg"
-                />
+                <font-awesome-icon icon="search" size="lg" />
                 <span class="sr-only">Search assets</span>
               </v-btn>
             </template>
@@ -66,123 +62,144 @@
       </div>
     </v-expand-transition>
     <v-expand-transition>
-      <v-card v-if="isAdvancedSearchOpen" class="mb-6 pl-8 pr-16 pt-4">
+      <v-card v-if="isAdvancedSearchOpen" class="px-4 py-2">
         <v-container fluid>
-          <v-row no-gutters>
-            <v-col class="pr-4 pt-2 text-right" cols="1">
+          <v-row align="center" class="pb-2 pt-3" justify="start">
+            <v-col class="pr-4 text-no-wrap text-right" cols="1">
               Search
             </v-col>
-            <v-col class="ps-1">
-              <v-text-field
-                id="adv-search-keywords-input"
-                clearable
-                solo
-                placeholder="Keyword"
-                type="search"
-                :value="keywords"
-                @input="setKeywords"
-                @keypress.enter="fetch"
-              />
+            <v-col class="py-0">
+              <div class="pr-2">
+                <v-text-field
+                  id="adv-search-keywords-input"
+                  clearable
+                  height="44"
+                  hide-details
+                  solo
+                  placeholder="Keyword"
+                  type="search"
+                  :value="keywords"
+                  @input="setKeywords"
+                  @keypress.enter="fetch"
+                />
+              </div>
             </v-col>
           </v-row>
-          <v-row no-gutters>
-            <v-col class="pr-4 pt-2 text-right" cols="1">Filter by</v-col>
-            <v-col>
-              <v-row no-gutters class="d-flex flex-wrap w-100">
-                <div class="ps-1 w-50">
-                  <AccessibleSelect
-                    :key="keyForSelectReset"
-                    :dense="true"
-                    :disabled="isBusy"
-                    id-prefix="adv-search-categories"
-                    :items="categories"
-                    item-text="title"
-                    item-value="id"
-                    label="Category"
-                    :value="categoryId"
-                    @input="setCategoryId"
-                  />
+          <v-row align="start" justify="start">
+            <v-col class="pr-4 text-no-wrap text-right" cols="1">Filter by</v-col>
+            <v-col class="py-0">
+              <div class="align-content-start d-flex flex-wrap w-100">
+                <div class="pb-2 w-50">
+                  <div class="pr-2">
+                    <AccessibleSelect
+                      :key="keyForSelectReset"
+                      :dense="true"
+                      :disabled="isBusy"
+                      hide-details
+                      id-prefix="adv-search-categories"
+                      :items="categories"
+                      item-text="title"
+                      item-value="id"
+                      label="Category"
+                      :value="categoryId"
+                      @input="setCategoryId"
+                    />
+                  </div>
                 </div>
-                <div class="ps-1 w-50">
-                  <AccessibleSelect
-                    :key="keyForSelectReset"
-                    :dense="true"
-                    :disabled="isBusy"
-                    id-prefix="adv-search-asset-types"
-                    :items="$_.map($config.assetTypes, t => ({text: $_.capitalize(t), value: t}))"
-                    label="Asset type"
-                    :value="assetType"
-                    @input="setAssetType"
-                  />
+                <div class="pb-2 w-50">
+                  <div class="pr-2">
+                    <AccessibleSelect
+                      :key="keyForSelectReset"
+                      :dense="true"
+                      :disabled="isBusy"
+                      hide-details
+                      id-prefix="adv-search-asset-types"
+                      :items="$_.map($config.assetTypes, t => ({text: $_.capitalize(t), value: t}))"
+                      label="Asset type"
+                      :value="assetType"
+                      @input="setAssetType"
+                    />
+                  </div>
                 </div>
-                <div class="ps-1 w-50">
-                  <AccessibleSelect
-                    :key="keyForSelectReset"
-                    :dense="true"
-                    :disabled="isBusy"
-                    id-prefix="adv-search-user"
-                    :items="users"
-                    item-text="canvasFullName"
-                    item-value="id"
-                    label="User"
-                    :value="userId"
-                    @input="setUserId"
-                  />
+                <div class="pb-2 w-50">
+                  <div class="pr-2">
+                    <AccessibleSelect
+                      :key="keyForSelectReset"
+                      :dense="true"
+                      :disabled="isBusy"
+                      hide-details
+                      id-prefix="adv-search-user"
+                      :items="users"
+                      item-text="canvasFullName"
+                      item-value="id"
+                      label="User"
+                      :value="userId"
+                      @input="setUserId"
+                    />
+                  </div>
                 </div>
-                <div v-if="$currentUser.isAdmin || $currentUser.isTeaching" class="ps-1 w-50">
-                  <AccessibleSelect
-                    :key="keyForSelectReset"
-                    :dense="true"
-                    :disabled="isBusy"
-                    id-prefix="adv-search-section"
-                    :items="$_.orderBy(sections, 'text')"
-                    item-text="text"
-                    item-value="value"
-                    label="Section"
-                    @input="setSection"
-                  />
+                <div v-if="$currentUser.isAdmin || $currentUser.isTeaching" class="pb-2 w-50">
+                  <div class="pr-2">
+                    <AccessibleSelect
+                      :key="keyForSelectReset"
+                      :dense="true"
+                      :disabled="isBusy"
+                      hide-details
+                      id-prefix="adv-search-section"
+                      :items="$_.orderBy(sections, 'text')"
+                      item-text="text"
+                      item-value="value"
+                      label="Section"
+                      @input="setSection"
+                    />
+                  </div>
                 </div>
-                <div v-if="$currentUser.course.canvasGroups.length" class="ps-1 w-50">
-                  <AccessibleSelect
-                    :key="keyForSelectReset"
-                    :dense="true"
-                    :disabled="isBusy"
-                    id-prefix="adv-search-group-set"
-                    :items="$currentUser.course.canvasGroups"
-                    item-text="label"
-                    item-value="id"
-                    label="Group"
-                    @input="setGroupId"
-                  />
+                <div v-if="$currentUser.course.canvasGroups.length" class="pb-2 w-50">
+                  <div class="pr-2">
+                    <AccessibleSelect
+                      :key="keyForSelectReset"
+                      :dense="true"
+                      :disabled="isBusy"
+                      id-prefix="adv-search-group-set"
+                      :items="$currentUser.course.canvasGroups"
+                      item-text="label"
+                      item-value="id"
+                      label="Group"
+                      @input="setGroupId"
+                    />
+                  </div>
                 </div>
-              </v-row>
+              </div>
             </v-col>
           </v-row>
-          <v-row no-gutters>
-            <v-col class="pr-4 pt-2 text-right" cols="1">
+          <v-row align="center" class="pb-3" justify="start">
+            <v-col class="pr-4 text-no-wrap text-right" cols="1">
               Sort by
             </v-col>
-            <v-col>
-              <AccessibleSelect
-                :key="keyForSelectReset"
-                class="ps-1 w-50"
-                :dense="true"
-                :disabled="isBusy"
-                id-prefix="adv-search-order-by"
-                :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
-                :unclearable="true"
-                :value="orderBy"
-                @input="setOrderBy"
-              />
+            <v-col class="py-0">
+              <div class="pr-3">
+                <AccessibleSelect
+                  :key="keyForSelectReset"
+                  class="w-50"
+                  :dense="true"
+                  :disabled="isBusy"
+                  hide-details
+                  id-prefix="adv-search-order-by"
+                  :items="$_.map($config.orderByOptions, (text, value) => ({text, value}))"
+                  :unclearable="true"
+                  :value="orderBy"
+                  @input="setOrderBy"
+                />
+              </div>
             </v-col>
           </v-row>
-          <v-row no-gutters>
-            <v-col class="text-right" cols="12">
+          <v-row>
+            <v-col class="text-right" cols="1"></v-col>
+            <v-col class="text-right">
               <div class="d-flex">
                 <div class="pr-2">
                   <v-btn
                     id="adv-search-btn"
-                    class="text-capitalize"
                     color="primary"
                     :disabled="isBusy || (!$_.trim(keywords) && !isAdvancedSearchOpen)"
                     elevation="1"
@@ -195,7 +212,6 @@
                 <div>
                   <v-btn
                     id="cancel-adv-search-btn"
-                    class="text-capitalize"
                     :disabled="isBusy"
                     elevation="1"
                     medium
@@ -245,6 +261,15 @@ export default {
   components: {AccessibleSelect, Alert},
   mixins: [AssetsSearch, Context, Utils],
   props: {
+    afterReset: {
+      default: () => {},
+      required: false,
+      type: Function
+    },
+    disableBookmarkable: {
+      required: false,
+      type: Boolean
+    },
     hideManageAssetsButton: {
       required: false,
       type: Boolean
@@ -299,7 +324,9 @@ export default {
         this.isBusy = true
         this.$announcer.polite('Searching')
         this.search().then(data => {
-          this.updateSearchBookmark()
+          if (!this.disableBookmarkable) {
+            this.updateSearchBookmark()
+          }
           this.isBusy = false
           if (data.total) {
             this.$announcer.polite(`${data.total} matching ${data.total === 1 ? 'asset' : 'assets'} found`)
@@ -317,7 +344,9 @@ export default {
       this.setOrderBy(this.orderByDefault)
       this.setUserId(null)
       this.setSection(null)
-      this.rewriteBookmarkHash({orderBy: this.orderByDefault})
+      if (!this.disableBookmarkable) {
+        this.rewriteBookmarkHash({orderBy: this.orderByDefault})
+      }
       this.alert = null
       this.alertType = null
       this.openAdvancedSearchOverride = openAdvancedSearch
@@ -331,6 +360,7 @@ export default {
         this.fetch()
       }
       this.putFocus()
+      this.afterReset()
     },
     putFocus() {
       this.$putFocusNextTick(this.isAdvancedSearchOpen ? 'adv-search-keywords-input' : 'basic-search-input')
