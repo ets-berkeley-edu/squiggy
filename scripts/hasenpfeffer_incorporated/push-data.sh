@@ -45,6 +45,12 @@ done
   exit 1
 }
 
+if grep -qi prod <<< "${db_database}"; then
+  echo "[ERROR] The target database name (${db_database}) cannot contain 'prod'."; echo
+  echo_usage
+  exit 1
+fi
+
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 CSV_HOME_DIRECTORY="${SCRIPT_DIR}/csv_files"
 
@@ -88,13 +94,13 @@ echo "Clearing out existing data..."
 
 # Truncate the canvas table if necessary.
 if [[ "${all_tables}" ]]; then
-  PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "truncate canvas cascade"; echo
+  PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE canvas CASCADE"; echo
 fi
 
 # Truncating course, user and category tables cascades along foreign key references and clears everything in one fell swoop.
-PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "truncate courses cascade"; echo
-PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "truncate users cascade"; echo
-PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "truncate categories cascade"; echo
+PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE courses CASCADE"; echo
+PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE users CASCADE"; echo
+PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE categories CASCADE"; echo
 
 echo "Pushing local CSV data..."; echo
 
@@ -106,15 +112,15 @@ push_csv() {
   columns=${header_row//|/,}
 
   # Load local CSV file contents into table.
-  sql="copy ${1} (${columns}) from stdin with (format csv, header true, delimiter '|')"
+  sql="COPY ${1} (${columns}) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, DELIMITER '|')"
   # Tables with an auto-incrementing id column must reset the sequence after load.
   if [[ ${columns} == id* ]]; then
-    sql+="; select setval('${1}_id_seq', (select max(id) from ${1}))"
+    sql+="; SELECT setval('${1}_id_seq', (SELECT MAX(id) FROM ${1}))"
   fi
   # If requested, mark all courses as inactive.
-  if ${inactivate_courses} && [[ $1 == "courses" ]]; then
+  if ${inactivate_courses} && [[ "${1}" == "courses" ]]; then
     echo "Will mark all courses as inactive."
-    sql+="; update courses set active=false"
+    sql+="; UPDATE courses SET active = FALSE"
   fi
 
   # Connect to the database and execute SQL.
