@@ -79,6 +79,7 @@ PREVIEWS_API_KEY = 'someKey'
 PREVIEWS_CALLBACK_API_PREFIX = None
 PREVIEWS_ENABLED = True
 PREVIEWS_URL = 'https://example.com/previews'
+PREVIEWS_UNSUPPORTED_MIME_TYPES = ['image/heic', 'image/webp']
 
 # Where file assets go.
 S3_BUCKET = 'some-bucket'

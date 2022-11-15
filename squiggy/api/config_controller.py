@@ -44,6 +44,7 @@ def app_config():
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
         'developerAuthEnabled': app.config['DEVELOPER_AUTH_ENABLED'],
         'orderByOptions': assets_sort_by_options,
+        'previewsUnsupportedMimeTypes': app.config['PREVIEWS_UNSUPPORTED_MIME_TYPES'],
         's3PreviewUrlPattern': S3_PREVIEW_URL_PATTERN,
         'servicePageUrl': app.config['SERVICE_PAGE_URL'],
         'socketIoDebugMode': app.config['SOCKET_IO_DEBUG_MODE'],
