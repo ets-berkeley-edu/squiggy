@@ -1,6 +1,6 @@
 <template>
   <v-img
-    :id="`asset-preview-image-${asset.id}`"
+    id="asset-preview"
     :alt="`Image preview of ${asset.title}`"
     :contain="contain"
     :max-height="maxHeight"

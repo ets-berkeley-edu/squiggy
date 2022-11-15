@@ -1,5 +1,10 @@
 <template>
   <v-container class="mt-3" fluid>
+    <v-row class="sr-only" no-gutters>
+      <v-col>
+        <h3 id="asset-overview" tabindex="0">Asset Overview</h3>
+      </v-col>
+    </v-row>
     <v-row class="mt-3" no-gutters>
       <v-col
         class="font-weight-bold pr-2 text-no-wrap text-right"
