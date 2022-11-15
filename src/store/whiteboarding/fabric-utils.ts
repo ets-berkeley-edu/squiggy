@@ -406,7 +406,9 @@ const $_addCanvasListeners = (state: any) => {
         text: '',
         selectable: true,
         selected: true,
-        top: textPointer.y
+        top: textPointer.y,
+        originX: 'left',
+        originY: 'top',
       })
       p.$canvas.add(iText)
 
