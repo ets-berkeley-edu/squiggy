@@ -68,7 +68,7 @@
               @keydown.enter.prevent="upload"
             />
             <v-alert
-              v-if="['image/webp', 'image/heic'].includes(type)"
+              v-if="$config.previewsUnsupportedMimeTypes.includes(type)"
               border="bottom"
               colored-border
               type="warning"
