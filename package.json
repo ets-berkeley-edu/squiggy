@@ -74,6 +74,7 @@
   },
   "resolutions": {
     "merge": "2.1.1",
+    "socket.io-parser": "4.2.1",
     "minimist": "1.2.6"
   },
   "license": "SEE LICENSE IN LICENSE",
