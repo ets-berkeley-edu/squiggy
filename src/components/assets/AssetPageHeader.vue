@@ -1,6 +1,6 @@
 <template>
   <div class="align-content-center flex-wrap d-flex justify-space-between pt-2 w-100">
-    <h2 id="asset-title" class="text-break mr-2">{{ asset.title }}</h2>
+    <PageTitle class="text-break mr-2" :text="asset.title" />
     <div class="d-flex align-content-end">
       <div v-if="canEditAsset" class="mr-2">
         <v-btn
@@ -92,6 +92,7 @@
 </template>
 
 <script>
+import PageTitle from '@/components/util/PageTitle'
 import RemixAsset from '@/components/assets/RemixAsset'
 import Utils from '@/mixins/Utils'
 import {deleteAsset} from '@/api/assets'
@@ -99,7 +100,7 @@ import {deleteAsset} from '@/api/assets'
 export default {
   name: 'AssetPageHeader',
   mixins: [Utils],
-  components: {RemixAsset},
+  components: {PageTitle, RemixAsset},
   props: {
     asset: {
       required: true,

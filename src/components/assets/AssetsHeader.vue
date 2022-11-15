@@ -331,6 +331,7 @@ export default {
           if (data.total) {
             this.$announcer.polite(`${data.total} matching ${data.total === 1 ? 'asset' : 'assets'} found`)
           } else {
+            this.$announcer.polite('No assets found.')
             this.alertType = 'warning'
             this.alert = 'No matching assets found'
           }
@@ -350,9 +351,7 @@ export default {
       this.alert = null
       this.alertType = null
       this.openAdvancedSearchOverride = openAdvancedSearch
-      if (this.isAdvancedSearchOpen !== openAdvancedSearch) {
-        this.$announcer.polite(`Advanced search form is ${this.isAdvancedSearchOpen ? 'open' : 'closed'}.`)
-      } else {
+      if (this.isAdvancedSearchOpen === openAdvancedSearch) {
         this.setKeywords(undefined)
         this.keyForSelectReset = new Date().getTime()
       }
@@ -360,6 +359,7 @@ export default {
         this.fetch()
       }
       this.putFocus()
+      this.$announcer.polite(`Advanced search form is ${openAdvancedSearch ? 'open' : 'closed'}.`)
       this.afterReset()
     },
     putFocus() {

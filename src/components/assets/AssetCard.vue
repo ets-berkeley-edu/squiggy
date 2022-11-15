@@ -49,7 +49,7 @@
         </v-sheet>
       </v-card>
       <div
-        v-if="!hideEngagementCounts"
+        v-if="!hideEngagementCounts && !isLoading"
         class="actions align-center d-flex justify-end w-100"
       >
         <div class="pr-3">
@@ -73,11 +73,12 @@
 </template>
 
 <script>
+import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'AssetCard',
-  mixins: [Utils],
+  mixins: [Context, Utils],
   props: {
     ariaPressed: {
       required: false,

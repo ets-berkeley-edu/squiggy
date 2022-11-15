@@ -9,7 +9,7 @@
       <v-card class="mt-3 pa-2" outlined>
         <v-card-text>
           <AssetPreview :asset="asset" :contain="true" />
-          <AssetOverview id="asset-overview" :asset="asset" />
+          <AssetOverview :asset="asset" />
         </v-card-text>
       </v-card>
       <div class="mt-3 px-2">
@@ -47,7 +47,7 @@ export default {
   created() {
     this.$loading()
     this.fetchAsset().then(() => {
-      this.$ready(this.asset.title)
+      this.$ready(this.asset.title, 'page-title')
       this.rewriteBookmarkHash({assetId: this.asset.id})
     })
   },

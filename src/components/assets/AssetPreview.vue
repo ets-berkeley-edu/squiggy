@@ -1,9 +1,9 @@
 <template>
-  <div class="assetlibrary-item-preview-outer">
-    <div v-if="previewStatus === 'done'" class="assetlibrary-item-preview">
+  <div class="preview-outer">
+    <div v-if="previewStatus === 'done'" class="preview">
       <div v-if="asset.assetType === 'file' && !asset.pdfUrl && !videoUrl && asset.imageUrl">
         <v-img
-          :id="`asset-preview-image-${asset.id}`"
+          id="asset-preview"
           :alt="`Image preview of ${asset.title}`"
           :contain="contain"
           :max-height="maxHeight"
@@ -13,77 +13,81 @@
       </div>
       <div v-if="asset.assetType === 'file' && asset.pdfUrl">
         <iframe
-          class="preview-document"
-          width="100%"
-          height="800"
-          :src="embedUrl"
-          frameborder="0"
-          webkitallowfullscreen=""
-          mozallowfullscreen=""
+          id="asset-preview"
           allowfullscreen=""
           allowscriptaccess="always"
+          class="preview-document"
+          frameborder="0"
+          height="800"
+          mozallowfullscreen=""
           scrolling="no"
+          :src="embedUrl"
+          webkitallowfullscreen=""
+          width="100%"
         />
       </div>
       <div v-if="asset.assetType === 'file' && !asset.pdfUrl && videoUrl" class="preview-video-wrapper">
         <video
-          class="preview-video"
+          id="asset-preview"
           :alt="asset.title"
-          :title="asset.title"
-          :poster="asset.image_url"
-          :width="width"
-          :height="height"
+          class="preview-video"
           controls
+          :height="height"
+          :poster="asset.image_url"
+          :title="asset.title"
+          :width="width"
         >
           <source :src="videoUrl" type="video/mp4">
         </video>
       </div>
       <div v-if="asset.assetType === 'link' && isEmbeddable && !asset.previewMetadata.youtubeId">
         <iframe
-          width="100%"
+          id="asset-preview"
+          frameborder="0"
           height="800"
           :src="embedUrl"
-          frameborder="0"
+          width="100%"
         />
       </div>
       <div v-if="asset.assetType === 'link' && isEmbeddable && asset.previewMetadata.youtubeId">
         <iframe
-          width="100%"
-          height="800"
-          :src="embedUrl"
-          frameborder="0"
-          webkitallowfullscreen=""
-          mozallowfullscreen=""
+          id="asset-preview"
           allowfullscreen=""
           allowscriptaccess="always"
+          frameborder="0"
+          height="800"
+          mozallowfullscreen=""
           scrolling="no"
+          :src="embedUrl"
+          webkitallowfullscreen=""
+          width="100%"
         />
       </div>
       <div v-if="asset.assetType === 'link' && !isEmbeddable && asset.imageUrl">
         <v-img
-          :id="`asset-preview-image-${asset.id}`"
+          id="asset-preview"
           :alt="`Image preview of ${asset.title}`"
-          :title="asset.title"
           :contain="contain"
           :max-height="maxHeight"
           :src="asset.imageUrl"
+          :title="asset.title"
           @error="imgError"
         />
       </div>
-      <div v-if="asset.assetType === 'whiteboard'" class="assetlibrary-item-whiteboard-preview">
+      <div v-if="asset.assetType === 'whiteboard'" class="whiteboard-preview">
         <AssetTypeWhiteboard :asset="asset" :max-height="maxHeight" />
       </div>
     </div>
     <div
       v-if="previewStatus === 'pending'"
-      class="assetlibrary-item-preview-message"
+      class="preview-message"
     >
       <font-awesome-icon icon="spinner" spin />
       Preparing a preview...
     </div>
     <div
       v-if="previewStatus === 'unsupported' || previewStatus === 'error'"
-      class="assetlibrary-item-preview-message"
+      class="preview-message"
     >
       No preview available.
     </div>
@@ -173,61 +177,61 @@ export default {
 </script>
 
 <style scoped>
-.assetlibrary-item-preview iframe {
+.preview iframe {
   background-color: #FFF;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
 }
 
-.assetlibrary-item-preview .preview-document,
-.assetlibrary-item-whiteboard-preview {
+.preview .preview-document,
+.whiteboard-preview {
   border-bottom: 1px solid #D3D3D3;
 }
 
-.assetlibrary-item-preview .preview-document {
+.preview .preview-document {
   height: 400px;
   width: 100%;
 }
 
 @media only screen and (min-width : 768px) {
-  .assetlibrary-item-preview .preview-image {
+  .preview .preview-image {
     padding: 5px;
   }
 
-  .assetlibrary-item-preview .preview-video {
+  .preview .preview-video {
     margin-top: 20px;
   }
 
-  .assetlibrary-item-preview .preview-video-wrapper {
+  .preview .preview-video-wrapper {
     line-height: 0;
   }
 
-  .assetlibrary-item-preview iframe,
-  .assetlibrary-item-preview .preview-document,
-   .assetlibrary-item-whiteboard-preview {
+  .preview iframe,
+  .preview .preview-document,
+   .whiteboard-preview {
     height: 720px;
   }
 }
-.assetlibrary-item-preview-message {
+.preview-message {
   background-color: #FFF;
   padding: 170px 0;
 }
-.assetlibrary-item-preview-message > i {
+.preview-message > i {
   color: #747474;
   font-size: 50px;
 }
-.assetlibrary-item-preview-message p {
+.preview-message p {
   font-size: 18px;
   margin: 15px 20px 0;
 }
-.assetlibrary-item-preview-message a {
+.preview-message a {
   margin-top: 15px;
 }
-.assetlibrary-item-preview-message i.fa-spinner {
+.preview-message i.fa-spinner {
   margin-right: 5px;
 }
-.assetlibrary-item-preview-outer {
+.preview-outer {
   text-align: center;
 }
 </style>
