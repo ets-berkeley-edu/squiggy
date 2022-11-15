@@ -25,7 +25,7 @@
         <span>{{ tooltipText }}</span>
       </v-tooltip>
     </template>
-    <v-card>
+    <v-card v-if="dialog">
       <v-card-title class="pb-1">
         <h2 id="modal-header" class="title">Select Asset(s)</h2>
       </v-card-title>
