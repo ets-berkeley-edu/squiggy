@@ -320,7 +320,7 @@ export default {
       }
     },
     showCourseSections(user) {
-      return this.$currentUser.course.protectsAssetsPerSection
+      return this.$currentUser.protectAssetsPerSection
         && this.$_.size(user.canvasCourseSections)
         && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
     }

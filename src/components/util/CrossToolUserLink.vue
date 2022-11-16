@@ -30,11 +30,11 @@ export default {
     destination: null
   }),
   created() {
-    if (this.$currentUser.course.impactStudioUrl) {
-      this.destination = `${this.$currentUser.course.impactStudioUrl}#suitec_userId=${this.user.id}`
+    if (this.$currentUser.impactStudioUrl) {
+      this.destination = `${this.$currentUser.impactStudioUrl}#suitec_userId=${this.user.id}`
       this.ariaLabel = `View Impact Studio profile for ${this.user.canvasFullName}`
     } else {
-      this.destination = `${this.$currentUser.course.assetLibraryUrl}#suitec_userId=${this.user.id}`
+      this.destination = `${this.$currentUser.assetLibraryUrl}#suitec_userId=${this.user.id}`
       this.ariaLabel = `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
     }
   }

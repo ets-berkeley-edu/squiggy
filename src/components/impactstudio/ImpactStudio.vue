@@ -213,7 +213,7 @@ export default {
         hashtag: href => {
           const hash = `suitec_keywords=${href.substring(1)}`
           if (this.$isInIframe) {
-            return this.$currentUser.course.assetLibraryUrl + '#' + hash
+            return this.$currentUser.assetLibraryUrl + '#' + hash
           } else {
             return '/assets#' + hash
           }

@@ -92,7 +92,7 @@ export default {
         hash = `suitec_userId=${this.user.id}&${hash}`
       }
       if (this.$isInIframe) {
-        return this.$currentUser.course.assetLibraryUrl + '#' + hash
+        return this.$currentUser.assetLibraryUrl + '#' + hash
       } else {
         return '/assets#' + hash
       }

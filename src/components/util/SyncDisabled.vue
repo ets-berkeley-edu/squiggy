@@ -71,7 +71,6 @@ export default {
       this.activating = true
       activate().then(data => {
         this.course = data
-        this.$currentUser.course.active = true
         this.activating = false
         this.reactivated = true
       })

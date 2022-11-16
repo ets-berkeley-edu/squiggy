@@ -47,14 +47,14 @@ export default {
   methods: {
     refresh() {
       return getCategories(true).then(data => {
-        this.checkbox = this.$currentUser.course.protectsAssetsPerSection
+        this.checkbox = this.$currentUser.protectAssetsPerSection
         this.assignments = this.$_.filter(data, c => !!c.canvasAssignmentId)
         this.categories = this.$_.filter(data, c => !c.canvasAssignmentId)
       })
     },
     toggleSectionCheckbox(value) {
       updateProtectAssetsPerSectionCheckbox(value).then(() => {
-        this.$currentUser.course.protectsAssetsPerSection = value
+        this.$currentUser.protectAssetsPerSection = value
       })
     }
   }
