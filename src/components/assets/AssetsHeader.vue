@@ -154,14 +154,14 @@
                     />
                   </div>
                 </div>
-                <div v-if="$currentUser.course.canvasGroups.length" class="pb-2 w-50">
+                <div v-if="canvasGroups.length" class="pb-2 w-50">
                   <div class="pr-2">
                     <AccessibleSelect
                       :key="keyForSelectReset"
                       :dense="true"
                       :disabled="isBusy"
                       id-prefix="adv-search-group-set"
-                      :items="$currentUser.course.canvasGroups"
+                      :items="canvasGroups"
                       item-text="label"
                       item-value="id"
                       label="Group"

@@ -33,7 +33,7 @@
           <a
             id="link-to-asset"
             class="hover-link"
-            :href="`${assetLibraryUrl}#suitec_assetId=${asset.id}`"
+            :href="`${$currentUser.assetLibraryUrl}#suitec_assetId=${asset.id}`"
             target="_blank"
           >
             Open asset in new window
@@ -114,12 +114,6 @@ export default {
       required: true,
       type: Function
     }
-  },
-  data: () => ({
-    assetLibraryUrl: undefined
-  }),
-  created() {
-    this.assetLibraryUrl = this.$currentUser.course.assetLibraryUrl
   }
 }
 </script>

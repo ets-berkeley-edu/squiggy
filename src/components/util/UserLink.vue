@@ -55,7 +55,7 @@ export default {
       this.destination = `/assets?userId=${this.user.id}`
       this.ariaLabel = `View assets, filtered by ${this.user.isAdmin || this.user.isTeaching ? 'instructor' : 'user'} ${this.user.canvasFullName}`
     }
-    else if (this.$currentUser.course.impactStudioUrl) {
+    else if (this.$currentUser.impactStudioUrl) {
       if (this.source === 'impactstudio') {
         this.destination = `/profile/user/${this.user.id}`
         this.ariaLabel = `View Impact Studio profile for ${this.user.canvasFullName}`

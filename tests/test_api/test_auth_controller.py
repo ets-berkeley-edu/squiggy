@@ -119,8 +119,8 @@ class TestDevAuth:
                 user_id=authorized_user_id,
             )
             assert api_json['id'] == authorized_user_id
-            assert api_json['course']['canvasCourseId'] == 1502870
-            assert api_json['course']['canvasApiDomain'] == 'bcourses.berkeley.edu'
+            assert api_json['canvasCourseId'] == 1502870
+            assert api_json['canvasApiDomain'] == 'bcourses.berkeley.edu'
             assert client.post('/api/auth/logout').status_code == 200
 
 

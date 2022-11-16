@@ -254,6 +254,7 @@ class User(Base):
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
             'courseId': self.course_id,
+            'courseName': self.course.name,
             'personalDescription': self.personal_description,
             'points': self.points,
             'sharePoints': True if self.share_points else False,

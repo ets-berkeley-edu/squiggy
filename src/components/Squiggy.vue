@@ -53,10 +53,10 @@
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-header>
-          <h2 class="primary--text text-no-wrap">Course {{ $currentUser.course.id }}</h2>
+          <h2 class="primary--text text-no-wrap">Course {{ $currentUser.courseId }}</h2>
         </v-expansion-panel-header>
         <v-expansion-panel-content>
-          <CourseSummary :course-id="$currentUser.course.id" />
+          <CourseSummary :course-id="$currentUser.courseId" />
         </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>

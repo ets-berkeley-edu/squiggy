@@ -9,6 +9,7 @@ export default {
     ...mapGetters('assets', [
       'assets',
       'assetType',
+      'canvasGroups',
       'categories',
       'categoryId',
       'groupId',

@@ -53,15 +53,15 @@ class LoginSession:
 
     @property
     def course_id(self):
-        return self._get('course.id')
+        return self._get('courseId')
 
     @property
     def canvas_api_domain(self):
-        return self._get('course.canvasApiDomain')
+        return self._get('canvasApiDomain')
 
     @property
     def canvas_course_id(self):
-        return self._get('course.canvasCourseId')
+        return self._get('canvasCourseId')
 
     @property
     def canvas_course_sections(self):
@@ -97,7 +97,7 @@ class LoginSession:
 
     @property
     def protect_assets_per_section(self):
-        return self.is_student and self._get('course.protectsAssetsPerSection')
+        return self._get('protectAssetsPerSection')
 
     def refresh(self):
         user = User.find_by_id(self.user_id) if self.user_id else None
@@ -142,12 +142,18 @@ def _construct_api_json(user=None):
     api_json = {
         **(user.to_api_json(include_points=True, include_sharing=True) if is_authenticated else {}),
         **{
-            'course': is_authenticated and user.course.to_api_json(),
+            'assetLibraryUrl': is_authenticated and user.course.asset_library_url,
+            'canvasApiDomain': is_authenticated and user.course.canvas_api_domain,
+            'canvasCourseId': is_authenticated and user.course.canvas_course_id,
+            'engagementIndexUrl': is_authenticated and user.course.engagement_index_url,
+            'impactStudioUrl': is_authenticated and user.course.impact_studio_url,
             'isAdmin': is_authenticated and is_admin(user),
             'isAuthenticated': is_authenticated,
             'isObserver': is_authenticated and is_observer(user),
             'isStudent': is_authenticated and is_student(user),
             'isTeaching': is_authenticated and is_teaching(user),
+            'protectAssetsPerSection': is_authenticated and is_student(user) and user.course.protects_assets_per_section,
+            'whiteboardsUrl': is_authenticated and user.course.whiteboards_url,
         },
     }
     return api_json

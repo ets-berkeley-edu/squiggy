@@ -1,6 +1,8 @@
 import _ from 'lodash'
+import Vue from 'vue'
 import {getAssets} from '@/api/assets'
 import {getCategories} from '@/api/categories'
+import {getCourse} from '@/api/courses'
 import {getUsers} from '@/api/users'
 
 const orderByDefault = 'recent'
@@ -30,7 +32,8 @@ function $_search(commit, state, addToExisting?: boolean) {
 const state = {
   assets: undefined,
   assetType: undefined,
-  categories: undefined,
+  canvasGroups: [],
+  categories: [],
   categoryId: undefined,
   groupId: undefined,
   isDirty: false,
@@ -39,10 +42,10 @@ const state = {
   offset: 0,
   orderBy: orderByDefault,
   section: undefined,
-  sections: undefined,
+  sections: [],
   totalAssetCount: undefined,
   userId: undefined,
-  users: undefined
+  users: []
 }
 
 const getters = {
@@ -50,6 +53,7 @@ const getters = {
   assetType: (state: any): string => state.assetType,
   categories: (state: any): any[] => state.categories,
   categoryId: (state: any): number => state.categoryId,
+  canvasGroups: (state: any): any => state.canvasGroups,
   groupId: (state: any): string[] => state.groupId,
   isDirty: (state: any): boolean => state.isDirty,
   keywords: (state: any): string => state.keywords,
@@ -74,6 +78,7 @@ const mutations = {
     state.categoryId = categoryId
     state.isDirty = true
   },
+  setCanvasGroups: (state: any, canvasGroups: any[]) => state.canvasGroups = canvasGroups,
   setDirty: (state: any, dirty: boolean) => state.isDirty = dirty,
   setGroupId: (state: any, groupId: number) => {
     state.groupId = groupId
@@ -123,11 +128,15 @@ const mutations = {
 const actions = {
   initAssetSearchOptions({commit}) {
     return new Promise<void>(resolve => {
-      getUsers().then(data => {
-        commit('setUsers', data)
-        getCategories().then(data => {
-          commit('setCategories', data)
-          resolve()
+      const courseId = Vue.prototype.$currentUser.courseId
+      getCourse(courseId).then(data => {
+        commit('setCanvasGroups', _.get(data, 'canvasGroups'))
+        getUsers().then(data => {
+          commit('setUsers', data)
+          getCategories().then(data => {
+            commit('setCategories', data)
+            resolve()
+          })
         })
       })
     })

@@ -16,7 +16,7 @@
             icon
             v-bind="attrs"
             target="_blank"
-            :href="`${$currentUser.course.assetLibraryUrl}#suitec_assetId=${assetId}`"
+            :href="`${$currentUser.assetLibraryUrl}#suitec_assetId=${assetId}`"
             v-on="on"
           >
             <font-awesome-icon icon="arrow-up-right-from-square" />

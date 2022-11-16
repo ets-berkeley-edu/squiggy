@@ -39,7 +39,7 @@
           />
         </div>
       </template>
-      <template v-if="$currentUser.course.protectsAssetsPerSection && ($currentUser.isAdmin || $currentUser.isTeaching)" #header.canvasCourseSections>
+      <template v-if="$currentUser.protectAssetsPerSection && ($currentUser.isAdmin || $currentUser.isTeaching)" #header.canvasCourseSections>
         <div class="float-left">
           Course Sections
         </div>
@@ -142,10 +142,10 @@ export default {
       if (!this.$currentUser.isAdmin && !this.$currentUser.isTeaching) {
         headers.splice(2, 1)
       }
-      if (this.$currentUser.course.impactStudioUrl) {
+      if (this.$currentUser.impactStudioUrl) {
         headers.splice(2, 0, {text: 'Collaborate', value: 'lookingForCollaborators'})
       }
-      if (this.$currentUser.course.protectsAssetsPerSection && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)) {
+      if (this.$currentUser.protectAssetsPerSection && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)) {
         headers.splice(0, 0, {text: 'Course Sections', sort: compareSections, 'value': 'canvasCourseSections'})
       }
       return headers

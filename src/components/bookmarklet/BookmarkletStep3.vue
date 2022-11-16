@@ -58,7 +58,8 @@ export default {
     toolbarName: undefined
   }),
   created() {
-    const course = this.$currentUser.course
+    const courseId = this.$currentUser.courseId
+    const courseName = this.$currentUser.courseName
     const minimum = 150
     let baseUrl = this.$config.baseUrl
     baseUrl = this.$_.endsWith(baseUrl, '/') ? baseUrl : `${baseUrl}/`
@@ -83,8 +84,8 @@ export default {
       const headers = document.getElementsByTagName('h1');
       const data = {
         course: {
-          id: ${course && course.id},
-          name: '${course && course.name}'
+          id: ${courseId},
+          name: '${courseName}'
         },
         description: (description && description.content) || (headers.length ? headers[0].innerHtml : null),
         images,
