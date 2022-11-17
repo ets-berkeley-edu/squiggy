@@ -105,7 +105,7 @@ Vue.prototype.$isBookmarklet = isBookmarklet
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data
-  Vue.prototype.$supportsCustomMessaging = _.get(Vue.prototype.$currentUser, 'course.canvas.supportsCustomMessaging')
+  Vue.prototype.$supportsCustomMessaging = Vue.prototype.$currentUser.supportsCustomMessaging
 
   const mount = () => {
     axios.get(`${apiBaseUrl}/api/config`).then(data => {
