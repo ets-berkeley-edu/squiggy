@@ -71,6 +71,7 @@ if __name__ == '__main__':
     application.logger.info('Starting development server on %s:%s', host, port)
     is_socket_debug_mode = application.config['SOCKET_IO_DEBUG_MODE']
     if application.config['VUE_LOCALHOST_BASE_URL']:
+        # TODO: PyCharm cannot run Squiggy in debug mode when 'SOCKET_IO_DEBUG_MODE' is True. Why?
         socketio.run(
             app=application,
             debug=is_socket_debug_mode,
