@@ -40,19 +40,20 @@ done
 
 # Validation
 [[ "${db_host}" && "${db_port}" && "${db_database}" && "${db_username}" ]] || {
-  echo "[ERROR] You must specify complete database connection information."; echo
+  echo; echo "[ERROR] You must specify complete database connection information."; echo
   echo_usage
   exit 1
 }
 
 if grep -qi prod <<< "${db_database}"; then
-  echo "[ERROR] The target database name (${db_database}) cannot contain 'prod'."; echo
-  echo_usage
+  echo; echo "[ERROR] The target database name (${db_database}) cannot contain 'prod'."; echo
   exit 1
 fi
 
+BR=$'\n\n'
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 CSV_HOME_DIRECTORY="${SCRIPT_DIR}/csv_files"
+SQL_TRANSACTION="BEGIN;${BR}"
 
 # Because of foreign key constraints, we must populate tables in order of association.
 # TODO: When course-groups feature is live, add "course_groups course_group_memberships" after asset_categories below.
@@ -92,17 +93,14 @@ read confirmation; echo
 
 echo "Clearing out existing data..."
 
-# Truncate the canvas table if necessary.
+# Truncate!
 if [[ "${all_tables}" ]]; then
-  PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE canvas CASCADE"; echo
+  SQL_TRANSACTION+="TRUNCATE canvas CASCADE;${BR}"
 fi
 
-# Truncating course, user and category tables cascades along foreign key references and clears everything in one fell swoop.
-PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE courses CASCADE"; echo
-PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE users CASCADE"; echo
-PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "TRUNCATE categories CASCADE"; echo
-
-echo "Pushing local CSV data..."; echo
+SQL_TRANSACTION+="TRUNCATE courses CASCADE;${BR}"
+SQL_TRANSACTION+="TRUNCATE users CASCADE;${BR}"
+SQL_TRANSACTION+="TRUNCATE categories CASCADE;${BR}"
 
 push_csv() {
   echo "Copying ${1} to database..."
@@ -112,25 +110,33 @@ push_csv() {
   columns=${header_row//|/,}
 
   # Load local CSV file contents into table.
-  sql="COPY ${1} (${columns}) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, DELIMITER '|')"
-  # Tables with an auto-incrementing id column must reset the sequence after load.
-  if [[ ${columns} == id* ]]; then
-    sql+="; SELECT setval('${1}_id_seq', (SELECT MAX(id) FROM ${1}))"
-  fi
-  # If requested, mark all courses as inactive.
-  if ${inactivate_courses} && [[ "${1}" == "courses" ]]; then
-    echo "Will mark all courses as inactive."
-    sql+="; UPDATE courses SET active = FALSE"
-  fi
+  SQL_TRANSACTION+="COPY ${1} (${columns}) FROM '${CSV_HOME_DIRECTORY}/${1}.csv' WITH (FORMAT CSV, HEADER TRUE, DELIMITER '|');${BR}"
 
-  # Connect to the database and execute SQL.
-  cat "${CSV_HOME_DIRECTORY}/${1}.csv" | PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -c "${sql}"
+  if [[ ${columns} == id* ]]; then
+    # Tables with an auto-incrementing id column must reset the sequence after load.
+    SQL_TRANSACTION+="SELECT setval('${1}_id_seq', (SELECT MAX(id) FROM ${1}));${BR}"
+  fi
+  if ${inactivate_courses} && [[ "${1}" == "courses" ]]; then
+    # If requested, mark all courses as inactive.
+    echo "Will mark all courses as inactive."
+    SQL_TRANSACTION+="UPDATE courses SET active = FALSE;${BR}"
+  fi
 }
 
 # Push CSV file contents to the database.
 for table in "${tables[@]}"; do
   push_csv "${table}"
 done
+
+SQL_TRANSACTION+="COMMIT;${BR}"
+
+SQL_FILES="${SCRIPT_DIR}/local"
+mkdir -p "${SQL_FILES}"
+
+SQL_TRANSACTION_FILE="${SQL_FILES}/push_prod_data_$(date +%Y-%m-%d-%I%M%S).sql"
+echo "${SQL_TRANSACTION}" | tee "${SQL_TRANSACTION_FILE}"
+
+PGPASSWORD=${db_password} psql -h "${db_host}" -p "${db_port}" -d "${db_database}" --username "${db_username}" -f "${SQL_TRANSACTION_FILE}"
 
 echo "Done."
 

@@ -69,6 +69,8 @@ echo
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 CSV_HOME_DIRECTORY="${SCRIPT_DIR}/csv_files"
 
+# Delete old CSVs
+rm -Rf "${CSV_HOME_DIRECTORY}"
 mkdir -p "${CSV_HOME_DIRECTORY}"
 
 output_csv() {
