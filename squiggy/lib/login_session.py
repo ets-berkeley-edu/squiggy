@@ -26,6 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from sqlalchemy.sql import text
 from squiggy import db
 from squiggy.lib.util import is_admin, is_observer, is_student, is_teaching
+from squiggy.models.canvas import Canvas
 from squiggy.models.user import User
 
 
@@ -139,21 +140,24 @@ class LoginSession:
 
 def _construct_api_json(user=None):
     is_authenticated = user and (is_admin(user) or user.canvas_enrollment_state != 'inactive')
+    canvas_api_domain = user.course.canvas_api_domain if is_authenticated else None
+    canvas = Canvas.find_by_domain(canvas_api_domain) if is_authenticated else None
     api_json = {
         **(user.to_api_json(include_points=True, include_sharing=True) if is_authenticated else {}),
         **{
-            'assetLibraryUrl': is_authenticated and user.course.asset_library_url,
-            'canvasApiDomain': is_authenticated and user.course.canvas_api_domain,
-            'canvasCourseId': is_authenticated and user.course.canvas_course_id,
-            'engagementIndexUrl': is_authenticated and user.course.engagement_index_url,
-            'impactStudioUrl': is_authenticated and user.course.impact_studio_url,
+            'assetLibraryUrl': user.course.asset_library_url if is_authenticated else None,
+            'canvasApiDomain': canvas_api_domain,
+            'canvasCourseId': user.course.canvas_course_id if is_authenticated else None,
+            'engagementIndexUrl': user.course.engagement_index_url if is_authenticated else None,
+            'impactStudioUrl': user.course.impact_studio_url if is_authenticated else None,
             'isAdmin': is_authenticated and is_admin(user),
             'isAuthenticated': is_authenticated,
             'isObserver': is_authenticated and is_observer(user),
             'isStudent': is_authenticated and is_student(user),
             'isTeaching': is_authenticated and is_teaching(user),
             'protectAssetsPerSection': is_authenticated and is_student(user) and user.course.protects_assets_per_section,
-            'whiteboardsUrl': is_authenticated and user.course.whiteboards_url,
+            'supportsCustomMessaging': canvas and canvas.supports_custom_messaging,
+            'whiteboardsUrl': user.course.whiteboards_url if is_authenticated else None,
         },
     }
     return api_json
