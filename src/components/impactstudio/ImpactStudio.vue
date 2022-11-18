@@ -209,16 +209,14 @@ export default {
   created() {
     this.$loading()
     this.linkifyOptions = {
+      className: 'hover-link',
       formatHref: {
         hashtag: href => {
           const hash = `suitec_keywords=${href.substring(1)}`
-          if (this.$isInIframe) {
-            return this.$currentUser.assetLibraryUrl + '#' + hash
-          } else {
-            return '/assets#' + hash
-          }
+          return this.$isInIframe ? `${this.$currentUser.assetLibraryUrl}#${hash}` : `/assets#${hash}`
         }
-      }
+      },
+      target: this.$isInIframe ? '_parent' : null
     }
     getUsers().then(data => {
       this.users = data
