@@ -44,7 +44,7 @@ const actions = {
     const target = JSON.parse(window.name)
     const course = _.get(target, 'course')
     commit('setCourse', course)
-    commit('setIsAuthorized', course && course.id === _.get(Vue.prototype.$currentUser, 'course.id'))
+    commit('setIsAuthorized', course && course.id === Vue.prototype.$currentUser.courseId)
     if (state.isAuthorized) {
       commit('setTargetPage', {
         images: target.images,
