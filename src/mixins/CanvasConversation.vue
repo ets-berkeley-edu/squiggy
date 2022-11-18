@@ -4,10 +4,10 @@ export default {
   methods: {
     startCanvasConversation(user) {
       const url = (
-        (this.$_.get(this.$currentUser, 'course.canvas.useHttps') ? 'https://' : 'http://') +
-        this.$_.get(this.$currentUser, 'course.canvasApiDomain') +
+        (this.$currentUser.useHttps ? 'https://' : 'http://') +
+        this.$currentUser.canvasApiDomain +
         '/conversations?context_id=course_' +
-        this.$_.get(this.$currentUser, 'course.canvasCourseId') +
+        this.$currentUser.canvasCourseId +
         '&user_id=' +
         user.canvasUserId +
         '&user_name=' +
