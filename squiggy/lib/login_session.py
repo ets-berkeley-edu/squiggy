@@ -157,6 +157,7 @@ def _construct_api_json(user=None):
             'isTeaching': is_authenticated and is_teaching(user),
             'protectAssetsPerSection': is_authenticated and is_student(user) and user.course.protects_assets_per_section,
             'supportsCustomMessaging': canvas and canvas.supports_custom_messaging,
+            'useHttps': canvas and canvas.use_https,
             'whiteboardsUrl': user.course.whiteboards_url if is_authenticated else None,
         },
     }
