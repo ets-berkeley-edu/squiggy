@@ -182,13 +182,14 @@ class Course(Base):
 
     def to_api_json(self, include_users=False):
         canvas = Canvas.find_by_domain(canvas_api_domain=self.canvas_api_domain)
+        sorted_groups = sorted(self.groups, key=lambda g: f'{g.category_name}{g.name}{g.id}')
         api_json = {
             'active': self.active,
             'assetLibraryUrl': self.asset_library_url,
             'canvas': canvas.to_api_json(),
             'canvasApiDomain': self.canvas_api_domain,
             'canvasCourseId': self.canvas_course_id,
-            'canvasGroups': [g.to_api_json() for g in self.groups],
+            'canvasGroups': [g.to_api_json() for g in sorted_groups],
             'enableDailyNotifications': self.enable_daily_notifications,
             'enableUpload': self.enable_upload,
             'enableWeeklyNotifications': self.enable_weekly_notifications,

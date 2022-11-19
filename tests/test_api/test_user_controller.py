@@ -78,7 +78,7 @@ class TestMyProfile:
         assert not api_json['isAdmin']
         assert not api_json.get('id')
         assert not api_json.get('course')
-        assert not api_json.get('canvasGroups')
+        assert not api_json.get('canvasGroupMemberships')
 
     def test_admin_profile(self, client, fake_auth):
         admin = User.query.filter_by(canvas_course_role='Administrator', canvas_enrollment_state='active').first()
@@ -88,7 +88,7 @@ class TestMyProfile:
         api_json = _api_my_profile(client)
         assert api_json['id'] == admin.id
         assert api_json['canvasApiDomain'] == expected_canvas_api_domain
-        assert api_json['canvasGroups'] == []
+        assert api_json['canvasGroupMemberships'] == []
         assert api_json['isAdmin'] is True
         assert api_json['isAuthenticated'] is True
         assert api_json['isObserver'] is False
@@ -107,7 +107,7 @@ class TestMyProfile:
         fake_auth.login(student.id)
         api_json = _api_my_profile(client)
         assert api_json['id'] == student.id
-        course_groups = api_json['canvasGroups']
+        course_groups = api_json['canvasGroupMemberships']
         assert len(course_groups) == 1
         print(course_groups)
         assert course_groups[0]['canvasUserId'] == canvas_user_id
@@ -126,7 +126,7 @@ class TestMyProfile:
         fake_auth.login(teacher.id)
         api_json = _api_my_profile(client)
         assert api_json['id'] == teacher.id
-        assert api_json['canvasGroups'] == []
+        assert api_json['canvasGroupMemberships'] == []
         assert api_json['isAdmin'] is False
         assert api_json['isAuthenticated'] is True
         assert api_json['isObserver'] is False

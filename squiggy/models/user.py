@@ -250,7 +250,7 @@ class User(Base):
             'canvasEmail': self.canvas_email,
             'canvasEnrollmentState': self.canvas_enrollment_state,
             'canvasFullName': self.canvas_full_name,
-            'canvasGroups': [g.to_api_json() for g in group_memberships],
+            'canvasGroupMemberships': [g.to_api_json() for g in group_memberships],
             'canvasImage': self.canvas_image,
             'canvasUserId': self.canvas_user_id,
             'courseId': self.course_id,

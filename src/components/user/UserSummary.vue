@@ -55,8 +55,8 @@ export default {
     canvasGroups: undefined
   }),
   created () {
-    this.canvasGroups = this.$_.map(this.user.canvasGroups, canvasGroup => {
-      return `${canvasGroup.categoryName} - ${canvasGroup.canvasGroupName}`
+    this.canvasGroups = this.$_.map(this.user.canvasGroupMemberships, m => {
+      return `${m.categoryName} - ${m.canvasGroupName}`
     })
   },
   methods: {
