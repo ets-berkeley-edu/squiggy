@@ -22,6 +22,7 @@ config/*.pickle
 # Scripts
 scripts/*_local.sh
 scripts/db/local
+scripts/hasenpfeffer_incorporated/local
 scripts/node_js/save_whiteboard_as_png.js
 
 # Local dev

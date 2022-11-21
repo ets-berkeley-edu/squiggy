@@ -7,7 +7,7 @@ Real-world data, from production, in a test environment promotes effective testi
 ## Pull data from production
 
 ```
-./scripts/hasenpfeffer_incorporated/pull-data.sh \
+./scripts/hasenpfeffer_incorporated/pull_prod_data.sh \
   -d db_connection \
   [-a] \
   [-c canvas_hostname [-r replacement_canvas_hostname]]
@@ -22,14 +22,23 @@ Real-world data, from production, in a test environment promotes effective testi
 -r  [OPTIONAL] If provided, all references to Canvas-hosted resources will
       be changed to this hostname. You must include the '-c' flag when using this option.
 ```
-### Fun facts about _pull-data.sh_
+### Fun facts about _pull_prod_data.sh_
 
 * CSV files are written to the _scripts/hasenpfeffer_incorporated/csv_files_ directory.
 
 ## Push data to test environment
 
+<span style="color: red;">IMPORTANT</span>: In this push operation, the db user specified in command below MUST be granted 
+"pg_read_server_files" permission. Contact Ops and have them execute the following:
+
 ```
-./scripts/hasenpfeffer_incorporated/push-data.sh -d db_connection [-a] [-i]
+GRANT pg_read_server_files TO db_username_goes_here;
+```
+
+Next, run the "push" script.
+
+```
+./scripts/hasenpfeffer_incorporated/push_prod_data.sh -d db_connection [-a] [-i]
 ```
 
 ### Available options
