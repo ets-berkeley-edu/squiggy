@@ -27,7 +27,7 @@ import ManageAssignments from '@/components/assets/ManageAssignments'
 import ManageCategories from '@/components/assets/ManageCategories'
 import Utils from '@/mixins/Utils'
 import {getCategories} from '@/api/categories'
-import {updateProtectAssetsPerSectionCheckbox} from '@/api/courses'
+import {getCourse, updateProtectAssetsPerSectionCheckbox} from '@/api/courses'
 
 export default {
   name: 'ManageAssets',
@@ -40,21 +40,23 @@ export default {
   }),
   created() {
     this.$loading()
-    this.refresh().then(() => {
-      this.$ready('Manage categories')
+    getCourse(this.$currentUser.courseId).then(data => {
+      this.checkbox = data.protectsAssetsPerSection
+      this.refresh().then(() => {
+        this.$ready('Manage assets')
+      })
     })
   },
   methods: {
     refresh() {
       return getCategories(true).then(data => {
-        this.checkbox = this.$currentUser.protectAssetsPerSection
         this.assignments = this.$_.filter(data, c => !!c.canvasAssignmentId)
         this.categories = this.$_.filter(data, c => !c.canvasAssignmentId)
       })
     },
     toggleSectionCheckbox(value) {
       updateProtectAssetsPerSectionCheckbox(value).then(() => {
-        this.$currentUser.protectAssetsPerSection = value
+        this.$announcer.polite(`Assets ${value ? '' : 'not'} protected per section.`)
       })
     }
   }
