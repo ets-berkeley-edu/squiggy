@@ -212,7 +212,7 @@ export default {
       className: 'hover-link',
       formatHref: {
         hashtag: href => {
-          const hash = `suitec_keywords=${href.substring(1)}`
+          const hash = `suitec_keywords=${href.substring(1)}&suitec_userId=${this.$currentUser.id}`
           return this.$isInIframe ? `${this.$currentUser.assetLibraryUrl}#${hash}` : `/assets#${hash}`
         }
       },
