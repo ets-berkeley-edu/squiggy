@@ -117,7 +117,7 @@ export default {
     }
   }),
   created() {
-    const suffix = `?from=impactStudio#suitec_assetId=${this.asset.id}`
+    const suffix = `#suitec_assetId=${this.asset.id}?from=impactStudio`
     this.assetUrl = this.$isInIframe ? `${this.$currentUser.assetLibraryUrl}${suffix}` : `/assets${suffix}`
   }
 }
