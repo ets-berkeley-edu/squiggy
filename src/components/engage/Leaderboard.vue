@@ -5,10 +5,11 @@
     :class="$vuetify.theme.dark ? 'dark' : 'light'"
   >
     <v-data-table
-      :headers="headers"
-      :items="rows"
+      v-if="course"
       disable-pagination
+      :headers="headers"
       :hide-default-footer="true"
+      :items="rows"
       :search="search"
     >
       <template #top>
@@ -39,7 +40,7 @@
           />
         </div>
       </template>
-      <template v-if="$currentUser.protectAssetsPerSection && ($currentUser.isAdmin || $currentUser.isTeaching)" #header.canvasCourseSections>
+      <template v-if="course.protectsAssetsPerSection && ($currentUser.isAdmin || $currentUser.isTeaching)" #header.canvasCourseSections>
         <div class="float-left">
           Course Sections
         </div>
@@ -105,22 +106,28 @@
 import CanvasConversation from '@/mixins/CanvasConversation'
 import CrossToolUserLink from '@/components/util/CrossToolUserLink'
 import Utils from '@/mixins/Utils'
+import {getCourse} from '@/api/courses'
 
 export default {
   name: 'Leaderboard',
   components: {CrossToolUserLink},
   mixins: [CanvasConversation, Utils],
-  data() {
-    return {
-      headers: this.getHeaders(),
-      search: ''
-    }
-  },
+  data: () => ({
+    course: undefined,
+    headers: undefined,
+    search: ''
+  }),
   props: {
     rows: {
       required: true,
       type: Array
     }
+  },
+  created() {
+    getCourse(this.$currentUser.courseId).then(course => {
+      this.course = course
+      this.headers = this.getHeaders()
+    })
   },
   methods: {
     downloadCSV() {
@@ -145,8 +152,8 @@ export default {
       if (this.$currentUser.impactStudioUrl) {
         headers.splice(2, 0, {text: 'Collaborate', value: 'lookingForCollaborators'})
       }
-      if (this.$currentUser.protectAssetsPerSection && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)) {
-        headers.splice(0, 0, {text: 'Course Sections', sort: compareSections, 'value': 'canvasCourseSections'})
+      if (this.course.protectsAssetsPerSection && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)) {
+        headers.splice(0, 0, {text: 'Course Sections', sort: compareSections, value: 'canvasCourseSections'})
       }
       return headers
     }
