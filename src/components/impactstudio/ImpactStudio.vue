@@ -39,15 +39,14 @@
         <div id="about-user" class="w-100">
           <h1 id="profile-header-name" class="profile-header-name mb-4">{{ user.canvasFullName }}</h1>
           <div v-if="isMyProfile" id="profile-looking-for-collaborators" class="my-4">
-            {{ user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators' }}
-            <v-btn
+            <v-switch
               id="toggle-looking-for-collaborators-btn"
-              class="mx-2"
-              @click="toggleLookingForCollaborators"
-              @keypress.enter="toggleLookingForCollaborators"
-            >
-              Change
-            </v-btn>
+              v-model="user.lookingForCollaborators"
+              color="success"
+              inset
+              :label="`${user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators'}`"
+              @change="toggleLookingForCollaborators"
+            />
           </div>
           <div v-if="!isMyProfile & user.lookingForCollaborators" id="profile-looking-for-collaborators" class="my-4">
             <v-btn
@@ -81,7 +80,7 @@
                 @click="isEditingPersonalDescription = true"
                 @keypress.enter="isEditingPersonalDescription = true"
               >
-                Edit
+                Edit Profile
               </v-btn>
             </div>
           </div>
@@ -281,8 +280,8 @@ export default {
         this.isEditingPersonalDescription = false
       })
     },
-    toggleLookingForCollaborators() {
-      updateLookingForCollaborators(!this.user.lookingForCollaborators).then((data) => {
+    toggleLookingForCollaborators(value) {
+      updateLookingForCollaborators(value).then((data) => {
         this.$announcer.polite('Looking for collaborators turned ' + (data.lookingForCollaborators ? 'on' : 'off'))
         this.user.lookingForCollaborators = data.lookingForCollaborators
       })
