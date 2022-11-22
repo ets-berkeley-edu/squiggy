@@ -201,6 +201,7 @@ import Context from '@/mixins/Context'
 import PageTitle from '@/components/util/PageTitle'
 import Utils from '@/mixins/Utils'
 import {createWhiteboard, getEligibleCollaborators, updateWhiteboard} from '@/api/whiteboards'
+import {getCourse} from '@/api/courses'
 
 export default {
   name: 'EditWhiteboard',
@@ -236,6 +237,7 @@ export default {
   },
   data: () => ({
     canDelete: false,
+    course: false,
     isFetchingUsers: true,
     isInputValid: false,
     isSaving: false,
@@ -268,17 +270,20 @@ export default {
     },
     getAvatarLabel: user => `Photo of ${user.canvasFullName}`,
     init() {
-      this.resetData()
-      this.isFetchingUsers = true
-      getEligibleCollaborators().then(users => {
-        const nonStudents = this.whiteboard ? this.$_.filter(this.whiteboard.users, u => u.isTeaching || u.isAdmin) : []
-        this.users = users.concat(nonStudents)
-        const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
-        if (addCurrentUser) {
-          this.users.push(this.$currentUser)
-          this.users = this.$_.sortBy(this.users, ['canvasFullName', 'id'])
-        }
-        this.isFetchingUsers = false
+      getCourse(this.$currentUser.courseId).then(course => {
+        this.course = course
+        this.resetData()
+        this.isFetchingUsers = true
+        getEligibleCollaborators().then(users => {
+          const nonStudents = this.whiteboard ? this.$_.filter(this.whiteboard.users, u => u.isTeaching || u.isAdmin) : []
+          this.users = users.concat(nonStudents)
+          const addCurrentUser = !this.whiteboard && !this.$_.includes(this.$_.map(this.users, 'id'), this.$currentUser.id)
+          if (addCurrentUser) {
+            this.users.push(this.$currentUser)
+            this.users = this.$_.sortBy(this.users, ['canvasFullName', 'id'])
+          }
+          this.isFetchingUsers = false
+        })
       })
     },
     remove(user) {
@@ -320,7 +325,7 @@ export default {
       }
     },
     showCourseSections(user) {
-      return this.$currentUser.protectAssetsPerSection
+      return this.course.protectsAssetsPerSection
         && this.$_.size(user.canvasCourseSections)
         && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
     }
