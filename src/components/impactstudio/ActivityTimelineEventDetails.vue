@@ -22,7 +22,7 @@
         <a
           :id="`event-details-popover-${activityId}-asset-link`"
           class="d-block text-truncate"
-          @click="go(`/asset/${asset.id}`, {from: 'impactStudio'})"
+          :href="assetUrl"
         >
           {{ title }}
         </a>
@@ -96,6 +96,7 @@ export default {
     }
   },
   data: () => ({
+    assetUrl: undefined,
     eventDescriptions: {
       'asset_add': 'added this asset.',
       'asset_comment': 'commented on this asset, ',
@@ -114,7 +115,11 @@ export default {
       'whiteboard_export': 'exported a whiteboard.',
       'whiteboard_remix': 'remixed this asset in a whiteboard.',
     }
-  })
+  }),
+  created() {
+    const suffix = `?from=impactStudio#suitec_assetId=${this.asset.id}&suitec_userId=${this.$currentUser.id}`
+    this.assetUrl = this.$isInIframe ? `${this.$currentUser.assetLibraryUrl}${suffix}` : `/assets${suffix}`
+  }
 }
 </script>
 
