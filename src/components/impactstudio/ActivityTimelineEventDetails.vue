@@ -19,13 +19,13 @@
     </div>
     <div class="text-truncate">
       <h3 class="event-details-popover-title">
-        <a
+        <router-link
           :id="`event-details-popover-${activityId}-asset-link`"
           class="d-block text-truncate"
-          :href="assetUrl"
+          :to="`/asset/${asset.id}?from=impactStudio`"
         >
           {{ title }}
-        </a>
+        </router-link>
       </h3>
       <p class="event-details-popover-description text-wrap">
         <a :id="`event-details-popover-${activityId}-profile-link`" :href="`/impact_studio/profile/${user.id}`">{{ user.name }}</a>
