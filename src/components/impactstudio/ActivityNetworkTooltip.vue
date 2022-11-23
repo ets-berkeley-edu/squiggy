@@ -45,7 +45,10 @@
         <span v-if="selectedUser.lastActivity">{{ selectedUser.lastActivity | moment('from', 'now') }}</span>
         <span v-if="!selectedUser.lastActivity">Never</span>
       </div>
-      <div v-if="selectedUser.lookingForCollaborators" class="profile-activity-network-tooltip-content">
+      <div
+        v-if="selectedUser.lookingForCollaborators && selectedUser.id !== $currentUser.id"
+        class="profile-activity-network-tooltip-content"
+      >
         <v-btn
           id="tooltip-looking-for-collaborators-btn"
           color="success"
@@ -53,7 +56,7 @@
           @keypress.enter.prevent="startCanvasConversation(selectedUser)"
         >
           <i class="pr-2 mdi mdi-account-plus"></i>
-          Looking for Collaborators
+          Looking for Collaborators: Send a Message
         </v-btn>
       </div>
     </div>
