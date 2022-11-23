@@ -79,6 +79,7 @@
 
 <script>
 import ActivityTimelineEventDetails from '@/components/impactstudio/ActivityTimelineEventDetails'
+import router from '@/router'
 import Vue from 'vue'
 
 const ActivityTimelineEventDetailsComponent = Vue.extend(ActivityTimelineEventDetails)
@@ -349,7 +350,8 @@ export default {
 
       eventDetails.append(() => {
         const eventDetailsComponent = new ActivityTimelineEventDetailsComponent({
-          propsData: displayProperties
+          propsData: displayProperties,
+          router
         })
         eventDetailsComponent.$mount()
         return eventDetailsComponent.$el
