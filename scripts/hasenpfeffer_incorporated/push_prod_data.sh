@@ -91,8 +91,6 @@ read confirmation; echo
   exit 1
 }
 
-echo "Clearing out existing data..."
-
 # Truncate!
 if [[ "${all_tables}" ]]; then
   SQL_TRANSACTION+="TRUNCATE canvas CASCADE;${BR}"
@@ -103,14 +101,12 @@ SQL_TRANSACTION+="TRUNCATE users CASCADE;${BR}"
 SQL_TRANSACTION+="TRUNCATE categories CASCADE;${BR}"
 
 push_csv() {
-  echo "Copying ${1} to database..."
-
   # Format the header row as a comma-separated list for the Postgres copy command.
   header_row=$(head -1 "${CSV_HOME_DIRECTORY}/${1}.csv")
   columns=${header_row//|/,}
 
   # Load local CSV file contents into table.
-  SQL_TRANSACTION+="COPY ${1} (${columns}) FROM '${CSV_HOME_DIRECTORY}/${1}.csv' WITH (FORMAT CSV, HEADER TRUE, DELIMITER '|');${BR}"
+  SQL_TRANSACTION+="\COPY ${1} (${columns}) FROM '${CSV_HOME_DIRECTORY}/${1}.csv' WITH (FORMAT CSV, HEADER TRUE, DELIMITER '|');${BR}"
 
   if [[ ${columns} == id* ]]; then
     # Tables with an auto-incrementing id column must reset the sequence after load.
@@ -118,7 +114,6 @@ push_csv() {
   fi
   if ${inactivate_courses} && [[ "${1}" == "courses" ]]; then
     # If requested, mark all courses as inactive.
-    echo "Will mark all courses as inactive."
     SQL_TRANSACTION+="UPDATE courses SET active = FALSE;${BR}"
   fi
 }
