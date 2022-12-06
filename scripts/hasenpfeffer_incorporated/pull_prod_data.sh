@@ -162,15 +162,15 @@ if [[ "${replacement_canvas}" ]]; then
   output_csv "assets" "SELECT a.id, a.type, a.url,
                 replace(a.download_url, '${source_canvas}', '${replacement_canvas}') as download_url,
                 a.title, a.canvas_assignment_id, a.description, a.thumbnail_url, a.image_url, a.mime,
-                a.source, a.body, a.likes, a.dislikes, a.views, a.comment_count, a.created_at, a.updated_at,
-                a.deleted_at, a.course_id, a.pdf_url, a.preview_status, a.preview_metadata, a.visible
+                a.source, a.body, a.likes, a.dislikes, a.views, a.comment_count, a.created_at, a.created_by,
+                a.updated_at, a.deleted_at, a.course_id, a.pdf_url, a.preview_status, a.preview_metadata, a.visible
               FROM assets a
               JOIN courses c
               ON a.course_id = c.id AND c.canvas_api_domain = '${source_canvas}'"
 
   output_csv "asset_whiteboard_elements" "SELECT awe.uuid,
                 replace(awe.element::text, '${source_canvas}', '${replacement_canvas}') as element,
-                awe.created_at, awe.updated_at, awe.asset_id, awe.element_asset_id
+                awe.created_at, awe.updated_at, awe.asset_id, awe.element_asset_id, awe.z_index
               FROM asset_whiteboard_elements awe
               JOIN (assets a JOIN courses c
                 ON a.course_id = c.id AND c.canvas_api_domain = '${source_canvas}')
@@ -189,14 +189,14 @@ if [[ "${replacement_canvas}" ]]; then
   output_csv "whiteboards" "SELECT w.id, w.title,
                 replace(w.thumbnail_url, '${source_canvas}', '${replacement_canvas}') as thumbnail_url,
                 replace(w.image_url, '${source_canvas}', '${replacement_canvas}') as image_url,
-                w.created_at, w.updated_at, w.course_id, w.deleted_at
+                w.created_at, w.created_by, w.updated_at, w.course_id, w.deleted_at
               FROM whiteboards w
               JOIN courses c
               ON w.course_id = c.id AND c.canvas_api_domain = '${source_canvas}'"
 
   output_csv "whiteboard_elements" "SELECT we.uuid,
                 replace(we.element::text, '${source_canvas}', '${replacement_canvas}') as element,
-                we.created_at, we.updated_at, we.whiteboard_id, we.asset_id
+                we.created_at, we.updated_at, we.whiteboard_id, we.asset_id, we.z_index
               FROM whiteboard_elements we
               JOIN (whiteboards w JOIN courses c
                 ON w.course_id = c.id AND c.canvas_api_domain = '${source_canvas}')
