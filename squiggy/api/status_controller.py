@@ -9,7 +9,7 @@ modifications, and distributions.
 
 Contact The Office of Technology Licensing, UC Berkeley, 2150 Shattuck Avenue,
 Suite 510, Berkeley, CA 94720-1620, (510) 643-7201, otl@berkeley.edu,
-http://ipira.berkeley.edu/industry-info for commercial licensing opportunities.
+https://ipira.berkeley.edu/industry-info for commercial licensing opportunities.
 
 IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
 INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF
