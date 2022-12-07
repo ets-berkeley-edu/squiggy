@@ -182,7 +182,8 @@ if [[ "${replacement_canvas}" ]]; then
                 replace(c.engagement_index_url, '${source_canvas}', '${replacement_canvas}') as engagement_index_url,
                 replace(c.whiteboards_url, '${source_canvas}', '${replacement_canvas}') as whiteboards_url,
                 '${replacement_canvas}' as canvas_api_domain,
-                c.active, c.created_at, c.updated_at, c.enable_daily_notifications, c.enable_weekly_notifications
+                c.active, c.created_at, c.updated_at, c.enable_daily_notifications, c.enable_weekly_notifications,
+                c.last_polled
               FROM courses c
               WHERE c.canvas_api_domain = '${source_canvas}'"
 
