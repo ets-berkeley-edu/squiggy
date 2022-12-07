@@ -67,4 +67,6 @@ These entries allow you to connect to databases via ssh tunnel. For example:
 
    ![Elastic Beanstalk console](../../src/assets/hasenpfeffer_restart_app_server.jpg)
 
-7. Finally, you should verify that test environment has the data.
+7. Finally, verify that _/api/ping_ is happy and that the targeted test environment has a clone of prod data.
+
+Cheerio, mate!
