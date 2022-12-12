@@ -25,7 +25,7 @@
                 @click="reset(!isAdvancedSearchOpen)"
               >
                 <font-awesome-icon icon="caret-down" />
-                <span class="sr-only">{{ isAdvancedSearchOpen ? 'Hide' : 'Show' }} Show advanced search</span>
+                <span class="sr-only">{{ isAdvancedSearchOpen ? 'Hide' : 'Show' }} advanced search</span>
               </v-btn>
             </template>
             <template #append-outer>
