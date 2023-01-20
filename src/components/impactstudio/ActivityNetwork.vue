@@ -409,6 +409,9 @@ export default {
         })
         // Only first names fit easily on the force diagram.
         .text(d => {
+          if (this.id === this.$currentUser.id) {
+            return d.canvasFullName.split(' ')[0] + ' (You)'
+          }
           return d.canvasFullName.split(' ')[0]
         })
 

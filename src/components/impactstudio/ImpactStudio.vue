@@ -85,12 +85,13 @@
             </div>
           </div>
           <div v-if="isEditingPersonalDescription" id="profile-personal-description-edit" class="my-4">
-            <v-text-field
+            <label class="sr-only" for="profile-personal-description-input">Short Personal Description or Collaboration Interests</label>
+            <v-textarea
               id="profile-personal-description-input"
               v-model="personalDescription"
               class="mt-4"
               counter
-              label="Short Personal Description or Collaboration Interests"
+              placeholder="Short Personal Description or Collaboration Interests"
               maxlength="255"
               :rules="[v => (!v || v.length <= 255) || 'Personal Description must be 255 characters or less']"
               solo

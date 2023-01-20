@@ -35,12 +35,17 @@
         :on-asset-click="goToAsset(asset)"
         class="asset-card ma-3"
       />
-      <div v-if="showMore" class="asset-card ma-3 d-flex align-center" align-center>
-        <a :id="`${idPrefix}-view-all-link`" :href="assetsHref">
-          View all assets in the Asset Library
-        </a>
-      </div>
     </v-card>
+    <div v-if="showMore" class="pl-4">
+      <a
+        :id="`${idPrefix}-view-all-link`"
+        :href="`${$currentUser.assetLibraryUrl}#${user ? `suitec_userId=${user.id}` : 'suitec_orderBy=recent'}`"
+        class="hover-link"
+        target="_parent"
+      >
+        View {{ user ? `${user.canvasFullName}'s` : 'all' }} assets in the Asset Library
+      </a>
+    </div>
     <div v-if="!assets.length" :id="`${idPrefix}-no-assets-msg`" class="px-4">
       No assets.
     </div>
