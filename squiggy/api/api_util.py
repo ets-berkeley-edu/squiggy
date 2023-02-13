@@ -154,7 +154,7 @@ def upsert_whiteboard_elements(socket_id, whiteboard_elements, whiteboard_id):
     results = []
     for whiteboard_element in whiteboard_elements:
         element = whiteboard_element.get('element') if whiteboard_element else None
-        ignore = not element or (element.get('type') == 'i-text' and not element.get('text', '').strip())
+        ignore = not element or (element.get('type') in ['i-text', 'textbox'] and not element.get('text', '').strip())
         if ignore:
             continue
         queue_for_preview_image = True
@@ -263,8 +263,8 @@ def _update_whiteboard_element(whiteboard_element, whiteboard_id):
 
 def _validate_fabricjs_element(element, is_update=False):
     error_message = None
-    if element['type'] == 'i-text' and not safe_strip(element.get('text')):
-        error_message = f'Invalid Fabric i-text element: {element}.'
+    if element['type'] in ['i-text', 'textbox'] and not safe_strip(element.get('text')):
+        error_message = f'Invalid Fabric i-text/textbox element: {element}.'
     if is_update:
         if 'uuid' not in element:
             error_message = 'uuid is required when updating existing whiteboard_element.'
