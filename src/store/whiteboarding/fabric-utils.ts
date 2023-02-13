@@ -361,7 +361,7 @@ const $_addCanvasListeners = (state: any) => {
   p.$canvas.on('object:added', (event: any) => {
     $_log(`canvas object:added (mode = ${state.mode})`)
     const element = event.target
-    const isNonEmptyIText = element.type !== 'i-text' || element.text.trim()
+    const isNonEmptyIText = !['i-text','textbox'].includes(element.type) || element.text.trim()
     const wasAddedByRemote = state.remoteUUIDs.includes(element.uuid)
     if (!wasAddedByRemote && isNonEmptyIText && !element.assetId && !element.uuid && !element.isHelper) {
       $_enableCanvasElements(true)
@@ -397,11 +397,10 @@ const $_addCanvasListeners = (state: any) => {
     }
     if (state.mode === 'text') {
       const textPointer = p.$canvas.getPointer(event.e)
-      const iText = new fabric.IText('', {
+      const iText = new fabric.Textbox('', {
         fill: state.selected.fill,
         fontFamily: 'Helvetica',
         fontSize: state.selected.fontSize || constants.TEXT_SIZE_OPTIONS[0].value,
-        height: 100,
         left: textPointer.x,
         text: '',
         selectable: true,
@@ -409,6 +408,7 @@ const $_addCanvasListeners = (state: any) => {
         top: textPointer.y,
         originX: 'left',
         originY: 'top',
+        width: 400,
       })
       p.$canvas.add(iText)
 
