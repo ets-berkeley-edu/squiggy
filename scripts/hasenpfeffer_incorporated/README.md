@@ -27,7 +27,7 @@ These entries allow you to connect to databases via ssh tunnel. For example:
 4. Pull prod data.
     ```shell
     # Replace 00000 with port number of the "prod" LocalForward above.
-    ./scripts/hasenpfeffer_incorporated/pull_production_data.sh \
+    ./scripts/hasenpfeffer_incorporated/pull_prod_data.sh \
       -d localhost:00000:squiggy_prod:app_squiggy_readonly \
       [-a] \
       [-c canvas_api_domain [-r replacement_canvas_api_domain]]
