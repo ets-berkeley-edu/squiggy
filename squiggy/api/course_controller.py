@@ -35,7 +35,13 @@ from squiggy.models.course import Course
 def activate():
     course = Course.find_by_id(current_user.course_id)
     course.activate()
-    return tolerant_jsonify(course.to_api_json(include_users=True))
+    return tolerant_jsonify(True)
+
+
+@app.route('/api/course/is_active')
+@login_required
+def is_active():
+    return tolerant_jsonify(Course.is_active(current_user.course_id))
 
 
 @app.route('/api/course/<course_id>')
