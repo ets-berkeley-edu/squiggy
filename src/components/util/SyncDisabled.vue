@@ -1,7 +1,7 @@
 <template>
-  <div v-if="course">
+  <div v-if="!$_.isNil(isCourseActive)">
     <v-alert
-      v-if="!course.active"
+      v-if="!isCourseActive"
       role="alert"
       outlined
       color="deep-orange darken-4"
@@ -51,26 +51,26 @@
 <script>
 import Context from '@/mixins/Context'
 import Utils from '@/mixins/Utils'
-import {activate, getCourse} from '@/api/courses'
+import {activate, isCurrentCourseActive} from '@/api/courses'
 
 export default {
   name: 'SyncDisabled',
   mixins: [Context, Utils],
   data: () => ({
     activating: false,
-    course: undefined,
+    isCourseActive: undefined,
     reactivated: false
   }),
   created() {
-    getCourse(this.$currentUser.courseId).then(data => {
-      this.course = data
+    isCurrentCourseActive().then(data => {
+      this.isCourseActive = data
     })
   },
   methods: {
     reactivateCourse() {
       this.activating = true
       activate().then(data => {
-        this.course = data
+        this.isCourseActive = data
         this.activating = false
         this.reactivated = true
       })

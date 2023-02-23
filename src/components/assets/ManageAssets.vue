@@ -41,6 +41,7 @@ export default {
   created() {
     this.$loading()
     getCourse(this.$currentUser.courseId).then(data => {
+      // TODO: replace expensive getCourse call with a lighter weight API call
       this.checkbox = data.protectsAssetsPerSection
       this.refresh().then(() => {
         this.$ready('Manage assets')
