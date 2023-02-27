@@ -1,9 +1,7 @@
 import _ from 'lodash'
 import Vue from 'vue'
 import {getAssets} from '@/api/assets'
-import {getCategories} from '@/api/categories'
-import {getCourse} from '@/api/courses'
-import {getUsers} from '@/api/users'
+import {getAdvancedAssetSearchOptions} from '@/api/courses'
 
 const orderByDefault = 'recent'
 
@@ -129,15 +127,11 @@ const actions = {
   initAssetSearchOptions({commit}) {
     return new Promise<void>(resolve => {
       const courseId = Vue.prototype.$currentUser.courseId
-      getCourse(courseId).then(data => {
+      getAdvancedAssetSearchOptions(courseId).then(data => {
         commit('setCanvasGroups', _.get(data, 'canvasGroups'))
-        getUsers().then(data => {
-          commit('setUsers', data)
-          getCategories().then(data => {
-            commit('setCategories', data)
-            resolve()
-          })
-        })
+        commit('setUsers', _.get(data, 'users'))
+        commit('setCategories', _.get(data, 'categories'))
+        resolve()
       })
     })
   },

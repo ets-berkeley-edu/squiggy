@@ -43,6 +43,12 @@ def _api_get_course(client, course_id, expected_status_code=200):
     return response.json
 
 
+def _api_get_users(client, course_id, expected_status_code=200):
+    response = client.get(f'/api/course/{course_id}/advanced_asset_search_options')
+    assert response.status_code == expected_status_code
+    return response.json
+
+
 class TestReactivateCourse:
 
     def test_anonymous(self, client):
@@ -86,7 +92,7 @@ class TestGetCourse:
         """Authenticated user succeeds."""
         user = User.find_by_id(student_id)
         fake_auth.login(user.id)
-        api_json = _api_get_course(client, user.course_id)
+        api_json = _api_get_users(client, user.course_id)
         assert user.id in [user['id'] for user in api_json['users']]
 
 

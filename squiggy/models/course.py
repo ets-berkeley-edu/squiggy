@@ -107,6 +107,49 @@ class Course(Base):
         return cls.query.filter_by(canvas_api_domain=canvas_api_domain, canvas_course_id=canvas_course_id).first()
 
     @classmethod
+    def get_advanced_asset_search_options(cls, course_id):
+        api_json = {
+            'canvasGroups': [],
+            'users': [],
+            'categories': [],
+        }
+        sql = """
+            SELECT id, CONCAT(category_name, ' - ', name)
+            AS label FROM course_groups
+            WHERE course_id = :course_id
+            ORDER BY category_name, name
+        """
+        for row in db.session.execute(text(sql), {'course_id': course_id}).all():
+            api_json['canvasGroups'].append({
+                'id': row['id'],
+                'label': row['label'],
+            })
+        sql = """
+            SELECT id, canvas_full_name, canvas_course_sections
+            FROM users
+            WHERE course_id = :course_id
+            ORDER BY canvas_full_name
+        """
+        for row in db.session.execute(text(sql), {'course_id': course_id}).all():
+            api_json['users'].append({
+                'id': row['id'],
+                'canvasFullName': row['canvas_full_name'],
+                'canvasCourseSections': row['canvas_course_sections'],
+            })
+        sql = """
+            SELECT id, title
+            FROM categories
+            WHERE course_id = :course_id
+            ORDER BY title
+        """
+        for row in db.session.execute(text(sql), {'course_id': course_id}).all():
+            api_json['categories'].append({
+                'id': row['id'],
+                'title': row['title'],
+            })
+        return api_json
+
+    @classmethod
     def create(
             cls,
             canvas_api_domain,

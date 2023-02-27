@@ -326,6 +326,7 @@ export default {
     },
     showCourseSections(user) {
       return this.course.protectsAssetsPerSection
+        // TODO: replace expensive getCourse call with a lighter weight API call
         && this.$_.size(user.canvasCourseSections)
         && (this.$currentUser.isAdmin || this.$currentUser.isTeaching)
     }

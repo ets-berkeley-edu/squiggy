@@ -44,10 +44,16 @@ def is_active():
     return tolerant_jsonify(Course.is_active(current_user.course_id))
 
 
+@app.route('/api/course/<course_id>/advanced_asset_search_options')
+@login_required
+def get_advanced_asset_search_options(course_id):
+    return tolerant_jsonify(Course.get_advanced_asset_search_options(course_id))
+
+
 @app.route('/api/course/<course_id>')
 @login_required
 def get_course(course_id):
-    return tolerant_jsonify(Course.find_by_id(course_id).to_api_json(include_users=True))
+    return tolerant_jsonify(Course.find_by_id(course_id).to_api_json())
 
 
 @app.route('/api/course/update_protect_assets_per_section', methods=['POST'])

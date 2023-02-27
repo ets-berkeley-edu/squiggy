@@ -41,6 +41,7 @@
         </div>
       </template>
       <template v-if="course.protectsAssetsPerSection && ($currentUser.isAdmin || $currentUser.isTeaching)" #header.canvasCourseSections>
+        <!--TODO: replace expensive getCourse call with a lighter weight API call-->
         <div class="float-left">
           Course Sections
         </div>
