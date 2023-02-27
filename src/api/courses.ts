@@ -5,6 +5,10 @@ export function activate() {
   return axios.post(`${utils.apiBaseUrl()}/api/course/activate`)
 }
 
+export function getAdvancedAssetSearchOptions(courseId) {
+  return axios.get(`${utils.apiBaseUrl()}/api/course/${courseId}/advanced_asset_search_options`)
+}
+
 export function getCourse(courseId) {
   return axios.get(`${utils.apiBaseUrl()}/api/course/${courseId}`)
 }

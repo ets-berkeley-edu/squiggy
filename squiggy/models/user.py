@@ -233,7 +233,7 @@ class User(Base):
         user.share_points = True if share else False
         std_commit()
 
-    def to_api_json(self, include_points=False, include_sharing=False):
+    def to_api_json(self, include_assets=False, include_points=False, include_sharing=False):
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
         group_memberships = CourseGroupMembership.find_by_course_and_user(
             canvas_user_id=self.canvas_user_id,
@@ -241,7 +241,6 @@ class User(Base):
         )
         api_json = {
             'id': self.id,
-            'assets': [{'id': asset.id, 'title': asset.title} for asset in self.assets],
             'bookmarkletAuth': Fernet(encryption_key).encrypt(f'{self.id}_{self.course_id}_{self.bookmarklet_token}'.encode()),
             'canvasApiDomain': self.course.canvas_api_domain,
             'canvasCourseId': self.course.canvas_course_id,
@@ -272,4 +271,6 @@ class User(Base):
             api_json.pop('points')
         if not include_sharing:
             api_json.pop('sharePoints')
+        if include_assets:
+            api_json['assets'] = [{'id': asset.id, 'title': asset.title} for asset in self.assets]
         return api_json

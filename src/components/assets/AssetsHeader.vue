@@ -147,7 +147,7 @@
                       hide-details
                       id-prefix="adv-search-section"
                       :items="$_.orderBy(sections, 'text')"
-                      item-text="text"
+                      item-text="value"
                       item-value="value"
                       label="Section"
                       @input="setSection"
