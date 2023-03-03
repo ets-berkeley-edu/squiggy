@@ -114,8 +114,8 @@ class Course(Base):
             'categories': [],
         }
         sql = """
-            SELECT id, CONCAT(category_name, ' - ', name)
-            AS label FROM course_groups
+            SELECT id, CONCAT(category_name, ' - ', name) AS label
+            FROM course_groups
             WHERE course_id = :course_id
             ORDER BY category_name, name
         """
@@ -140,6 +140,7 @@ class Course(Base):
             SELECT id, title
             FROM categories
             WHERE course_id = :course_id
+            AND visible IS TRUE
             ORDER BY title
         """
         for row in db.session.execute(text(sql), {'course_id': course_id}).all():
