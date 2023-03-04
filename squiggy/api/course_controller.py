@@ -47,7 +47,12 @@ def is_active():
 @app.route('/api/course/<course_id>/advanced_asset_search_options')
 @login_required
 def get_advanced_asset_search_options(course_id):
-    return tolerant_jsonify(Course.get_advanced_asset_search_options(course_id))
+    search_options = Course.get_advanced_asset_search_options(
+        course_id,
+        current_user_sections=current_user.canvas_course_sections,
+        is_current_user_student=current_user.is_student,
+    )
+    return tolerant_jsonify(search_options)
 
 
 @app.route('/api/course/<course_id>')
