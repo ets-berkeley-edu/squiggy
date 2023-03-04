@@ -107,7 +107,12 @@ class Course(Base):
         return cls.query.filter_by(canvas_api_domain=canvas_api_domain, canvas_course_id=canvas_course_id).first()
 
     @classmethod
-    def get_advanced_asset_search_options(cls, course_id):
+    def get_advanced_asset_search_options(
+            cls,
+            course_id,
+            current_user_sections,
+            is_current_user_student,
+    ):
         api_json = {
             'canvasGroups': [],
             'users': [],
@@ -125,12 +130,28 @@ class Course(Base):
                 'label': row['label'],
             })
         sql = """
-            SELECT id, canvas_full_name, canvas_course_sections
-            FROM users
-            WHERE course_id = :course_id
-            ORDER BY canvas_full_name
-        """
-        for row in db.session.execute(text(sql), {'course_id': course_id}).all():
+            SELECT u.id, u.canvas_full_name, u.canvas_course_sections
+                FROM users u
+                JOIN courses c ON c.id = u.course_id
+                WHERE
+                    u.course_id = :course_id
+                    AND canvas_enrollment_state = 'active'
+                    AND (
+                        canvas_course_role NOT IN ('Student', 'Learner')
+                        OR (
+                            :is_current_user_student IS FALSE
+                            OR c.protects_assets_per_section IS FALSE
+                            OR CAST (:current_user_sections AS VARCHAR[]) && u.canvas_course_sections
+                        )
+                    )
+                ORDER BY u.canvas_full_name
+            """
+        args = {
+            'course_id': course_id,
+            'current_user_sections': current_user_sections,
+            'is_current_user_student': is_current_user_student,
+        }
+        for row in db.session.execute(text(sql), args).all():
             api_json['users'].append({
                 'id': row['id'],
                 'canvasFullName': row['canvas_full_name'],
