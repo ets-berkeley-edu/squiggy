@@ -135,7 +135,7 @@ class Course(Base):
                 JOIN courses c ON c.id = u.course_id
                 WHERE
                     u.course_id = :course_id
-                    AND canvas_enrollment_state in ('active', 'invited')
+                    AND canvas_enrollment_state IN ('active', 'invited')
                     AND (
                         canvas_course_role NOT IN ('Student', 'Learner')
                         OR (
