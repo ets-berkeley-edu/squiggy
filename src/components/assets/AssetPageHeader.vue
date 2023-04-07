@@ -13,7 +13,7 @@
           Edit Details
         </v-btn>
       </div>
-      <div v-if="canEditAsset && asset.assetType === 'link'" class="mr-2">
+      <div v-if="$currentUser.isAdmin || (canEditAsset && asset.assetType === 'link')" class="mr-2">
         <v-tooltip bottom>
           <template #activator="{on, attrs}">
             <v-btn
