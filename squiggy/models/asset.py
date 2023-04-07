@@ -391,7 +391,11 @@ class Asset(Base):
 
     def refresh_asset_preview_image(self):
         self.update_preview(preview_status='pending')
-        _generate_previews(self, self.url)
+        preview_url = self.download_url if self.asset_type in ['file', 'whiteboard'] else self.url
+        _generate_previews(
+            asset=self,
+            preview_url=preview_url,
+        )
 
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
