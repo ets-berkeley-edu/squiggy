@@ -71,7 +71,7 @@ export default {
     },
     refreshPreview() {
       refreshAssetPreview(this.asset.id).then(() => {
-        this.asset.previewStatus = 'pending'
+        this.$_.set(this.asset, 'previewStatus', 'pending')
         this.scheduleRefreshPreview()
       })
     },
