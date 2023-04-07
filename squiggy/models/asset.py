@@ -389,9 +389,7 @@ class Asset(Base):
         std_commit()
         return self.comment_count
 
-    def refresh_link_preview(self):
-        if self.asset_type != 'link':
-            return
+    def refresh_asset_preview_image(self):
         self.update_preview(preview_status='pending')
         _generate_previews(self, self.url)
 

@@ -183,11 +183,13 @@ def like_asset(asset_id):
 @login_required
 def refresh_preview(asset_id):
     asset = Asset.find_by_id(asset_id) if asset_id else None
-    if not asset or asset.asset_type != 'link':
+    if not asset:
+        raise ResourceNotFoundError('Asset not found.')
+    if asset.asset_type != 'link' and not current_user.is_admin:
         raise BadRequestError('Preview refresh requires a valid link asset.')
-    if not can_current_user_update_asset(asset=asset):
+    if not can_current_user_update_asset(asset=asset) and not current_user.is_admin:
         raise BadRequestError('To refresh an asset preview you must own it or be a teacher in the course.')
-    asset.refresh_link_preview()
+    asset.refresh_asset_preview_image()
     return tolerant_jsonify(asset.to_api_json(user_id=current_user.id))
 
 
