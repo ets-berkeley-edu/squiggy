@@ -25,9 +25,11 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from time import sleep
 
+from flask import current_app as app
 from sqlalchemy import text
 from squiggy import db
 from squiggy.lib.background_job import BackgroundJob
+from squiggy.lib.db_util import advisory_lock
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.previews import generate_whiteboard_preview
 from squiggy.lib.util import utc_now
@@ -62,12 +64,13 @@ class WhiteboardHousekeeping(BackgroundJob):
     def run(self):
         while True:
             if not self.is_running:
-                self.is_running = True
-                try:
-                    self._generate_whiteboard_previews()
-                    WhiteboardSession.delete_stale_sessions()
-                finally:
-                    self.is_running = False
+                with advisory_lock(app.config['ADVISORY_LOCK_ID_WHITEBOARD_HOUSEKEEPING']):
+                    self.is_running = True
+                    try:
+                        self._generate_whiteboard_previews()
+                        WhiteboardSession.delete_stale_sessions()
+                    finally:
+                        self.is_running = False
             sleep(15)
 
     def _generate_whiteboard_previews(self):
