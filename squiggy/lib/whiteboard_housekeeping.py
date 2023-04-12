@@ -64,13 +64,14 @@ class WhiteboardHousekeeping(BackgroundJob):
     def run(self):
         while True:
             if not self.is_running:
-                with advisory_lock(app.config['ADVISORY_LOCK_ID_WHITEBOARD_HOUSEKEEPING']):
-                    self.is_running = True
-                    try:
-                        self._generate_whiteboard_previews()
-                        WhiteboardSession.delete_stale_sessions()
-                    finally:
-                        self.is_running = False
+                with advisory_lock(app.config['ADVISORY_LOCK_ID_WHITEBOARD_HOUSEKEEPING']) as has_lock:
+                    if has_lock:
+                        self.is_running = True
+                        try:
+                            self._generate_whiteboard_previews()
+                            WhiteboardSession.delete_stale_sessions()
+                        finally:
+                            self.is_running = False
             sleep(15)
 
     def _generate_whiteboard_previews(self):
