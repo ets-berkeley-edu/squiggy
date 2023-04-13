@@ -84,6 +84,10 @@ PREVIEWS_ENABLED = True
 PREVIEWS_URL = 'https://example.com/previews'
 PREVIEWS_UNSUPPORTED_MIME_TYPES = ['image/heic', 'image/webp']
 
+REDIS_HOST = None
+REDIS_PASSWORD = None
+REDIS_PORT = 6379
+
 # Where file assets go.
 S3_BUCKET = 'some-bucket'
 S3_REGION = 'us-west-2'
