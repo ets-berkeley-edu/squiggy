@@ -71,27 +71,28 @@ class CanvasPoller(BackgroundJob):
         self.canvas = get_canvas(api_url, api_key)
 
         while True:
-            with advisory_lock(app.config['ADVISORY_LOCK_ID_CANVAS_POLLER']):
-                course = db.session.query(Course) \
-                    .filter_by(canvas_api_domain=canvas_api_domain, active=True) \
-                    .order_by(nullsfirst(Course.last_polled.asc())) \
-                    .with_for_update() \
-                    .first()
-                if not course:
-                    logger.info(f'No active courses found: {canvas_api_domain}')
-                else:
-                    logger.debug(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
-                    course.last_polled = utc_now()
-                    db.session.add(course)
-                    std_commit()
+            with advisory_lock(app.config['ADVISORY_LOCK_ID_CANVAS_POLLER']) as has_lock:
+                if has_lock:
+                    course = db.session.query(Course) \
+                        .filter_by(canvas_api_domain=canvas_api_domain, active=True) \
+                        .order_by(nullsfirst(Course.last_polled.asc())) \
+                        .with_for_update() \
+                        .first()
+                    if not course:
+                        logger.info(f'No active courses found: {canvas_api_domain}')
+                    else:
+                        logger.debug(f"Will poll {_format_course(course)}, last polled {course.last_polled or 'never'}")
+                        course.last_polled = utc_now()
+                        db.session.add(course)
+                        std_commit()
 
-                    try:
-                        self.poll_course(course)
-                    except ResourceDoesNotExist:
-                        logger.warn(f'Poller, using Canvas API, did not find course {_format_course(course)}')
-                    except Exception as e:
-                        logger.error(f'Failed to poll course {_format_course(course)}')
-                        logger.exception(e)
+                        try:
+                            self.poll_course(course)
+                        except ResourceDoesNotExist:
+                            logger.warn(f'Poller, using Canvas API, did not find course {_format_course(course)}')
+                        except Exception as e:
+                            logger.error(f'Failed to poll course {_format_course(course)}')
+                            logger.exception(e)
             sleep(5)
 
     def poll_course(self, db_course):
