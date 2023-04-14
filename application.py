@@ -24,11 +24,16 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import os
+import socket
 import subprocess
 
 import eventlet
+from eventlet.green import ssl
 # https://eventlet.net/doc/patching.html
 eventlet.monkey_patch()
+# https://github.com/eventlet/eventlet/issues/692
+ssl.timeout_exc = socket.timeout
+
 from squiggy.factory import create_app  # noqa E402
 
 """Squiggy says HELLO!
