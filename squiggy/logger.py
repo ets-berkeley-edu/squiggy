@@ -34,7 +34,15 @@ def initialize_app_logger(app):
 
     # Configure app and library loggers.
     loggers = [app.logger]
-    third_parties = ['boto3', 'botocore', 's3transfer', 'werkzeug', 'sqlalchemy.engine']
+    third_parties = [
+        'boto3',
+        'botocore',
+        's3transfer',
+        'socketio',
+        'socketio.server',
+        'sqlalchemy.engine',
+        'werkzeug',
+    ]
     for third_party in third_parties:
         loggers.append(logging.getLogger(third_party))
 
