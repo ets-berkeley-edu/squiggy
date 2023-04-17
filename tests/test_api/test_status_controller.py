@@ -51,6 +51,7 @@ class TestStatusController:
             assert response.status_code == 200
             assert response.json['app'] is True
             assert response.json['db'] is True
+            assert response.json['previewService'] is False
             assert response.json['poller'] is expected_ping_value
             assert response.json['whiteboards'] is expected_ping_value
 
