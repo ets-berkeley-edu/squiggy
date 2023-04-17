@@ -67,6 +67,10 @@ axios.interceptors.response.use(
           return Promise.reject(error)
         })
       }
+    } else if (requestUrl.includes('whiteboard')) {
+      console.log(`[ERROR] HTTP status ${errorStatus} from ${requestUrl} API call`)
+      console.log(error)
+      return Promise.reject()
     } else {
       utils.axiosErrorHandler(error)
       return Promise.reject(error)
