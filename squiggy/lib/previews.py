@@ -105,6 +105,20 @@ def get_s3_key_prefix(course_id, object_type):
     }[object_type]
 
 
+def ping_preview_service():
+    if not app.config['PREVIEWS_ENABLED']:
+        return False
+    success = False
+    try:
+        ping_url = app.config['PREVIEWS_URL'].replace('process', 'api/status')
+        response = http.request(ping_url)
+        if response and response.body and '"app":true' in response.body:
+            success = True
+    except Exception as e:
+        app.logger.error(f'Failed to contact preview service: {e}')
+    return success
+
+
 def verify_preview_service_authorization(auth_header):
     if not (auth_header and auth_header.startswith('Bearer ')):
         logger.error('No authorization token provided to preview service callback.')

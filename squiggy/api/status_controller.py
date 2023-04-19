@@ -26,6 +26,7 @@ from flask import current_app as app
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
 from squiggy.lib.http import tolerant_jsonify
+from squiggy.lib.previews import ping_preview_service
 from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 
@@ -36,6 +37,7 @@ def app_status():
         'app': True,
         'db': _db_status(),
         'poller': _poller_status(),
+        'previewService': _preview_service_status(),
         'whiteboards': _whiteboard_housekeeping_status(),
     }
     return tolerant_jsonify(resp)
@@ -61,6 +63,10 @@ def _poller_status():
     except SQLAlchemyError:
         logger.exception('Database connection error')
         return None
+
+
+def _preview_service_status():
+    return ping_preview_service()
 
 
 def _whiteboard_housekeeping_status():
