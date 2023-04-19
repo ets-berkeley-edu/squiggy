@@ -112,7 +112,7 @@ def ping_preview_service():
     try:
         ping_url = app.config['PREVIEWS_URL'].replace('process', 'api/status')
         response = http.request(ping_url)
-        if response and response.body and '"app":true' in response.body:
+        if response and response.json()['app'] is True:
             success = True
     except Exception as e:
         app.logger.error(f'Failed to contact preview service: {e}')
