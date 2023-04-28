@@ -13,7 +13,7 @@
           Edit Details
         </v-btn>
       </div>
-      <div v-if="$currentUser.isAdmin || (canEditAsset && asset.assetType === 'link')" class="mr-2">
+      <div v-if="$currentUser.isAdmin || $currentUser.isTeaching || (canEditAsset && asset.assetType === 'link')" class="mr-2">
         <v-tooltip bottom>
           <template #activator="{on, attrs}">
             <v-btn
@@ -120,9 +120,6 @@ export default {
   }),
   computed: {
     previewGeneratedAt: function () {
-      if (this.asset.assetType !== 'link') {
-        return null
-      }
       return this.$_.get(this.asset, 'previewMetadata.updatedAt') || this.asset.createdAt
     }
   },
