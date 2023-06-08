@@ -533,13 +533,10 @@ const $_addCanvasPanningListeners = (state: any) => {
 
 const $_addSocketListeners = (state: any) => {
   $_log('Add socket listeners')
-  const onWindowClose = (event: any) => {
+  const onWindowClose = () => {
     if (p.$socket) {
       $_leave(state)
       p.$socket.close()
-    }
-    if (event) {
-      event.preventDefault()
     }
   }
   window.onbeforeunload = onWindowClose
