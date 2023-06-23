@@ -50,6 +50,7 @@ class TestStatusController:
             response = client.get('/api/ping')
             assert response.status_code == 200
             assert response.json['app'] is True
+            assert response.json['cache'] is False
             assert response.json['db'] is True
             assert response.json['previewService'] is False
             assert response.json['poller'] is expected_ping_value
