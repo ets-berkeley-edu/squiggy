@@ -29,11 +29,6 @@ from flask_socketio import SocketIO
 def initialize_socket_io(app):
     debug_socketio = app.config['SOCKET_IO_DEBUG_MODE']
     socket_logger = app.logger if debug_socketio else False
-
-    message_queue = None
-    if app.config['REDIS_HOST']:
-        message_queue = f"rediss://:{app.config['REDIS_PASSWORD']}@{app.config['REDIS_HOST']}:{app.config['REDIS_PORT']}"
-
     socketio = SocketIO(
         app,
         async_handlers=True,
@@ -41,7 +36,7 @@ def initialize_socket_io(app):
         cors_allowed_origins=[],
         engineio_logger=socket_logger,
         logger=socket_logger,
-        message_queue=message_queue,
+        message_queue=get_queue_url(app),
     )
     return socketio
 
@@ -56,3 +51,10 @@ def create_mock_socket():
         on_error=lambda *args: (lambda *args: None),
         on_error_default=lambda *args: (lambda *args: None),
     )
+
+
+def get_queue_url(app):
+    queue_url = None
+    if app.config['REDIS_HOST']:
+        queue_url = f"rediss://:{app.config['REDIS_PASSWORD']}@{app.config['REDIS_HOST']}:{app.config['REDIS_PORT']}"
+    return queue_url

@@ -23,10 +23,12 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 from flask import current_app as app
+import redis
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.previews import ping_preview_service
+from squiggy.lib.socket_io_util import get_queue_url
 from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 
@@ -35,12 +37,23 @@ from squiggy.logger import logger
 def app_status():
     resp = {
         'app': True,
+        'cache': _cache_status(),
         'db': _db_status(),
         'poller': _poller_status(),
         'previewService': _preview_service_status(),
         'whiteboards': _whiteboard_housekeeping_status(),
     }
     return tolerant_jsonify(resp)
+
+
+def _cache_status():
+    try:
+        r = redis.from_url(get_queue_url(app), socket_connect_timeout=1)
+        r.ping()
+        return True
+    except Exception:
+        logger.exception('Redis connection error')
+        return False
 
 
 def _db_status():
