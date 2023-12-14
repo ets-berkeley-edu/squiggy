@@ -32,8 +32,7 @@
     "vue-router": "npm:@neverendingsupport/vue-router@3.6.6",
     "vue-scrollto": "2.20.0",
     "vuetify": "npm:@neverendingsupport/vuetify2@2.7.1",
-    "vuex": "3.6.2",
-    "webpack": "^5.89.0"
+    "vuex": "3.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.23.6",
@@ -90,7 +89,6 @@
   "resolutions": {
     "merge": "2.1.1",
     "minimist": "1.2.6",
-    "socket.io-parser": "4.2.1",
-    "webpack": "^5.89.0"
+    "socket.io-parser": "4.2.1"
   }
 }
