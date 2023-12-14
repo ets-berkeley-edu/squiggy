@@ -80,7 +80,8 @@
     "@vue/compiler-sfc": { ".": "npm:@neverendingsupport/vue2@2.7.17-compiler-sfc" },
     "vue-router": { ".": "npm:@neverendingsupport/vue-router@3.6.6" },
     "vue-server-renderer": { ".": "npm:@neverendingsupport/vue2@2.7.17-server-renderer" },
-    "vue-template-compiler": { ".": "npm:@neverendingsupport/vue2@2.7.17-template-compiler" }
+    "vue-template-compiler": { ".": "npm:@neverendingsupport/vue2@2.7.17-template-compiler" },
+    "vuetify": { ".": "npm:@neverendingsupport/vuetify2@2.7.1" }
   },
   "repository": {
     "type": "git",
