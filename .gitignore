@@ -27,6 +27,7 @@ scripts/node_js/save_whiteboard_as_png.js
 
 # Local dev
 venv
+.npmrc
 .tox/
 
 # Compiled/optimized files

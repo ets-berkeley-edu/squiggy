@@ -6,6 +6,7 @@ phases:
       nodejs: 14
       python: 3.7
     commands:
+      - echo -e '@neverendingsupport:registry=https://registry.nes.herodevs.com/npm/pkg/\n//registry.nes.herodevs.com/npm/pkg/:_authToken="'${NES_AUTH_TOKEN}'"' > .npmrc
       - npm -v
       - npm install
       - npm install -g typescript@4.7.4
