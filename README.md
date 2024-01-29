@@ -6,7 +6,7 @@ Providing LTI tools (Asset Library, Engagement Index, Whiteboards and Impact Stu
 
 ## Installation
 
-* Install Python 3.11
+* Install Python 3.7
 * Create your virtual environment (venv)
 * Install dependencies
 

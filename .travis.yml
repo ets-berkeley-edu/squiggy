@@ -1,7 +1,6 @@
 sudo: required
 language: python
-# 3.9 is the most recent Python currently available for Travis.
-python: "3.9"
+python: "3.8"
 
 addons:
   postgresql: "12"
