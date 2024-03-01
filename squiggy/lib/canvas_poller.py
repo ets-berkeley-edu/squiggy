@@ -218,7 +218,13 @@ class CanvasPoller(BackgroundJob):
             else:
                 if enrollment['enrollment_state'] in ['active', 'completed', 'inactive', 'invited', 'rejected']:
                     enrollment_state = enrollment['enrollment_state']
-                if enrollment['role'] in ['Adv Designer', 'DesignerEnrollment', 'Lead TA', 'Reader', 'TaEnrollment', 'TeacherEnrollment']:
+                if (
+                    # Enrollment roles can be customized per Canvas environment.
+                    enrollment['role'] in ['Adv Designer', 'DesignerEnrollment', 'Lead TA', 'Reader', 'TaEnrollment', 'TeacherEnrollment']
+                    # If we don't recognize an enrollment role with instructor privileges, check the underlying enrollment type, which is
+                    # less amenable to customization.
+                    or enrollment['type'] in ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
+                ):
                     course_role = 'urn:lti:role:ims/lis/Instructor'
 
             user_attributes = {
