@@ -22,7 +22,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
 ENHANCEMENTS, OR MODIFICATIONS.
 """
+from datetime import datetime
+
 from flask import current_app as app
+import pytz
 import redis
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
@@ -42,6 +45,20 @@ def app_status():
         'poller': _poller_status(),
         'previewService': _preview_service_status(),
         'whiteboards': _whiteboard_housekeeping_status(),
+    }
+    return tolerant_jsonify(resp)
+
+
+@app.route('/api/countdown')
+def countdown():
+    td = datetime.fromisoformat(app.config['COUNTDOWN']).astimezone(pytz.timezone(app.config['TIMEZONE'])) - utc_now()
+    hours, remainder = divmod(td.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    resp = {
+        'days': td.days,
+        'hours': hours,
+        'minutes': minutes,
+        'seconds': seconds,
     }
     return tolerant_jsonify(resp)
 
