@@ -229,13 +229,12 @@ class TestCookies:
     @staticmethod
     def _assert_cookie(client, user=None):
         client.get('/api/profile/my')
-        cookie_dict = client.cookie_jar._cookies
-        assert len(cookie_dict) == 1
-        cookies = list(list(client.cookie_jar._cookies.values())[0].values())[0]
+        cookies = list(client.cookie_jar)
         if user:
             def _assert_cookie_value(key, value):
-                assert key in cookies
-                assert cookies[key].value == str(value)
+                cookie = next(c for c in cookies if c.key == key)
+                assert cookie
+                assert cookie.value == str(value)
 
             canvas_api_domain = user.course.canvas_api_domain
             canvas = Canvas.find_by_domain(canvas_api_domain)
