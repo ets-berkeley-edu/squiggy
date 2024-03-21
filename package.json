@@ -23,7 +23,7 @@
     "lodash": "4.17.21",
     "moment": "2.29.4",
     "moment-timezone": "0.5.37",
-    "socket.io-client": "4.5.2",
+    "socket.io-client": "4.7.5",
     "uuid": "8.3.2",
     "vue": "npm:@neverendingsupport/vue2@2.7.18",
     "vue-infinite-loading": "2.4.5",
