@@ -92,14 +92,14 @@ Vue.config.errorHandler = function(error, vm, info) {
 
 const params = new URLSearchParams(window.location.search)
 if (params.get('canvasApiDomain')) {
-  axios.defaults.headers['Squiggy-Canvas-Api-Domain'] = params.get('canvasApiDomain')
+  axios.defaults.headers['Squiggy-Canvas-Api-Domain'] = String(params.get('canvasApiDomain'))
 }
 if (params.get('canvasCourseId')) {
-  axios.defaults.headers['Squiggy-Canvas-Course-Id'] = params.get('canvasCourseId')
+  axios.defaults.headers['Squiggy-Canvas-Course-Id'] = String(params.get('canvasCourseId'))
 }
 const isBookmarklet = !!params.get('_b')
 if (isBookmarklet) {
-  axios.defaults.headers['Squiggy-Bookmarklet-Auth'] = params.get('_b')
+  axios.defaults.headers['Squiggy-Bookmarklet-Auth'] = String(params.get('_b'))
 }
 
 const isInIframe = utils.isInIframe()
