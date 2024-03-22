@@ -19,6 +19,9 @@ phases:
     commands:
       - npm run build-vue
       - tsc --resolveJsonModule --esModuleInterop ./scripts/node_js/save_whiteboard_as_png.ts
+      # Specify absolute path in the whiteboard PNG export script to load the server-side version of fabric installed in the platform hooks,
+      # not the client-side version specified in package.json.
+      - sed -i -e 's/require("fabric")/require("\/usr\/local\/lib\/node_modules\/fabric")/' scripts/node_js/save_whiteboard_as_png.js
 
   post_build:
     commands:
