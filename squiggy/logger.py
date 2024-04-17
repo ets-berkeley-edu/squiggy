@@ -34,16 +34,7 @@ def initialize_app_logger(app):
 
     # Configure app and library loggers.
     loggers = [app.logger]
-    third_parties = [
-        'boto3',
-        'botocore',
-        's3transfer',
-        'socketio',
-        'socketio.server',
-        'sqlalchemy.engine',
-        'werkzeug',
-    ]
-    for third_party in third_parties:
+    for third_party in app.config['LOGGING_PROPAGATION_TARGETS']:
         loggers.append(logging.getLogger(third_party))
 
     # Capture runtime warnings so that we'll see them.
@@ -68,7 +59,7 @@ def initialize_app_logger(app):
             logger.addHandler(handler)
         if 'sqlalchemy' in logger.name:
             logger.setLevel(app.config['LOGGING_LEVEL_SQLALCHEMY'])
-        elif logger.name in third_parties:
+        elif logger.name in app.config['LOGGING_PROPAGATION_TARGETS']:
             logger.setLevel(app.config['LOGGING_PROPAGATION_LEVEL'])
         else:
             logger.setLevel(app.config['LOGGING_LEVEL'])
