@@ -74,6 +74,16 @@ LOGGING_LOCATION = 'squiggy.log'
 LOGGING_LEVEL = logging.DEBUG
 LOGGING_LEVEL_SQLALCHEMY = logging.ERROR
 LOGGING_PROPAGATION_LEVEL = logging.INFO
+LOGGING_PROPAGATION_TARGETS = [
+    'boto3',
+    'botocore',
+    'canvasapi',
+    's3transfer',
+    'socketio',
+    'socketio.server',
+    'sqlalchemy.engine',
+    'werkzeug',
+]
 
 NODE_EXECUTABLE = '/usr/bin/node'
 
