@@ -68,10 +68,9 @@ export default {
     },
     resizeIFrame() {
       if (this.isInIframe) {
-        // If Canvas instance supports custom messaging then send our custom 'changeParent' event.
         const generator = () => ({
           height: document.body.offsetHeight,
-          subject: this.$supportsCustomMessaging ? 'changeParent' : 'lti.frameResize'
+          subject: 'lti.frameResize'
         })
         this.postIFrameMessage({generator, callback: _.noop})
       }
@@ -81,15 +80,8 @@ export default {
       window.scrollTo(0, 0)
       // If running as BasicLTI then we also scroll parent window to top.
       if (this.isInIframe) {
-        if (this.$supportsCustomMessaging) {
-          // If hosting Canvas supports our custom 'changeParent' cross-window event then use it.
-          const generator = () => ({subject: 'changeParent', scrollToTop: true})
-          this.postIFrameMessage({generator, callback: _.noop})
-        } else {
-          // Otherwise, use the standard Canvas event.
-          const generator = () => ({subject: 'lti.scrollToTop'})
-          this.postIFrameMessage({generator, callback: _.noop})
-        }
+        const generator = () => ({subject: 'lti.scrollToTop'})
+        this.postIFrameMessage({generator, callback: _.noop})
       }
     },
     setColorScheme() {

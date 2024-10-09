@@ -130,8 +130,7 @@ axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   if (isInIframe) {
     store.dispatch('context/postIFrameMessage', {
       generator: () => ({
-        subject: 'changeParent',
-        scrollToTop: true
+        subject: 'lti.scrollToTop'
       })
     }).then(mount)
 
