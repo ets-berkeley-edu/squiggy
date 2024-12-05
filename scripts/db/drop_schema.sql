@@ -135,6 +135,8 @@ ALTER TABLE IF EXISTS public.whiteboards ALTER COLUMN id DROP DEFAULT;
 DROP INDEX IF EXISTS activities_actor_id_idx;
 DROP INDEX IF EXISTS activities_asset_id_idx;
 DROP INDEX IF EXISTS activities_created_at_idx;
+DROP INDEX IF EXISTS activities_object_id_idx;
+DROP INDEX IF EXISTS activities_object_type_idx;
 
 DROP INDEX IF EXISTS activity_types_type_course_id_idx;
 
@@ -147,6 +149,10 @@ DROP INDEX IF EXISTS asset_users_user_id_idx;
 DROP INDEX IF EXISTS course_group_memberships_canvas_user_id_idx;
 
 DROP INDEX IF EXISTS whiteboard_elements_created_at_uuid_whiteboard_id_idx;
+DROP INDEX IF EXISTS whiteboard_elements_id_idx;
+
+DROP INDEX IF EXISTS whiteboard_sessions_user_id_idx;
+DROP INDEX IF EXISTS whiteboard_sessions_whiteboard_id_idx;
 
 --
 

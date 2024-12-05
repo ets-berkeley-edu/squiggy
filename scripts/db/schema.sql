@@ -117,6 +117,8 @@ ALTER TABLE ONLY activities
 CREATE INDEX activities_actor_id_idx ON activities USING btree (actor_id);
 CREATE INDEX activities_asset_id_idx ON activities USING btree (asset_id);
 CREATE INDEX activities_created_at_idx ON activities USING btree (created_at);
+CREATE INDEX activities_object_id_idx ON activities USING btree (object_id);
+CREATE INDEX activities_object_type_idx ON activities USING btree (object_type);
 
 --
 
@@ -455,6 +457,7 @@ CREATE SEQUENCE whiteboard_elements_id_seq
 ALTER SEQUENCE whiteboard_elements_id_seq OWNED BY whiteboard_elements.id;
 ALTER TABLE ONLY whiteboard_elements ALTER COLUMN id SET DEFAULT nextval('whiteboard_elements_id_seq'::regclass);
 
+CREATE INDEX whiteboard_elements_id_idx ON whiteboard_elements USING btree (id);
 CREATE UNIQUE INDEX whiteboard_elements_created_at_uuid_whiteboard_id_idx ON whiteboard_elements USING btree (uuid, whiteboard_id, created_at);
 
 --
@@ -469,6 +472,9 @@ CREATE TABLE whiteboard_sessions (
 
 ALTER TABLE ONLY whiteboard_sessions
     ADD CONSTRAINT whiteboard_sessions_pkey PRIMARY KEY (socket_id);
+
+CREATE INDEX whiteboard_sessions_user_id_idx ON whiteboard_sessions USING btree (user_id);
+CREATE INDEX whiteboard_sessions_whiteboard_id_idx ON whiteboard_sessions USING btree (whiteboard_id);
 
 --
 
