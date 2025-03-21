@@ -51,14 +51,21 @@ def app_status():
 
 @app.route('/api/countdown')
 def countdown():
-    td = datetime.fromisoformat(app.config['COUNTDOWN']).astimezone(pytz.timezone(app.config['TIMEZONE'])) - utc_now()
-    hours, remainder = divmod(td.seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
+
+    def _calculate_countdown(countdown):
+        td = datetime.fromisoformat(countdown).astimezone(pytz.timezone(app.config['TIMEZONE'])) - utc_now()
+        hours, remainder = divmod(td.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return {
+            'days': td.days,
+            'hours': hours,
+            'minutes': minutes,
+            'seconds': seconds,
+        }
+
     resp = {
-        'days': td.days,
-        'hours': hours,
-        'minutes': minutes,
-        'seconds': seconds,
+        'readonly': _calculate_countdown(app.config['COUNTDOWN_READONLY']),
+        'removal': _calculate_countdown(app.config['COUNTDOWN_REMOVAL']),
     }
     return tolerant_jsonify(resp)
 
