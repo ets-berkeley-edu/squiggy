@@ -23,10 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, request
+from flask import current_app as app
 from flask_login import current_user, login_required
-from squiggy.api.api_util import activities_type_enums, teacher_required
-from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
+from squiggy.api.api_util import teacher_required
+from squiggy.lib.errors import ResourceNotFoundError
 from squiggy.lib.http import response_with_csv_download, tolerant_jsonify
 from squiggy.models.activity import Activity
 from squiggy.models.activity_type import ActivityType
@@ -38,26 +38,6 @@ from squiggy.models.user import User
 def get_activity_configuration():
     configuration = ActivityType.get_activity_type_configuration(course_id=current_user.course_id)
     return tolerant_jsonify(configuration)
-
-
-@app.route('/api/activities/configuration', methods=['POST'])
-@teacher_required
-def update_activity_configuration():
-    params = request.get_json()
-    for update in params:
-        if (
-            type(update) is not dict
-            or update.get('type', None) not in activities_type_enums()
-            or 'points' not in update
-            or 'enabled' not in update
-        ):
-            raise BadRequestError('Activity updates not properly formatted.')
-    ActivityType.update_activity_type_configuration(
-        course_id=current_user.course_id,
-        updates=params,
-    )
-    Activity.recalculate_points(course_id=current_user.course_id)
-    return tolerant_jsonify({'updated': True})
 
 
 @app.route('/api/activities/csv', methods=['GET'])

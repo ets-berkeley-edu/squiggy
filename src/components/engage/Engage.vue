@@ -5,7 +5,7 @@
     </div>
     <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
     <div v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && ($currentUser.sharePoints === null)" id="engagement-splash" class="float-none">
-      The engagement index is a scoreboard that lists the names and scores of all the students taking this course. If you do not wish to share your engagement score, uncheck the box below and click 'Continue'.
+      The engagement index is a scoreboard that lists the names and scores of all the students taking this course.
     </div>
     <div
       v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && ($currentUser.sharePoints !== null)"
@@ -47,36 +47,6 @@
         Points configuration
       </v-btn>
     </div>
-
-    <div class="engagement-container">
-      <h3>Share my score</h3>
-      <v-form class="engagement-share-form" @submit="saveSharePoints">
-        <v-checkbox
-          id="share-my-score"
-          v-model="sharePoints"
-          @change="toggleSharePoints"
-        />
-        <label for="share-my-score">
-          Yes, I want to share my score on the Engagement Index
-        </label>
-        <v-btn
-          v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && $currentUser.sharePoints === null"
-          id="continue-btn"
-          :disabled="isSaving"
-          @click="saveSharePoints"
-          @keydown.enter="saveSharePoints"
-        >
-          <font-awesome-icon
-            v-if="isSaving"
-            class="mr-2"
-            icon="spinner"
-            :spin="true"
-          />
-          <span v-if="isSaving">Saving</span>
-          <span v-if="!isSaving">Continue</span>
-        </v-btn>
-      </v-form>
-    </div>
   </div>
 </template>
 
@@ -84,7 +54,7 @@
 import Leaderboard from '@/components/engage/Leaderboard'
 import SyncDisabled from '@/components/util/SyncDisabled'
 import Utils from '@/mixins/Utils'
-import {getLeaderboard, updateSharePoints} from '@/api/users'
+import {getLeaderboard} from '@/api/users'
 
 export default {
   name: 'Engage',
@@ -254,25 +224,11 @@ export default {
         this.showLeaderboard = false
       }
     },
-    saveSharePoints() {
-      this.isSaving = true
-      updateSharePoints(this.sharePoints).then((data) => {
-        this.$currentUser.sharePoints = data.sharePoints
-        this.$announcer.polite(this.sharePoints ? 'Sharing points' : 'Not sharing points')
-        this.refreshLeaderboard()
-        this.isSaving = false
-      })
-    },
     setInitialSharePoints() {
       if (!this.$currentUser.isAdmin && !this.$currentUser.isTeaching && this.$currentUser.sharePoints === null) {
         return true
       } else {
         return this.$currentUser.sharePoints
-      }
-    },
-    toggleSharePoints() {
-      if (this.$currentUser.isAdmin || this.$currentUser.isTeaching || this.$currentUser.sharePoints !== null) {
-        this.saveSharePoints()
       }
     }
   }

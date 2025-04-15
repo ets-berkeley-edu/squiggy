@@ -12,7 +12,3 @@ export function getPointsConfiguration() {
 export function getUserActivities(userId) {
   return axios.get(`${utils.apiBaseUrl()}/api/activities/user/${userId}`)
 }
-
-export function updatePointsConfiguration(activities) {
-  return axios.post(`${utils.apiBaseUrl()}/api/activities/configuration`, activities)
-}
