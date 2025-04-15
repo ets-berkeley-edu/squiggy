@@ -23,8 +23,6 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import json
-
 from squiggy.models.activity_type import DEFAULT_ACTIVITY_TYPE_CONFIGURATION
 from squiggy.models.user import User
 
@@ -33,15 +31,6 @@ def api_get_configuration(client, expected_status_code=200):
     response = client.get('/api/activities/configuration')
     assert response.status_code == expected_status_code
     return response.json
-
-
-def api_update_configuration(client, updates=None, expected_status_code=200):
-    response = client.post(
-        '/api/activities/configuration',
-        data=json.dumps(updates),
-        content_type='application/json',
-    )
-    assert response.status_code == expected_status_code
 
 
 class TestGetActivityConfiguration:
@@ -79,77 +68,6 @@ class TestGetActivityConfiguration:
     def test_teacher(self, client, fake_auth):
         """Allows student."""
         self._assert_valid_configuration(client, fake_auth, canvas_id=9876543)
-
-
-class TestUpdateActivityConfiguration:
-    """API to ipdate activity configuration for a course."""
-
-    def test_anonymous(self, client):
-        """Denies anonymous user."""
-        api_update_configuration(client, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        student = User.find_by_canvas_user_id(8765432)
-        fake_auth.login(student.id)
-        api_update_configuration(client, expected_status_code=401)
-
-    def test_ill_formed_data(self, client, fake_auth):
-        """Rejects ill-formed configurations."""
-        teacher = User.find_by_canvas_user_id(9876543)
-        fake_auth.login(teacher.id)
-        api_update_configuration(
-            client,
-            updates=[
-                {'type': 'asset_add', 'enabled': True, 'points': 5},
-                {'type': 'asset_puree', 'enabled': False, 'points': 4000},
-            ],
-            expected_status_code=400,
-        )
-
-    def test_well_formed_data(self, client, fake_auth):
-        teacher = User.find_by_canvas_user_id(9876543)
-        fake_auth.login(teacher.id)
-
-        old_points = User.find_by_id(1).points
-
-        api_update_configuration(
-            client,
-            updates=[
-                {'type': 'asset_add', 'enabled': True, 'points': 3},
-                {'type': 'get_asset_comment', 'enabled': False, 'points': 12},
-            ],
-        )
-        new_config = api_get_configuration(client)
-        expected_length = len(DEFAULT_ACTIVITY_TYPE_CONFIGURATION)
-        assert len(new_config) == expected_length
-
-        for config in new_config:
-            default_config = next(c for c in DEFAULT_ACTIVITY_TYPE_CONFIGURATION if c['type'] == config['type'])
-            if config['type'] == 'asset_add':
-                assert config['points'] == 3
-                assert config['enabled'] is True
-            elif config['type'] == 'asset_comment':
-                assert config['points'] == 2
-                assert config['enabled'] is True
-            elif config['type'] == 'get_asset_comment':
-                assert config['points'] == 12
-                assert config['enabled'] is False
-            else:
-                assert config['points'] == default_config['points']
-                assert config['enabled'] == default_config['enabled']
-
-        assert User.find_by_id(1).points == old_points - 6
-
-        # Reset to default.
-        api_update_configuration(
-            client,
-            updates=[
-                {'type': 'asset_add', 'enabled': True, 'points': 5},
-                {'type': 'get_asset_comment', 'enabled': True, 'points': 1},
-            ],
-        )
-        assert User.find_by_id(1).points == old_points
 
 
 class TestActivityCsvDownload:

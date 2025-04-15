@@ -59,16 +59,6 @@ def _api_update_personal_description(client, data, expected_status_code=200):
     return response.json
 
 
-def _api_update_share_points(client, data, expected_status_code=200):
-    response = client.post(
-        '/api/users/me/share',
-        data=json.dumps(data),
-        content_type='application/json',
-    )
-    assert response.status_code == expected_status_code
-    return response.json
-
-
 class TestMyProfile:
 
     def test_anonymous(self, client):
@@ -273,124 +263,6 @@ class TestGetLeaderboard:
         assert api_json[0]['points'] > api_json[1]['points']
         assert next(feed for feed in api_json if not feed['sharePoints'])
 
-    def test_sharing_student(self, client, fake_auth, student_id):
-        """Returns sharing students to student user."""
-        fake_auth.login(student_id)
-        _api_update_share_points(client, {'share': True})
-        api_json = self._api_get_leaderboard(client)
-        for feed in api_json:
-            assert 'points' in feed
-
-    def test_non_sharing_student(self, client, fake_auth, student_id):
-        """Denies non-sharing student user."""
-        fake_auth.login(student_id)
-        _api_update_share_points(client, {'share': False})
-        self._api_get_leaderboard(client, expected_status_code=403)
-
-    def test_course_all_users(self, client, fake_auth, mock_asset_course):
-        """Teachers and students can see other users in the course."""
-        # Instructor can see all users in the course
-        instructor = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Teacher').first()
-        fake_auth.login(instructor.id)
-        _api_update_share_points(client, {'share': True})
-        api_json = self._api_get_leaderboard(client)
-        users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
-        roles = list(users_by_role.keys())
-        assert 'Student' in roles
-        assert 'Teacher' in roles
-
-        users_by_section = {section: users for section, users in groupby(
-            api_json,
-            key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
-        )}
-        sections = list(users_by_section.keys())
-        assert 'section A' in sections
-        assert 'section B' in sections
-
-        section_a_student = User.query.filter_by(
-            course_id=mock_asset_course.id,
-            canvas_course_role='Student',
-            canvas_course_sections=['section A'],
-        ).first()
-        fake_auth.login(section_a_student.id)
-        _api_update_share_points(client, {'share': True})
-        section_b_student = User.query.filter_by(
-            course_id=mock_asset_course.id,
-            canvas_course_role='Student',
-            canvas_course_sections=['section B'],
-        ).first()
-        fake_auth.login(section_b_student.id)
-        _api_update_share_points(client, {'share': True})
-
-        # Students can see other sharing students in the course
-        for student in (section_a_student, section_b_student):
-            fake_auth.login(student.id)
-            _api_update_share_points(client, {'share': True})
-            api_json = self._api_get_leaderboard(client)
-            users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
-            roles = list(users_by_role.keys())
-            assert 'Student' in roles
-            assert 'Teacher' in roles
-
-            users_by_section = {section: users for section, users in groupby(
-                api_json,
-                key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
-            )}
-            sections = list(users_by_section.keys())
-            assert 'section A' in sections
-            assert 'section B' in sections
-
-    def test_course_users_per_section(self, client, fake_auth, mock_asset_course):
-        """Students in an asset-siloed course can see only other students in their section."""
-        mock_asset_course.protects_assets_per_section = True
-        # Instructor can see all users in the course
-        instructor = User.query.filter_by(course_id=mock_asset_course.id, canvas_course_role='Teacher').first()
-        fake_auth.login(instructor.id)
-        api_json = self._api_get_leaderboard(client)
-        users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
-        roles = list(users_by_role.keys())
-        assert 'Student' in roles
-        assert 'Teacher' in roles
-
-        users_by_section = {section: users for section, users in groupby(
-            api_json,
-            key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
-        )}
-        sections = list(users_by_section.keys())
-        assert 'section A' in sections
-        assert 'section B' in sections
-
-        section_a_student = User.query.filter_by(
-            course_id=mock_asset_course.id,
-            canvas_course_role='Student',
-            canvas_course_sections=['section A'],
-        ).first()
-        fake_auth.login(section_a_student.id)
-        _api_update_share_points(client, {'share': True})
-        section_b_student = User.query.filter_by(
-            course_id=mock_asset_course.id,
-            canvas_course_role='Student',
-            canvas_course_sections=['section B'],
-        ).first()
-        fake_auth.login(section_b_student.id)
-        _api_update_share_points(client, {'share': True})
-
-        # Students can see only sharing students in their section
-        for student in (section_a_student, section_b_student):
-            fake_auth.login(student.id)
-            api_json = self._api_get_leaderboard(client)
-            users_by_role = {role: users for role, users in groupby(api_json, key=lambda u: u['canvasCourseRole'])}
-            roles = list(users_by_role.keys())
-            assert 'Student' in roles
-            assert 'Teacher' in roles
-
-            users_by_section = {section: users for section, users in groupby(
-                api_json,
-                key=lambda u: u['canvasCourseSections'][0] if u['canvasCourseSections'] and len(u['canvasCourseSections']) else None,
-            )}
-            sections = list(users_by_section.keys())
-            assert set(sections) == set([None, student.canvas_course_sections[0]])
-
 
 class TestUpdateLookingForCollaborators:
 
@@ -462,35 +334,3 @@ class TestUpdatePersonalDescription:
         assert response['personalDescription'] == expected_text
         profile = _api_my_profile(client)
         assert profile['personalDescription'] == expected_text
-
-
-class TestUpdateSharePoints:
-
-    def test_anonymous(self, client):
-        """Denies anonymous user."""
-        _api_update_share_points(client, {'share': True}, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        fake_auth.login(unauthorized_user_id)
-        _api_update_share_points(client, {'share': True}, expected_status_code=401)
-
-    def test_bad_data(self, client, fake_auth, authorized_user_id):
-        """Rejects bad data."""
-        fake_auth.login(authorized_user_id)
-        _api_update_share_points(client, {'regrettable': 'junk'}, expected_status_code=400)
-
-    def test_toggles_share_points(self, client, fake_auth, authorized_user_id):
-        """Turns sharing on and off."""
-        fake_auth.login(authorized_user_id)
-        _api_update_share_points(client, {'share': False})
-        profile = _api_my_profile(client)
-        assert profile['sharePoints'] is False
-        response = _api_update_share_points(client, {'share': True})
-        assert response['sharePoints'] is True
-        profile = _api_my_profile(client)
-        assert profile['sharePoints'] is True
-        response = _api_update_share_points(client, {'share': False})
-        assert response['sharePoints'] is False
-        profile = _api_my_profile(client)
-        assert profile['sharePoints'] is False

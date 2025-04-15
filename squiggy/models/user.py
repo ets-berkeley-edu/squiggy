@@ -227,12 +227,6 @@ class User(Base):
         db.session.add(user)
         std_commit()
 
-    @classmethod
-    def update_share_points(cls, share, user_id):
-        user = cls.query.filter_by(id=user_id).first()
-        user.share_points = True if share else False
-        std_commit()
-
     def to_api_json(self, include_assets=False, include_points=False, include_sharing=False):
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
         group_memberships = CourseGroupMembership.find_by_course_and_user(

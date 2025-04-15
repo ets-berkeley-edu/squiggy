@@ -20,14 +20,12 @@
     <form
       class="points-container"
       name="activityTypeConfigurationForm"
-      @submit="saveActivityTypeConfiguration"
     >
       <table id="enabled-activities-table" class="points-table" tabindex="-1">
         <thead>
           <tr>
             <th class="activity-title">Activity</th>
             <th class="text-center">Points</th>
-            <th v-if="editMode" class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -35,30 +33,6 @@
             <td class="activity-title">{{ activityType.title }}</td>
             <td v-if="!editMode" class="text-center">
               {{ activityType.points }}
-            </td>
-            <td v-if="editMode">
-              <label :for="`points-edit-${activityType.type}`" class="sr-only">
-                {{ activityType.title }}
-              </label>
-              <v-text-field
-                :id="`points-edit-${activityType.type}`"
-                v-model="activityType.points"
-                class="points-edit"
-                type="number"
-                :outlined="true"
-                hide-details
-                required
-              />
-            </td>
-            <td v-if="editMode" class="text-center">
-              <v-btn
-                :id="`disable-${activityType.type}`"
-                type="button"
-                @click.prevent="disableActivityType(activityType)"
-                @keypress.enter.prevent="disableActivityType(activityType)"
-              >
-                Disable
-              </v-btn>
             </td>
           </tr>
         </tbody>
@@ -72,7 +46,6 @@
               <tr>
                 <th class="activity-title">Activity</th>
                 <th class="text-center">Points</th>
-                <th v-if="editMode" class="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -81,55 +54,9 @@
                 <td class="text-center">
                   {{ activityType.points }}
                 </td>
-                <td v-if="editMode" class="text-center">
-                  <v-btn
-                    :id="`enable-${activityType.type}`"
-                    type="button"
-                    @click.prevent="enableActivityType(activityType)"
-                    @keypress.enter.prevent="enableActivityType(activityType)"
-                  >
-                    Enable
-                  </v-btn>
-                </td>
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <div class="points-actions d-flex">
-          <div class="pr-1">
-            <v-btn
-              v-if="editMode"
-              id="save-btn"
-              color="primary"
-              type="submit"
-            >
-              Save
-            </v-btn>
-          </div>
-          <div class="pr-1">
-            <v-btn
-              v-if="!editMode"
-              id="edit-btn"
-              class="mr-2"
-              color="primary"
-              type="button"
-              @click.prevent="setEditMode(true)"
-              @keypress.enter.prevent="setEditMode(true)"
-            >
-              Edit
-            </v-btn>
-          </div>
-          <div>
-            <v-btn
-              v-if="editMode"
-              id="cancel-edit-btn"
-              @click.prevent="setEditMode(false)"
-              @keypress.enter.prevent="setEditMode(false)"
-            >
-              Cancel
-            </v-btn>
-          </div>
         </div>
       </div>
     </form>
@@ -138,7 +65,7 @@
 
 <script>
 import Utils from '@/mixins/Utils'
-import {getPointsConfiguration, updatePointsConfiguration} from '@/api/activities'
+import {getPointsConfiguration} from '@/api/activities'
 
 export default {
   name: 'PointsConfiguration',
@@ -155,32 +82,6 @@ export default {
     },
     enabledActivities() {
       return this.activities.filter(a => a.enabled)
-    }
-  },
-  methods: {
-    disableActivityType(activityType) {
-      activityType.enabled = false
-      this.$announcer.polite(`Disabled activity: ${activityType.title}`)
-    },
-    enableActivityType(activityType) {
-      activityType.enabled = true
-      this.$announcer.polite(`Enabled activity: ${activityType.title}`)
-    },
-    saveActivityTypeConfiguration() {
-      updatePointsConfiguration(this.activities).then(() => {
-        this.editMode = false
-        this.$announcer.polite('Saved points configuration')
-      })
-    },
-    setEditMode(mode) {
-      this.editMode = mode
-      if (this.editMode) {
-        this.originalActivities = this.activities.map((a) => { return {...a}})
-      } else {
-        this.activities = this.originalActivities
-      }
-      this.$announcer.polite(mode ? 'Editing points configuration' : 'Canceled points configuration edit')
-      this.$putFocusNextTick('enabled-activities-table')
     }
   },
   created() {

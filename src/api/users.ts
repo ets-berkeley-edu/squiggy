@@ -16,7 +16,3 @@ export function updateLookingForCollaborators(lookingForCollaborators) {
 export function updatePersonalDescription(personalDescription) {
   return axios.post(`${utils.apiBaseUrl()}/api/users/me/personal_description`, {personalDescription})
 }
-
-export function updateSharePoints(share) {
-  return axios.post(`${utils.apiBaseUrl()}/api/users/me/share`, {share})
-}

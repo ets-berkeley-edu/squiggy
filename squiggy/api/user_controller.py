@@ -84,17 +84,3 @@ def update_personal_description():
     )
     current_user.refresh()
     return tolerant_jsonify(current_user.to_api_json())
-
-
-@app.route('/api/users/me/share', methods=['POST'])
-@login_required
-def update_share_points():
-    params = request.get_json()
-    if 'share' not in params:
-        raise BadRequestError('No share status provided.')
-    User.update_share_points(
-        share=params['share'],
-        user_id=current_user.id,
-    )
-    current_user.refresh()
-    return tolerant_jsonify(current_user.to_api_json())

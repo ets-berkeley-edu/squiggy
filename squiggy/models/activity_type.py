@@ -107,26 +107,6 @@ class ActivityType(Base):
         std_commit()
         return activity_configs
 
-    @classmethod
-    def update_activity_type_configuration(cls, course_id, updates):
-        existing_configs = cls.query.filter_by(course_id=course_id).all()
-        for update in updates:
-            existing_config = next((c for c in existing_configs if c.activity_type == update['type']), None)
-            if existing_config:
-                existing_config.enabled = update['enabled']
-                existing_config.points = update['points']
-                db.session.add(existing_config)
-            else:
-                new_config = cls(
-                    activity_type=update['type'],
-                    course_id=course_id,
-                    enabled=update['enabled'],
-                    points=update['points'],
-                )
-                db.session.add(new_config)
-        std_commit()
-        return True
-
     def to_api_json(self):
         return {
             'id': self.id,
