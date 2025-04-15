@@ -5,49 +5,8 @@ import store from '@/store'
 import Vue from 'vue'
 import {io} from 'socket.io-client'
 import {fabric} from 'fabric'
-import {v4 as uuidv4} from 'uuid'
-import {deleteWhiteboardElement, updateWhiteboardElementsOrder, upsertWhiteboardElements} from '@/api/whiteboard-elements'
 
 const p = Vue.prototype
-
-export function addAssets(assets: any[], state: any) {
-  return new Promise<void>(resolve => {
-    $_log(`Add ${assets.length} assets`)
-    setMode('move')
-    const elements: any[] = []
-    _.each(assets, asset => {
-      let imageUrl: any
-      if (asset.imageUrl && asset.imageUrl.match(new RegExp(p.$config.s3PreviewUrlPattern))) {
-        imageUrl = asset.imageUrl
-      } else {
-        // Default to a placeholder when the asset does not have a preview image
-        const isImageFile = asset.assetType === 'file' && asset.mime.indexOf('image/') !== -1 && _.startsWith(asset.downloadUrl, 'http')
-        imageUrl = isImageFile ? asset.downloadUrl : constants.ASSET_PLACEHOLDERS[asset.assetType]
-      }
-      fabric.Image.fromURL(imageUrl, (element: any) => {
-        element.assetId = asset.id
-        element.src = imageUrl
-        element.uuid = uuidv4()
-        const zoomLevel = p.$canvas.getZoom()
-        const canvasCenter = {
-          x: ((state.viewport.clientWidth / 2) + state.viewport.scrollLeft) / zoomLevel,
-          y: ((state.viewport.clientHeight / 2) + state.viewport.scrollTop) / zoomLevel
-        }
-        $_scaleImageObject(element, state)
-        element.left = canvasCenter.x
-        element.top = canvasCenter.y
-        elements.push(element)
-
-        p.$canvas.add(element)
-        p.$canvas.bringToFront(element)
-        if (elements.length === assets.length) {
-          p.$canvas.setActiveObject(element)
-          $_broadcastUpsert($_translateIntoWhiteboardElements(elements), state).then(resolve)
-        }
-      })
-    })
-  })
-}
 
 export function afterChangeMode(state: any) {
   p.$canvas.discardActiveObject().requestRenderAll()
@@ -67,42 +26,6 @@ export function afterChangeMode(state: any) {
       p.$canvas.cursor = 'text'
     }
   }
-}
-
-export function deleteActiveElements(state: any) {
-  $_log('Delete active elements')
-  const uuids: any[] = []
-  _.each(getActiveObjects(), (element: any) => {
-    const uuid = element.uuid
-    p.$canvas.remove($_getCanvasElement(uuid))
-    uuids.push(uuid)
-  })
-  // If a group selection was made, remove the group as well in case Fabric doesn't clean up after itself
-  const activeObject = p.$canvas.getActiveObject()
-  if (activeObject && activeObject.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-    p.$canvas.remove(activeObject)
-    p.$canvas.discardActiveObject().requestRenderAll()
-  }
-  return $_broadcastDelete(uuids, state)
-}
-
-export function getActiveObjects() {
-  $_log('Get active objects')
-  const activeElements: any[] = []
-  const selection = p.$canvas.getActiveObject()
-  if (selection) {
-    if (selection.getObjects) {
-      _.each(selection.getObjects(), (element: any) => {
-        // When a Fabric.js canvas is part of a group selection, its properties will be relative to the group.
-        // Therefore, we calculate the actual position of each element in the group relative to the whiteboard canvas.
-        const position = $_calculateGlobalElementPosition(selection, element)
-        activeElements.push(_.assignIn({}, element.toObject(), position))
-      })
-    } else {
-      activeElements.push(selection.toObject())
-    }
-  }
-  return activeElements
 }
 
 export function initialize(state: any) {
@@ -130,10 +53,7 @@ export function initialize(state: any) {
       })
     } else {
       $_initSocket(state)
-      // Order matters: (1) set up Fabric prototypes, (2) initialize the canvas.
-      $_initFabricPrototypes(state)
       $_initCanvas(state)
-      $_addViewportListeners(state)
       $_renderWhiteboard(state, true).then(() => {
         $_addSocketListeners(state)
         $_addCanvasListeners(state)
@@ -141,32 +61,6 @@ export function initialize(state: any) {
       })
     }
   })
-}
-
-export function changeZOrder(direction: string, objects: any[], state: any) {
-  $_log('Change z-order')
-  const uuids: string[] = []
-  _.each(objects, (e: any) => {
-    if (e.type !== constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-      const uuid: string = e.uuid
-      const element:any = $_getCanvasElement(uuid)
-      if (element) {
-        uuids.push(uuid)
-        if (direction === 'bringToFront') {
-          p.$canvas.bringToFront(element)
-        } else if (direction === 'sendToBack') {
-          p.$canvas.sendToBack(element)
-        }
-      }
-    }
-  })
-  const apiCall = () => updateWhiteboardElementsOrder(
-      direction,
-      p.$socket.id,
-      uuids,
-      state.whiteboard.id
-  )
-  $_invokeWithSocketConnectRetry('update whiteboard elements order', apiCall, state)
 }
 
 export function setCanvasDimensions(state: any) {
@@ -296,32 +190,6 @@ const $_addCanvasListeners = (state: any) => {
     $_ensureWithinCanvas(event.target)
   })
 
-  p.$canvas.on('object:modified', () => {
-    $_setModifyingElement(false)
-    const objects: any[] = []
-    const object = p.$canvas.getActiveObject()
-    if (object) {
-      if (object.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-        _.each(object.getObjects(), (element: any) => {
-          const position = $_calculateGlobalElementPosition(object, element)
-          objects.push(_.assignIn({}, element.toObject(), position))
-        })
-      } else {
-        objects.push(object.toObject())
-      }
-      if (_.size(objects)) {
-        const whiteboardElements = _.map(objects, o => {
-          return {assetId: o.assetId, element: o, uuid: o.uuid}
-        })
-        changeZOrder('bringToFront', objects, state)
-        $_broadcastUpsert(whiteboardElements, state).then(() => {
-          _.each(p.$canvas.getObjects(), $_ensureWithinCanvas)
-          store.dispatch('whiteboarding/setIsFitToScreen', true).then(_.noop)
-        })
-      }
-    }
-  })
-
   p.$canvas.on('after:render', () => {
     const selection = p.$canvas.getActiveObject()
     if (!_.isEmpty(selection) && !state.isModifyingElement) {
@@ -357,19 +225,6 @@ const $_addCanvasListeners = (state: any) => {
   })
   // Recalculate the size of the whiteboard canvas when a selection has been deselected
   p.$canvas.on('selection:cleared', () => setCanvasDimensions(state))
-
-  p.$canvas.on('object:added', (event: any) => {
-    $_log(`canvas object:added (mode = ${state.mode})`)
-    const element = event.target
-    const isNonEmptyIText = !['i-text','textbox'].includes(element.type) || element.text.trim()
-    const wasAddedByRemote = state.remoteUUIDs.includes(element.uuid)
-    if (!wasAddedByRemote && isNonEmptyIText && !element.assetId && !element.uuid && !element.isHelper) {
-      $_enableCanvasElements(true)
-      element.uuid = uuidv4()
-      const whiteboardElements = $_translateIntoWhiteboardElements([element])
-      $_broadcastUpsert(whiteboardElements, state).then(() => setCanvasDimensions(state))
-    }
-  })
 
   p.$canvas.on('mouse:down', (event: any) => {
     $_log(`canvas mouse:down (mode = ${state.mode})`)
@@ -459,30 +314,6 @@ const $_addCanvasListeners = (state: any) => {
 
   p.$canvas.on('mouse:up', () => {
     $_log(`canvas mouse:up (mode = ${state.mode})`)
-    if (state.isDrawingShape) {
-      const shape = $_getHelperObject()
-      store.commit('whiteboarding/setStartShapePointer', undefined)
-      // Clone the drawn shape and add the clone to the canvas. This is caused by a bug in Fabric where it initially
-      // uses the size when drawing started to position the controls. Cloning ensures that the controls are added in
-      // the correct position. The origin of element is set to `center` to make it inline with the other elements.
-      if (shape) {
-        store.commit('whiteboarding/setIsDrawingShape', false)
-        shape.uuid = shape.uuid || uuidv4()
-        shape.left += shape.width / 2
-        shape.top += shape.height / 2
-        shape.originX = shape.originY = 'center'
-        shape.isHelper = false
-        // Shapes are special: When a shape is added we keep it selected and set mode to 'move'
-        // so it can be quickly manipulated without creating more shape objects.
-        // In the case of other canvas object types, after they are added to the canvas
-        // we do NOT reset the mode. We hope these varying rules are intuitive to the user.
-        p.$canvas.bringToFront(shape)
-        setMode('move')
-        p.$canvas.setActiveObject(shape)
-        const whiteboardElements = $_translateIntoWhiteboardElements([shape])
-        $_broadcastUpsert(whiteboardElements, state).then(_.noop)
-      }
-    }
     $_enableCanvasElements(true)
   })
 
@@ -649,49 +480,6 @@ const $_addSocketListeners = (state: any) => {
   })
 }
 
-const $_addViewportListeners = (state: any) => {
-  $_log('Add viewport listeners')
-  // Detect keydown events in the whiteboard to respond to keyboard shortcuts
-  const element = document.getElementById(constants.VIEWPORT_ELEMENT_ID)
-  if (element) {
-    const onKeydown = (event: any) => {
-      if (!state.disableAll) {
-        if (event.keyCode === 8 || event.keyCode === 46) {
-          // Delete or backspace
-          deleteActiveElements(state)
-          event.preventDefault()
-        } else if (event.keyCode === 67 && event.metaKey) {
-          // Copy
-          const activeObject = p.$canvas.getActiveObject()
-          if (activeObject) {
-            const clipboard: any[] = []
-            const copy = (element: any, left: number, top: number) => {
-              const clone = _.cloneDeep(element)
-              delete clone.uuid
-              clone.left = left
-              clone.top = top
-              clipboard.push(clone.toObject())
-            }
-            if (activeObject.type === constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-              _.each(activeObject.getObjects(), (object: any) => {
-                copy(object, activeObject.left + object.left, activeObject.top + object.top)
-              })
-            } else {
-              copy(activeObject, activeObject.left, activeObject.top)
-            }
-            if (clipboard.length) {
-              store.dispatch('whiteboarding/setClipboard', clipboard).then(_.noop)
-            }
-          }
-        } else if (event.keyCode === 86 && event.metaKey && state.clipboard) {
-          $_paste(state)
-        }
-      }
-    }
-    element.addEventListener('keydown', onKeydown, false)
-  }
-}
-
 const $_assignIn = (object: any, source: any) => {
   $_log('Assign in')
   let modified = false
@@ -701,56 +489,6 @@ const $_assignIn = (object: any, source: any) => {
     object.set(key, value)
   })
   return modified
-}
-
-const $_broadcastDelete = (uuids: string[], state: any) => {
-  $_log(`Delete whiteboard elements: ${uuids}`)
-  store.commit('whiteboarding/onDeleteWhiteboardElements', uuids)
-  const apiCall = () => deleteWhiteboardElement(p.$socket.id, uuids, state.whiteboard.id)
-  $_invokeWithSocketConnectRetry('whiteboard element delete', apiCall, state)
-}
-
-const $_broadcastUpsert = (whiteboardElements: any[], state: any) => {
-  $_log('Upsert whiteboard elements')
-  return new Promise<void>(resolve => {
-    const whiteboardId = state.whiteboard.id
-    const apiCall = () => upsertWhiteboardElements(p.$socket.id, whiteboardElements, whiteboardId).then((data: any) => {
-      store.dispatch('whiteboarding/onWhiteboardElementsUpsert', data).then(resolve)
-    })
-    $_invokeWithSocketConnectRetry('whiteboard elements upsert', apiCall, state)
-  })
-}
-
-const $_calculateGlobalElementPosition = (selection: any, element: any): any => {
-  $_log('Calculate global element position')
-  // Calculate the position of an element in a group relative to the whiteboard canvas. This function returns the
-  // position of the element relative to the whiteboard canvas: `angle`, `left` and `top` position and
-  // the `scaleX` and `scaleY` scaling factors
-  //
-  // selection         The selection (group of objects) of which the element is a part
-  // element           The Fabric.js element for which the position relative to its group should be calculated
-  const center = selection.getCenterPoint()
-  const rotated = $_calculateRotatedLeftTop(selection, element)
-  return {
-    angle: element.angle + selection.angle,
-    left: center.x + rotated.left,
-    scaleX: element.get('scaleX') * selection.get('scaleX'),
-    scaleY: element.get('scaleY') * selection.get('scaleY'),
-    top: center.y + rotated.top
-  }
-}
-
- const $_calculateRotatedLeftTop = (selection: any, element: any): any => {
-  $_log('Calculate rotated left top')
-  // selection: Object group of which the element is a part
-  // element: Fabric element for which the top left position in its group should be calculated
-  const groupAngle = selection.angle * (Math.PI / 180)
-  const scaleX = selection.get('scaleX')
-  const scaleY = selection.get('scaleY')
-  const left = (-Math.sin(groupAngle) * element.top * scaleY + Math.cos(groupAngle) * element.left * scaleX)
-  const top = (Math.cos(groupAngle) * element.top * scaleY + Math.sin(groupAngle) * element.left * scaleX)
-  // Returns `top` and `left` position of the element in its group.
-  return {left, top}
 }
 
 const $_deactivateGroupIfOverlap = (uuid: string) => {
@@ -819,13 +557,6 @@ const $_getCanvasElement = (uuid: string) => {
   return element
 }
 
-const $_getDaysUntilRetirement = () => {
-  const now = new Date()
-  const freedom = new Date('09/12/2024')
-  const diff = freedom.getTime() - now.getTime()
-  return Math.floor(diff / (1000 * 3600 * 24))
-}
-
 const $_getHelperObject = () => _.find(p.$canvas.getObjects(), (o: any) => o.isHelper)
 
 const $_initCanvas = (state: any) => {
@@ -854,58 +585,6 @@ const $_initCanvas = (state: any) => {
   if (state.isAssetView) {
     p.$canvas.defaultCursor = 'grab'
   }
-}
-
-const $_initFabricPrototypes = (state: any) => {
-  $_log('Init fabric prototypes')
-  fabric.Object.prototype.toObject = (function(toObject) {
-    // Extend the Fabric.js `toObject` deserialization function to include the property that
-    // uniquely identifies an object on the canvas, as well as a property containing the index
-    // of the object relative to the other items on the canvas.
-    return function() {
-      const extras = {
-        assetId: this.assetId,
-        fontSize: this.fontSize,
-        fontFamily: this.fontFamily,
-        height: this.height,
-        isHelper: this.isHelper,
-        radius: this.radius,
-        text: this.text,
-        uuid: this.uuid,
-        width: this.width
-      }
-      return fabric.util.object.extend(toObject.call(this), extras)
-    }
-  }(fabric.Object.prototype.toObject))
-
-  // IMPORTANT: Do not use arrow function below. If you do then 'this' will be undefined.
-  fabric.IText.prototype.on('editing:exited', function() {
-    // An IText whiteboard canvas element was updated by the current user.
-    const element:any = this
-    if (element) {
-      // If the text element is empty, it can be removed from the whiteboard canvas
-      const text = element.text.trim()
-      if (text) {
-        setMode('move')
-        // The text element existed before. Notify the server that the element was updated
-        const days_until_retirement = $_getDaysUntilRetirement()
-        if (days_until_retirement === 0) {
-          element.text = 'Sorry, SuiteC is past its expiration date. Please rebuild it, in Perl. Thank you.'
-        } else if (text.toLowerCase() === 'when will teena retire?') {
-          element.text = `${days_until_retirement} days until freedom`
-        }
-        element.uuid = element.uuid || uuidv4()
-        const whiteboardElements = $_translateIntoWhiteboardElements([element])
-        $_broadcastUpsert(whiteboardElements, state).then(_.noop)
-      } else {
-        const uuid = element.get('uuid')
-        p.$canvas.remove(element)
-        if (uuid) {
-          $_broadcastDelete([uuid], state)
-        }
-      }
-    }
-  })
 }
 
 const $_initSocket = (state: any) => {
@@ -937,21 +616,6 @@ const $_initSocket = (state: any) => {
   })
 }
 
-function $_invokeWithSocketConnectRetry(description: string, operation: () => void, state: any) {
-  const isConnected = () => p.$socket.connected && p.$socket.id
-  if (isConnected()) {
-    return operation()
-  } else {
-    $_tryReconnect(state).then(() => {
-      if (isConnected()) {
-        return operation()
-      } else {
-        throw `Socket.io reconnect failed prior to ${description}.`
-      }
-    })
-  }
-}
-
 const $_join = (state: any) => {
   return new Promise<void>(resolve => {
     $_log('Join')
@@ -974,43 +638,6 @@ const $_leave = (state: any) => {
 const $_log = (statement: string, force?: boolean) => {
   if (p.$config.socketIoDebugMode || force) {
     console.log(`🪲 ${statement}`)
-  }
-}
-
-const $_paste = (state: any): void => {
-  $_log('Paste')
-  if (state.clipboard.length) {
-    p.$canvas.discardActiveObject()
-    const promises: any[] = []
-    const whiteboardElements: any[] = []
-    let zIndex = Math.max(_.map(state.whiteboard.whiteboardElements, 'zIndex')) + 1
-    _.each(state.clipboard, element => {
-      if (element.type !== constants.FABRIC_MULTIPLE_SELECT_TYPE) {
-        promises.push(new Promise<void>((resolve: any) => {
-          const clone = _.cloneDeep(element)
-          const uuid = uuidv4()
-          clone.evented = true
-          clone.left = clone.left + constants.PASTE_OFFSET
-          clone.top = clone.top + constants.PASTE_OFFSET
-          clone.uuid = uuid
-          $_deserializeElement(state, clone).then((object: any) => {
-            p.$canvas.add(object)
-            whiteboardElements.push({
-              assetId: clone.assetId,
-              element: clone,
-              uuid,
-              zIndex
-            })
-            zIndex++
-            resolve()
-          })
-        }))
-      }
-    })
-    Promise.all(promises).then(() => {
-      setCanvasDimensions(state)
-      $_broadcastUpsert(whiteboardElements, state).then(_.noop)
-    })
   }
 }
 
@@ -1068,19 +695,6 @@ const $_scaleImageObject = (element: any, state: any) => {
 }
 
 const $_setModifyingElement = (value: boolean) => store.commit('whiteboarding/setIsModifyingElement', value)
-
-const $_translateIntoWhiteboardElement = (fabricObject: any) => {
-  const element = fabricObject.toObject()
-  // Force serialization to include properties that fabric.js assumes by default aren't worth its while.
-  if (fabricObject.fontSize) {
-    element.fontSize = fabricObject.fontSize
-  }
-  return {assetId: fabricObject.assetId, element: element, uuid: fabricObject.uuid}
-}
-
-const $_translateIntoWhiteboardElements = (fabricObjects: any) => {
-  return _.map(fabricObjects, (fabricObject: any) => $_translateIntoWhiteboardElement(fabricObject))
-}
 
 const $_tryReconnect = (state: any) => {
   return new Promise<void>(resolve => {

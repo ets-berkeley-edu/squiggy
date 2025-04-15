@@ -16,7 +16,6 @@ import BookmarkletStep1 from '@/components/bookmarklet/BookmarkletStep1.vue'
 import BookmarkletStep2 from '@/components/bookmarklet/BookmarkletStep2.vue'
 import BookmarkletStep3 from '@/components/bookmarklet/BookmarkletStep3.vue'
 import BookmarkletStep4 from '@/components/bookmarklet/BookmarkletStep4.vue'
-import CreateWhiteboard from '@/components/whiteboards/CreateWhiteboard.vue'
 import EditAsset from '@/components/assets/EditAsset.vue'
 import Engage from '@/components/engage/Engage.vue'
 import Error from '@/components/Error.vue'
@@ -183,13 +182,6 @@ const router = new Router({
           component: ImpactStudio,
           meta: {
             title: 'Impact Studio'
-          }
-        },
-        {
-          path: '/whiteboard/create',
-          component: CreateWhiteboard,
-          meta: {
-            title: 'Create Whiteboard'
           }
         },
         {

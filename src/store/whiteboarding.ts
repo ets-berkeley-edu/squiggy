@@ -3,13 +3,9 @@ import constants from '@/store/whiteboarding/constants'
 import store from '@/store'
 import Vue from 'vue'
 import {getCategories} from '@/api/categories'
-import {deleteWhiteboard, getWhiteboard, undelete} from '@/api/whiteboards'
+import {getWhiteboard} from '@/api/whiteboards'
 import {
-  addAssets,
   afterChangeMode,
-  changeZOrder,
-  deleteActiveElements,
-  getActiveObjects,
   initialize,
   setCanvasDimensions,
   updatePreviewImage,
@@ -73,9 +69,6 @@ const getters = {
 }
 
 const mutations = {
-  addAssets: (state: any, assets: any[]) => addAssets(assets, state),
-  changeZOrder: (state: any, direction: string) => changeZOrder(direction, getActiveObjects(), state),
-  deleteActiveElements: (state: any) => deleteActiveElements(state),
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
   onJoin: (state: any, userId: string) => {
     _.each(state.whiteboard.users, user => {
@@ -208,26 +201,6 @@ const mutations = {
 }
 
 const actions = {
-  addAssets: ({commit}, assets: any[]) => {
-    return new Promise<void>(resolve => {
-      commit('addAssets', assets)
-      resolve()
-    })
-  },
-  changeZOrder: ({commit}, direction: string) => commit('changeZOrder', direction),
-  deleteActiveElements: ({commit}) => commit('deleteActiveElements'),
-  deleteWhiteboard: ({commit, state}) => {
-    return new Promise<void>(resolve => {
-      deleteWhiteboard(p.$socket.id, state.whiteboard.id).then(() => {
-        commit('onWhiteboardUpdate', {
-          deletedAt: Date(),
-          resolve,
-          title: state.whiteboard.title,
-          users: state.whiteboard.users
-        })
-      })
-    })
-  },
   init: ({commit}, {whiteboard, disable}) => {
     return new Promise<void>(resolve => {
       getCategories(false).then(categories => {
@@ -268,22 +241,6 @@ const actions = {
   toggleFitToScreen: ({commit, state}) => {
     commit('setIsFitToScreen', !state.isFitToScreen)
     setCanvasDimensions(state)
-  },
-  undeleteWhiteboard: ({commit, state}) => {
-    return new Promise<void>(resolve => {
-      if (state.whiteboard.deletedAt) {
-        undelete(p.$socket.id, state.whiteboard.id).then(() => {
-          commit('onWhiteboardUpdate', {
-            deletedAt: null,
-            resolve,
-            title: state.whiteboard.title,
-            users: state.whiteboard.users
-          })
-        })
-      } else {
-        resolve()
-      }
-    })
   },
   updateSelected: ({commit}, properties: any) => commit('updateSelected', properties),
   zoomIn: () => zoom(-constants.ZOOM_INCREMENT),

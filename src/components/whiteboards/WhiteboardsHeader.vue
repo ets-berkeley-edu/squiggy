@@ -4,17 +4,6 @@
       <div>
         <h2>My whiteboards</h2>
       </div>
-      <div>
-        <v-btn
-          id="done-btn"
-          color="primary"
-          @click="$router.push('/whiteboard/create', $_.noop)"
-          @keypress.enter="$router.push('/whiteboard/create', $_.noop)"
-        >
-          <font-awesome-icon class="mr-2" icon="plus" />
-          <span class="sr-only">Create new </span>Whiteboard
-        </v-btn>
-      </div>
     </div>
     <div v-if="!$currentUser.isObserver && !$currentUser.isStudent">
       <v-expand-transition>

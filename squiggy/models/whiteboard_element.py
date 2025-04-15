@@ -26,7 +26,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 from sqlalchemy import and_, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql import asc, text
+from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.util import isoformat
 from squiggy.models.asset import Asset
@@ -130,39 +130,6 @@ class WhiteboardElement(Base):
             db.session.add(whiteboard_element)
             std_commit()
             return whiteboard_element
-
-    @classmethod
-    def update_z_indexes(cls, direction, uuids, whiteboard_id):
-        whiteboard_elements = cls.query.filter(cls.whiteboard_id == whiteboard_id).order_by(asc(cls.z_index)).all()
-        selected = list(filter(lambda w: w.uuid in uuids, whiteboard_elements))
-        others = list(filter(lambda w: w.uuid not in uuids, whiteboard_elements))
-        z_index = 0
-        if direction == 'bringForward':
-            # TODO: Implement this if customer convinces us to expand the layering feature.
-            pass
-        elif direction == 'bringToFront':
-            for whiteboard_element in others:
-                whiteboard_element.z_index = z_index
-                db.session.add(whiteboard_element)
-                z_index += 1
-            for whiteboard_element in selected:
-                whiteboard_element.z_index = z_index
-                db.session.add(whiteboard_element)
-                z_index += 1
-        elif direction == 'sendToBack':
-            for whiteboard_element in selected:
-                whiteboard_element.z_index = z_index
-                db.session.add(whiteboard_element)
-                z_index += 1
-            for whiteboard_element in others:
-                whiteboard_element.z_index = z_index
-                db.session.add(whiteboard_element)
-                z_index += 1
-        elif direction == 'sendBackwards':
-            # TODO: Implement this if customer convinces us to expand the layering feature.
-            pass
-        std_commit()
-        return whiteboard_elements
 
     def to_api_json(self):
         # Correct any out-of-sync uuid surprises.
