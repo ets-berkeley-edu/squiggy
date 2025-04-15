@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from itertools import groupby
-import json
 
 from squiggy.lib.util import is_teaching
 from squiggy.models.course import Course
@@ -35,26 +34,6 @@ unauthorized_user_id = '666'
 
 def _api_my_profile(client, expected_status_code=200):
     response = client.get('/api/profile/my')
-    assert response.status_code == expected_status_code
-    return response.json
-
-
-def _api_update_looking_for_collaborators(client, data, expected_status_code=200):
-    response = client.post(
-        '/api/users/me/looking_for_collaborators',
-        data=json.dumps(data),
-        content_type='application/json',
-    )
-    assert response.status_code == expected_status_code
-    return response.json
-
-
-def _api_update_personal_description(client, data, expected_status_code=200):
-    response = client.post(
-        '/api/users/me/personal_description',
-        data=json.dumps(data),
-        content_type='application/json',
-    )
     assert response.status_code == expected_status_code
     return response.json
 
@@ -262,75 +241,3 @@ class TestGetLeaderboard:
         assert 'points' in api_json[0]
         assert api_json[0]['points'] > api_json[1]['points']
         assert next(feed for feed in api_json if not feed['sharePoints'])
-
-
-class TestUpdateLookingForCollaborators:
-
-    def test_anonymous(self, client):
-        """Denies anonymous user."""
-        _api_update_looking_for_collaborators(client, {'lookingForCollaborators': True}, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        fake_auth.login(unauthorized_user_id)
-        _api_update_looking_for_collaborators(client, {'lookingForCollaborators': True}, expected_status_code=401)
-
-    def test_bad_data(self, client, fake_auth, authorized_user_id):
-        """Rejects bad data."""
-        fake_auth.login(authorized_user_id)
-        _api_update_looking_for_collaborators(client, {'regrettable': 'junk'}, expected_status_code=400)
-
-    def test_toggles_looking_for_collaborators(self, client, fake_auth, authorized_user_id):
-        """Turns looking for collaborators on and off."""
-        fake_auth.login(authorized_user_id)
-        profile = _api_my_profile(client)
-        assert profile['lookingForCollaborators'] is False
-        response = _api_update_looking_for_collaborators(client, {'lookingForCollaborators': True})
-        assert response['lookingForCollaborators'] is True
-        profile = _api_my_profile(client)
-        assert profile['lookingForCollaborators'] is True
-        response = _api_update_looking_for_collaborators(client, {'lookingForCollaborators': False})
-        assert response['lookingForCollaborators'] is False
-        profile = _api_my_profile(client)
-        assert profile['lookingForCollaborators'] is False
-
-
-class TestUpdatePersonalDescription:
-
-    def test_anonymous(self, client):
-        """Denies anonymous user."""
-        _api_update_personal_description(client, {'personalDescription': 'The fastest gun alive'}, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        fake_auth.login(unauthorized_user_id)
-        _api_update_personal_description(client, {'personalDescription': 'The fastest gun alive'}, expected_status_code=401)
-
-    def test_bad_data(self, client, fake_auth, authorized_user_id):
-        """Rejects bad data."""
-        fake_auth.login(authorized_user_id)
-        _api_update_personal_description(client, {'regrettable': 'junk'}, expected_status_code=400)
-
-    def test_set_personal_description(self, client, fake_auth, authorized_user_id):
-        """Sets and unsets personal description."""
-        fake_auth.login(authorized_user_id)
-        profile = _api_my_profile(client)
-        assert profile['personalDescription'] is None
-        response = _api_update_personal_description(client, {'personalDescription': 'The fastest gun alive'})
-        assert response['personalDescription'] == 'The fastest gun alive'
-        profile = _api_my_profile(client)
-        assert profile['personalDescription'] == 'The fastest gun alive'
-        response = _api_update_personal_description(client, {'personalDescription': None})
-        assert response['personalDescription'] is None
-        profile = _api_my_profile(client)
-        assert profile['personalDescription'] is None
-
-    def test_text_exceeds_max_length(self, client, fake_auth, authorized_user_id):
-        """Truncates the provided text at 255 characters."""
-        long_text = 'ʬ' * 256
-        expected_text = 'ʬ' * 255
-        fake_auth.login(authorized_user_id)
-        response = _api_update_personal_description(client, {'personalDescription': long_text})
-        assert response['personalDescription'] == expected_text
-        profile = _api_my_profile(client)
-        assert profile['personalDescription'] == expected_text

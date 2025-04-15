@@ -23,9 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, request
+from flask import current_app as app
 from flask_login import current_user, login_required
-from squiggy.lib.errors import BadRequestError, ForbiddenRequestError
+from squiggy.lib.errors import ForbiddenRequestError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.user import User
 
@@ -55,32 +55,3 @@ def get_leaderboard():
         return tolerant_jsonify([u.to_api_json(include_points=True) for u in users])
     else:
         raise ForbiddenRequestError('Leaderboard disallowed for users not sharing points.')
-
-
-@app.route('/api/users/me/looking_for_collaborators', methods=['POST'])
-@login_required
-def update_looking_for_collaborators():
-    params = request.get_json()
-    if 'lookingForCollaborators' not in params:
-        raise BadRequestError('No looking for collaborators status provided.')
-    User.update_looking_for_collaborators(
-        is_looking_for_collaborators=params['lookingForCollaborators'],
-        user_id=current_user.id,
-    )
-    current_user.refresh()
-    return tolerant_jsonify(current_user.to_api_json())
-
-
-@app.route('/api/users/me/personal_description', methods=['POST'])
-@login_required
-def update_personal_description():
-    params = request.get_json()
-    if 'personalDescription' not in params:
-        raise BadRequestError('No personal description provided.')
-    personal_description = params['personalDescription']
-    User.update_personal_description(
-        personal_description=personal_description[:255] if personal_description else None,
-        user_id=current_user.id,
-    )
-    current_user.refresh()
-    return tolerant_jsonify(current_user.to_api_json())
