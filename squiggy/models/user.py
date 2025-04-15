@@ -213,20 +213,6 @@ class User(Base):
         result = db.session.execute(text(sql), {'id': user_id}).first()
         return bool(result and result['share_points'])
 
-    @classmethod
-    def update_personal_description(cls, personal_description, user_id):
-        user = cls.query.filter_by(id=user_id).first()
-        user.personal_description = personal_description
-        db.session.add(user)
-        std_commit()
-
-    @classmethod
-    def update_looking_for_collaborators(cls, is_looking_for_collaborators, user_id):
-        user = cls.query.filter_by(id=user_id).first()
-        user.looking_for_collaborators = True if is_looking_for_collaborators else False
-        db.session.add(user)
-        std_commit()
-
     def to_api_json(self, include_assets=False, include_points=False, include_sharing=False):
         encryption_key = app.config['BOOKMARKLET_ENCRYPTION_KEY']
         group_memberships = CourseGroupMembership.find_by_course_and_user(

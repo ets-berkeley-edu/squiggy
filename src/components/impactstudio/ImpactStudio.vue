@@ -39,14 +39,7 @@
         <div id="about-user" class="w-100">
           <h1 id="profile-header-name" class="profile-header-name mb-4">{{ user.canvasFullName }}</h1>
           <div v-if="isMyProfile" id="profile-looking-for-collaborators" class="my-4">
-            <v-switch
-              id="toggle-looking-for-collaborators-btn"
-              v-model="user.lookingForCollaborators"
-              color="success"
-              inset
-              :label="`${user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators'}`"
-              @change="toggleLookingForCollaborators"
-            />
+            {{ user.lookingForCollaborators ? 'Looking for collaborators' : 'Not looking for collaborators' }}
           </div>
           <div v-if="!isMyProfile & user.lookingForCollaborators" id="profile-looking-for-collaborators" class="my-4">
             <v-btn
@@ -73,49 +66,6 @@
               class="my-4 pt-1 pb-2"
               v-html="user.personalDescription"
             />
-            <div class="pt-3">
-              <v-btn
-                v-if="isMyProfile"
-                id="profile-personal-description-edit-btn"
-                @click="isEditingPersonalDescription = true"
-                @keypress.enter="isEditingPersonalDescription = true"
-              >
-                Edit Profile
-              </v-btn>
-            </div>
-          </div>
-          <div v-if="isEditingPersonalDescription" id="profile-personal-description-edit" class="my-4">
-            <label class="sr-only" for="profile-personal-description-input">Short Personal Description or Collaboration Interests</label>
-            <v-textarea
-              id="profile-personal-description-input"
-              v-model="personalDescription"
-              class="mt-4"
-              counter
-              placeholder="Short Personal Description or Collaboration Interests"
-              maxlength="255"
-              :rules="[v => (!v || v.length <= 255) || 'Personal Description must be 255 characters or less']"
-              solo
-              @keydown.enter.prevent
-            />
-            <div class="d-flex">
-              <v-btn
-                id="confirm-personal-description-btn"
-                class="mr-2"
-                color="primary"
-                @click="personalDescriptionSave"
-                @keypress.enter="personalDescriptionSave"
-              >
-                Save
-              </v-btn>
-              <v-btn
-                id="cancel-personal-description-btn"
-                class="mr-2"
-                @click="personalDescriptionCancel"
-                @keypress.enter="personalDescriptionCancel"
-              >
-                Cancel
-              </v-btn>
-            </div>
           </div>
         </div>
       </div>
@@ -175,7 +125,7 @@
 <script>
 import {getAssets} from '@/api/assets'
 import {getCourseInteractions, getUserActivities} from '@/api/activities'
-import {getUsers, updateLookingForCollaborators, updatePersonalDescription} from '@/api/users'
+import {getUsers} from '@/api/users'
 import ActivityNetwork from '@/components/impactstudio/ActivityNetwork'
 import ActivityTimeline from '@/components/impactstudio/ActivityTimeline'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
@@ -267,25 +217,6 @@ export default {
     },
     goToProfile(userId) {
       this.$router.push({path: `/impact_studio/profile/${userId}`})
-    },
-    personalDescriptionCancel() {
-      this.$announcer.polite('Canceled')
-      this.personalDescription = this.user.personalDescription
-      this.isEditingPersonalDescription = false
-    },
-    personalDescriptionSave() {
-      updatePersonalDescription(this.personalDescription).then((data) => {
-        this.$announcer.polite('Saved')
-        this.user.personalDescription = data.personalDescription
-        this.personalDescription = this.user.personalDescription
-        this.isEditingPersonalDescription = false
-      })
-    },
-    toggleLookingForCollaborators(value) {
-      updateLookingForCollaborators(value).then((data) => {
-        this.$announcer.polite('Looking for collaborators turned ' + (data.lookingForCollaborators ? 'on' : 'off'))
-        this.user.lookingForCollaborators = data.lookingForCollaborators
-      })
     }
   }
 }
