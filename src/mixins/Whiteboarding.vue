@@ -34,10 +34,6 @@ export default {
   },
   methods: {
     ...mapActions('whiteboarding', [
-      'addAssets',
-      'changeZOrder',
-      'deleteActiveElements',
-      'deleteWhiteboard',
       'init',
       'onWhiteboardUpdate',
       'refreshWhiteboard',
@@ -45,7 +41,6 @@ export default {
       'setDisableAll',
       'setMode',
       'toggleFitToScreen',
-      'undeleteWhiteboard',
       'updateSelected',
       'zoomIn',
       'zoomOut'

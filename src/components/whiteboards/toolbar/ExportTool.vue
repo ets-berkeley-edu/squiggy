@@ -27,15 +27,7 @@
       </v-tooltip>
     </template>
     <v-card class="pt-1">
-      <v-card-title class="sr-only">
-        <h2 id="menu-header" class="sr-only">Export whiteboard to Asset Library</h2>
-      </v-card-title>
       <v-list v-if="$canvas.getObjects().length">
-        <v-list-item>
-          <v-list-item-action class="mr-0 my-0 w-100">
-            <ExportAsAsset :watch-dialog="watchChildDialog" />
-          </v-list-item-action>
-        </v-list-item>
         <v-list-item v-if="!$_.intersection(assetPreviewStatuses, ['error', 'pending']).length">
           <v-list-item-action class="mr-0 my-0 w-100">
             <v-btn
@@ -83,7 +75,6 @@
           When this whiteboard has one or more elements, it can be:
           <ul class="py-2">
             <li>Downloaded as PNG file</li>
-            <li>Exported to the Asset Library</li>
           </ul>
           <div class="py-2">
             Enjoy!
@@ -96,12 +87,10 @@
 
 <script>
 import Whiteboarding from '@/mixins/Whiteboarding'
-import ExportAsAsset from '@/components/whiteboards/toolbar/assets/ExportAsAsset'
 
 export default {
   name: 'ExportTool',
   mixins: [Whiteboarding],
-  components: {ExportAsAsset},
   data: () => ({
     menu: false,
     tooltipText: 'Export this whiteboard'

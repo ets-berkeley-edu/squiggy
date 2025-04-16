@@ -1,7 +1,6 @@
 <template>
   <v-app>
     <Toolbar />
-    <EditActiveFabricObject v-if="!isLoading && !whiteboard.deletedAt" />
     <Spinner v-if="isLoading" class="spinner" />
     <v-main id="whiteboard-container" class="h-100 whiteboard-container">
       <!-- 'tabindex' is necessary in order to attach DOM element listener. -->
@@ -14,7 +13,6 @@
 
 <script>
 import Context from '@/mixins/Context'
-import EditActiveFabricObject from '@/components/whiteboards/EditActiveFabricObject'
 import Spinner from '@/components/util/Spinner'
 import Toolbar from '@/components/whiteboards/toolbar/Toolbar'
 import Utils from '@/mixins/Utils'
@@ -24,10 +22,9 @@ import {getWhiteboard} from '@/api/whiteboards'
 export default {
   name: 'Whiteboard',
   mixins: [Context, Utils, Whiteboarding],
-  components: {EditActiveFabricObject, Spinner, Toolbar},
+  components: {Spinner, Toolbar},
   data: () => ({
-    isSnackbarOpen: false,
-    refreshJob: undefined
+    isSnackbarOpen: false
   }),
   created() {
     this.$loading(true)
@@ -36,24 +33,8 @@ export default {
       this.init({whiteboard, disable: false}).then(() => {
         this.setDisableAll(false)
         this.$ready(this.whiteboard.title)
-        if (!this.whiteboard.deletedAt) {
-          this.scheduleRefresh()
-        }
       })
     })
-  },
-  destroyed() {
-    clearTimeout(this.refreshJob)
-  },
-  methods: {
-    scheduleRefresh() {
-      clearTimeout(this.refreshJob)
-      this.refreshJob = setTimeout(() => {
-        this.refreshWhiteboard().then(() => {
-          this.scheduleRefresh()
-        })
-      }, this.$config.whiteboardsRefreshInterval)
-    }
   }
 }
 </script>
