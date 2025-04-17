@@ -5,7 +5,6 @@ import Vue from 'vue'
 import {getCategories} from '@/api/categories'
 import {getWhiteboard} from '@/api/whiteboards'
 import {
-  afterChangeMode,
   initialize,
   setCanvasDimensions,
   updatePreviewImage,
@@ -32,9 +31,7 @@ const $_log = (statement: string, force?: boolean) => {
 }
 
 const state = {
-  activeCanvasObject: undefined,
   categories: undefined,
-  clipboard: [],
   disableAll: false,
   // Variable that will keep track of whether a shape is currently being drawn
   isAssetView: undefined,
@@ -48,7 +45,6 @@ const state = {
   remoteUUIDs: [],
   selected: _.clone(DEFAULT_TOOL_SELECTION),
   // Variable that will keep track of the point at which drawing a shape started
-  startShapePointer: null,
   viewport: undefined,
   whiteboard: undefined,
   windowHeight: undefined,
@@ -56,7 +52,6 @@ const state = {
 }
 
 const getters = {
-  activeCanvasObject: (state: any): any => state.activeCanvasObject,
   categories: (state: any): any[] => state.categories,
   disableAll: (state: any): boolean => state.disableAll || store.getters['context/isLoading'],
   isFitToScreen: (state: any): boolean => state.isFitToScreen,
@@ -64,76 +59,11 @@ const getters = {
   isScrollingCanvas: (state: any): boolean => state.isScrollingCanvas,
   mode: (state: any): string => state.mode,
   selected: (state: any): any => state.selected,
-  selectedAsset: () => null,
   whiteboard: (state: any): any => state.whiteboard
 }
 
 const mutations = {
   initialize: (state: any, resolve: any) => initialize(state).then(resolve),
-  onJoin: (state: any, userId: string) => {
-    _.each(state.whiteboard.users, user => {
-      if (user.id === userId) {
-        user.isOnline = true
-        return false
-      }
-    })
-  },
-  onLeave: (state: any, userId: string) => {
-    _.each(state.whiteboard.users, user => {
-      if (user.id === userId) {
-        user.isOnline = false
-        return false
-      }
-    })
-  },
-  onDeleteWhiteboardElements: (state: any, uuids: string[]) => {
-    state.whiteboard.whiteboardElements = _.filter(state.whiteboard.whiteboardElements, w => !uuids.includes(w.uuid))
-  },
-  onWhiteboardElementsUpsert: (state: any, whiteboardElements: any[]) => {
-    _.each(whiteboardElements, (whiteboardElement: any) => {
-      const existing = _.find(state.whiteboard.whiteboardElements, ['uuid', whiteboardElement.uuid])
-      if (existing) {
-        existing.assetId = whiteboardElement.assetId
-        existing.element = _.cloneDeep(whiteboardElement.element)
-      } else {
-        state.whiteboard.whiteboardElements.push(whiteboardElement)
-      }
-    })
-  },
-  onWhiteboardUpdate: (state: any, {deletedAt, resolve, title, users}) => {
-    document.title = `${title} | SuiteC`
-    state.whiteboard.title = title
-    // Set 'isOnline' (true or false) on incoming users.
-    const previousUsersById = {}
-    _.each(state.whiteboard.users, u => previousUsersById[u.id] = u)
-    _.each(users, user => {
-      const existingUser = previousUsersById[user.id]
-      user.isOnline = existingUser && existingUser.isOnline
-    })
-    state.whiteboard.users = users
-    // Whiteboard might have been deleted.
-    const hasDeleteStatusChanged = (!state.whiteboard.deletedAt && deletedAt) || (state.whiteboard.deletedAt && !deletedAt)
-    if (hasDeleteStatusChanged) {
-      state.whiteboard.deletedAt = deletedAt
-    }
-    state.whiteboard.deletedAt = deletedAt
-    // Close browser tab if current user is no longer authorized.
-    if (!p.$currentUser.isAdmin && !p.$currentUser.isTeaching) {
-      if (state.whiteboard.deletedAt) {
-        window.close()
-      } else {
-        const userIds = _.map(state.whiteboard.users, 'id')
-        if (!_.includes(userIds, p.$currentUser.id)) {
-          window.close()
-        }
-      }
-    }
-    resolve()
-    if (hasDeleteStatusChanged) {
-      p.$loading()
-      location.reload()
-    }
-  },
   onWindowResize: (state: any) => {
     state.windowHeight = window.innerHeight
     state.windowWidth = window.innerWidth
@@ -163,25 +93,10 @@ const mutations = {
     }
   },
   resetSelected: (state: any) => state.selected = _.clone(DEFAULT_TOOL_SELECTION),
-  setActiveCanvasObject: (state: any, activeCanvasObject: any) => state.activeCanvasObject = _.cloneDeep(activeCanvasObject),
   setCategories: (state: any, categories: any[]) => state.categories = categories,
-  setClipboard: (state: any, objects: any[]) => {
-    _.each(objects, object => {
-      delete object.uuid
-    })
-    state.clipboard = objects
-  },
   setDisableAll: (state: any, disableAll: boolean) => state.disableAll = disableAll,
   setIsInitialized: (state: any, isInitialized: boolean) => state.isInitialized = isInitialized,
-  setIsModifyingElement: (state: any, isModifyingElement: boolean) => state.isModifyingElement = isModifyingElement,
-  setIsDrawingShape: (state: any, isDrawingShape: boolean) => state.isDrawingShape = isDrawingShape,
   setIsScrollingCanvas: (state: any, isScrollingCanvas: boolean) => state.isScrollingCanvas = isScrollingCanvas,
-  setMode: (state: any, mode: string) => {
-    $_log(`Set mode: ${mode}`)
-    state.mode = mode
-    afterChangeMode(state)
-  },
-  setStartShapePointer: (state: any, startShapePointer: any) => state.startShapePointer = startShapePointer,
   setViewport: (state: any, viewport: any) => state.viewport = viewport,
   setWhiteboard: (state: any, whiteboard: any) => {
     state.whiteboard = whiteboard
@@ -214,18 +129,6 @@ const actions = {
       })
     })
   },
-  onJoin: ({commit}, userId: number) => commit('onJoin', userId),
-  onWhiteboardElementsUpsert: ({commit}, whiteboardElements: any[]) => commit('onWhiteboardElementsUpsert', whiteboardElements),
-  onWhiteboardUpdate: ({commit}, whiteboard: any) => {
-    return new Promise<void>(resolve => {
-      commit('onWhiteboardUpdate', {
-        deletedAt: whiteboard.deletedAt,
-        resolve,
-        title: whiteboard.title,
-        users: whiteboard.users
-      })
-    })
-  },
   refreshWhiteboard: ({commit, state}) => {
     return new Promise<void>(resolve => {
       getWhiteboard(state.whiteboard.id).then((data: any) => {
@@ -234,10 +137,7 @@ const actions = {
     })
   },
   resetSelected: ({commit}) => commit('resetSelected'),
-  setClipboard: ({commit}, objects: any[]) => commit('setClipboard', objects),
-  setDisableAll: ({commit}, disableAll: boolean) => commit('setDisableAll', disableAll),
   setIsFitToScreen: ({commit}, isFitToScreen: boolean) => commit('setIsFitToScreen', isFitToScreen),
-  setMode: ({commit}, mode: string) => commit('setMode', mode),
   toggleFitToScreen: ({commit, state}) => {
     commit('setIsFitToScreen', !state.isFitToScreen)
     setCanvasDimensions(state)

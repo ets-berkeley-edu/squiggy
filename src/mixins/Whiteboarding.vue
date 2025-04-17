@@ -14,7 +14,6 @@ export default {
   },
   computed: {
     ...mapGetters('whiteboarding', [
-      'activeCanvasObject',
       'categories',
       'disableAll',
       'isFitToScreen',
@@ -22,7 +21,6 @@ export default {
       'isScrollingCanvas',
       'mode',
       'selected',
-      'selectedAsset',
       'whiteboard'
     ]),
     usersOffline() {
@@ -35,11 +33,8 @@ export default {
   methods: {
     ...mapActions('whiteboarding', [
       'init',
-      'onWhiteboardUpdate',
       'refreshWhiteboard',
       'resetSelected',
-      'setDisableAll',
-      'setMode',
       'toggleFitToScreen',
       'updateSelected',
       'zoomIn',

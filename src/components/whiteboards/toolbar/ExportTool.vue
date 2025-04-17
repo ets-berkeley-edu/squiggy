@@ -100,24 +100,6 @@ export default {
       const key = 'assetPreviewStatus'
       return this.whiteboard ? this.$_.map(this.$_.filter(this.whiteboard.whiteboardElements, key), key) : []
     }
-  },
-  watch: {
-    menu(value) {
-      if (value) {
-        this.$putFocusNextTick('menu-header')
-      }
-      this.setDisableAll(value)
-    }
-  },
-  methods: {
-    watchChildDialog(isOpen) {
-      if (isOpen) {
-        this.menu = false
-      }
-    }
-  },
-  beforeDestroy() {
-    this.setDisableAll(false)
   }
 }
 </script>
