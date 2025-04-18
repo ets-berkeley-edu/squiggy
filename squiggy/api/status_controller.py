@@ -83,16 +83,8 @@ def _db_status():
 
 
 def _poller_status():
-    try:
-        first_row = db.session.execute('SELECT last_polled FROM courses WHERE last_polled IS NOT NULL ORDER BY last_polled DESC LIMIT 1').first()
-        if first_row:
-            diff_in_hours = (utc_now() - first_row['last_polled']).total_seconds() / 3600
-            return diff_in_hours < app.config['CANVAS_POLLER_ACCEPTABLE_HOURS_SINCE_LAST']
-        else:
-            return False
-    except SQLAlchemyError:
-        logger.exception('Database connection error')
-        return None
+    # The poller has been turned off; don't bother Nagios.
+    return True
 
 
 def _preview_service_status():

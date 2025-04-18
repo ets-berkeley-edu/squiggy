@@ -33,9 +33,8 @@ from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.login_session import LoginSession
 from squiggy.lib.lti import LtiRequestValidator, TOOL_ID_ASSET_LIBRARY, TOOL_ID_ENGAGEMENT_INDEX, TOOL_ID_IMPACT_STUDIO, TOOL_ID_WHITEBOARDS
-from squiggy.lib.util import safe_strip, to_int, utc_now
+from squiggy.lib.util import safe_strip, to_int
 from squiggy.logger import logger
-from squiggy.models.activity import Activity
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 from squiggy.models.user import User
@@ -190,13 +189,11 @@ def _lti_launch_authentication(tool_id):
             canvas_course_id=canvas_course_id,
         )
         if course:
-            active = _check_course_activity(course)
             asset_library_url = external_tool_url if is_asset_library else course.asset_library_url
             engagement_index_url = external_tool_url if is_engagement_index else course.engagement_index_url
             impact_studio_url = external_tool_url if is_impact_studio else course.impact_studio_url
             whiteboards_url = external_tool_url if is_whiteboards else course.whiteboards_url
             course = Course.update(
-                active=active,
                 asset_library_url=asset_library_url,
                 course_id=course.id,
                 engagement_index_url=engagement_index_url,
@@ -242,14 +239,3 @@ def _lti_launch_authentication(tool_id):
         params = f'canvasApiDomain={canvas_api_domain}&canvasCourseId={canvas_course_id}'
         logger.info(f'LTI launch redirect: {path}?{params}')
         return user, f'{path}?{params}'
-
-
-def _check_course_activity(course):
-    if course.active:
-        return True
-    # If the course has been inactivated by the poller, check recent activity to see if reactivation is needed.
-    last_activity = Activity.get_last_activity_for_course(course_id=course.id)
-    if last_activity and (utc_now() - last_activity).days < app.config['CANVAS_POLLER_DEACTIVATION_THRESHOLD']:
-        return True
-    else:
-        return False

@@ -26,9 +26,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 import logging
 import os
 
-ADVISORY_LOCK_ID_CANVAS_POLLER = 1000
-ADVISORY_LOCK_ID_WHITEBOARD_HOUSEKEEPING = 2000
-
 API_PREFIX = 'https://example.com/api'
 
 AWS_ACCESS_KEY_ID = 'some id'
@@ -43,10 +40,6 @@ BOOKMARKLET_ENCRYPTION_KEY = b'32 url-safe base64-encoded bytes'
 
 CAS_SERVER = 'https://auth-test.berkeley.edu/cas/'
 CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'
-
-CANVAS_POLLER = True
-CANVAS_POLLER_ACCEPTABLE_HOURS_SINCE_LAST = 1
-CANVAS_POLLER_DEACTIVATION_THRESHOLD = 90
 
 COUNTDOWN_READONLY = '2025-08-20'
 COUNTDOWN_REMOVAL = '2026-06-30'
@@ -78,7 +71,6 @@ LOGGING_PROPAGATION_LEVEL = logging.INFO
 LOGGING_PROPAGATION_TARGETS = [
     'boto3',
     'botocore',
-    'canvasapi',
     's3transfer',
     'sqlalchemy.engine',
     'werkzeug',
@@ -111,9 +103,6 @@ SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
-# Flask-SocketIO debug logging is verbose.
-SOCKET_IO_DEBUG_MODE = False
-
 # Save DB changes at the end of a request.
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
@@ -138,11 +127,6 @@ TIMEZONE = 'America/Los_Angeles'
 
 # This base-URL config should only be non-None in the "local" env where the Vue front-end runs on port 8080.
 VUE_LOCALHOST_BASE_URL = None
-
-WHITEBOARD_HOUSEKEEPING_ACCEPTABLE_MINUTES_SINCE_LAST = 60
-WHITEBOARD_SESSION_EXPIRATION_MINUTES = 2
-# The following value is in milliseconds.
-WHITEBOARDS_REFRESH_INTERVAL = 15000
 
 # We keep these out of alphabetical sort above for readability's sake.
 HOST = '0.0.0.0'

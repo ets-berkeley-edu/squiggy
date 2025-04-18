@@ -28,17 +28,11 @@ import logging
 # Development environment.
 DEBUG = True
 
-CANVAS_POLLER = False
-
 DEVELOPER_AUTH_ENABLED = True
 
 DIST_STATIC_DIR = 'public'
 
 LOGGING_LEVEL_SQLALCHEMY = logging.WARN
-
-SOCKET_IO_DEBUG_MODE = False
-SOCKET_IO_PING_INTERVAL = 6
-SOCKET_IO_PING_TIMEOUT = 5
 
 STATIC_PATH = ''
 
