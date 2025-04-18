@@ -23,36 +23,14 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from flask import current_app as app, request
-from flask_login import current_user, login_required
-from squiggy.api.api_util import can_current_user_delete_comment, can_current_user_update_comment, can_current_user_view_asset
-from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
+from flask import current_app as app
+from flask_login import login_required
+from squiggy.api.api_util import can_current_user_view_asset
+from squiggy.lib.errors import ResourceNotFoundError
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.asset import Asset
 from squiggy.models.comment import Comment
 from squiggy.models.user import User
-
-
-@app.route('/api/comment/create', methods=['POST'])
-@login_required
-def create_comment():
-    params = request.get_json()
-    asset_id = params.get('assetId')
-    asset = Asset.find_by_id(asset_id=asset_id)
-    if asset and can_current_user_view_asset(asset=asset):
-        body = params.get('body', '').strip()
-        if not body:
-            raise BadRequestError('Comment body is required.')
-        parent_id = params.get('parentId')
-        comment = Comment.create(
-            asset=asset,
-            user_id=current_user.user_id,
-            body=body,
-            parent_id=parent_id and int(parent_id),
-        )
-        return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
-    else:
-        raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
 
 
 @app.route('/api/comments/<asset_id>')
@@ -61,32 +39,6 @@ def get_comments(asset_id):
     asset = Asset.find_by_id(asset_id=asset_id)
     if asset and can_current_user_view_asset(asset=asset):
         return tolerant_jsonify(_decorate_comments(Comment.get_comments(asset.id)))
-    else:
-        raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
-
-
-@app.route('/api/comment/<comment_id>/delete', methods=['DELETE'])
-@login_required
-def delete_comment(comment_id):
-    comment = Comment.find_by_id(comment_id=comment_id)
-    if comment and can_current_user_delete_comment(comment=comment):
-        Comment.delete(comment_id=comment_id)
-        return tolerant_jsonify({'message': f'Comment {comment_id} deleted'}), 200
-    else:
-        raise ResourceNotFoundError('Comment is either unavailable or non-existent.')
-
-
-@app.route('/api/comment/<comment_id>/update', methods=['POST'])
-@login_required
-def update_comment(comment_id):
-    params = request.get_json()
-    comment = Comment.find_by_id(comment_id=comment_id)
-    if comment and can_current_user_update_comment(comment=comment):
-        body = params.get('body', '').strip()
-        if not body:
-            raise BadRequestError('Comment body is required.')
-        comment = Comment.update(body=body, comment_id=comment.id)
-        return tolerant_jsonify(_decorate_comments([comment.to_api_json()])[0])
     else:
         raise ResourceNotFoundError('Asset is either unavailable or non-existent.')
 

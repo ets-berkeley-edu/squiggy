@@ -60,7 +60,7 @@ if __name__.startswith('_mod_wsgi'):
         key, _, value = line.decode('utf-8').rstrip().partition('=')
         os.environ[key] = value
 
-application, socketio = create_app()
+application = create_app()
 
 
 @application.cli.command()
@@ -74,13 +74,6 @@ port = application.config['PORT']
 
 if __name__ == '__main__':
     application.logger.info('Starting development server on %s:%s', host, port)
-    is_socket_debug_mode = application.config['SOCKET_IO_DEBUG_MODE']
-    if application.config['VUE_LOCALHOST_BASE_URL']:
-        # TODO: PyCharm cannot run Squiggy in debug mode when 'SOCKET_IO_DEBUG_MODE' is True. Why?
-        socketio.run(
-            app=application,
-            debug=is_socket_debug_mode,
-            log_output=is_socket_debug_mode,
-        )
+
 elif __name__.startswith('_mod_wsgi'):
     application.logger.info('Will start WSGI server on %s:%s', host, port)

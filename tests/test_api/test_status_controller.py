@@ -26,7 +26,6 @@ from datetime import timedelta
 
 from squiggy import db, std_commit
 from squiggy.lib.util import utc_now
-from squiggy.lib.whiteboard_housekeeping import update_timestamp
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 
@@ -50,17 +49,16 @@ class TestStatusController:
             response = client.get('/api/ping')
             assert response.status_code == 200
             assert response.json['app'] is True
-            assert response.json['cache'] is False
+            assert response.json['cache'] is True
             assert response.json['db'] is True
             assert response.json['previewService'] is False
             assert response.json['poller'] is expected_ping_value
-            assert response.json['whiteboards'] is expected_ping_value
+            assert response.json['whiteboards'] is True
 
         for minutes_ago in [59, 61]:
             the_past = utc_now() - timedelta(minutes=minutes_ago)
             course.last_polled = the_past
             db.session.add(course)
-            update_timestamp(the_past)
             std_commit(allow_test_environment=True)
             _ping(minutes_ago < 60)
 

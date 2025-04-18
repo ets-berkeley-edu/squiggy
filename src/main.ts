@@ -97,15 +97,9 @@ if (params.get('canvasApiDomain')) {
 if (params.get('canvasCourseId')) {
   axios.defaults.headers['Squiggy-Canvas-Course-Id'] = String(params.get('canvasCourseId'))
 }
-const isBookmarklet = !!params.get('_b')
-if (isBookmarklet) {
-  axios.defaults.headers['Squiggy-Bookmarklet-Auth'] = String(params.get('_b'))
-}
 
 const isInIframe = utils.isInIframe()
-
-Vue.prototype.$isInIframe = isInIframe && !isBookmarklet
-Vue.prototype.$isBookmarklet = isBookmarklet
+Vue.prototype.$isInIframe = isInIframe
 
 axios.get(`${apiBaseUrl}/api/profile/my`).then(data => {
   Vue.prototype.$currentUser = data

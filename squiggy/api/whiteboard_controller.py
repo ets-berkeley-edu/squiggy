@@ -27,16 +27,12 @@ import re
 
 from flask import current_app as app, request, send_file
 from flask_login import current_user, login_required
-from squiggy.api.api_util import can_current_user_view_asset
 from squiggy.lib.errors import BadRequestError, ResourceNotFoundError
 from squiggy.lib.file_remover import file_remover
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.util import local_now
-from squiggy.lib.whiteboard_housekeeping import WhiteboardHousekeeping
 from squiggy.lib.whiteboard_util import to_png_file
 from squiggy.logger import logger
-from squiggy.models.asset import Asset
-from squiggy.models.user import User
 from squiggy.models.whiteboard import Whiteboard
 
 
@@ -48,33 +44,6 @@ def get_whiteboard(whiteboard_id):
         return tolerant_jsonify(whiteboard)
     else:
         raise ResourceNotFoundError('Whiteboard not found')
-
-
-@app.route('/api/whiteboard/remix', methods=['POST'])
-@login_required
-def remix_whiteboard():
-    params = request.get_json()
-    asset_id = params.get('assetId')
-    title = params.get('title')
-    asset = Asset.find_by_id(asset_id=asset_id)
-    if not asset or not can_current_user_view_asset(asset=asset):
-        raise ResourceNotFoundError(f'No asset found with id: {asset_id}')
-    if asset.asset_type != 'whiteboard':
-        raise BadRequestError('Asset type is not \'whiteboard\'.')
-    if not (title or '').strip():
-        raise BadRequestError('title is required')
-    whiteboard = Whiteboard.remix(
-        asset_id=asset.id,
-        course_id=asset.course_id,
-        created_by=User.find_by_id(current_user.user_id),
-        title=title,
-        whiteboard_users=asset.users,
-    )
-    WhiteboardHousekeeping.queue_for_preview_image(whiteboard['id'])
-    return tolerant_jsonify(Whiteboard.find_by_id(
-        current_user=current_user,
-        whiteboard_id=whiteboard['id'],
-    ))
 
 
 @app.route('/api/whiteboard/<whiteboard_id>/download/png')

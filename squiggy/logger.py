@@ -93,7 +93,7 @@ class LogDelegator:
 
     def __getattr__(self, k):
         thread_name = current_thread().name
-        if thread_name.startswith('poller-') or thread_name == 'whiteboard_housekeeping':
+        if thread_name.startswith('poller-'):
             delegate_logger = logging.getLogger(thread_name)
         else:
             from flask import current_app as app

@@ -26,12 +26,10 @@ from datetime import datetime
 
 from flask import current_app as app
 import pytz
-import redis
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.lib.previews import ping_preview_service
-from squiggy.lib.socket_io_util import get_queue_url
 from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 
@@ -71,13 +69,8 @@ def countdown():
 
 
 def _cache_status():
-    try:
-        r = redis.from_url(get_queue_url(app), socket_connect_timeout=1)
-        r.ping()
-        return True
-    except Exception:
-        logger.exception('Redis connection error')
-        return False
+    # Sockets and background jobs have been turned off; don't bother Nagios.
+    return True
 
 
 def _db_status():
@@ -107,13 +100,5 @@ def _preview_service_status():
 
 
 def _whiteboard_housekeeping_status():
-    try:
-        first_row = db.session.execute("SELECT last_run FROM background_jobs WHERE job_name = 'whiteboard_housekeeping'").first()
-        if first_row:
-            diff_in_minutes = (utc_now() - first_row['last_run']).total_seconds() / 60
-            return diff_in_minutes < app.config['WHITEBOARD_HOUSEKEEPING_ACCEPTABLE_MINUTES_SINCE_LAST']
-        else:
-            return False
-    except SQLAlchemyError:
-        logger.exception('Database connection error')
-        return None
+    # Whiteboard housekeeping has been turned off; don't bother Nagios.
+    return True
