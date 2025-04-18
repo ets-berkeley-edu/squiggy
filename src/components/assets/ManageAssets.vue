@@ -6,12 +6,14 @@
     </div>
     <div class="mt-8 pl-4 pr-4">
       <h3 class="mb-3">Section Restrictions</h3>
-      <v-checkbox
-        id="protect_assets_per_section_checkbox"
-        v-model="checkbox"
-        label="Students can only access assets created by others enrolled in the same sections."
-        @change="toggleSectionCheckbox"
-      />
+      <div v-if="protectsAssetsPerSection">
+        Students can only access assets created by others enrolled in the same sections.
+      </div>
+      <div v-if="!protectsAssetsPerSection">
+        None.
+      </div>
+    </div>
+    <div class="mt-8 pl-4 pr-4">
       <ManageCategories :categories="categories" :refresh="refresh" />
     </div>
     <div class="mt-8 pl-4 pr-4">
@@ -27,7 +29,7 @@ import ManageAssignments from '@/components/assets/ManageAssignments'
 import ManageCategories from '@/components/assets/ManageCategories'
 import Utils from '@/mixins/Utils'
 import {getCategories} from '@/api/categories'
-import {getCourse, updateProtectAssetsPerSectionCheckbox} from '@/api/courses'
+import {getCourse} from '@/api/courses'
 
 export default {
   name: 'ManageAssets',
@@ -36,13 +38,13 @@ export default {
   data: () => ({
     assignments: [],
     categories: [],
-    checkbox: undefined
+    protectsAssetsPerSection: undefined
   }),
   created() {
     this.$loading()
     getCourse(this.$currentUser.courseId).then(data => {
       // TODO: replace expensive getCourse call with a lighter weight API call
-      this.checkbox = data.protectsAssetsPerSection
+      this.protectsAssetsPerSection = data.protectsAssetsPerSection
       this.refresh().then(() => {
         this.$ready('Manage assets')
       })
@@ -53,11 +55,6 @@ export default {
       return getCategories(true).then(data => {
         this.assignments = this.$_.filter(data, c => !!c.canvasAssignmentId)
         this.categories = this.$_.filter(data, c => !c.canvasAssignmentId)
-      })
-    },
-    toggleSectionCheckbox(value) {
-      updateProtectAssetsPerSectionCheckbox(value).then(() => {
-        this.$announcer.polite(`Assets ${value ? '' : 'not'} protected per section.`)
       })
     }
   }

@@ -81,7 +81,7 @@ class FakeAuth(object):
 @pytest.fixture(scope='session')
 def app(request):
     """Fixture application object, shared by all tests."""
-    _app, socketio = squiggy.factory.create_app()
+    _app = squiggy.factory.create_app()
 
     # Create app context before running tests.
     ctx = _app.app_context()

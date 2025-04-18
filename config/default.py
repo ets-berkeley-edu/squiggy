@@ -80,8 +80,6 @@ LOGGING_PROPAGATION_TARGETS = [
     'botocore',
     'canvasapi',
     's3transfer',
-    'socketio',
-    'socketio.server',
     'sqlalchemy.engine',
     'werkzeug',
 ]

@@ -20,21 +20,7 @@
       <v-col class="text-right">
         <v-container class="py-0" fluid>
           <v-row align="center" justify="end" no-gutters>
-            <div v-if="canLikeAsset" class="mr-5">
-              <v-btn
-                id="like-asset-btn"
-                icon
-                class="like-asset-btn pt-0 mt-0"
-                :class="{'like-asset-btn-liked': liked}"
-                @click="toggleLike"
-                @keypress.enter.prevent="toggleLike"
-              >
-                <font-awesome-icon icon="thumbs-up" />
-                <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
-                <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
-              </v-btn>
-            </div>
-            <div v-if="!canLikeAsset" class="mr-5">
+            <div class="mr-5">
               <font-awesome-icon icon="thumbs-up" />
               <span id="asset-like-count" class="ml-1">{{ likeCount }}</span>
               <span class="sr-only">{{ likeCount === 1 ? 'like' : 'likes' }}</span>
@@ -182,7 +168,6 @@ import Avatar from '@/components/user/Avatar'
 import OxfordJoin from '@/components/util/OxfordJoin'
 import UserLink from '@/components/util/UserLink'
 import Utils from '@/mixins/Utils'
-import {likeAsset, removeLikeAsset} from '@/api/assets'
 
 export default {
   name: 'AssetOverview',
@@ -195,7 +180,6 @@ export default {
     }
   },
   data: () => ({
-    canLikeAsset: false,
     imageUrl: undefined,
     likeCount: undefined,
     liked: undefined,
@@ -203,7 +187,6 @@ export default {
     usedInAssets: undefined
   }),
   created() {
-    this.canLikeAsset = !(this.$_.find(this.asset.users, {id: this.$currentUser.id}))
     this.imageUrl = this.asset.imageUrl || require('@/assets/img-not-found.png')
     this.likeCount = this.asset.likes
     this.liked = this.asset.liked
@@ -220,23 +203,6 @@ export default {
         }
       })
       return assets
-    },
-    toggleLike() {
-      if (this.liked) {
-        removeLikeAsset(this.asset.id).then(data => {
-          this.likeCount = data.likes
-          this.liked = data.liked
-          this.updateAssetStore(data)
-          this.$announcer.polite(`You removed your like from '${data.title}'`)
-        })
-      } else {
-        likeAsset(this.asset.id).then(data => {
-          this.likeCount = data.likes
-          this.liked = data.liked
-          this.updateAssetStore(data)
-          this.$announcer.polite(`You liked '${data.title}'`)
-        })
-      }
     }
   }
 }
