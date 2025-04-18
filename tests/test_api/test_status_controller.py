@@ -52,7 +52,7 @@ class TestStatusController:
             assert response.json['cache'] is True
             assert response.json['db'] is True
             assert response.json['previewService'] is False
-            assert response.json['poller'] is expected_ping_value
+            assert response.json['poller'] is True
             assert response.json['whiteboards'] is True
 
         for minutes_ago in [59, 61]:

@@ -25,7 +25,7 @@ const DEFAULT_TOOL_SELECTION = {
 const p = Vue.prototype
 
 const $_log = (statement: string, force?: boolean) => {
-  if (p.$config.socketIoDebugMode || force) {
+  if (force) {
     console.log(`🪲 ${statement}`)
   }
 }
@@ -70,7 +70,6 @@ const mutations = {
   },
   pushRemoteUUID: (state: any, uuid: string) => state.remoteUUIDs.push(uuid),
   refreshWhiteboard: (state: any, {resolve, whiteboard}) => {
-    $_log(`Refresh (happens every ${p.$config.whiteboardsRefreshInterval / 1000} seconds)`)
     state.whiteboard.deletedAt = whiteboard.deletedAt
     state.whiteboard.title = whiteboard.title
     state.whiteboard.users = whiteboard.users

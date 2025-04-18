@@ -40,7 +40,6 @@ def app_config():
         'assetTypes': assets_type_enums(),
         'baseUrl': app.config['VUE_LOCALHOST_BASE_URL'] or request.url_root,
         'browserKbUrl': app.config['BROWSER_KB_URL'],
-        'canvasPollerDeactivationThreshold': app.config['CANVAS_POLLER_DEACTIVATION_THRESHOLD'],
         'developerAuthEnabled': app.config['DEVELOPER_AUTH_ENABLED'],
         'ebEnvironment': app.config.get('EB_ENVIRONMENT'),
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
@@ -48,11 +47,9 @@ def app_config():
         'previewsUnsupportedMimeTypes': app.config['PREVIEWS_UNSUPPORTED_MIME_TYPES'],
         's3PreviewUrlPattern': S3_PREVIEW_URL_PATTERN,
         'servicePageUrl': app.config['SERVICE_PAGE_URL'],
-        'socketIoDebugMode': app.config['SOCKET_IO_DEBUG_MODE'],
         'squiggyEnv': app.config['SQUIGGY_ENV'],
         'staticPath': app.config['STATIC_PATH'],
         'timezone': app.config['TIMEZONE'],
-        'whiteboardsRefreshInterval': app.config['WHITEBOARDS_REFRESH_INTERVAL'],
     })
 
 

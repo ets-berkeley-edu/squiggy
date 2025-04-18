@@ -26,9 +26,7 @@ export default {
   components: {WhiteboardCard, WhiteboardsHeader},
   data: () => ({
     anchor: null,
-    isComplete: false,
-    isRefreshing: false,
-    refreshJob: undefined
+    isComplete: false
   }),
   computed: {
     whiteboardGrid() {
@@ -47,12 +45,7 @@ export default {
     }
   },
   created() {
-    document.addEventListener('visibilitychange', this.onVisibilityChange)
     this.$loading(true)
-  },
-  destroyed() {
-    document.removeEventListener('visibilitychange', this.onVisibilityChange)
-    clearTimeout(this.refreshJob)
   },
   mounted() {
     this.anchor = this.$route.query.anchor
@@ -113,33 +106,6 @@ export default {
         this.scrollTo(`#${this.anchor}`)
         this.$putFocusNextTick(this.anchor)
       }
-      this.scheduleRefreshJob()
-    },
-    onVisibilityChange() {
-      if (!this.isRefreshing && document.visibilityState === 'visible') {
-        clearTimeout(this.refreshJob)
-        // We want to refresh all whiteboards visible to the user.
-        this.isRefreshing = true
-        this.refresh().then(() => {
-          this.scheduleRefreshJob()
-          this.isRefreshing = false
-        })
-      }
-    },
-    runRefresh() {
-      const run = !this.isRefreshing && (!this.isBusy || !this.$_.trim(this.keywords) || !this.orderBy || !this.userId)
-      if (run) {
-        clearTimeout(this.refreshJob)
-        this.isRefreshing = true
-        this.refresh().then(() => {
-          this.scheduleRefreshJob()
-          this.isRefreshing = false
-        })
-      }
-    },
-    scheduleRefreshJob() {
-      clearTimeout(this.refreshJob)
-      this.refreshJob = setTimeout(this.runRefresh, this.$config.whiteboardsRefreshInterval)
     }
   }
 }

@@ -265,7 +265,7 @@ const $_initCanvas = (state: any) => {
 }
 
 const $_log = (statement: string, force?: boolean) => {
-  if (p.$config.socketIoDebugMode || force) {
+  if (force) {
     console.log(`🪲 ${statement}`)
   }
 }

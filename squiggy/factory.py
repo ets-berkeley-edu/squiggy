@@ -23,12 +23,9 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-import os
-
 from flask import Flask
 from squiggy import db
 from squiggy.configs import load_configs
-from squiggy.lib.canvas_poller import launch_pollers
 from squiggy.logger import initialize_app_logger
 from squiggy.routes import register_routes
 
@@ -42,10 +39,5 @@ def create_app():
 
     with app.app_context():
         register_routes(app)
-
-        # See https://stackoverflow.com/questions/9449101/how-to-stop-flask-from-initialising-twice-in-debug-mode
-        if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-            if app.config['CANVAS_POLLER']:
-                launch_pollers()
 
     return app

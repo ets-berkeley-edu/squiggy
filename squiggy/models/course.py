@@ -223,7 +223,6 @@ class Course(Base):
     @classmethod
     def update(
             cls,
-            active,
             asset_library_url,
             course_id,
             engagement_index_url,
@@ -231,7 +230,6 @@ class Course(Base):
             whiteboards_url=None,
     ):
         course = cls.find_by_id(course_id=course_id)
-        course.active = active
         course.asset_library_url = asset_library_url
         course.engagement_index_url = engagement_index_url
         course.impact_studio_url = impact_studio_url
