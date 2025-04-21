@@ -200,12 +200,6 @@ class Course(Base):
         return course
 
     @classmethod
-    def is_active(cls, course_id):
-        sql = 'SELECT active FROM courses WHERE id = :course_id'
-        result = db.session.execute(text(sql), {'course_id': course_id}).first()
-        return result[0]
-
-    @classmethod
     def is_user_in_course(cls, canvas_api_domain, canvas_course_id, user_id):
         sql = """
             SELECT u.id
@@ -277,11 +271,6 @@ class Course(Base):
             users = list(self.users)
             api_json['users'] = [user.to_api_json() for user in users]
         return api_json
-
-    def activate(self):
-        self.active = True
-        db.session.add(self)
-        std_commit()
 
 
 def _isoformat(value):

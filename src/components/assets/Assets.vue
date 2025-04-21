@@ -1,6 +1,6 @@
 <template>
   <div id="asset-library">
-    <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
+    <ReadOnly />
     <AssetsHeader
       ref="header"
       :open-advanced-search="openAdvancedSearch"
@@ -23,12 +23,12 @@ import AssetsHeader from '@/components/assets/AssetsHeader'
 import AssetsSearch from '@/mixins/AssetsSearch'
 import Context from '@/mixins/Context'
 import InfiniteScrolling from '@/mixins/InfiniteScrolling'
-import SyncDisabled from '@/components/util/SyncDisabled'
+import ReadOnly from '@/components/util/ReadOnly'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'Assets',
-  components: {AssetCard, AssetsHeader, SyncDisabled},
+  components: {AssetCard, AssetsHeader, ReadOnly},
   mixins: [AssetsSearch, Context, InfiniteScrolling, Utils],
   data: () => ({
     anchor: null,

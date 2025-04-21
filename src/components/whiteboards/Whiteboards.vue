@@ -1,5 +1,6 @@
 <template>
   <div>
+    <ReadOnly />
     <WhiteboardsHeader :put-focus-on-load="anchor ? null : 'basic-search-input'" />
     <v-card class="d-flex flex-wrap" flat tile>
       <WhiteboardCard
@@ -15,6 +16,7 @@
 <script>
 import Context from '@/mixins/Context'
 import InfiniteScrolling from '@/mixins/InfiniteScrolling'
+import ReadOnly from '@/components/util/ReadOnly'
 import Utils from '@/mixins/Utils'
 import WhiteboardCard from '@/components/whiteboards/WhiteboardCard'
 import WhiteboardsSearch from '@/mixins/WhiteboardsSearch'
@@ -23,7 +25,7 @@ import WhiteboardsHeader from '@/components/whiteboards/WhiteboardsHeader'
 export default {
   name: 'Whiteboards',
   mixins: [Context, InfiniteScrolling, Utils, WhiteboardsSearch],
-  components: {WhiteboardCard, WhiteboardsHeader},
+  components: {ReadOnly, WhiteboardCard, WhiteboardsHeader},
   data: () => ({
     anchor: null,
     isComplete: false
