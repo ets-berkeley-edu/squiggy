@@ -1,7 +1,7 @@
 <template>
   <div id="impact-studio">
     <div v-if="!isLoading && user">
-      <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
+      <ReadOnly />
       <div class="d-flex align-baseline">
         <div>Find user:</div>
         <div class="w-25 mx-3">
@@ -131,13 +131,13 @@ import ActivityTimeline from '@/components/impactstudio/ActivityTimeline'
 import AssetSwimlane from '@/components/impactstudio/AssetSwimlane'
 import CanvasConversation from '@/mixins/CanvasConversation'
 import Context from '@/mixins/Context'
-import SyncDisabled from '@/components/util/SyncDisabled'
+import ReadOnly from '@/components/util/ReadOnly'
 import Utils from '@/mixins/Utils'
 
 export default {
   name: 'ImpactStudio',
   mixins: [CanvasConversation, Context, Utils],
-  components: {ActivityNetwork, ActivityTimeline, AssetSwimlane, SyncDisabled},
+  components: {ActivityNetwork, ActivityTimeline, AssetSwimlane, ReadOnly},
   data: () => ({
     courseInteractions: null,
     everyonesAssets: [],

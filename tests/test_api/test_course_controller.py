@@ -23,16 +23,10 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from squiggy.models.course import Course
 from squiggy.models.user import User
 
 
 unauthorized_user_id = '666'
-
-
-def _api_activate_course(client, expected_status_code=200):
-    response = client.post('/api/course/activate')
-    assert response.status_code == expected_status_code
 
 
 def _api_get_course(client, course_id, expected_status_code=200):
@@ -45,39 +39,6 @@ def _api_get_users(client, course_id, expected_status_code=200):
     response = client.get(f'/api/course/{course_id}/advanced_asset_search_options')
     assert response.status_code == expected_status_code
     return response.json
-
-
-class TestReactivateCourse:
-
-    def test_anonymous(self, client):
-        """Denies anonymous user."""
-        _api_activate_course(client, expected_status_code=401)
-
-    def test_unauthorized(self, client, fake_auth):
-        """Denies unauthorized user."""
-        fake_auth.login(unauthorized_user_id)
-        _api_activate_course(client, expected_status_code=401)
-
-    def test_student(self, client, fake_auth, student_id):
-        """Denies student."""
-        fake_auth.login(student_id)
-        _api_activate_course(client, expected_status_code=401)
-
-    def test_teacher(self, client, fake_auth, authorized_user_id, db_session):
-        """Allows teacher."""
-        user = User.find_by_id(authorized_user_id)
-        fake_auth.login(authorized_user_id)
-        api_json = _api_get_course(client, user.course_id)
-        assert api_json['active'] is True
-
-        course_id = api_json['id']
-        assert course_id == user.course_id
-        course = db_session.query(Course).filter_by(id=course_id).first()
-        course.active = False
-        assert _api_get_course(client, course_id)['active'] is False
-
-        _api_activate_course(client)
-        assert _api_get_course(client, course_id)['active'] is True
 
 
 class TestGetCourse:

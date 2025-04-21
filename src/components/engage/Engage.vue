@@ -3,7 +3,7 @@
     <div class="mb-2 mt-2">
       <h2>Engagement Index</h2>
     </div>
-    <SyncDisabled v-if="$currentUser.isAdmin || $currentUser.isTeaching" />
+    <ReadOnly />
     <div v-if="!$currentUser.isAdmin && !$currentUser.isTeaching && ($currentUser.sharePoints === null)" id="engagement-splash" class="float-none">
       The engagement index is a scoreboard that lists the names and scores of all the students taking this course.
     </div>
@@ -52,14 +52,14 @@
 
 <script>
 import Leaderboard from '@/components/engage/Leaderboard'
-import SyncDisabled from '@/components/util/SyncDisabled'
+import ReadOnly from '@/components/util/ReadOnly'
 import Utils from '@/mixins/Utils'
 import {getLeaderboard} from '@/api/users'
 
 export default {
   name: 'Engage',
   mixins: [Utils],
-  components: {Leaderboard, SyncDisabled},
+  components: {Leaderboard, ReadOnly},
   data() {
     return {
       boxplotOptions: null,

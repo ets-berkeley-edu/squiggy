@@ -25,23 +25,8 @@ ENHANCEMENTS, OR MODIFICATIONS.
 
 from flask import current_app as app
 from flask_login import current_user, login_required
-from squiggy.api.api_util import teacher_required
 from squiggy.lib.http import tolerant_jsonify
 from squiggy.models.course import Course
-
-
-@app.route('/api/course/activate', methods=['POST'])
-@teacher_required
-def activate():
-    course = Course.find_by_id(current_user.course_id)
-    course.activate()
-    return tolerant_jsonify(True)
-
-
-@app.route('/api/course/is_active')
-@login_required
-def is_active():
-    return tolerant_jsonify(Course.is_active(current_user.course_id))
 
 
 @app.route('/api/course/<course_id>/advanced_asset_search_options')
