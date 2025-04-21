@@ -85,10 +85,6 @@ def can_current_user_view_asset(asset):
     return asset.visible or (asset.id in current_user.asset_ids)
 
 
-def get_socket_io_room(whiteboard_id):
-    return f'whiteboard-{whiteboard_id}'
-
-
 def start_login_session(login_session, redirect_path=None, tool_id=None):
     authenticated = login_user(login_session, remember=True) and current_user.is_authenticated
     if not _is_safe_url(request.args.get('next')):

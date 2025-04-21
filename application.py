@@ -24,15 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 import os
-import socket
 import subprocess
-
-import eventlet
-from eventlet.green import ssl
-# https://eventlet.net/doc/patching.html
-eventlet.monkey_patch()
-# https://github.com/eventlet/eventlet/issues/692
-ssl.timeout_exc = socket.timeout
 
 from squiggy.factory import create_app  # noqa E402
 
@@ -74,6 +66,6 @@ port = application.config['PORT']
 
 if __name__ == '__main__':
     application.logger.info('Starting development server on %s:%s', host, port)
-
+    application.run(host=host, port=port)
 elif __name__.startswith('_mod_wsgi'):
     application.logger.info('Will start WSGI server on %s:%s', host, port)
