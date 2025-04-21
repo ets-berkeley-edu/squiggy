@@ -32,7 +32,6 @@ from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.lib.aws import get_s3_signed_url
 from squiggy.lib.http import request
-from squiggy.lib.previews import generate_previews
 from squiggy.lib.util import db_row_to_dict, isoformat, utc_now
 from squiggy.models.activity import Activity
 from squiggy.models.asset_category import asset_category_table
@@ -177,9 +176,6 @@ class Asset(Base):
         db.session.add(asset)
         std_commit()
 
-        preview_url = download_url if asset_type in ['file', 'whiteboard'] else url
-        _generate_previews(asset, preview_url)
-
         # Invisible assets generate no activities.
         if visible and create_activity is not False:
             for user in users:
@@ -316,14 +312,6 @@ class Asset(Base):
         db.session.add(self)
         std_commit()
         return self.comment_count
-
-    def refresh_asset_preview_image(self):
-        self.update_preview(preview_status='pending')
-        preview_url = self.download_url if self.asset_type in ['file', 'whiteboard'] else self.url
-        _generate_previews(
-            asset=self,
-            preview_url=preview_url,
-        )
 
     def update_preview(self, **kwargs):
         if kwargs.get('preview_status'):
@@ -494,8 +482,3 @@ def _build_where_clause(filters, include_hidden, params, current_user):
         where_clause += ' AND (array_position(u.canvas_course_sections, :section) > 0)'
 
     return where_clause
-
-
-def _generate_previews(asset, preview_url):
-    if not generate_previews(asset.id, preview_url):
-        asset.update_preview(preview_status='error')

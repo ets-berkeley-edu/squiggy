@@ -29,7 +29,6 @@ import pytz
 from sqlalchemy.exc import SQLAlchemyError
 from squiggy import db
 from squiggy.lib.http import tolerant_jsonify
-from squiggy.lib.previews import ping_preview_service
 from squiggy.lib.util import utc_now
 from squiggy.logger import logger
 
@@ -82,15 +81,16 @@ def _db_status():
         return False
 
 
+# Poller, preview service, and whiteboard housekeeping have been turned off; don't bother Nagios.
+
+
 def _poller_status():
-    # The poller has been turned off; don't bother Nagios.
     return True
 
 
 def _preview_service_status():
-    return ping_preview_service()
+    return True
 
 
 def _whiteboard_housekeeping_status():
-    # Whiteboard housekeeping has been turned off; don't bother Nagios.
     return True
