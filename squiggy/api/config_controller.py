@@ -44,7 +44,6 @@ def app_config():
         'ebEnvironment': app.config.get('EB_ENVIRONMENT'),
         'emailAddressSupport': app.config['EMAIL_ADDRESS_SUPPORT'],
         'orderByOptions': assets_sort_by_options,
-        'previewsUnsupportedMimeTypes': app.config['PREVIEWS_UNSUPPORTED_MIME_TYPES'],
         's3PreviewUrlPattern': S3_PREVIEW_URL_PATTERN,
         'servicePageUrl': app.config['SERVICE_PAGE_URL'],
         'squiggyEnv': app.config['SQUIGGY_ENV'],

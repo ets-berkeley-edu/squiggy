@@ -51,7 +51,7 @@ class TestStatusController:
             assert response.json['app'] is True
             assert response.json['cache'] is True
             assert response.json['db'] is True
-            assert response.json['previewService'] is False
+            assert response.json['previewService'] is True
             assert response.json['poller'] is True
             assert response.json['whiteboards'] is True
 

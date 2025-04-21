@@ -37,8 +37,6 @@ DIST_STATIC_DIR = 'tests/static'
 
 LOGGING_LOCATION = 'STDOUT'
 
-PREVIEWS_ENABLED = False
-
 SQLALCHEMY_DATABASE_URI = f"postgresql://squiggy:squiggy@localhost:{os.getenv('PGPORT', '5432')}/squiggy_test"
 
 TESTING = True
