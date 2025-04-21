@@ -28,6 +28,7 @@ from sqlalchemy.sql import text
 from squiggy import db, std_commit
 from squiggy.models.base import Base
 from squiggy.models.canvas import Canvas
+from squiggy.models.course_group import CourseGroup  # noqa F401
 
 
 class Course(Base):
