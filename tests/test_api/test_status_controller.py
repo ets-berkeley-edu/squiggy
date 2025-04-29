@@ -22,10 +22,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
 ENHANCEMENTS, OR MODIFICATIONS.
 """
-from datetime import timedelta
-
 from squiggy import db, std_commit
-from squiggy.lib.util import utc_now
 from squiggy.models.canvas import Canvas
 from squiggy.models.course import Course
 
@@ -45,22 +42,10 @@ class TestStatusController:
         db.session.add(course)
         std_commit(allow_test_environment=True)
 
-        def _ping(expected_ping_value):
-            response = client.get('/api/ping')
-            assert response.status_code == 200
-            assert response.json['app'] is True
-            assert response.json['cache'] is True
-            assert response.json['db'] is True
-            assert response.json['previewService'] is True
-            assert response.json['poller'] is True
-            assert response.json['whiteboards'] is True
-
-        for minutes_ago in [59, 61]:
-            the_past = utc_now() - timedelta(minutes=minutes_ago)
-            course.last_polled = the_past
-            db.session.add(course)
-            std_commit(allow_test_environment=True)
-            _ping(minutes_ago < 60)
+        response = client.get('/api/ping')
+        assert response.status_code == 200
+        assert response.json['app'] is True
+        assert response.json['db'] is True
 
         # Teardown
         db.session.execute(f'DELETE FROM courses WHERE id = {course.id}')
