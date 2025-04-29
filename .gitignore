@@ -44,3 +44,4 @@ tmp/
 .cache
 .pytest_cache/
 scripts/hasenpfeffer_incorporated/csv_files
+scripts/hasenpfeffer_incorporated/media_files

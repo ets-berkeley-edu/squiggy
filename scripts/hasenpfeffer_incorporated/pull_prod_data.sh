@@ -5,21 +5,27 @@ set -e
 
 echo_usage() {
   echo "SYNOPSIS"
-  echo "     ${0} -d db_connection [-c canvas_hostname [-r replacement_canvas_hostname]] [-a]"; echo
+  echo "     ${0} -d db_connection [-a] [-c canvas_hostname [-r replacement_canvas_hostname]] [-i course_id [-b bucket]]"; echo
   echo "DESCRIPTION"
   echo "Available options"
   echo "     -d      Database connection information in the form 'host:port:database:username'"
   echo "     -a      [OPTIONAL] Pull all database tables including the canvas table."
+  echo "     -b      [OPTIONAL] S3 bucket to download media files from."
   echo "     -c      [OPTIONAL] Hostname of the Canvas instance for which SuiteC course data should be pulled."
   echo "                 Defaults to all instances."
+  echo "     -i      [OPTIONAL] SuiteC id for the course for which SuiteC course data should be pulled."
+  echo "                 Defaults to all courses."
   echo "     -r      [OPTIONAL] If provided, all references to Canvas-hosted resources will be changed to this hostname."
   echo "                 You must include the '-c' flag when using this option."
 }
 
-while getopts "ac:d:r:" arg; do
+while getopts "ab:c:d:i:r:" arg; do
   case ${arg} in
     a)
       all_tables=true
+      ;;
+    b)
+      bucket="${OPTARG}"
       ;;
     c)
       source_canvas="${OPTARG}"
@@ -32,6 +38,9 @@ while getopts "ac:d:r:" arg; do
       db_database=${db_params[2]}
       db_username=${db_params[3]}
       db_password=${db_params[4]}
+      ;;
+    i)
+      course_id="${OPTARG}"
       ;;
     r)
       replacement_canvas="${OPTARG}"
@@ -52,12 +61,20 @@ done
   exit 1
 }
 
+[[ "${bucket}" ]] && ! [[ "${course_id}" ]] && {
+  echo "[ERROR] You must specify a course id in order to download media files from S3."; echo
+  echo_usage
+  exit 1
+}
+
 if ! [[ "${db_password}" ]]; then
   echo -n "Enter database password: "
   read -s db_password; echo; echo
 fi
 
-if [[ "${replacement_canvas}" ]]; then
+if [[ "${course_id}" ]]; then
+  echo "Will pull data for course id ${course_id}."
+elif [[ "${replacement_canvas}" ]]; then
   echo "Will pull data for all courses hosted under ${source_canvas}, changing host references to ${replacement_canvas}."
 elif [[ "${source_canvas}" ]]; then
   echo "Will pull data for all courses hosted under ${source_canvas}."
@@ -84,9 +101,40 @@ output_csv() {
 # 'canvas' table itself.
 
 # First, pull data from tables that contain no references to specific Canvas hostnames. Select by Canvas instance
-# if that option is specified.
+# or course id if that option is specified.
 
-if [[ "${source_canvas}" ]]; then
+if [[ "${course_id}" ]]; then
+
+  output_csv "activities" "SELECT a.* FROM activities a
+              WHERE a.course_id = ${course_id}
+              order by id"
+
+  output_csv "activity_types" "SELECT at.* FROM activity_types at
+              WHERE at.course_id = ${course_id}"
+
+  output_csv "asset_categories" "SELECT ac.* FROM asset_categories ac
+              JOIN categories cat ON cat.course_id = ${course_id}
+              AND ac.category_id = cat.id"
+
+  output_csv "asset_users" "SELECT au.* FROM asset_users au
+              JOIN users u ON u.course_id = ${course_id}
+              AND au.user_id = u.id"
+
+  output_csv "categories" "SELECT cat.* FROM categories cat
+              WHERE cat.course_id = ${course_id}"
+
+  output_csv "comments" "SELECT com.* FROM comments com
+              JOIN users u ON u.course_id = ${course_id}
+              AND com.user_id = u.id"
+
+  output_csv "whiteboard_users" "SELECT wm.* FROM whiteboard_users wm
+              JOIN whiteboards w ON w.course_id = ${course_id}
+              AND wm.whiteboard_id = w.id"
+
+  output_csv "users" "SELECT u.* FROM users u
+              WHERE u.course_id = ${course_id}"
+
+elif [[ "${source_canvas}" ]]; then
 
   output_csv "activities" "SELECT a.* FROM activities a
               JOIN courses c
@@ -135,7 +183,7 @@ if [[ "${source_canvas}" ]]; then
               JOIN courses c
               ON u.course_id = c.id AND c.canvas_api_domain = '${source_canvas}'"
 
-# If no source Canvas is specified, select all rows.
+# If no source Canvas or source course is specified, select all rows.
 
 else
 
@@ -155,9 +203,30 @@ fi
 
 # Next, pull data from tables that do contain references to specific Canvas hostnames.
 
+
+if [[ "${course_id}" ]]; then
+
+  output_csv "assets" "SELECT a.* FROM assets a
+              WHERE a.course_id = ${course_id}"
+
+  output_csv "asset_whiteboard_elements" "SELECT awe.* FROM asset_whiteboard_elements awe
+              JOIN assets a ON a.course_id = ${course_id}
+              AND awe.asset_id = a.id"
+
+  output_csv "courses" "SELECT c.* FROM courses c
+              WHERE c.id = ${course_id}"
+
+  output_csv "whiteboards" "SELECT w.* FROM whiteboards w
+              JOIN courses c
+              ON w.course_id = c.id AND c.canvas_api_domain = '${source_canvas}'"
+
+  output_csv "whiteboard_elements" "SELECT we.* FROM whiteboard_elements we
+              JOIN whiteboards w ON w.course_id = ${course_id}
+              AND we.whiteboard_id = w.id"
+
 # If the Canvas hostname should be changed, run a replace command on certain columns as part of the query.
 
-if [[ "${replacement_canvas}" ]]; then
+elif [[ "${replacement_canvas}" ]]; then
 
   output_csv "assets" "SELECT a.id, a.type, a.url,
                 replace(a.download_url, '${source_canvas}', '${replacement_canvas}') as download_url,
@@ -256,6 +325,21 @@ fi
 
 if [[ "${all_tables}" ]]; then
   output_csv "canvas" "SELECT * FROM canvas"
+fi
+
+if [[ "${bucket}" && "${course_id}" ]]; then
+
+  MEDIA_HOME_DIRECTORY="${SCRIPT_DIR}/media_files"
+
+  # Delete old media files
+  rm -Rf "${MEDIA_HOME_DIRECTORY}"
+  mkdir -p "${MEDIA_HOME_DIRECTORY}"
+
+  # Squiggy's S3 is organized by course id, reversed and zero-padded to seven digits.
+  PADDED_COURSE_ID=$(echo "${course_id}" | sed $'s/./&\\\n/g' | sed -ne $'x;H;${x;s/\\n//g;p;}' | sed -e :a -e 's/^.\{1,6\}$/0&/;ta')
+
+  aws s3 cp "s3://${bucket}/${PADDED_COURSE_ID}" "${MEDIA_HOME_DIRECTORY}" --recursive
+
 fi
 
 echo "Done."
