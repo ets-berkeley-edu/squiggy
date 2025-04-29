@@ -37,11 +37,7 @@ from squiggy.logger import logger
 def app_status():
     resp = {
         'app': True,
-        'cache': _cache_status(),
         'db': _db_status(),
-        'poller': _poller_status(),
-        'previewService': _preview_service_status(),
-        'whiteboards': _whiteboard_housekeeping_status(),
     }
     return tolerant_jsonify(resp)
 
@@ -67,11 +63,6 @@ def countdown():
     return tolerant_jsonify(resp)
 
 
-def _cache_status():
-    # Sockets and background jobs have been turned off; don't bother Nagios.
-    return True
-
-
 def _db_status():
     try:
         db.session.execute('SELECT 1')
@@ -79,18 +70,3 @@ def _db_status():
     except SQLAlchemyError:
         logger.exception('Database connection error')
         return False
-
-
-# Poller, preview service, and whiteboard housekeeping have been turned off; don't bother Nagios.
-
-
-def _poller_status():
-    return True
-
-
-def _preview_service_status():
-    return True
-
-
-def _whiteboard_housekeeping_status():
-    return True
